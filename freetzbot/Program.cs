@@ -157,7 +157,7 @@ namespace freetzbot
             }
             while (count > 0);
             String changeset = "Der aktuellste Changeset ist " + sb.ToString().Split(new string[] { "<h1>" }, 2, StringSplitOptions.None)[1].Split(new string[] { "</h1>" }, 2, StringSplitOptions.None)[0].Split(new string[] { "Changeset " }, 2, StringSplitOptions.None)[1];
-            changeset += " und wurde am " + sb.ToString().Split(new string[] { "<dd class=\"time\">" }, 2, StringSplitOptions.None)[1].Split(new string[] { "\n" }, 3, StringSplitOptions.None)[1] + " in den Trunk eingecheckt. Siehe: http://freetz.org/changeset";
+            changeset += " und wurde am" + sb.ToString().Split(new string[] { "<dd class=\"time\">" }, 2, StringSplitOptions.None)[1].Split(new string[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new string[] { "   " }, 5, StringSplitOptions.None)[4] + " in den Trunk eingecheckt. Siehe: http://freetz.org/changeset";
             Senden(changeset, privat, sender);
         }
 
