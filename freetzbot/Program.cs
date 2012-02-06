@@ -401,7 +401,7 @@ namespace freetzbot
             }
         }
 
-        static private void boxfrage_DoWork(object sender, DoWorkEventArgs e)
+        static private void boxfrage_DoWork(Object sender, DoWorkEventArgs e)
         {
             try
             {
@@ -426,7 +426,12 @@ namespace freetzbot
             catch { }
         }
 
-        static private void empfangsthread_DoWork(object sender, DoWorkEventArgs e)
+        static private void thready(Object parameter)
+        {
+
+        }
+
+        static private void empfangsthread_DoWork(Object sender, DoWorkEventArgs e)
         {
             NetworkStream inOut = c.GetStream();
             StreamReader inStream = new StreamReader(c.GetStream());
@@ -459,7 +464,8 @@ namespace freetzbot
                     if (pieces[2].ToCharArray()[0] == '!')
                     {
                         string[] befehl = pieces[2].Split(new string[] { "!" }, 2, StringSplitOptions.None);
-                        bot_antwort(nickname[0], privat, befehl[1]);
+                        Thread thread = new Thread(delegate() { bot_antwort(nickname[0], privat, befehl[1]); });
+                        thread.Start();
                     }
                     if (pieces[2] == raum && klappe == false)
                     {
