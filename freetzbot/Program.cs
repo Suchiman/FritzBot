@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
+using System.Net;
 using System.Net.Sockets;
 using System.ComponentModel;
 using System.Threading;
@@ -84,6 +85,9 @@ namespace freetzbot
                             hilfe(sender, privat);
                         }
                         break;
+                    case "trunk":
+                        trunk(sender, privat);
+                        break;
                     case "box":
                         box(sender, privat, parameter[1]);
                         break;
@@ -127,6 +131,34 @@ namespace freetzbot
                         break;
                 }
             }
+        }
+
+        static private void trunk(String sender, Boolean privat)
+        {
+            Senden("Einen moment bitte ich stelle sogleich die Nachforschungen an...", privat, sender);
+            StringBuilder sb = new StringBuilder();
+            byte[] buf = new byte[8192];
+            HttpWebRequest request = (HttpWebRequest)
+                WebRequest.Create("http://freetz.org/changeset");
+            HttpWebResponse response = (HttpWebResponse)
+                request.GetResponse();
+            Stream resStream = response.GetResponseStream();
+            String tempString = null;
+            int count = 0;
+
+            do
+            {
+                count = resStream.Read(buf, 0, buf.Length);
+                if (count != 0)
+                {
+                    tempString = Encoding.ASCII.GetString(buf, 0, count);
+                    sb.Append(tempString);
+                }
+            }
+            while (count > 0);
+            String changeset = "Der aktuellste Changeset ist " + sb.ToString().Split(new string[] { "<h1>" }, 2, StringSplitOptions.None)[1].Split(new string[] { "</h1>" }, 2, StringSplitOptions.None)[0].Split(new string[] { "Changeset " }, 2, StringSplitOptions.None)[1];
+            changeset += " und wurde am " + sb.ToString().Split(new string[] { "<dd class=\"time\">" }, 2, StringSplitOptions.None)[1].Split(new string[] { "\n" }, 3, StringSplitOptions.None)[1] + " in den Trunk eingecheckt. Siehe: http://freetz.org/changeset";
+            Senden(changeset, privat, sender);
         }
 
         static private void boxfind(String sender, Boolean privat, String parameter = "")
@@ -306,6 +338,9 @@ namespace freetzbot
                     case "witz":
                         Senden("Erzählt dir einen Witz, mit \"!witz add witztext\" kannst du einen neuen hinzufügen", privat, sender);
                         break;
+                    case "trunk":
+                        Senden("Zeigt den aktuellsten Changeset an", privat, sender);
+                        break;
                     case "box":
                         Senden("Trägt deine boxdaten ein, example: \"!box 7270\" bitte jede Box einzeln angeben", privat, sender);
                         break;
@@ -330,9 +365,8 @@ namespace freetzbot
             }
             else
             {
-                Senden("Aktuelle Befehle: about frag zeit witz box boxinfo boxfind boxlist boxremove userlist", privat, sender);
+                Senden("Aktuelle Befehle: about frag zeit witz trunk box boxinfo boxfind boxlist boxremove userlist", privat, sender);
                 Senden("Hilfe zu jedem Befehl mit \"!help befehl\"", privat, sender);
-                //Senden("Aktuelle Befehle (für unterbefehle !help befehl) (Befehlspräfix !) about frag zeit witz box boxinfo boxfind boxlist boxremove userlist", sender);
             }
         }
 
@@ -424,11 +458,6 @@ namespace freetzbot
                 }
             }
             catch { }
-        }
-
-        static private void thready(Object parameter)
-        {
-
         }
 
         static private void empfangsthread_DoWork(Object sender, DoWorkEventArgs e)
