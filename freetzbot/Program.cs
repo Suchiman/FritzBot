@@ -12,6 +12,7 @@ namespace freetzbot
     {
         static private System.ComponentModel.BackgroundWorker empfangsthread;
         static private System.ComponentModel.BackgroundWorker boxfrage;
+
         static public TcpClient c;
         static public String nickname = "FritzBot";
         static public String server = "irc.atw-inter.net";
@@ -19,52 +20,113 @@ namespace freetzbot
         static public Boolean klappe = false;
         static public Boolean crashed = true;
 
-        static public void init()
+        static private void bot_antwort(String sender, Boolean privat, String nachricht)
         {
-            empfangsthread = new System.ComponentModel.BackgroundWorker();
-            empfangsthread.WorkerSupportsCancellation = true;
-            empfangsthread.DoWork += new System.ComponentModel.DoWorkEventHandler(empfangsthread_DoWork);
-            boxfrage = new System.ComponentModel.BackgroundWorker();
-            boxfrage.WorkerSupportsCancellation = true;
-            boxfrage.DoWork += new System.ComponentModel.DoWorkEventHandler(boxfrage_DoWork);
-        }
-
-        static private void Senden(String text, Boolean privat, String adressant = "", String methode = "PRIVMSG")
-        {
-            if (!privat || adressant == "")
+            String[] parameter = nachricht.Split(new string[] { " " }, 2, StringSplitOptions.None);
+            if (sender == "Suchiman" || sender == "hippie2000")
             {
-                adressant = raum;
+                switch (parameter[0])
+                {
+                    case "quit":
+                        Trennen();
+                        break;
+                    case "klappe":
+                        klappe = true;
+                        Senden("Tschuldigung, bin ruhig", privat);
+                        break;
+                    case "okay":
+                        klappe = false;
+                        Senden("Okay bin zurück ;-)", privat);
+                        break;
+                }
             }
-            try
+            if (!klappe)
             {
-                Byte[] sendBytes;
-                NetworkStream inOut = c.GetStream();
-                sendBytes = Encoding.GetEncoding("iso-8859-1").GetBytes(methode + " " + adressant + " :" + text + "\r\n");
-                inOut.Write(sendBytes, 0, sendBytes.Length);
-                logging(nickname + ": " + text);
+                switch (parameter[0])
+                {
+                    case "witz":
+                        if (parameter.Length > 1)
+                        {
+                            witz(sender, privat, parameter[1]);
+                        }
+                        else
+                        {
+                            witz(sender, privat);
+                        }
+                        break;
+                    case "zeit":
+                        try
+                        {
+                            Senden("Laut meiner Uhr ist es gerade " + DateTime.Now.ToString("HH:mm:ss"), privat, sender);
+                        }
+                        catch { }
+                        break;
+                    case "frag":
+                        try
+                        {
+                            Senden("Hallo " + parameter[1] + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast :)", privat, sender);
+                        }
+                        catch { }
+                        break;
+                    case "about":
+                        Senden("Programmiert hat mich Suchiman, und ich bin dazu da, um Daten über Fritzboxen zu sammeln. Ich bestehe derzeit aus 594 Zeilen C# code", privat, sender);
+                        break;
+                    case "help":
+                    case "hilfe":
+                    case "faq":
+                    case "info":
+                        if (parameter.Length > 1)
+                        {
+                            hilfe(sender, privat, parameter[1]);
+                        }
+                        else
+                        {
+                            hilfe(sender, privat);
+                        }
+                        break;
+                    case "box":
+                        box(sender, privat, parameter[1]);
+                        break;
+                    case "boxinfo":
+                        if (parameter.Length > 1)
+                        {
+                            boxinfo(sender, privat, parameter[1]);
+                        }
+                        else
+                        {
+                            boxinfo(sender, privat);
+                        }
+                        break;
+                    case "userlist":
+                        userlist(sender, privat);
+                        break;
+                    case "boxfind":
+                        if (parameter.Length > 1)
+                        {
+                            boxfind(sender, privat, parameter[1]);
+                        }
+                        else
+                        {
+                            boxfind(sender, privat);
+                        }
+                        break;
+                    case "boxlist":
+                        boxlist(sender, privat);
+                        break;
+                    case "boxremove":
+                        if (parameter.Length > 1)
+                        {
+                            boxremove(sender, privat, parameter[1]);
+                        }
+                        else
+                        {
+                            boxremove(sender, privat);
+                        }
+                        break;
+                    default:
+                        break;
+                }
             }
-            catch { }
-        }
-
-        static private String[] db_lesen(String db)
-        {
-            if (!File.Exists(db))
-            {
-                StreamWriter create_db = new StreamWriter(db, true);
-                create_db.WriteLine("");
-                create_db.Close();
-            }
-            StreamReader sr = new StreamReader(db);
-            String[] Daten = new String[0];
-            int i = 0;
-            while (sr.Peek() >= 0)
-            {
-                Array.Resize(ref Daten, Daten.Length + 1);
-                Daten[i] = sr.ReadLine();
-                i++;
-            }
-            sr.Close();
-            return Daten;
         }
 
         static private void boxfind(String sender, Boolean privat, String parameter = "")
@@ -339,115 +401,6 @@ namespace freetzbot
             }
         }
 
-        static private void bot_antwort(String sender, Boolean privat, String nachricht)
-        {
-            String[] parameter = nachricht.Split(new string[] { " " }, 2, StringSplitOptions.None);
-            if (sender == "Suchiman" || sender == "hippie2000")
-            {
-                switch (parameter[0])
-                {
-                    case "quit":
-                        Trennen();
-                        break;
-                    case "klappe":
-                        klappe = true;
-                        Senden("Tschuldigung, bin ruhig", privat);
-                        break;
-                    case "okay":
-                        klappe = false;
-                        Senden("Okay bin zurück ;-)", privat);
-                        break;
-                }
-            }
-            if (!klappe)
-            {
-                switch (parameter[0])
-                {
-                    case "witz":
-                        if (parameter.Length > 1)
-                        {
-                            witz(sender, privat ,parameter[1]);
-                        }
-                        else
-                        {
-                            witz(sender, privat);
-                        }
-                        break;
-                    case "zeit":
-                        try
-                        {
-                            Senden("Laut meiner Uhr ist es gerade " + DateTime.Now.ToString("HH:mm:ss"), privat, sender);
-                        }
-                        catch { }
-                        break;
-                    case "frag":
-                        try
-                        {
-                            Senden("Hallo " + parameter[1] + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast :)", privat, sender);
-                        }
-                        catch { }
-                        break;
-                    case "about":
-                        Senden("Programmiert hat mich Suchiman, und ich bin dazu da, um Daten über Fritzboxen zu sammeln. Ich bestehe derzeit aus 594 Zeilen C# code", privat, sender);
-                        break;
-                    case "help":
-                    case "hilfe":
-                    case "faq":
-                    case "info":
-                        if (parameter.Length > 1)
-                        {
-                            hilfe(sender, privat, parameter[1]);
-                        }
-                        else
-                        {
-                            hilfe(sender, privat);
-                        }
-                        break;
-                    case "box":
-                        box(sender, privat, parameter[1]);
-                        break;
-                    case "boxinfo":
-                        if (parameter.Length > 1)
-                        {
-                            boxinfo(sender, privat, parameter[1]);
-                        }
-                        else
-                        {
-                            boxinfo(sender, privat);
-                        }
-                        break;
-                    case "userlist":
-                        userlist(sender, privat);
-                        break;
-                    case "boxfind":
-                        if (parameter.Length > 1)
-                        {
-                            boxfind(sender, privat, parameter[1]);
-                        }
-                        else
-                        {
-                            boxfind(sender, privat);
-                        }
-                        break;
-                    case "boxlist":
-                        boxlist(sender, privat);
-                        break;
-                    case "boxremove":
-                        if (parameter.Length > 1)
-                        {
-                            boxremove(sender, privat, parameter[1]);
-                        }
-                        else
-                        {
-                            boxremove(sender, privat);
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-
         static private void boxfrage_DoWork(object sender, DoWorkEventArgs e)
         {
             try
@@ -516,6 +469,44 @@ namespace freetzbot
             }
         }
 
+        static private String[] db_lesen(String db)
+        {
+            if (!File.Exists(db))
+            {
+                StreamWriter create_db = new StreamWriter(db, true);
+                create_db.WriteLine("");
+                create_db.Close();
+            }
+            StreamReader sr = new StreamReader(db);
+            String[] Daten = new String[0];
+            int i = 0;
+            while (sr.Peek() >= 0)
+            {
+                Array.Resize(ref Daten, Daten.Length + 1);
+                Daten[i] = sr.ReadLine();
+                i++;
+            }
+            sr.Close();
+            return Daten;
+        }
+
+        static private void Senden(String text, Boolean privat, String adressant = "", String methode = "PRIVMSG")
+        {
+            if (!privat || adressant == "")
+            {
+                adressant = raum;
+            }
+            try
+            {
+                Byte[] sendBytes;
+                NetworkStream inOut = c.GetStream();
+                sendBytes = Encoding.GetEncoding("iso-8859-1").GetBytes(methode + " " + adressant + " :" + text + "\r\n");
+                inOut.Write(sendBytes, 0, sendBytes.Length);
+                logging(nickname + ": " + text);
+            }
+            catch { }
+        }
+
         static private Boolean Verbinden()
         {
             #if DEBUG
@@ -549,6 +540,16 @@ namespace freetzbot
             catch { }
             crashed = false;
             empfangsthread.CancelAsync();
+        }
+
+        static public void init()
+        {
+            empfangsthread = new System.ComponentModel.BackgroundWorker();
+            empfangsthread.WorkerSupportsCancellation = true;
+            empfangsthread.DoWork += new System.ComponentModel.DoWorkEventHandler(empfangsthread_DoWork);
+            boxfrage = new System.ComponentModel.BackgroundWorker();
+            boxfrage.WorkerSupportsCancellation = true;
+            boxfrage.DoWork += new System.ComponentModel.DoWorkEventHandler(boxfrage_DoWork);
         }
 
         static private void logging(String to_log)
