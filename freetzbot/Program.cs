@@ -41,7 +41,6 @@ namespace freetzbot
                 NetworkStream inOut = c.GetStream();
                 sendBytes = Encoding.GetEncoding("iso-8859-1").GetBytes(methode + " " + adressant + " :" + text + "\r\n");
                 inOut.Write(sendBytes, 0, sendBytes.Length);
-                Console.WriteLine(nickname + ": " + text);
                 logging(nickname + ": " + text);
             }
             catch { }
@@ -503,7 +502,6 @@ namespace freetzbot
                 else if (pieces.Length >= 3)    //Verarbeitung einer Nachricht, eine Nachricht sollte 3 gesplittete Elemente im Array haben
                 {                               //Beispiel einer Nachricht: ":Suchiman!~Suchiman@Robin-PC PRIVMSG #eingang :hi"
                     string[] nickname = pieces[1].Split(new string[] { "!" }, 2, StringSplitOptions.None);
-                    Console.WriteLine(nickname[0] + ": " + pieces[2]);
                     logging(nickname[0] + ": " + pieces[2]);
                     if (pieces[2].ToCharArray()[0] == '!')
                     {
@@ -557,6 +555,7 @@ namespace freetzbot
         {
             StreamWriter log = new StreamWriter("log.txt", true);
             log.WriteLine(DateTime.Now.ToString("dd.MM HH:mm:ss ") + to_log);
+            Console.WriteLine(DateTime.Now.ToString("dd.MM HH:mm:ss ") + to_log);
             log.Close();
         }
 
@@ -572,12 +571,10 @@ namespace freetzbot
                 }
                 if (crashed)
                 {
-                    Console.WriteLine("Verbindung verloren :( versuche Verbindung wiederherzustellen");
                     logging("Verbindung verloren :( versuche Verbindung wiederherzustellen");
                     int count = 0;
                     while (!empfangsthread.IsBusy)
                     {
-                        Console.WriteLine("Versuch " + count);
                         logging("Versuch " + count);
                         if (!Verbinden())
                         {
@@ -585,7 +582,6 @@ namespace freetzbot
                         }
                         count++;
                     }
-                    Console.WriteLine("Verbindung nach dem " + count + " versuch erfolgreich wiederhergestellt");
                     logging("Verbindung nach dem " + count + " versuch erfolgreich wiederhergestellt");
                 }
             }
