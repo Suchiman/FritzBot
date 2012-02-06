@@ -19,6 +19,7 @@ namespace freetzbot
         static public String raum = "#fritzbox";
         static public Boolean klappe = false;
         static public Boolean crashed = true;
+        static public String zeilen = "688";
 
         static private void bot_antwort(String sender, Boolean privat, String nachricht)
         {
@@ -69,7 +70,7 @@ namespace freetzbot
                         catch { }
                         break;
                     case "about":
-                        Senden("Programmiert hat mich Suchiman, und ich bin dazu da, um Daten über Fritzboxen zu sammeln. Ich bestehe derzeit aus 623 Zeilen C# code", privat, sender);
+                        Senden("Programmiert hat mich Suchiman, und ich bin dazu da, um Daten über Fritzboxen zu sammeln. Ich bestehe derzeit aus " + zeilen + " Zeilen C# code", privat, sender);
                         break;
                     case "help":
                     case "hilfe":
@@ -88,7 +89,14 @@ namespace freetzbot
                         trunk(sender, privat);
                         break;
                     case "labor":
-                        labor(sender, privat);
+                        if (parameter.Length > 1)
+                        {
+                            labor(sender, privat, parameter[1]);
+                        }
+                        else
+                        {
+                            labor(sender, privat);
+                        }
                         break;
                     case "box":
                         box(sender, privat, parameter[1]);
@@ -163,7 +171,7 @@ namespace freetzbot
             Senden(changeset, privat, sender);
         }
 
-        static private void labor(String sender, Boolean privat)
+        static private void labor(String sender, Boolean privat, String parameter="")
         {
             Senden("Einen moment bitte ich stelle sogleich die Nachforschungen an...", privat, sender);
             StringBuilder sb = new StringBuilder();
@@ -186,7 +194,31 @@ namespace freetzbot
                 }
             }
             while (count > 0);
-            String changeset = "Die neueste 7270 Labor version ist am " + sb.ToString().Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 7, StringSplitOptions.None)[6].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0] + " erschienen";
+            int modell;
+            switch(parameter){
+                case "ios":
+                    modell = 1;
+                    break;
+                case "android":
+                    modell = 2;
+                    break;
+                case "7390":
+                    modell = 3;
+                    break;
+                case "fhem":
+                    modell = 4;
+                    break;
+                case "7390at":
+                    modell = 5;
+                    break;
+                case "7270":
+                    modell = 6;
+                    break;
+                default:
+                    modell = 6;
+                    break;
+            }
+            String changeset = "Die neueste 7270 Labor version ist am " + sb.ToString().Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 7, StringSplitOptions.None)[modell].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0] + " erschienen";
             Senden(changeset, privat, sender);
         }
 
@@ -370,6 +402,9 @@ namespace freetzbot
                     case "trunk":
                         Senden("Zeigt den aktuellsten Changeset an", privat, sender);
                         break;
+                    case "labor":
+                        Senden("Ich schaue mal auf das aktuelle Datum der Labor Firmwares, '7270', '7390', 'fhem', '7390at', 'android', 'ios'", privat, sender);
+                        break;
                     case "box":
                         Senden("Trägt deine boxdaten ein, example: \"!box 7270\" bitte jede Box einzeln angeben", privat, sender);
                         break;
@@ -394,7 +429,7 @@ namespace freetzbot
             }
             else
             {
-                Senden("Aktuelle Befehle: about frag zeit witz trunk box boxinfo boxfind boxlist boxremove userlist", privat, sender);
+                Senden("Aktuelle Befehle: about frag zeit witz trunk labor box boxinfo boxfind boxlist boxremove userlist", privat, sender);
                 Senden("Hilfe zu jedem Befehl mit \"!help befehl\"", privat, sender);
             }
         }
