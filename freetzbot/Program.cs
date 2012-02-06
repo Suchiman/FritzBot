@@ -12,7 +12,6 @@ namespace freetzbot
     class Program
     {
         static private System.ComponentModel.BackgroundWorker empfangsthread;
-        static private System.ComponentModel.BackgroundWorker boxfrage;
 
         static public TcpClient c;
         static public String nickname = "FritzBot";
@@ -23,7 +22,7 @@ namespace freetzbot
 
         static private void bot_antwort(String sender, Boolean privat, String nachricht)
         {
-            String[] parameter = nachricht.Split(new string[] { " " }, 2, StringSplitOptions.None);
+            String[] parameter = nachricht.Split(new String[] { " " }, 2, StringSplitOptions.None);
             if (sender == "Suchiman" || sender == "hippie2000")
             {
                 switch (parameter[0])
@@ -70,7 +69,7 @@ namespace freetzbot
                         catch { }
                         break;
                     case "about":
-                        Senden("Programmiert hat mich Suchiman, und ich bin dazu da, um Daten über Fritzboxen zu sammeln. Ich bestehe derzeit aus 594 Zeilen C# code", privat, sender);
+                        Senden("Programmiert hat mich Suchiman, und ich bin dazu da, um Daten über Fritzboxen zu sammeln. Ich bestehe derzeit aus 623 Zeilen C# code", privat, sender);
                         break;
                     case "help":
                     case "hilfe":
@@ -156,8 +155,8 @@ namespace freetzbot
                 }
             }
             while (count > 0);
-            String changeset = "Der aktuellste Changeset ist " + sb.ToString().Split(new string[] { "<h1>" }, 2, StringSplitOptions.None)[1].Split(new string[] { "</h1>" }, 2, StringSplitOptions.None)[0].Split(new string[] { "Changeset " }, 2, StringSplitOptions.None)[1];
-            changeset += " und wurde am" + sb.ToString().Split(new string[] { "<dd class=\"time\">" }, 2, StringSplitOptions.None)[1].Split(new string[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new string[] { "   " }, 5, StringSplitOptions.None)[4] + " in den Trunk eingecheckt. Siehe: http://freetz.org/changeset";
+            String changeset = "Der aktuellste Changeset ist " + sb.ToString().Split(new String[] { "<h1>" }, 2, StringSplitOptions.None)[1].Split(new String[] { "</h1>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "Changeset " }, 2, StringSplitOptions.None)[1];
+            changeset += " und wurde am" + sb.ToString().Split(new String[] { "<dd class=\"time\">" }, 2, StringSplitOptions.None)[1].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "   " }, 5, StringSplitOptions.None)[4] + " in den Trunk eingecheckt. Siehe: http://freetz.org/changeset";
             Senden(changeset, privat, sender);
         }
 
@@ -173,7 +172,7 @@ namespace freetzbot
                 {
                     if (data.ToLower().Contains(parameter.ToLower()))
                     {
-                        temp = data.Split(new string[] { ":" }, 2, StringSplitOptions.None);
+                        temp = data.Split(new String[] { ":" }, 2, StringSplitOptions.None);
                         if (!besitzer.ToLower().Contains(temp[0].ToLower()))
                         {
                             if (besitzer == "")
@@ -212,7 +211,7 @@ namespace freetzbot
             String[] temp;
             foreach (String data in Daten)
             {
-                temp = data.Split(new string[] { ":" }, 2, StringSplitOptions.None);
+                temp = data.Split(new String[] { ":" }, 2, StringSplitOptions.None);
                 if (!boxen.ToLower().Contains(temp[1].ToLower()))
                 {
                     if (boxen == "")
@@ -267,7 +266,7 @@ namespace freetzbot
             String[] temp;
             foreach (String data in Daten)
             {
-                temp = data.Split(new string[] { ":" }, 2, StringSplitOptions.None);
+                temp = data.Split(new String[] { ":" }, 2, StringSplitOptions.None);
                 if (!besitzer.Contains(temp[0]))
                 {
                     if (besitzer == "")
@@ -297,7 +296,7 @@ namespace freetzbot
             String[] Daten = db_lesen("witze.db");
             if (parameter != "")
             {
-                String[] witz = parameter.Split(new string[] { " " }, 2, StringSplitOptions.None);
+                String[] witz = parameter.Split(new String[] { " " }, 2, StringSplitOptions.None);
                 if (witz[0] == "add")
                 {
                     StreamWriter db = new StreamWriter("witze.db", true);
@@ -397,7 +396,7 @@ namespace freetzbot
             String boxen = "";
             for (int i = 0; i < Daten.Length; i++)
             {
-                user = Daten[i].Split(new string[] { ":" }, 2, StringSplitOptions.None);
+                user = Daten[i].Split(new String[] { ":" }, 2, StringSplitOptions.None);
                 if (parameter.ToLower() == user[0].ToLower())
                 {
                     gefunden = true;
@@ -435,7 +434,7 @@ namespace freetzbot
             }
         }
 
-        static private void boxfrage_DoWork(Object sender, DoWorkEventArgs e)
+        static private void boxfrage(String sender)
         {
             try
             {
@@ -443,7 +442,7 @@ namespace freetzbot
                 String[] Daten = db_lesen("user.db");
                 for (int i = 0; i < Daten.Length; i++)
                 {
-                    if (e.Argument.ToString() == Daten[i])
+                    if (sender == Daten[i])
                     {
                         gefunden = true;
                     }
@@ -451,9 +450,9 @@ namespace freetzbot
                 if (gefunden == false)
                 {
                     Thread.Sleep(10000);
-                    Senden("Hallo " + e.Argument.ToString() + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast :). Pro !box bitte nur eine Box nennen (nur die Boxversion) z.b. !box 7270v1 oder !box 7170", true, e.Argument.ToString(), "NOTICE");
+                    Senden("Hallo " + sender + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast :). Pro !box bitte nur eine Box nennen (nur die Boxversion) z.b. !box 7270v1 oder !box 7170", true, sender, "NOTICE");
                     StreamWriter db = new StreamWriter("user.db", true);
-                    db.WriteLine(e.Argument.ToString());
+                    db.WriteLine(sender);
                     db.Close();
                 }
             }
@@ -471,11 +470,11 @@ namespace freetzbot
                     break;
                 }
                 String Daten = inStream.ReadLine();
-                String[] pieces = Daten.Split(new string[] { ":" }, 3, StringSplitOptions.None);
+                String[] pieces = Daten.Split(new String[] { ":" }, 3, StringSplitOptions.None);
                 Boolean privat = true;
                 if (pieces.Length > 2)
                 {
-                    String[] methode = pieces[1].Split(new string[] { " " }, 5, StringSplitOptions.None);
+                    String[] methode = pieces[1].Split(new String[] { " " }, 5, StringSplitOptions.None);
                     if (methode[2] == raum)
                     {
                         privat = false;
@@ -488,17 +487,18 @@ namespace freetzbot
                 }
                 else if (pieces.Length >= 3)    //Verarbeitung einer Nachricht, eine Nachricht sollte 3 gesplittete Elemente im Array haben
                 {                               //Beispiel einer Nachricht: ":Suchiman!~Suchiman@Robin-PC PRIVMSG #eingang :hi"
-                    string[] nickname = pieces[1].Split(new string[] { "!" }, 2, StringSplitOptions.None);
+                    String[] nickname = pieces[1].Split(new String[] { "!" }, 2, StringSplitOptions.None);
                     logging(nickname[0] + ": " + pieces[2]);
                     if (pieces[2].ToCharArray()[0] == '!')
                     {
-                        string[] befehl = pieces[2].Split(new string[] { "!" }, 2, StringSplitOptions.None);
+                        String[] befehl = pieces[2].Split(new String[] { "!" }, 2, StringSplitOptions.None);
                         Thread thread = new Thread(delegate() { bot_antwort(nickname[0], privat, befehl[1]); });
                         thread.Start();
                     }
                     if (pieces[2] == raum && klappe == false)
                     {
-                        boxfrage.RunWorkerAsync(nickname[0]);
+                        Thread thread = new Thread(delegate() { boxfrage(nickname[0]); });
+                        thread.Start();
                     }
                 }
             }
@@ -582,9 +582,6 @@ namespace freetzbot
             empfangsthread = new System.ComponentModel.BackgroundWorker();
             empfangsthread.WorkerSupportsCancellation = true;
             empfangsthread.DoWork += new System.ComponentModel.DoWorkEventHandler(empfangsthread_DoWork);
-            boxfrage = new System.ComponentModel.BackgroundWorker();
-            boxfrage.WorkerSupportsCancellation = true;
-            boxfrage.DoWork += new System.ComponentModel.DoWorkEventHandler(boxfrage_DoWork);
         }
 
         static private void logging(String to_log)
@@ -595,7 +592,7 @@ namespace freetzbot
             log.Close();
         }
 
-        static private void Main(string[] args)
+        static private void Main(String[] args)
         {
             init();
             Verbinden();
