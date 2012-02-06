@@ -87,6 +87,9 @@ namespace freetzbot
                     case "trunk":
                         trunk(sender, privat);
                         break;
+                    case "labor":
+                        labor(sender, privat);
+                        break;
                     case "box":
                         box(sender, privat, parameter[1]);
                         break;
@@ -157,6 +160,33 @@ namespace freetzbot
             while (count > 0);
             String changeset = "Der aktuellste Changeset ist " + sb.ToString().Split(new String[] { "<h1>" }, 2, StringSplitOptions.None)[1].Split(new String[] { "</h1>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "Changeset " }, 2, StringSplitOptions.None)[1];
             changeset += " und wurde am" + sb.ToString().Split(new String[] { "<dd class=\"time\">" }, 2, StringSplitOptions.None)[1].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "   " }, 5, StringSplitOptions.None)[4] + " in den Trunk eingecheckt. Siehe: http://freetz.org/changeset";
+            Senden(changeset, privat, sender);
+        }
+
+        static private void labor(String sender, Boolean privat)
+        {
+            Senden("Einen moment bitte ich stelle sogleich die Nachforschungen an...", privat, sender);
+            StringBuilder sb = new StringBuilder();
+            byte[] buf = new byte[8192];
+            HttpWebRequest request = (HttpWebRequest)
+                WebRequest.Create("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
+            HttpWebResponse response = (HttpWebResponse)
+                request.GetResponse();
+            Stream resStream = response.GetResponseStream();
+            String tempString = null;
+            int count = 0;
+
+            do
+            {
+                count = resStream.Read(buf, 0, buf.Length);
+                if (count != 0)
+                {
+                    tempString = Encoding.ASCII.GetString(buf, 0, count);
+                    sb.Append(tempString);
+                }
+            }
+            while (count > 0);
+            String changeset = "Die neueste 7270 Labor version ist am " + sb.ToString().Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 7, StringSplitOptions.None)[6].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0] + " erschienen";
             Senden(changeset, privat, sender);
         }
 
