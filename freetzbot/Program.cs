@@ -531,18 +531,80 @@ namespace freetzbot
             catch { }
         }
 
+        static private void verarbeitung(String eingehend)
+        {
+            Boolean privat = true;
+            String[] pieces = eingehend.Split(new String[] { ":" }, 3, StringSplitOptions.None);
+            if (pieces[0] == "PING ")       //Wichtig: Auf Ping anforderungen mit Pong antworten oder Kick ;- )
+            {
+                Senden("PONG " + pieces[1], false, "", "RAW");
+            }
+            try
+            {
+                if (pieces.Length > 2)
+                {
+                    String[] methode = pieces[1].Split(new String[] { " " }, 5, StringSplitOptions.None);
+                    if (methode.Length > 1)
+                    {
+                        if (methode[2] == raum)
+                        {
+                            privat = false;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logging("Exception bei der Verarbeitung ob es eine Private nachricht ist: " + ex.Message);
+            }
+            try
+            {                                   //Verarbeitung einer Nachricht, eine Nachricht sollte 3 gesplittete Elemente im Array haben
+                if (pieces.Length >= 3)         //Beispiel einer v6 Nachricht: :User!~info@2001:67c:1401:2100:5ab0:35fa:fe76:feb0 PRIVMSG #eingang :hehe
+                {                               //Beispiel einer Nachricht: ":Suchiman!~Suchiman@Robin-PC PRIVMSG #eingang :hi"
+                    String[] nickname = pieces[1].Split(new String[] { "!" }, 2, StringSplitOptions.None);
+                    logging(nickname[0] + ": " + pieces[2]);
+                    try
+                    {
+                        if (pieces[2].ToCharArray()[0] == '!')
+                        {
+                            String[] befehl = pieces[2].Split(new String[] { "!" }, 2, StringSplitOptions.None);
+                            bot_antwort(nickname[0], privat, befehl[1]);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logging("Exception beim starten des bot_antwort threads: " + ex.Message);
+                    }
+                    try
+                    {
+                        if (pieces[2] == raum && klappe == false)
+                        {
+                            boxfrage(nickname[0]);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logging("Exception bei der boxfrage: " + ex.Message);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logging("Exception bei der Verarbeitung: " + ex.Message);
+            }
+        }
+
         static private void empfangsthread_DoWork(Object sender, DoWorkEventArgs e)
         {
             try
             {
-                NetworkStream inOut = c.GetStream();
                 StreamReader inStream = new StreamReader(c.GetStream());
                 while (true)
                 {
                     if (empfangsthread.CancellationPending)
                     {
-                        logging("Quit requestet");
-                        break;
+                        logging("Beendung wurde angefordert");
+                        return;
                     }
                     String Daten = "";
                     try
@@ -551,82 +613,17 @@ namespace freetzbot
                     }
                     catch (Exception ex)
                     {
-                        logging("Exception beim TCP lesen aufgefangen " + ex.Message);
+                        logging("Exception beim TCP lesen aufgefangen: " + ex.Message);
+                        return;//Exception an kritischer Stelle, Thread beenden, wird von Main thread neugestartet
                     }
-                    String[] pieces = Daten.Split(new String[] { ":" }, 3, StringSplitOptions.None);
-                    Boolean privat = true;
-                    try
-                    {
-                        if (pieces.Length > 2)
-                        {
-                            String[] methode = pieces[1].Split(new String[] { " " }, 5, StringSplitOptions.None);
-                            if (methode.Length > 1)
-                            {
-                                if (methode[2] == raum)
-                                {
-                                    privat = false;
-                                }
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        logging("Exception bei der Verarbeitung ob es eine Private nachricht ist " + ex.Message);
-                    }
-                    try
-                    {
-                        if (pieces[0] == "PING ")       //Wichtig: Auf Ping anforderungen mit Pong antworten oder Kick ;- )
-                        {
-                            try
-                            {
-                                Byte[] sendBytes = Encoding.GetEncoding("iso-8859-1").GetBytes("PONG " + pieces[1] + "\r\n");
-                                inOut.Write(sendBytes, 0, sendBytes.Length);
-                            }
-                            catch (Exception ex)
-                            {
-                                logging("Exception bei der PING verarbeitung " + ex.Message);
-                            }
-                        }                               //Verarbeitung einer Nachricht, eine Nachricht sollte 3 gesplittete Elemente im Array haben
-                        else if (pieces.Length >= 3)    //Beispiel einer v6 Nachricht: :User!~info@2001:67c:1401:2100:5ab0:35fa:fe76:feb0 PRIVMSG #eingang :hehe
-                        {                               //Beispiel einer Nachricht: ":Suchiman!~Suchiman@Robin-PC PRIVMSG #eingang :hi"
-                            String[] nickname = pieces[1].Split(new String[] { "!" }, 2, StringSplitOptions.None);
-                            logging(nickname[0] + ": " + pieces[2]);
-                            try
-                            {
-                                if (pieces[2].ToCharArray()[0] == '!')
-                                {
-                                    String[] befehl = pieces[2].Split(new String[] { "!" }, 2, StringSplitOptions.None);
-                                    Thread thread = new Thread(delegate() { bot_antwort(nickname[0], privat, befehl[1]); });
-                                    thread.Start();
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                logging("Exception beim starten des bot_antwort threads " + ex.Message);
-                            }
-                            try
-                            {
-                                if (pieces[2] == raum && klappe == false)
-                                {
-                                    Thread thread = new Thread(delegate() { boxfrage(nickname[0]); });
-                                    thread.Start();
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                logging("Exception bei der boxfrage " + ex.Message);
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        logging("Exception bei der Verarbeitung " + ex.Message);
-                    }
+                    Thread thread = new Thread(delegate() { verarbeitung(Daten); });
+                    thread.Start();
                 }
             }
             catch (Exception ex)
             {
-                logging("Exception in unbekannten Code bereich des empfangsthread aufgefangen " + ex.Message);
+                logging("Exception in unbekannten Code bereich des empfangsthread aufgefangen: " + ex.Message);
+                return;
             }
         }
 
@@ -661,9 +658,16 @@ namespace freetzbot
             {
                 Byte[] sendBytes;
                 NetworkStream inOut = c.GetStream();
-                sendBytes = Encoding.GetEncoding("iso-8859-1").GetBytes(methode + " " + adressant + " :" + text + "\r\n");
+                if (methode != "RAW")
+                {
+                    sendBytes = Encoding.GetEncoding("iso-8859-1").GetBytes(methode + " " + adressant + " :" + text + "\r\n");
+                    logging(nickname + ": " + text);
+                }
+                else
+                {
+                    sendBytes = Encoding.GetEncoding("iso-8859-1").GetBytes(text + "\r\n");
+                }
                 inOut.Write(sendBytes, 0, sendBytes.Length);
-                logging(nickname + ": " + text);
             }
             catch { }
         }
@@ -673,10 +677,8 @@ namespace freetzbot
             try
             {
                 c = new TcpClient(server, 6667);
-                NetworkStream inOut = c.GetStream();
                 empfangsthread.RunWorkerAsync();
-                Byte[] sendBytes = Encoding.GetEncoding("iso-8859-1").GetBytes("NICK " + nickname + "\r\nUSER " + nickname + " " + nickname + " " + nickname + " :" + nickname + "\r\nJOIN " + raum + "\r\n");
-                inOut.Write(sendBytes, 0, sendBytes.Length);
+                Senden("NICK " + nickname + "\r\nUSER " + nickname + " " + nickname + " " + nickname + " :" + nickname + "\r\nJOIN " + raum, false, "", "RAW");
                 return true;
             }
             catch
@@ -687,15 +689,8 @@ namespace freetzbot
 
         static private void Trennen()
         {
-            NetworkStream inOut = c.GetStream();
-            Byte[] sendBytes = Encoding.GetEncoding("iso-8859-1").GetBytes("QUIT\r\n");
-            try
-            {
-                inOut.Write(sendBytes, 0, sendBytes.Length);
-                c.Close();
-            }
-            catch { }
             crashed = false;
+            Senden("QUIT", false, "", "RAW");
             empfangsthread.CancelAsync();
         }
 
@@ -708,7 +703,16 @@ namespace freetzbot
 
         static private void logging(String to_log)
         {
-            StreamWriter log = new StreamWriter("log.txt", true);
+            StreamWriter log;
+            try
+            {
+                log = new StreamWriter("log.txt", true);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Fehler beim Zugriff auf den Serverlog: " + ex.Message);
+                return;
+            }
             log.WriteLine(DateTime.Now.ToString("dd.MM HH:mm:ss ") + to_log);
             Console.WriteLine(DateTime.Now.ToString("dd.MM HH:mm:ss ") + to_log);
             log.Close();
