@@ -24,7 +24,7 @@ namespace freetzbot
         static public String raum = "#fritzbox";
         #endif
 
-        static public Boolean klappe = true;
+        static public Boolean klappe = false;
         static public Boolean crashed = true;
         static public String zeilen = "688";
 
@@ -40,11 +40,11 @@ namespace freetzbot
                         break;
                     case "klappe":
                         klappe = true;
-                        Senden("Tschuldigung, bin ruhig", privat);
+                        Senden("Tschuldigung, bin ruhig", privat, sender);
                         break;
                     case "okay":
                         klappe = false;
-                        Senden("Okay bin zurück ;-)", privat);
+                        Senden("Okay bin zurück ;-)", privat, sender);
                         break;
                 }
             }
