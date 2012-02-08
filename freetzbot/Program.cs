@@ -15,8 +15,15 @@ namespace freetzbot
 
         static public TcpClient c;
         static public String nickname = "FritzBot";
+
+        #if DEBUG
+        static public String server = "suchiman.selfip.org";
+        static public String raum = "#eingang";
+        #else
         static public String server = "irc.atw-inter.net";
         static public String raum = "#fritzbox";
+        #endif
+
         static public Boolean klappe = true;
         static public Boolean crashed = true;
         static public String zeilen = "688";
@@ -663,10 +670,6 @@ namespace freetzbot
 
         static private Boolean Verbinden()
         {
-            #if DEBUG
-            server = "suchiman.selfip.org";
-            raum = "#eingang";
-            #endif
             try
             {
                 c = new TcpClient(server, 6667);
