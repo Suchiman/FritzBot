@@ -12,6 +12,7 @@ namespace freetzbot
     class Program
     {
         static private System.ComponentModel.BackgroundWorker empfangsthread;
+        static private System.ComponentModel.BackgroundWorker loggingthread;
 
         static public TcpClient c;
         static public String nickname = "FritzBot";
@@ -27,6 +28,7 @@ namespace freetzbot
         static public Boolean klappe = false;
         static public Boolean crashed = true;
         static public String zeilen = "688";
+        static public List<string> logging_list = new List<string>();
 
         static private void bot_antwort(String sender, Boolean privat, String nachricht)
         {
@@ -699,23 +701,40 @@ namespace freetzbot
             empfangsthread = new System.ComponentModel.BackgroundWorker();
             empfangsthread.WorkerSupportsCancellation = true;
             empfangsthread.DoWork += new System.ComponentModel.DoWorkEventHandler(empfangsthread_DoWork);
+            loggingthread = new System.ComponentModel.BackgroundWorker();
+            loggingthread.WorkerSupportsCancellation = true;
+            loggingthread.DoWork += new System.ComponentModel.DoWorkEventHandler(log_thread);
+            loggingthread.RunWorkerAsync();
         }
 
         static private void logging(String to_log)
         {
-            StreamWriter log;
-            try
+            logging_list.Add(to_log);
+        }
+
+        static private void log_thread(Object sender, DoWorkEventArgs e)
+        {
+            while (true)
             {
-                log = new StreamWriter("log.txt", true);
+                while (!(logging_list.Count > 0))
+                {
+                    Thread.Sleep(500);
+                }
+                StreamWriter log;
+                try
+                {
+                    log = new StreamWriter("log.txt", true);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Fehler beim Zugriff auf den Serverlog: " + ex.Message);
+                    return;
+                }
+                log.WriteLine(DateTime.Now.ToString("dd.MM HH:mm:ss ") + logging_list[0]);
+                Console.WriteLine(DateTime.Now.ToString("dd.MM HH:mm:ss ") + logging_list[0]);
+                logging_list.RemoveAt(0);
+                log.Close();
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Fehler beim Zugriff auf den Serverlog: " + ex.Message);
-                return;
-            }
-            log.WriteLine(DateTime.Now.ToString("dd.MM HH:mm:ss ") + to_log);
-            Console.WriteLine(DateTime.Now.ToString("dd.MM HH:mm:ss ") + to_log);
-            log.Close();
         }
 
         static private void Main(String[] args)
