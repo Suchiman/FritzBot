@@ -17,7 +17,7 @@ namespace freetzbot
         static public String nickname = "FritzBot";
         static public String server = "irc.atw-inter.net";
         static public String raum = "#fritzbox";
-        static public Boolean klappe = false;
+        static public Boolean klappe = true;
         static public Boolean crashed = true;
         static public String zeilen = "688";
 
@@ -526,46 +526,100 @@ namespace freetzbot
 
         static private void empfangsthread_DoWork(Object sender, DoWorkEventArgs e)
         {
-            NetworkStream inOut = c.GetStream();
-            StreamReader inStream = new StreamReader(c.GetStream());
-            while (true)
+            try
             {
-                if (empfangsthread.CancellationPending)
+                NetworkStream inOut = c.GetStream();
+                StreamReader inStream = new StreamReader(c.GetStream());
+                while (true)
                 {
-                    break;
-                }
-                String Daten = inStream.ReadLine();
-                String[] pieces = Daten.Split(new String[] { ":" }, 3, StringSplitOptions.None);
-                Boolean privat = true;
-                if (pieces.Length > 2)
-                {
-                    String[] methode = pieces[1].Split(new String[] { " " }, 5, StringSplitOptions.None);
-                    if (methode[2] == raum)
+                    if (empfangsthread.CancellationPending)
                     {
-                        privat = false;
+                        logging("Quit requestet");
+                        break;
+                    }
+                    String Daten = "";
+                    try
+                    {
+                        Daten = inStream.ReadLine();
+                    }
+                    catch (Exception ex)
+                    {
+                        logging("Exception beim TCP lesen aufgefangen " + ex.Message);
+                    }
+                    String[] pieces = Daten.Split(new String[] { ":" }, 3, StringSplitOptions.None);
+                    Boolean privat = true;
+                    try
+                    {
+                        if (pieces.Length > 2)
+                        {
+                            String[] methode = pieces[1].Split(new String[] { " " }, 5, StringSplitOptions.None);
+                            if (methode.Length > 1)
+                            {
+                                if (methode[2] == raum)
+                                {
+                                    privat = false;
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logging("Exception bei der Verarbeitung ob es eine Private nachricht ist " + ex.Message);
+                    }
+                    try
+                    {
+                        if (pieces[0] == "PING ")       //Wichtig: Auf Ping anforderungen mit Pong antworten oder Kick ;- )
+                        {
+                            try
+                            {
+                                Byte[] sendBytes = Encoding.GetEncoding("iso-8859-1").GetBytes("PONG " + pieces[1] + "\r\n");
+                                inOut.Write(sendBytes, 0, sendBytes.Length);
+                            }
+                            catch (Exception ex)
+                            {
+                                logging("Exception bei der PING verarbeitung " + ex.Message);
+                            }
+                        }                               //Verarbeitung einer Nachricht, eine Nachricht sollte 3 gesplittete Elemente im Array haben
+                        else if (pieces.Length >= 3)    //Beispiel einer v6 Nachricht: :User!~info@2001:67c:1401:2100:5ab0:35fa:fe76:feb0 PRIVMSG #eingang :hehe
+                        {                               //Beispiel einer Nachricht: ":Suchiman!~Suchiman@Robin-PC PRIVMSG #eingang :hi"
+                            String[] nickname = pieces[1].Split(new String[] { "!" }, 2, StringSplitOptions.None);
+                            logging(nickname[0] + ": " + pieces[2]);
+                            try
+                            {
+                                if (pieces[2].ToCharArray()[0] == '!')
+                                {
+                                    String[] befehl = pieces[2].Split(new String[] { "!" }, 2, StringSplitOptions.None);
+                                    Thread thread = new Thread(delegate() { bot_antwort(nickname[0], privat, befehl[1]); });
+                                    thread.Start();
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                logging("Exception beim starten des bot_antwort threads " + ex.Message);
+                            }
+                            try
+                            {
+                                if (pieces[2] == raum && klappe == false)
+                                {
+                                    Thread thread = new Thread(delegate() { boxfrage(nickname[0]); });
+                                    thread.Start();
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                logging("Exception bei der boxfrage " + ex.Message);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logging("Exception bei der Verarbeitung " + ex.Message);
                     }
                 }
-                if (pieces[0] == "PING ")       //Wichtig: Auf Ping anforderungen mit Pong antworten oder Kick ;- )
-                {
-                    Byte[] sendBytes = Encoding.GetEncoding("iso-8859-1").GetBytes("PONG " + pieces[1] + "\r\n");
-                    inOut.Write(sendBytes, 0, sendBytes.Length);
-                }
-                else if (pieces.Length >= 3)    //Verarbeitung einer Nachricht, eine Nachricht sollte 3 gesplittete Elemente im Array haben
-                {                               //Beispiel einer Nachricht: ":Suchiman!~Suchiman@Robin-PC PRIVMSG #eingang :hi"
-                    String[] nickname = pieces[1].Split(new String[] { "!" }, 2, StringSplitOptions.None);
-                    logging(nickname[0] + ": " + pieces[2]);
-                    if (pieces[2].ToCharArray()[0] == '!')
-                    {
-                        String[] befehl = pieces[2].Split(new String[] { "!" }, 2, StringSplitOptions.None);
-                        Thread thread = new Thread(delegate() { bot_antwort(nickname[0], privat, befehl[1]); });
-                        thread.Start();
-                    }
-                    if (pieces[2] == raum && klappe == false)
-                    {
-                        Thread thread = new Thread(delegate() { boxfrage(nickname[0]); });
-                        thread.Start();
-                    }
-                }
+            }
+            catch (Exception ex)
+            {
+                logging("Exception in unbekannten Code bereich des empfangsthread aufgefangen " + ex.Message);
             }
         }
 
@@ -610,7 +664,7 @@ namespace freetzbot
         static private Boolean Verbinden()
         {
             #if DEBUG
-            server = "fritz.box";
+            server = "suchiman.selfip.org";
             raum = "#eingang";
             #endif
             try
@@ -673,12 +727,12 @@ namespace freetzbot
                     int count = 0;
                     while (!empfangsthread.IsBusy)
                     {
+                        count++;
                         logging("Versuch " + count);
                         if (!Verbinden())
                         {
                             Thread.Sleep(5000);
                         }
-                        count++;
                     }
                     logging("Verbindung nach dem " + count + " versuch erfolgreich wiederhergestellt");
                 }
