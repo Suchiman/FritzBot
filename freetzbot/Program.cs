@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.ComponentModel;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.ComponentModel;
+using System.Text;
 using System.Threading;
 
 namespace freetzbot
@@ -27,7 +27,7 @@ namespace freetzbot
 
         static public Boolean klappe = false;
         static public Boolean crashed = true;
-        static public String zeilen = "688";
+        static public String zeilen = "785";
         static public List<string> logging_list = new List<string>();
 
         static private void bot_antwort(String sender, Boolean privat, String nachricht)
@@ -566,7 +566,7 @@ namespace freetzbot
             {
                 if (eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None).LongLength > 2)
                 {
-                    if (eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[1].Contains(":"))
+                    if (eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[1] == "JOIN")
                     {
                         String nachricht = eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[2];
                         nachricht = nachricht.Split(new String[] { ":" }, 2, StringSplitOptions.None)[1];
@@ -583,6 +583,12 @@ namespace freetzbot
             {
                 logging("Exception bei der boxfrage: " + ex.Message);
             }
+            /*
+            :Suchiman!~robinsue@91-67-134-206-dynip.superkabel.de PART #eingang :Suchiman
+            :Suchiman!~robinsue@91-67-134-206-dynip.superkabel.de JOIN :#eingang
+            :Suchiman!~robinsue@91-67-134-206-dynip.superkabel.de QUIT :Suchiman
+            :Suchiman!~robinsue@91-67-134-206-dynip.superkabel.de QUIT :"und tschüss"
+            */
 
             //Verarbeitung einer Nachricht, eine Nachricht sollte 3 gesplittete Elemente im Array haben
             try
