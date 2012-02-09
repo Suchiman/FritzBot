@@ -568,14 +568,20 @@ namespace freetzbot
                 {
                     if (eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[1] == "JOIN")
                     {
-                        String nachricht = eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[2];
-                        nachricht = nachricht.Split(new String[] { ":" }, 2, StringSplitOptions.None)[1];
                         String nick = eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[0].Split(new String[] { "!" }, 2, StringSplitOptions.None)[0].Split(new String[] { ":" }, 2, StringSplitOptions.None)[1];
-                        if (nachricht == raum && klappe == false)
-                        {
-                            boxfrage(nick);
-                            logging(nick + " joined");
-                        }
+                        boxfrage(nick);
+                        logging(nick + " hat den Raum betreten");
+                    }
+                    //Prüfen ob der Raum verlassen wird
+                    if (eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[1] == "PART")
+                    {
+                        String nick = eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[0].Split(new String[] { "!" }, 2, StringSplitOptions.None)[0].Split(new String[] { ":" }, 2, StringSplitOptions.None)[1];
+                        logging(nick + " hat den Raum verlassen");
+                    }
+                    if (eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[1] == "QUIT")
+                    {
+                        String nick = eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[0].Split(new String[] { "!" }, 2, StringSplitOptions.None)[0].Split(new String[] { ":" }, 2, StringSplitOptions.None)[1];
+                        logging(nick + " hat den Server verlassen");
                     }
                 }
             }
@@ -583,12 +589,6 @@ namespace freetzbot
             {
                 logging("Exception bei der boxfrage: " + ex.Message);
             }
-            /*
-            :Suchiman!~robinsue@91-67-134-206-dynip.superkabel.de PART #eingang :Suchiman
-            :Suchiman!~robinsue@91-67-134-206-dynip.superkabel.de JOIN :#eingang
-            :Suchiman!~robinsue@91-67-134-206-dynip.superkabel.de QUIT :Suchiman
-            :Suchiman!~robinsue@91-67-134-206-dynip.superkabel.de QUIT :"und tschüss"
-            */
 
             //Verarbeitung einer Nachricht, eine Nachricht sollte 3 gesplittete Elemente im Array haben
             try
