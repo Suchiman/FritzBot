@@ -326,7 +326,7 @@ namespace freetzbot
                     Daten = tmp.ToArray();
                 }
             }
-            StreamWriter db = new StreamWriter("box.db", false);
+            StreamWriter db = new StreamWriter("box.db", false, Encoding.GetEncoding("iso-8859-1"));
             for (i = 0; i < Daten.Length; i++)
             {
                 db.WriteLine(Daten[i]);
@@ -375,7 +375,7 @@ namespace freetzbot
                 String[] witz = parameter.Split(new String[] { " " }, 2, StringSplitOptions.None);
                 if (witz[0] == "add")
                 {
-                    StreamWriter db = new StreamWriter("witze.db", true);
+                    StreamWriter db = new StreamWriter("witze.db", true, Encoding.GetEncoding("iso-8859-1"));
                     db.WriteLine(witz[1]);
                     db.Close();
                     Senden("Ist notiert", privat, sender);
@@ -452,7 +452,7 @@ namespace freetzbot
         {
             if (parameter != "")
             {
-                StreamWriter db = new StreamWriter("box.db", true);
+                StreamWriter db = new StreamWriter("box.db", true, Encoding.GetEncoding("iso-8859-1"));
                 db.WriteLine(sender + ":" + parameter);
                 db.Close();
                 Senden("Okay danke, ich werde es mir notieren", privat, sender);
@@ -530,7 +530,7 @@ namespace freetzbot
                 {
                     Thread.Sleep(10000);
                     Senden("Hallo " + sender + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast :). Pro !box bitte nur eine Box nennen (nur die Boxversion) z.b. !box 7270v1 oder !box 7170", true, sender, "NOTICE");
-                    StreamWriter db = new StreamWriter("user.db", true);
+                    StreamWriter db = new StreamWriter("user.db", true, Encoding.GetEncoding("iso-8859-1"));
                     db.WriteLine(sender);
                     db.Close();
                 }
@@ -633,7 +633,7 @@ namespace freetzbot
         {
             try
             {
-                StreamReader inStream = new StreamReader(c.GetStream());
+                StreamReader inStream = new StreamReader(c.GetStream(), Encoding.GetEncoding("iso-8859-1"));
                 while (true)
                 {
                     if (empfangsthread.CancellationPending)
@@ -666,11 +666,11 @@ namespace freetzbot
         {
             if (!File.Exists(db))
             {
-                StreamWriter create_db = new StreamWriter(db, true);
+                StreamWriter create_db = new StreamWriter(db, true, Encoding.GetEncoding("iso-8859-1"));
                 create_db.WriteLine("");
                 create_db.Close();
             }
-            StreamReader sr = new StreamReader(db);
+            StreamReader sr = new StreamReader(db, Encoding.GetEncoding("iso-8859-1"));
             String[] Daten = new String[0];
             int i = 0;
             while (sr.Peek() >= 0)
@@ -756,7 +756,7 @@ namespace freetzbot
                 StreamWriter log;
                 try
                 {
-                    log = new StreamWriter("log.txt", true);
+                    log = new StreamWriter("log.txt", true, Encoding.GetEncoding("iso-8859-1"));
                 }
                 catch (Exception ex)
                 {
