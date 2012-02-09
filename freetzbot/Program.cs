@@ -535,23 +535,25 @@ namespace freetzbot
 
         static private void verarbeitung(String eingehend)
         {
+            //Beispiel einer v6 Nachricht: ":User!~info@2001:67c:1401:2100:5ab0:35fa:fe76:feb0 PRIVMSG #eingang :hehe"
+            //Beispiel einer Nachricht: ":Suchiman!~Suchiman@Robin-PC PRIVMSG #eingang :hi"
+            //Beispiel eines Joins: ":Suchiman!~robinsue@91-67-134-206-dynip.superkabel.de JOIN :#eingang"
             Boolean privat = true;
-            String[] pieces = eingehend.Split(new String[] { ":" }, 3, StringSplitOptions.None);
-            if (pieces[0] == "PING ")       //Wichtig: Auf Ping anforderungen mit Pong antworten oder Kick ;- )
+
+            //Auf Ping Prüfen, Wichtig: wird Pong ausgelassen kickt dich der Server
+            String[] ping = eingehend.Split(new String[] { ":" }, 3, StringSplitOptions.None);
+            if (ping[0] == "PING ")
             {
-                Senden("PONG " + pieces[1], false, "", "RAW");
+                Senden("PONG " + ping[1], false, "", "RAW");
             }
             try
             {
-                if (pieces.Length > 2)
+                String[] privat_check = eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None);
+                if (privat_check.Length > 2)
                 {
-                    String[] methode = pieces[1].Split(new String[] { " " }, 5, StringSplitOptions.None);
-                    if (methode.Length > 1)
+                    if (privat_check[2] == raum)
                     {
-                        if (methode[2] == raum)
-                        {
-                            privat = false;
-                        }
+                        privat = false;
                     }
                 }
             }
@@ -559,34 +561,49 @@ namespace freetzbot
             {
                 logging("Exception bei der Verarbeitung ob es eine Private nachricht ist: " + ex.Message);
             }
+            //Join checken
             try
-            {                                   //Verarbeitung einer Nachricht, eine Nachricht sollte 3 gesplittete Elemente im Array haben
-                if (pieces.Length >= 3)         //Beispiel einer v6 Nachricht: :User!~info@2001:67c:1401:2100:5ab0:35fa:fe76:feb0 PRIVMSG #eingang :hehe
-                {                               //Beispiel einer Nachricht: ":Suchiman!~Suchiman@Robin-PC PRIVMSG #eingang :hi"
-                    String[] nickname = pieces[1].Split(new String[] { "!" }, 2, StringSplitOptions.None);
-                    logging(nickname[0] + ": " + pieces[2]);
+            {
+                if (eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None).LongLength > 2)
+                {
+                    if (eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[1].Contains(":"))
+                    {
+                        String nachricht = eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[2];
+                        nachricht = nachricht.Split(new String[] { ":" }, 2, StringSplitOptions.None)[1];
+                        String nick = eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[0].Split(new String[] { "!" }, 2, StringSplitOptions.None)[0].Split(new String[] { ":" }, 2, StringSplitOptions.None)[1];
+                        if (nachricht == raum && klappe == false)
+                        {
+                            boxfrage(nick);
+                            logging(nick + " joined");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logging("Exception bei der boxfrage: " + ex.Message);
+            }
+
+            //Verarbeitung einer Nachricht, eine Nachricht sollte 3 gesplittete Elemente im Array haben
+            try
+            {
+                String[] verarbeitung = eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None);
+                if (verarbeitung.Length > 3)
+                {
+                    String nachricht = verarbeitung[3].Split(new String[] { ":" }, 2, StringSplitOptions.None)[1];
+                    String nick = verarbeitung[0].Split(new String[] { "!" }, 2, StringSplitOptions.None)[0].Split(new String[] { ":" }, 2, StringSplitOptions.None)[1];
+                    logging(nick + ": " + nachricht);
                     try
                     {
-                        if (pieces[2].ToCharArray()[0] == '!')
+                        if (nachricht.ToCharArray()[0] == '!')
                         {
-                            String[] befehl = pieces[2].Split(new String[] { "!" }, 2, StringSplitOptions.None);
-                            bot_antwort(nickname[0], privat, befehl[1]);
+                            String befehl = nachricht.Split(new String[] { "!" }, 2, StringSplitOptions.None)[1];
+                            bot_antwort(nick, privat, befehl);
                         }
                     }
                     catch (Exception ex)
                     {
                         logging("Exception beim starten des bot_antwort threads: " + ex.Message);
-                    }
-                    try
-                    {
-                        if (pieces[2] == raum && klappe == false)
-                        {
-                            boxfrage(nickname[0]);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        logging("Exception bei der boxfrage: " + ex.Message);
                     }
                 }
             }
@@ -709,7 +726,7 @@ namespace freetzbot
 
         static private void logging(String to_log)
         {
-            logging_list.Add(to_log);
+            logging_list.Add(DateTime.Now.ToString("dd.MM HH:mm:ss ") + to_log);
         }
 
         static private void log_thread(Object sender, DoWorkEventArgs e)
@@ -730,8 +747,8 @@ namespace freetzbot
                     Console.WriteLine("Fehler beim Zugriff auf den Serverlog: " + ex.Message);
                     return;
                 }
-                log.WriteLine(DateTime.Now.ToString("dd.MM HH:mm:ss ") + logging_list[0]);
-                Console.WriteLine(DateTime.Now.ToString("dd.MM HH:mm:ss ") + logging_list[0]);
+                log.WriteLine(logging_list[0]);
+                Console.WriteLine(logging_list[0]);
                 logging_list.RemoveAt(0);
                 log.Close();
             }
