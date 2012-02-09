@@ -27,7 +27,7 @@ namespace freetzbot
 
         static public Boolean klappe = false;
         static public Boolean crashed = true;
-        static public String zeilen = "785";
+        static public String zeilen = "801";
         static public List<string> logging_list = new List<string>();
 
         static private void bot_antwort(String sender, Boolean privat, String nachricht)
@@ -108,33 +108,40 @@ namespace freetzbot
                         }
                         break;
                     case "box":
-                        box(sender, privat, parameter[1]);
+                        if (parameter.Length > 1)
+                        {
+                            box(sender, privat, parameter[1]);
+                        }
+                        else
+                        {
+                            box(sender, privat);
+                        }
                         break;
                     case "boxinfo":
                         if (parameter.Length > 1)
                         {
-                            boxinfo(sender, privat, parameter[1]);
+                            boxinfo(sender, true, parameter[1]);
                         }
                         else
                         {
-                            boxinfo(sender, privat);
+                            boxinfo(sender, true);
                         }
                         break;
                     case "userlist":
-                        userlist(sender, privat);
+                        userlist(sender, true);
                         break;
                     case "boxfind":
                         if (parameter.Length > 1)
                         {
-                            boxfind(sender, privat, parameter[1]);
+                            boxfind(sender, true, parameter[1]);
                         }
                         else
                         {
-                            boxfind(sender, privat);
+                            boxfind(sender, true);
                         }
                         break;
                     case "boxlist":
-                        boxlist(sender, privat);
+                        boxlist(sender, true);
                         break;
                     case "boxremove":
                         if (parameter.Length > 1)
@@ -154,7 +161,6 @@ namespace freetzbot
 
         static private void trunk(String sender, Boolean privat)
         {
-            Senden("Einen moment bitte ich stelle sogleich die Nachforschungen an...", privat, sender);
             StringBuilder sb = new StringBuilder();
             byte[] buf = new byte[8192];
             HttpWebRequest request = (HttpWebRequest)
@@ -182,7 +188,6 @@ namespace freetzbot
 
         static private void labor(String sender, Boolean privat, String parameter="")
         {
-            Senden("Einen moment bitte ich stelle sogleich die Nachforschungen an...", privat, sender);
             StringBuilder sb = new StringBuilder();
             byte[] buf = new byte[8192];
             HttpWebRequest request = (HttpWebRequest)
@@ -561,11 +566,12 @@ namespace freetzbot
             {
                 logging("Exception bei der Verarbeitung ob es eine Private nachricht ist: " + ex.Message);
             }
-            //Join checken
+
             try
             {
                 if (eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None).LongLength > 2)
                 {
+                    //Join checken
                     if (eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[1] == "JOIN")
                     {
                         String nick = eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[0].Split(new String[] { "!" }, 2, StringSplitOptions.None)[0].Split(new String[] { ":" }, 2, StringSplitOptions.None)[1];
@@ -578,6 +584,7 @@ namespace freetzbot
                         String nick = eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[0].Split(new String[] { "!" }, 2, StringSplitOptions.None)[0].Split(new String[] { ":" }, 2, StringSplitOptions.None)[1];
                         logging(nick + " hat den Raum verlassen");
                     }
+                    //Prüfen ob der Server verlassen wird
                     if (eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[1] == "QUIT")
                     {
                         String nick = eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[0].Split(new String[] { "!" }, 2, StringSplitOptions.None)[0].Split(new String[] { ":" }, 2, StringSplitOptions.None)[1];
@@ -596,20 +603,23 @@ namespace freetzbot
                 String[] verarbeitung = eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None);
                 if (verarbeitung.Length > 3)
                 {
-                    String nachricht = verarbeitung[3].Split(new String[] { ":" }, 2, StringSplitOptions.None)[1];
-                    String nick = verarbeitung[0].Split(new String[] { "!" }, 2, StringSplitOptions.None)[0].Split(new String[] { ":" }, 2, StringSplitOptions.None)[1];
-                    logging(nick + ": " + nachricht);
-                    try
+                    if (verarbeitung[3].Contains(":"))
                     {
+                        String nachricht = verarbeitung[3].Split(new String[] { ":" }, 2, StringSplitOptions.None)[1];
+                        String nick = verarbeitung[0].Split(new String[] { "!" }, 2, StringSplitOptions.None)[0].Split(new String[] { ":" }, 2, StringSplitOptions.None)[1];
+                        logging(nick + ": " + nachricht);
+                        try
+                        {
                         if (nachricht.ToCharArray()[0] == '!')
                         {
                             String befehl = nachricht.Split(new String[] { "!" }, 2, StringSplitOptions.None)[1];
                             bot_antwort(nick, privat, befehl);
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        logging("Exception beim starten des bot_antwort threads: " + ex.Message);
+                        }
+                        catch (Exception ex)
+                        {
+                            logging("Exception beim starten des bot_antwort threads: " + ex.Message);
+                        }
                     }
                 }
             }
