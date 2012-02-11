@@ -521,7 +521,7 @@ namespace freetzbot
                 String[] Daten = db_lesen("user.db");
                 for (int i = 0; i < Daten.Length; i++)
                 {
-                    if (sender == Daten[i])
+                    if (sender == Daten[i] || sender.Contains(Daten[i]))
                     {
                         gefunden = true;
                     }
@@ -546,10 +546,17 @@ namespace freetzbot
             Boolean privat = true;
 
             //Auf Ping Prüfen, Wichtig: wird Pong ausgelassen kickt dich der Server
-            String[] ping = eingehend.Split(new String[] { ":" }, 3, StringSplitOptions.None);
-            if (ping[0] == "PING ")
+            try
             {
-                Senden("PONG " + ping[1], false, "", "RAW");
+                String[] ping = eingehend.Split(new String[] { ":" }, 3, StringSplitOptions.None);
+                if (ping[0] == "PING ")
+                {
+                    Senden("PONG " + ping[1], false, "", "RAW");
+                }
+            }
+            catch (Exception ex)
+            {
+                logging("Exception bei der Ping verarbeitung: " + ex.Message);
             }
             try
             {
