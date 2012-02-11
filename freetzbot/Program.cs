@@ -141,6 +141,9 @@ namespace freetzbot
                         labor(sender, privat);
                     }
                     break;
+                case "ping":
+                    ping(sender, privat);
+                    break;
                 case "trunk":
                     trunk(sender, privat);
                     break;
@@ -398,6 +401,9 @@ namespace freetzbot
                     case "labor":
                         Senden("Ich schaue mal auf das aktuelle Datum der Labor Firmwares, Parameter: '7270', '7390', 'fhem', '7390at', 'android', 'ios'.", privat, sender);
                         break;
+                    case "ping":
+                        Senden("Damit kannst du Testen ob ich noch Ansprechbar bin oder ob ich gestorben bin", privat, sender);
+                        break;
                     case "trunk":
                         Senden("Dies zeigt den aktuellsten Changeset an.", privat, sender);
                         break;
@@ -422,7 +428,7 @@ namespace freetzbot
             }
             else
             {
-                Senden("Aktuelle Befehle: about box boxfind boxinfo boxlist boxremove frag hilfe labor trunk uptime userlist whmf witz zeit.", privat, sender);
+                Senden("Aktuelle Befehle: about box boxfind boxinfo boxlist boxremove frag hilfe labor ping trunk uptime userlist whmf witz zeit.", privat, sender);
                 Senden("Hilfe zu jedem Befehl mit \"!help befehl\".", privat, sender);
             }
         }
@@ -476,6 +482,11 @@ namespace freetzbot
             }
             String changeset = "Die neueste 7270 labor Version ist am " + sb.ToString().Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 7, StringSplitOptions.None)[modell].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0] + " erschienen.";
             Senden(changeset, privat, sender);
+        }
+
+        static private void ping(String sender, Boolean privat)
+        {
+            Senden("Pong " + sender, privat, sender);
         }
 
         static private void trunk(String sender, Boolean privat)
