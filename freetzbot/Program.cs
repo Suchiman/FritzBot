@@ -28,7 +28,7 @@ namespace freetzbot
         static public Boolean klappe = false;
         static public Boolean crashed = true;
         static public Boolean restart = false;
-        static public String zeilen = "801";
+        static public String zeilen = "845";
         static public DateTime startzeit;
         static public List<string> logging_list = new List<string>();
 
@@ -750,8 +750,8 @@ namespace freetzbot
         static private void Trennen()
         {
             crashed = false;
-            Senden("QUIT :I'll be back", false, "", "RAW");
             empfangsthread.CancelAsync();
+            Senden("QUIT :I'll be back", false, "", "RAW");
         }
 
         static public void init()
