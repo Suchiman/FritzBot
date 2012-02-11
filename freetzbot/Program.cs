@@ -27,7 +27,9 @@ namespace freetzbot
 
         static public Boolean klappe = false;
         static public Boolean crashed = true;
+        static public Boolean restart = false;
         static public String zeilen = "801";
+        static public DateTime startzeit;
         static public List<string> logging_list = new List<string>();
 
         static private void bot_antwort(String sender, Boolean privat, String nachricht)
@@ -38,6 +40,10 @@ namespace freetzbot
                 switch (parameter[0])
                 {
                     case "quit":
+                        Trennen();
+                        break;
+                    case "restart":
+                        restart = true;
                         Trennen();
                         break;
                     case "klappe":
@@ -130,6 +136,9 @@ namespace freetzbot
                     case "userlist":
                         userlist(sender, true);
                         break;
+                    case "uptime":
+                        uptime(sender, privat);
+                        break;
                     case "boxfind":
                         if (parameter.Length > 1)
                         {
@@ -157,6 +166,12 @@ namespace freetzbot
                         break;
                 }
             }
+        }
+
+        static private void uptime(String sender, Boolean privat)
+        {
+            TimeSpan laufzeit = DateTime.Now.Subtract(startzeit);
+            Senden("Meine Laufzeit beträgt " + laufzeit.Days + " Tage, " + laufzeit.Hours + " Stunden, " + laufzeit.Minutes + " Minuten und " + laufzeit.Seconds + " Sekunden", privat, sender);
         }
 
         static private void trunk(String sender, Boolean privat)
@@ -437,13 +452,16 @@ namespace freetzbot
                     case "userlist":
                         Senden("Listet die Nutzernamen all jener auf die eine Box bei mir registriert haben", privat, sender);
                         break;
+                    case "uptime":
+                        Senden("Meine derzeitige Laufzeit seit dem letzten Neustart", privat, sender);
+                        break;
                     default:
                         break;
                 }
             }
             else
             {
-                Senden("Aktuelle Befehle: about frag zeit witz trunk labor box boxinfo boxfind boxlist boxremove userlist", privat, sender);
+                Senden("Aktuelle Befehle: about frag zeit witz trunk labor box boxinfo boxfind boxlist boxremove userlist uptime", privat, sender);
                 Senden("Hilfe zu jedem Befehl mit \"!help befehl\"", privat, sender);
             }
         }
@@ -732,7 +750,7 @@ namespace freetzbot
         static private void Trennen()
         {
             crashed = false;
-            Senden("QUIT", false, "", "RAW");
+            Senden("QUIT :I'll be back", false, "", "RAW");
             empfangsthread.CancelAsync();
         }
 
@@ -745,11 +763,19 @@ namespace freetzbot
             loggingthread.WorkerSupportsCancellation = true;
             loggingthread.DoWork += new System.ComponentModel.DoWorkEventHandler(log_thread);
             loggingthread.RunWorkerAsync();
+            startzeit = DateTime.Now;
         }
 
         static private void logging(String to_log)
         {
-            logging_list.Add(DateTime.Now.ToString("dd.MM HH:mm:ss ") + to_log);
+            try
+            {
+                logging_list.Add(DateTime.Now.ToString("dd.MM HH:mm:ss ") + to_log);
+            }
+            catch (Exception ex)
+            {
+                logging("Exception beim logging aufgetreten: " + ex.Message);
+            }
         }
 
         static private void log_thread(Object sender, DoWorkEventArgs e)
@@ -801,6 +827,17 @@ namespace freetzbot
                         }
                     }
                     logging("Verbindung nach dem " + count + " versuch erfolgreich wiederhergestellt");
+                }
+            }
+            if (restart == true)
+            {
+                try
+                {
+                    System.Diagnostics.Process.Start("/bin/sh", "/home/suchi/debugbot/start");
+                }
+                catch (Exception ex)
+                {
+                    logging("Exception beim restart aufgetreten: " + ex.Message);
                 }
             }
         }
