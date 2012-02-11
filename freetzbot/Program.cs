@@ -28,7 +28,7 @@ namespace freetzbot
         static public Boolean klappe = false;
         static public Boolean crashed = true;
         static public Boolean restart = false;
-        static public String zeilen = "930";
+        static public String zeilen = "941";
         static public DateTime startzeit;
         static public List<string> logging_list = new List<string>();
 
@@ -414,7 +414,7 @@ namespace freetzbot
                         Senden("Das gibt eine Liste jener Benutzer aus, die mindestens eine Box bei mir registriert haben.", privat, sender);
                         break;
                     case "whmf":
-                        Senden("Das erzeugt einen Link zu wehavemorefun mit dem angegebenen Suchkriterium, z.b. !whmf 7270", privat, sender);
+                        Senden("Das erzeugt einen Link zu wehavemorefun mit dem angegebenen Suchkriterium, Beispiele: !whmf 7270, !whmf \"CAPI Treiber\", !whmf 7270 Benutzer", privat, sender);
                         break;
                     case "witz":
                         Senden("Ich werde dann einen Witz erzählen, mit \"!witz add witztext\" kannst du einen neuen Witz hinzufügen.", privat, sender);
