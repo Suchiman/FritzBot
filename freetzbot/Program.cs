@@ -28,7 +28,7 @@ namespace freetzbot
         static public Boolean klappe = false;
         static public Boolean crashed = true;
         static public Boolean restart = false;
-        static public String zeilen = "876";
+        static public String zeilen = "912";
         static public DateTime startzeit;
         static public List<string> logging_list = new List<string>();
 
@@ -39,13 +39,6 @@ namespace freetzbot
             {
                 switch (parameter[0])
                 {
-                    case "quit":
-                        Trennen();
-                        break;
-                    case "restart":
-                        restart = true;
-                        Trennen();
-                        break;
                     case "klappe":
                         klappe = true;
                         Senden("Tschuldigung, bin ruhig", privat, sender);
@@ -53,6 +46,13 @@ namespace freetzbot
                     case "okay":
                         klappe = false;
                         Senden("Okay bin zurück ;-)", privat, sender);
+                        break;
+                    case "quit":
+                        Trennen();
+                        break;
+                    case "restart":
+                        restart = true;
+                        Trennen();
                         break;
                 }
             }
@@ -62,6 +62,104 @@ namespace freetzbot
             }
             switch (parameter[0])
             {
+                case "about":
+                    Senden("Programmiert hat mich Suchiman, und ich bin dazu da, um Daten über Fritzboxen zu sammeln und andere kleine Dinge zu tuen. Ich bestehe derzeit aus " + zeilen + " Zeilen C# Code.", privat, sender);
+                    break;
+                case "box":
+                    if (parameter.Length > 1)
+                    {
+                        box(sender, privat, parameter[1]);
+                    }
+                    else
+                    {
+                        box(sender, privat);
+                    }
+                    break;
+                case "boxfind":
+                    if (parameter.Length > 1)
+                    {
+                        boxfind(sender, true, parameter[1]);
+                    }
+                    else
+                    {
+                        boxfind(sender, true);
+                    }
+                    break;
+                case "boxinfo":
+                    if (parameter.Length > 1)
+                    {
+                        boxinfo(sender, true, parameter[1]);
+                    }
+                    else
+                    {
+                        boxinfo(sender, true);
+                    }
+                    break;
+                case "boxlist":
+                    boxlist(sender, true);
+                    break;
+                case "boxremove":
+                    if (parameter.Length > 1)
+                    {
+                        boxremove(sender, privat, parameter[1]);
+                    }
+                    else
+                    {
+                        boxremove(sender, privat);
+                    }
+                    break;
+                case "frag":
+                    if (parameter.Length > 1)
+                    {
+                        frag(sender, privat, parameter[1]);
+                    }
+                    else
+                    {
+                        frag(sender, privat);
+                    }
+                    break;
+                case "help":
+                case "hilfe":
+                case "faq":
+                case "info":
+                    if (parameter.Length > 1)
+                    {
+                        hilfe(sender, privat, parameter[1]);
+                    }
+                    else
+                    {
+                        hilfe(sender, privat);
+                    }
+                    break;
+                case "labor":
+                    if (parameter.Length > 1)
+                    {
+                        labor(sender, privat, parameter[1]);
+                    }
+                    else
+                    {
+                        labor(sender, privat);
+                    }
+                    break;
+                case "trunk":
+                    trunk(sender, privat);
+                    break;
+                case "uptime":
+                    uptime(sender, privat);
+                    break;
+                case "userlist":
+                    userlist(sender, true);
+                    break;
+                case "whmf":
+                    if (parameter.Length > 1)
+                    {
+                        whmf(sender, privat, parameter[1]);
+                    }
+                    else
+                    {
+                        whmf(sender, privat);
+                    }
+                    break;
                 case "witz":
                     if (parameter.Length > 1)
                     {
@@ -78,94 +176,6 @@ namespace freetzbot
                         Senden("Laut meiner Uhr ist es gerade " + DateTime.Now.ToString("HH:mm:ss") + ".", privat, sender);
                     }
                     catch { }
-                    break;
-                case "frag":
-                    if (parameter.Length > 1)
-                    {
-                        frag(sender, privat, parameter[1]);
-                    }
-                    else
-                    {
-                        frag(sender, privat);
-                    }
-                    break;
-                case "about":
-                    Senden("Programmiert hat mich Suchiman, und ich bin dazu da, um Daten über Fritzboxen zu sammeln und andere kleine Dinge zu tuen. Ich bestehe derzeit aus " + zeilen + " Zeilen C# Code.", privat, sender);
-                    break;
-                case "help":
-                case "hilfe":
-                case "faq":
-                case "info":
-                    if (parameter.Length > 1)
-                    {
-                        hilfe(sender, privat, parameter[1]);
-                    }
-                    else
-                    {
-                        hilfe(sender, privat);
-                    }
-                    break;
-                case "trunk":
-                    trunk(sender, privat);
-                    break;
-                case "labor":
-                    if (parameter.Length > 1)
-                    {
-                        labor(sender, privat, parameter[1]);
-                    }
-                    else
-                    {
-                        labor(sender, privat);
-                    }
-                    break;
-                case "box":
-                    if (parameter.Length > 1)
-                    {
-                        box(sender, privat, parameter[1]);
-                    }
-                    else
-                    {
-                        box(sender, privat);
-                    }
-                    break;
-                case "boxinfo":
-                    if (parameter.Length > 1)
-                    {
-                        boxinfo(sender, true, parameter[1]);
-                    }
-                    else
-                    {
-                        boxinfo(sender, true);
-                    }
-                    break;
-                case "userlist":
-                    userlist(sender, true);
-                    break;
-                case "uptime":
-                    uptime(sender, privat);
-                    break;
-                case "boxfind":
-                    if (parameter.Length > 1)
-                    {
-                        boxfind(sender, true, parameter[1]);
-                    }
-                    else
-                    {
-                        boxfind(sender, true);
-                    }
-                    break;
-                case "boxlist":
-                    boxlist(sender, true);
-                    break;
-                case "boxremove":
-                    if (parameter.Length > 1)
-                    {
-                        boxremove(sender, privat, parameter[1]);
-                    }
-                    else
-                    {
-                        boxremove(sender, privat);
-                    }
                     break;
                 default:
                     break;
@@ -380,7 +390,7 @@ namespace freetzbot
                         Senden("Entfernt die exakt von dir genannte Box aus deiner Boxinfo, als Beispiel: \"!boxremove 7270v1\".", privat, sender);
                         break;
                     case "frag":
-                        Senden("Dann werde ich den genannten Benutzer nach seiner Box fragen.", privat, sender);
+                        Senden("Dann werde ich den genannten Benutzer nach seiner Box fragen, z.b. !frag Anonymous", privat, sender);
                         break;
                     case "hilfe":
                         Senden("Du scherzbold, hehe.", privat, sender);
@@ -397,6 +407,9 @@ namespace freetzbot
                     case "userlist":
                         Senden("Das gibt eine Liste jener Benutzer aus, die mindestens eine Box bei mir registriert haben.", privat, sender);
                         break;
+                    case "whmf":
+                        Senden("Das erzeugt einen Link zu wehavemorefun mit dem angegebenen Suchkriterium, z.b. !whmf 7270", privat, sender);
+                        break;
                     case "witz":
                         Senden("Ich werde dann einen Witz erzählen, mit \"!witz add witztext\" kannst du einen neuen Witz hinzufügen.", privat, sender);
                         break;
@@ -409,7 +422,7 @@ namespace freetzbot
             }
             else
             {
-                Senden("Aktuelle Befehle: about box boxfind boxinfo boxlist boxremove frag hilfe labor trunk uptime userlist witz zeit.", privat, sender);
+                Senden("Aktuelle Befehle: about box boxfind boxinfo boxlist boxremove frag hilfe labor trunk uptime userlist whmf witz zeit.", privat, sender);
                 Senden("Hilfe zu jedem Befehl mit \"!help befehl\".", privat, sender);
             }
         }
@@ -528,6 +541,26 @@ namespace freetzbot
             else
             {
                 Senden("Ich fürchte, mir ist ein Fehler unterlaufen. Ich kann keine registrierten Benutzer feststellen.", privat, sender);
+            }
+        }
+
+        static private void whmf(String sender, Boolean privat, String parameter = "")
+        {
+            if (parameter == "")
+            {
+                Senden("http://www.wehavemorefun.de/fritzbox/index.php", privat, sender);
+            }
+            else
+            {
+                String[] split = parameter.Split(new String[] { " " }, 2, StringSplitOptions.None);
+                if (split.Length > 1)
+                {
+                    Senden("@"+split[1]+": Siehe: http://wehavemorefun.de/fritzbox/index.php/Special:Search?search=" + split[0], privat, sender);
+                }
+                else
+                {
+                    Senden("http://wehavemorefun.de/fritzbox/index.php/Special:Search?search=" + split[0], privat, sender);
+                }
             }
         }
 
