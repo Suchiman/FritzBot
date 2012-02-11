@@ -168,87 +168,19 @@ namespace freetzbot
             }
         }
 
-        static private void uptime(String sender, Boolean privat)
+        static private void box(String sender, Boolean privat, String parameter = "")
         {
-            TimeSpan laufzeit = DateTime.Now.Subtract(startzeit);
-            Senden("Meine Laufzeit beträgt " + laufzeit.Days + " Tage, " + laufzeit.Hours + " Stunden, " + laufzeit.Minutes + " Minuten und " + laufzeit.Seconds + " Sekunden", privat, sender);
-        }
-
-        static private void trunk(String sender, Boolean privat)
-        {
-            StringBuilder sb = new StringBuilder();
-            byte[] buf = new byte[8192];
-            HttpWebRequest request = (HttpWebRequest)
-                WebRequest.Create("http://freetz.org/changeset");
-            HttpWebResponse response = (HttpWebResponse)
-                request.GetResponse();
-            Stream resStream = response.GetResponseStream();
-            String tempString = null;
-            int count = 0;
-
-            do
+            if (parameter != "")
             {
-                count = resStream.Read(buf, 0, buf.Length);
-                if (count != 0)
-                {
-                    tempString = Encoding.ASCII.GetString(buf, 0, count);
-                    sb.Append(tempString);
-                }
+                StreamWriter db = new StreamWriter("box.db", true, Encoding.GetEncoding("iso-8859-1"));
+                db.WriteLine(sender + ":" + parameter);
+                db.Close();
+                Senden("Okay danke, ich werde es mir notieren", privat, sender);
             }
-            while (count > 0);
-            String changeset = "Der aktuellste Changeset ist " + sb.ToString().Split(new String[] { "<h1>" }, 2, StringSplitOptions.None)[1].Split(new String[] { "</h1>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "Changeset " }, 2, StringSplitOptions.None)[1];
-            changeset += " und wurde am" + sb.ToString().Split(new String[] { "<dd class=\"time\">" }, 2, StringSplitOptions.None)[1].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "   " }, 5, StringSplitOptions.None)[4] + " in den Trunk eingecheckt. Siehe: http://freetz.org/changeset";
-            Senden(changeset, privat, sender);
-        }
-
-        static private void labor(String sender, Boolean privat, String parameter="")
-        {
-            StringBuilder sb = new StringBuilder();
-            byte[] buf = new byte[8192];
-            HttpWebRequest request = (HttpWebRequest)
-                WebRequest.Create("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
-            HttpWebResponse response = (HttpWebResponse)
-                request.GetResponse();
-            Stream resStream = response.GetResponseStream();
-            String tempString = null;
-            int count = 0;
-
-            do
+            else
             {
-                count = resStream.Read(buf, 0, buf.Length);
-                if (count != 0)
-                {
-                    tempString = Encoding.ASCII.GetString(buf, 0, count);
-                    sb.Append(tempString);
-                }
+                hilfe(sender, privat, parameter = "box");
             }
-            while (count > 0);
-            int modell;
-            switch(parameter){
-                case "ios":
-                    modell = 1;
-                    break;
-                case "android":
-                    modell = 2;
-                    break;
-                case "7390":
-                    modell = 3;
-                    break;
-                case "fhem":
-                    modell = 4;
-                    break;
-                case "7390at":
-                    modell = 5;
-                    break;
-                case "7270":
-                    modell = 6;
-                    break;
-                default:
-                    modell = 6;
-                    break;
-            }
-            String changeset = "Die neueste 7270 Labor version ist am " + sb.ToString().Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 7, StringSplitOptions.None)[modell].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0] + " erschienen";
-            Senden(changeset, privat, sender);
         }
 
         static private void boxfind(String sender, Boolean privat, String parameter = "")
@@ -291,6 +223,56 @@ namespace freetzbot
             else
             {
                 hilfe(sender, privat, "boxfind");
+            }
+        }
+
+        static private void boxinfo(String sender, Boolean privat, String parameter = "")
+        {
+            if (parameter == "")
+            {
+                parameter = sender;
+            }
+            Boolean gefunden = false;
+            String[] user = new String[2];
+            String[] Daten = db_lesen("box.db");
+            String boxen = "";
+            for (int i = 0; i < Daten.Length; i++)
+            {
+                user = Daten[i].Split(new String[] { ":" }, 2, StringSplitOptions.None);
+                if (parameter.ToLower() == user[0].ToLower())
+                {
+                    gefunden = true;
+                    if (boxen != "")
+                    {
+                        boxen += ", " + user[1];
+                    }
+                    else
+                    {
+                        boxen = user[1];
+                    }
+                }
+            }
+            if (gefunden == true)
+            {
+                if (parameter == sender)
+                {
+                    Senden("Du hast bei mir die Box/en " + boxen + " registriert", privat, sender);
+                }
+                else
+                {
+                    Senden(parameter + " sagte mir er hätte die Box/en " + boxen, privat, sender);
+                }
+            }
+            else
+            {
+                if (parameter == sender)
+                {
+                    Senden("Du hast bei mir noch keine Box registriert", privat, sender);
+                }
+                else
+                {
+                    Senden("Von dem weiss ich nix", privat, sender);
+                }
             }
         }
 
@@ -347,6 +329,149 @@ namespace freetzbot
                 db.WriteLine(Daten[i]);
             }
             db.Close();
+        }
+
+        static private void hilfe(String sender, Boolean privat, String parameter = "")
+        {
+            if (parameter != "")
+            {
+                switch (parameter)
+                {
+                    case "about":
+                        Senden("Sollte klar sein", privat, sender);
+                        break;
+                    case "box":
+                        Senden("Trägt deine boxdaten ein, example: \"!box 7270\" bitte jede Box einzeln angeben", privat, sender);
+                        break;
+                    case "boxfind":
+                        Senden("Findet die nutzer der angegebenen Box: Bsp. \"!boxfind 7270\"", privat, sender);
+                        break;
+                    case "boxinfo":
+                        Senden("Ruft die gespeicherten Boxinfos eines nutzers ab", privat, sender);
+                        break;
+                    case "boxlist":
+                        Senden("Listet alle Registrierten Boxtypen auf", privat, sender);
+                        break;
+                    case "boxremove":
+                        Senden("Entfernt die exakt von dir genannte Box aus deiner boxinfo, als Beispiel: \"!boxremove 7270v1\"", privat, sender);
+                        break;
+                    case "frag":
+                        Senden("Ich nerve einen User ;)", privat, sender);
+                        break;
+                    case "hilfe":
+                        Senden("Du scherzbold, hehe", privat, sender);
+                        break;
+                    case "labor":
+                        Senden("Ich schaue mal auf das aktuelle Datum der Labor Firmwares, '7270', '7390', 'fhem', '7390at', 'android', 'ios'", privat, sender);
+                        break;
+                    case "trunk":
+                        Senden("Zeigt den aktuellsten Changeset an", privat, sender);
+                        break;
+                    case "uptime":
+                        Senden("Meine derzeitige Laufzeit seit dem letzten Neustart", privat, sender);
+                        break;
+                    case "userlist":
+                        Senden("Listet die Nutzernamen all jener auf die eine Box bei mir registriert haben", privat, sender);
+                        break;
+                    case "witz":
+                        Senden("Erzählt dir einen Witz, mit \"!witz add witztext\" kannst du einen neuen hinzufügen", privat, sender);
+                        break;
+                    case "zeit":
+                        Senden("Ich schaue mal kurz auf meine Armbanduhr", privat, sender);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            else
+            {
+                Senden("Aktuelle Befehle: about box boxfind boxinfo boxlist boxremove frag hilfe labor trunk uptime userlist witz zeit", privat, sender);
+                Senden("Hilfe zu jedem Befehl mit \"!help befehl\"", privat, sender);
+            }
+        }
+
+        static private void labor(String sender, Boolean privat, String parameter = "")
+        {
+            StringBuilder sb = new StringBuilder();
+            byte[] buf = new byte[8192];
+            HttpWebRequest request = (HttpWebRequest)
+                WebRequest.Create("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
+            HttpWebResponse response = (HttpWebResponse)
+                request.GetResponse();
+            Stream resStream = response.GetResponseStream();
+            String tempString = null;
+            int count = 0;
+
+            do
+            {
+                count = resStream.Read(buf, 0, buf.Length);
+                if (count != 0)
+                {
+                    tempString = Encoding.ASCII.GetString(buf, 0, count);
+                    sb.Append(tempString);
+                }
+            }
+            while (count > 0);
+            int modell;
+            switch (parameter)
+            {
+                case "ios":
+                    modell = 1;
+                    break;
+                case "android":
+                    modell = 2;
+                    break;
+                case "7390":
+                    modell = 3;
+                    break;
+                case "fhem":
+                    modell = 4;
+                    break;
+                case "7390at":
+                    modell = 5;
+                    break;
+                case "7270":
+                    modell = 6;
+                    break;
+                default:
+                    modell = 6;
+                    break;
+            }
+            String changeset = "Die neueste 7270 Labor version ist am " + sb.ToString().Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 7, StringSplitOptions.None)[modell].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0] + " erschienen";
+            Senden(changeset, privat, sender);
+        }
+
+        static private void trunk(String sender, Boolean privat)
+        {
+            StringBuilder sb = new StringBuilder();
+            byte[] buf = new byte[8192];
+            HttpWebRequest request = (HttpWebRequest)
+                WebRequest.Create("http://freetz.org/changeset");
+            HttpWebResponse response = (HttpWebResponse)
+                request.GetResponse();
+            Stream resStream = response.GetResponseStream();
+            String tempString = null;
+            int count = 0;
+
+            do
+            {
+                count = resStream.Read(buf, 0, buf.Length);
+                if (count != 0)
+                {
+                    tempString = Encoding.ASCII.GetString(buf, 0, count);
+                    sb.Append(tempString);
+                }
+            }
+            while (count > 0);
+            String changeset = "Der aktuellste Changeset ist " + sb.ToString().Split(new String[] { "<h1>" }, 2, StringSplitOptions.None)[1].Split(new String[] { "</h1>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "Changeset " }, 2, StringSplitOptions.None)[1];
+            changeset += " und wurde am" + sb.ToString().Split(new String[] { "<dd class=\"time\">" }, 2, StringSplitOptions.None)[1].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "   " }, 5, StringSplitOptions.None)[4] + " in den Trunk eingecheckt. Siehe: http://freetz.org/changeset";
+            Senden(changeset, privat, sender);
+        }
+
+        static private void uptime(String sender, Boolean privat)
+        {
+            TimeSpan laufzeit = DateTime.Now.Subtract(startzeit);
+            Senden("Meine Laufzeit beträgt " + laufzeit.Days + " Tage, " + laufzeit.Hours + " Stunden, " + laufzeit.Minutes + " Minuten und " + laufzeit.Seconds + " Sekunden", privat, sender);
         }
 
         static private void userlist(String sender, Boolean privat)
@@ -406,127 +531,6 @@ namespace freetzbot
                 else
                 {
                     Senden("Mir fällt gerade kein Fritz!Witz ein", privat, sender);
-                }
-            }
-        }
-
-        static private void hilfe(String sender, Boolean privat, String parameter = "")
-        {
-            if (parameter != "")
-            {
-                switch (parameter)
-                {
-                    case "about":
-                        Senden("Sollte klar sein", privat, sender);
-                        break;
-                    case "frag":
-                        Senden("Ich nerve einen User ;)", privat, sender);
-                        break;
-                    case "zeit":
-                        Senden("Ich schaue mal kurz auf meine Armbanduhr", privat, sender);
-                        break;
-                    case "witz":
-                        Senden("Erzählt dir einen Witz, mit \"!witz add witztext\" kannst du einen neuen hinzufügen", privat, sender);
-                        break;
-                    case "trunk":
-                        Senden("Zeigt den aktuellsten Changeset an", privat, sender);
-                        break;
-                    case "labor":
-                        Senden("Ich schaue mal auf das aktuelle Datum der Labor Firmwares, '7270', '7390', 'fhem', '7390at', 'android', 'ios'", privat, sender);
-                        break;
-                    case "box":
-                        Senden("Trägt deine boxdaten ein, example: \"!box 7270\" bitte jede Box einzeln angeben", privat, sender);
-                        break;
-                    case "boxinfo":
-                        Senden("Ruft die gespeicherten Boxinfos eines nutzers ab", privat, sender);
-                        break;
-                    case "boxfind":
-                        Senden("Findet die nutzer der angegebenen Box: Bsp. \"!boxfind 7270\"", privat, sender);
-                        break;
-                    case "boxlist":
-                        Senden("Listet alle Registrierten Boxtypen auf", privat, sender);
-                        break;
-                    case "boxremove":
-                        Senden("Entfernt die exakt von dir genannte Box aus deiner boxinfo, als Beispiel: \"!boxremove 7270v1\"", privat, sender);
-                        break;
-                    case "userlist":
-                        Senden("Listet die Nutzernamen all jener auf die eine Box bei mir registriert haben", privat, sender);
-                        break;
-                    case "uptime":
-                        Senden("Meine derzeitige Laufzeit seit dem letzten Neustart", privat, sender);
-                        break;
-                    default:
-                        break;
-                }
-            }
-            else
-            {
-                Senden("Aktuelle Befehle: about frag zeit witz trunk labor box boxinfo boxfind boxlist boxremove userlist uptime", privat, sender);
-                Senden("Hilfe zu jedem Befehl mit \"!help befehl\"", privat, sender);
-            }
-        }
-
-        static private void box(String sender, Boolean privat, String parameter = "")
-        {
-            if (parameter != "")
-            {
-                StreamWriter db = new StreamWriter("box.db", true, Encoding.GetEncoding("iso-8859-1"));
-                db.WriteLine(sender + ":" + parameter);
-                db.Close();
-                Senden("Okay danke, ich werde es mir notieren", privat, sender);
-            }
-            else
-            {
-                hilfe(sender, privat, parameter = "box");
-            }
-        }
-
-        static private void boxinfo(String sender, Boolean privat, String parameter = "")
-        {
-            if (parameter == "")
-            {
-                parameter = sender;
-            }
-            Boolean gefunden = false;
-            String[] user = new String[2];
-            String[] Daten = db_lesen("box.db");
-            String boxen = "";
-            for (int i = 0; i < Daten.Length; i++)
-            {
-                user = Daten[i].Split(new String[] { ":" }, 2, StringSplitOptions.None);
-                if (parameter.ToLower() == user[0].ToLower())
-                {
-                    gefunden = true;
-                    if (boxen != "")
-                    {
-                        boxen += ", " + user[1];
-                    }
-                    else
-                    {
-                        boxen = user[1];
-                    }
-                }
-            }
-            if (gefunden == true)
-            {
-                if (parameter == sender)
-                {
-                    Senden("Du hast bei mir die Box/en " + boxen + " registriert", privat, sender);
-                }
-                else
-                {
-                    Senden(parameter + " sagte mir er hätte die Box/en " + boxen, privat, sender);
-                }
-            }
-            else
-            {
-                if (parameter == sender)
-                {
-                    Senden("Du hast bei mir noch keine Box registriert", privat, sender);
-                }
-                else
-                {
-                    Senden("Von dem weiss ich nix", privat, sender);
                 }
             }
         }
