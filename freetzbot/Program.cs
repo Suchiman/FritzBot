@@ -28,7 +28,7 @@ namespace freetzbot
         static public Boolean klappe = false;
         static public Boolean crashed = true;
         static public Boolean restart = false;
-        static public String zeilen = "912";
+        static public String zeilen = "930";
         static public DateTime startzeit;
         static public List<string> logging_list = new List<string>();
 
@@ -552,14 +552,32 @@ namespace freetzbot
             }
             else
             {
-                String[] split = parameter.Split(new String[] { " " }, 2, StringSplitOptions.None);
-                if (split.Length > 1)
+                //Parameter: "CAPI Treiber" peter
+                if (parameter.Contains("\""))
                 {
-                    Senden("@"+split[1]+": Siehe: http://wehavemorefun.de/fritzbox/index.php/Special:Search?search=" + split[0], privat, sender);
+                    String[] split = parameter.Split(new String[] { "\"" }, 3, StringSplitOptions.None);
+                    split[1] = split[1].Replace(' ', '_');
+                    String[] nick = split[2].Split(new String[] { " " }, 2, StringSplitOptions.None);
+                    if (nick.Length > 1)
+                    {
+                        Senden("@" + split[2] + ": Siehe: http://wehavemorefun.de/fritzbox/index.php/Special:Search?search=" + split[1], privat, sender);
+                    }
+                    else
+                    {
+                        Senden("http://wehavemorefun.de/fritzbox/index.php/Special:Search?search=" + split[1], privat, sender);
+                    }
                 }
                 else
                 {
-                    Senden("http://wehavemorefun.de/fritzbox/index.php/Special:Search?search=" + split[0], privat, sender);
+                    String[] split = parameter.Split(new String[] { " " }, 2, StringSplitOptions.None);
+                    if (split.Length > 1)
+                    {
+                        Senden("@" + split[1] + ": Siehe: http://wehavemorefun.de/fritzbox/index.php/Special:Search?search=" + split[0], privat, sender);
+                    }
+                    else
+                    {
+                        Senden("http://wehavemorefun.de/fritzbox/index.php/Special:Search?search=" + split[0], privat, sender);
+                    }
                 }
             }
         }
@@ -710,7 +728,7 @@ namespace freetzbot
                         }
                         catch (Exception ex)
                         {
-                            logging("Exception beim starten des bot_antwort threads: " + ex.Message);
+                            logging("Exception im Bot Antwort thread aufgetreten: " + ex.Message);
                         }
                     }
                 }
