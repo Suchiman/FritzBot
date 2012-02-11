@@ -28,7 +28,7 @@ namespace freetzbot
         static public Boolean klappe = false;
         static public Boolean crashed = true;
         static public Boolean restart = false;
-        static public String zeilen = "845";
+        static public String zeilen = "876";
         static public DateTime startzeit;
         static public List<string> logging_list = new List<string>();
 
@@ -633,18 +633,21 @@ namespace freetzbot
                             boxfrage(nick);
                         }
                         logging(nick + " hat den Raum betreten");
+                        return;
                     }
                     //Prüfen ob der Raum verlassen wird
                     if (eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[1] == "PART")
                     {
                         String nick = eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[0].Split(new String[] { "!" }, 2, StringSplitOptions.None)[0].Split(new String[] { ":" }, 2, StringSplitOptions.None)[1];
                         logging(nick + " hat den Raum verlassen");
+                        return;
                     }
                     //Prüfen ob der Server verlassen wird
                     if (eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[1] == "QUIT")
                     {
                         String nick = eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[0].Split(new String[] { "!" }, 2, StringSplitOptions.None)[0].Split(new String[] { ":" }, 2, StringSplitOptions.None)[1];
                         logging(nick + " hat den Server verlassen");
+                        return;
                     }
                 }
             }
