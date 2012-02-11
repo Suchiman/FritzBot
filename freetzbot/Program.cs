@@ -56,115 +56,119 @@ namespace freetzbot
                         break;
                 }
             }
-            if (!klappe)
+            if (klappe)
             {
-                switch (parameter[0])
-                {
-                    case "witz":
-                        if (parameter.Length > 1)
-                        {
-                            witz(sender, privat, parameter[1]);
-                        }
-                        else
-                        {
-                            witz(sender, privat);
-                        }
-                        break;
-                    case "zeit":
-                        try
-                        {
-                            Senden("Laut meiner Uhr ist es gerade " + DateTime.Now.ToString("HH:mm:ss"), privat, sender);
-                        }
-                        catch { }
-                        break;
-                    case "frag":
-                        try
-                        {
-                            Senden("Hallo " + parameter[1] + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast :)", privat, sender);
-                        }
-                        catch { }
-                        break;
-                    case "about":
-                        Senden("Programmiert hat mich Suchiman, und ich bin dazu da, um Daten über Fritzboxen zu sammeln. Ich bestehe derzeit aus " + zeilen + " Zeilen C# code", privat, sender);
-                        break;
-                    case "help":
-                    case "hilfe":
-                    case "faq":
-                    case "info":
-                        if (parameter.Length > 1)
-                        {
-                            hilfe(sender, privat, parameter[1]);
-                        }
-                        else
-                        {
-                            hilfe(sender, privat);
-                        }
-                        break;
-                    case "trunk":
-                        trunk(sender, privat);
-                        break;
-                    case "labor":
-                        if (parameter.Length > 1)
-                        {
-                            labor(sender, privat, parameter[1]);
-                        }
-                        else
-                        {
-                            labor(sender, privat);
-                        }
-                        break;
-                    case "box":
-                        if (parameter.Length > 1)
-                        {
-                            box(sender, privat, parameter[1]);
-                        }
-                        else
-                        {
-                            box(sender, privat);
-                        }
-                        break;
-                    case "boxinfo":
-                        if (parameter.Length > 1)
-                        {
-                            boxinfo(sender, true, parameter[1]);
-                        }
-                        else
-                        {
-                            boxinfo(sender, true);
-                        }
-                        break;
-                    case "userlist":
-                        userlist(sender, true);
-                        break;
-                    case "uptime":
-                        uptime(sender, privat);
-                        break;
-                    case "boxfind":
-                        if (parameter.Length > 1)
-                        {
-                            boxfind(sender, true, parameter[1]);
-                        }
-                        else
-                        {
-                            boxfind(sender, true);
-                        }
-                        break;
-                    case "boxlist":
-                        boxlist(sender, true);
-                        break;
-                    case "boxremove":
-                        if (parameter.Length > 1)
-                        {
-                            boxremove(sender, privat, parameter[1]);
-                        }
-                        else
-                        {
-                            boxremove(sender, privat);
-                        }
-                        break;
-                    default:
-                        break;
-                }
+                privat = true;
+            }
+            switch (parameter[0])
+            {
+                case "witz":
+                    if (parameter.Length > 1)
+                    {
+                        witz(sender, privat, parameter[1]);
+                    }
+                    else
+                    {
+                        witz(sender, privat);
+                    }
+                    break;
+                case "zeit":
+                    try
+                    {
+                        Senden("Laut meiner Uhr ist es gerade " + DateTime.Now.ToString("HH:mm:ss") + ".", privat, sender);
+                    }
+                    catch { }
+                    break;
+                case "frag":
+                    if (parameter.Length > 1)
+                    {
+                        frag(sender, privat, parameter[1]);
+                    }
+                    else
+                    {
+                        frag(sender, privat);
+                    }
+                    break;
+                case "about":
+                    Senden("Programmiert hat mich Suchiman, und ich bin dazu da, um Daten über Fritzboxen zu sammeln und andere kleine Dinge zu tuen. Ich bestehe derzeit aus " + zeilen + " Zeilen C# Code.", privat, sender);
+                    break;
+                case "help":
+                case "hilfe":
+                case "faq":
+                case "info":
+                    if (parameter.Length > 1)
+                    {
+                        hilfe(sender, privat, parameter[1]);
+                    }
+                    else
+                    {
+                        hilfe(sender, privat);
+                    }
+                    break;
+                case "trunk":
+                    trunk(sender, privat);
+                    break;
+                case "labor":
+                    if (parameter.Length > 1)
+                    {
+                        labor(sender, privat, parameter[1]);
+                    }
+                    else
+                    {
+                        labor(sender, privat);
+                    }
+                    break;
+                case "box":
+                    if (parameter.Length > 1)
+                    {
+                        box(sender, privat, parameter[1]);
+                    }
+                    else
+                    {
+                        box(sender, privat);
+                    }
+                    break;
+                case "boxinfo":
+                    if (parameter.Length > 1)
+                    {
+                        boxinfo(sender, true, parameter[1]);
+                    }
+                    else
+                    {
+                        boxinfo(sender, true);
+                    }
+                    break;
+                case "userlist":
+                    userlist(sender, true);
+                    break;
+                case "uptime":
+                    uptime(sender, privat);
+                    break;
+                case "boxfind":
+                    if (parameter.Length > 1)
+                    {
+                        boxfind(sender, true, parameter[1]);
+                    }
+                    else
+                    {
+                        boxfind(sender, true);
+                    }
+                    break;
+                case "boxlist":
+                    boxlist(sender, true);
+                    break;
+                case "boxremove":
+                    if (parameter.Length > 1)
+                    {
+                        boxremove(sender, privat, parameter[1]);
+                    }
+                    else
+                    {
+                        boxremove(sender, privat);
+                    }
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -175,7 +179,7 @@ namespace freetzbot
                 StreamWriter db = new StreamWriter("box.db", true, Encoding.GetEncoding("iso-8859-1"));
                 db.WriteLine(sender + ":" + parameter);
                 db.Close();
-                Senden("Okay danke, ich werde es mir notieren", privat, sender);
+                Senden("Okay danke, ich werde es mir notieren.", privat, sender);
             }
             else
             {
@@ -213,11 +217,11 @@ namespace freetzbot
                 }
                 if (gefunden == true)
                 {
-                    Senden("Folgende User scheinen diese Box zu haben: " + besitzer, privat, sender);
+                    Senden("Folgende Benutzer scheinen diese Box zu besitzen: " + besitzer, privat, sender);
                 }
                 else
                 {
-                    Senden("Diese Box scheint niemand zu haben", privat, sender);
+                    Senden("Diese Box scheint niemand zu besitzen!", privat, sender);
                 }
             }
             else
@@ -256,7 +260,7 @@ namespace freetzbot
             {
                 if (parameter == sender)
                 {
-                    Senden("Du hast bei mir die Box/en " + boxen + " registriert", privat, sender);
+                    Senden("Du hast bei mir die Box/en " + boxen + " registriert.", privat, sender);
                 }
                 else
                 {
@@ -267,11 +271,11 @@ namespace freetzbot
             {
                 if (parameter == sender)
                 {
-                    Senden("Du hast bei mir noch keine Box registriert", privat, sender);
+                    Senden("Du hast bei mir noch keine Box registriert.", privat, sender);
                 }
                 else
                 {
-                    Senden("Von dem weiss ich nix", privat, sender);
+                    Senden("Über den habe ich keine Informationen.", privat, sender);
                 }
             }
         }
@@ -305,30 +309,50 @@ namespace freetzbot
             }
             else
             {
-                Senden("Diese Box scheint niemand zu haben", privat, sender);
+                Senden("Diese Box scheint niemand zu besitzen.", privat, sender);
             }
         }
 
         static private void boxremove(String sender, Boolean privat, String parameter = "")
         {
-            String[] Daten = db_lesen("box.db");
-            int i = 0;
-            String suche = sender + ":" + parameter;
-            for (i = 0; i < Daten.Length; i++)
+            if (parameter != "")
             {
-                if (Daten[i] == suche)
+                String[] Daten = db_lesen("box.db");
+                int i = 0;
+                String suche = sender + ":" + parameter;
+                for (i = 0; i < Daten.Length; i++)
                 {
-                    List<String> tmp = new List<String>(Daten);
-                    tmp.RemoveAt(i);
-                    Daten = tmp.ToArray();
+                    if (Daten[i] == suche)
+                    {
+                        List<String> tmp = new List<String>(Daten);
+                        tmp.RemoveAt(i);
+                        Daten = tmp.ToArray();
+                        Senden("Erledigt!", privat, sender);
+                    }
                 }
+                StreamWriter db = new StreamWriter("box.db", false, Encoding.GetEncoding("iso-8859-1"));
+                for (i = 0; i < Daten.Length; i++)
+                {
+                    db.WriteLine(Daten[i]);
+                }
+                db.Close();
             }
-            StreamWriter db = new StreamWriter("box.db", false, Encoding.GetEncoding("iso-8859-1"));
-            for (i = 0; i < Daten.Length; i++)
+            else
             {
-                db.WriteLine(Daten[i]);
+                hilfe(sender, privat, "boxremove");
             }
-            db.Close();
+        }
+
+        static private void frag(String sender, Boolean privat, String parameter = "")
+        {
+            if (parameter != "")
+            {
+                Senden("Hallo " + parameter + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast. :)", privat, sender);
+            }
+            else
+            {
+                hilfe(sender, privat, "frag");
+            }
         }
 
         static private void hilfe(String sender, Boolean privat, String parameter = "")
@@ -338,46 +362,46 @@ namespace freetzbot
                 switch (parameter)
                 {
                     case "about":
-                        Senden("Sollte klar sein", privat, sender);
+                        Senden("Ich würde dir dann kurz etwas über mich erzählen.", privat, sender);
                         break;
                     case "box":
-                        Senden("Trägt deine boxdaten ein, example: \"!box 7270\" bitte jede Box einzeln angeben", privat, sender);
+                        Senden("Dies trägt deine Boxdaten ein, Beispiel: \"!box 7270\", bitte jede Box einzeln angeben.", privat, sender);
                         break;
                     case "boxfind":
-                        Senden("Findet die nutzer der angegebenen Box: Bsp. \"!boxfind 7270\"", privat, sender);
+                        Senden("Findet die Nutzer der angegebenen Box: Beispiel: \"!boxfind 7270\".", privat, sender);
                         break;
                     case "boxinfo":
-                        Senden("Ruft die gespeicherten Boxinfos eines nutzers ab", privat, sender);
+                        Senden("Zeigt die Box/en des angegebenen Benutzers an.", privat, sender);
                         break;
                     case "boxlist":
-                        Senden("Listet alle Registrierten Boxtypen auf", privat, sender);
+                        Senden("Dies listet alle registrierten Boxtypen auf.", privat, sender);
                         break;
                     case "boxremove":
-                        Senden("Entfernt die exakt von dir genannte Box aus deiner boxinfo, als Beispiel: \"!boxremove 7270v1\"", privat, sender);
+                        Senden("Entfernt die exakt von dir genannte Box aus deiner Boxinfo, als Beispiel: \"!boxremove 7270v1\".", privat, sender);
                         break;
                     case "frag":
-                        Senden("Ich nerve einen User ;)", privat, sender);
+                        Senden("Dann werde ich den genannten Benutzer nach seiner Box fragen.", privat, sender);
                         break;
                     case "hilfe":
-                        Senden("Du scherzbold, hehe", privat, sender);
+                        Senden("Du scherzbold, hehe.", privat, sender);
                         break;
                     case "labor":
-                        Senden("Ich schaue mal auf das aktuelle Datum der Labor Firmwares, '7270', '7390', 'fhem', '7390at', 'android', 'ios'", privat, sender);
+                        Senden("Ich schaue mal auf das aktuelle Datum der Labor Firmwares, Parameter: '7270', '7390', 'fhem', '7390at', 'android', 'ios'.", privat, sender);
                         break;
                     case "trunk":
-                        Senden("Zeigt den aktuellsten Changeset an", privat, sender);
+                        Senden("Dies zeigt den aktuellsten Changeset an.", privat, sender);
                         break;
                     case "uptime":
-                        Senden("Meine derzeitige Laufzeit seit dem letzten Neustart", privat, sender);
+                        Senden("Das zeigt meine aktuelle Laufzeit an.", privat, sender);
                         break;
                     case "userlist":
-                        Senden("Listet die Nutzernamen all jener auf die eine Box bei mir registriert haben", privat, sender);
+                        Senden("Das gibt eine Liste jener Benutzer aus, die mindestens eine Box bei mir registriert haben.", privat, sender);
                         break;
                     case "witz":
-                        Senden("Erzählt dir einen Witz, mit \"!witz add witztext\" kannst du einen neuen hinzufügen", privat, sender);
+                        Senden("Ich werde dann einen Witz erzählen, mit \"!witz add witztext\" kannst du einen neuen Witz hinzufügen.", privat, sender);
                         break;
                     case "zeit":
-                        Senden("Ich schaue mal kurz auf meine Armbanduhr", privat, sender);
+                        Senden("Das gibt die aktuelle Uhrzeit aus.", privat, sender);
                         break;
                     default:
                         break;
@@ -385,8 +409,8 @@ namespace freetzbot
             }
             else
             {
-                Senden("Aktuelle Befehle: about box boxfind boxinfo boxlist boxremove frag hilfe labor trunk uptime userlist witz zeit", privat, sender);
-                Senden("Hilfe zu jedem Befehl mit \"!help befehl\"", privat, sender);
+                Senden("Aktuelle Befehle: about box boxfind boxinfo boxlist boxremove frag hilfe labor trunk uptime userlist witz zeit.", privat, sender);
+                Senden("Hilfe zu jedem Befehl mit \"!help befehl\".", privat, sender);
             }
         }
 
@@ -437,7 +461,7 @@ namespace freetzbot
                     modell = 6;
                     break;
             }
-            String changeset = "Die neueste 7270 Labor version ist am " + sb.ToString().Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 7, StringSplitOptions.None)[modell].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0] + " erschienen";
+            String changeset = "Die neueste 7270 labor Version ist am " + sb.ToString().Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 7, StringSplitOptions.None)[modell].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0] + " erschienen.";
             Senden(changeset, privat, sender);
         }
 
@@ -471,7 +495,7 @@ namespace freetzbot
         static private void uptime(String sender, Boolean privat)
         {
             TimeSpan laufzeit = DateTime.Now.Subtract(startzeit);
-            Senden("Meine Laufzeit beträgt " + laufzeit.Days + " Tage, " + laufzeit.Hours + " Stunden, " + laufzeit.Minutes + " Minuten und " + laufzeit.Seconds + " Sekunden", privat, sender);
+            Senden("Meine Laufzeit beträgt " + laufzeit.Days + " Tage, " + laufzeit.Hours + " Stunden, " + laufzeit.Minutes + " Minuten und " + laufzeit.Seconds + " Sekunden.", privat, sender);
         }
 
         static private void userlist(String sender, Boolean privat)
@@ -499,11 +523,11 @@ namespace freetzbot
             }
             if (gefunden == true)
             {
-                Senden("Folgende User haben bei mir Boxen registriert: " + besitzer, privat, sender);
+                Senden("Diese Benutzer haben bei mir mindestens eine Box registriert: " + besitzer, privat, sender);
             }
             else
             {
-                Senden("Ich glaube etwas stimmt mit meiner Datenbank nicht denn niemand hat sich bei mir registriert", privat, sender);
+                Senden("Ich fürchte, mir ist ein Fehler unterlaufen. Ich kann keine registrierten Benutzer feststellen.", privat, sender);
             }
         }
 
@@ -551,7 +575,7 @@ namespace freetzbot
                 if (gefunden == false)
                 {
                     Thread.Sleep(10000);
-                    Senden("Hallo " + sender + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast :). Pro !box bitte nur eine Box nennen (nur die Boxversion) z.b. !box 7270v1 oder !box 7170", true, sender, "NOTICE");
+                    Senden("Hallo " + sender + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast :). Pro !box bitte nur eine Box nennen (nur die Boxversion) z.b. !box 7270v1 oder !box 7170.", true, sender, "NOTICE");
                     StreamWriter db = new StreamWriter("user.db", true, Encoding.GetEncoding("iso-8859-1"));
                     db.WriteLine(sender);
                     db.Close();
@@ -604,7 +628,10 @@ namespace freetzbot
                     if (eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[1] == "JOIN")
                     {
                         String nick = eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[0].Split(new String[] { "!" }, 2, StringSplitOptions.None)[0].Split(new String[] { ":" }, 2, StringSplitOptions.None)[1];
-                        boxfrage(nick);
+                        if (klappe == false)
+                        {
+                            boxfrage(nick);
+                        }
                         logging(nick + " hat den Raum betreten");
                     }
                     //Prüfen ob der Raum verlassen wird
