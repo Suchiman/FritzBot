@@ -486,7 +486,7 @@ namespace freetzbot
 
         static private void ping(String sender, Boolean privat)
         {
-            Senden("Pong " + sender, privat, sender);
+            Senden("Pong Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet." + sender, privat, sender);
         }
 
         static private void trunk(String sender, Boolean privat)
@@ -804,6 +804,31 @@ namespace freetzbot
             return Daten;
         }
 
+        static private String[] splitat(String text, int length)
+        {
+            String[] gesplittet = new String[0];
+            if (text.Length >= length)
+            {
+                Decimal loops = Math.Ceiling((decimal)text.Length / (decimal)length);
+                int splitlength = length;
+                for (int i = 0; i < loops; i++)
+                {
+                    if (!(i < loops - 1))
+                    {
+                        splitlength = text.Length % length;
+                    }
+                    Array.Resize(ref gesplittet, gesplittet.Length + 1);
+                    gesplittet[i] = text.Substring(length * i, splitlength);
+                }
+            }
+            else
+            {
+                Array.Resize(ref gesplittet, gesplittet.Length + 1);
+                gesplittet[0] = text;
+            }
+            return gesplittet;
+        }
+
         static private void Senden(String text, Boolean privat, String adressant = "", String methode = "PRIVMSG")
         {
             if (!privat || adressant == "")
@@ -816,14 +841,19 @@ namespace freetzbot
                 NetworkStream inOut = c.GetStream();
                 if (methode != "RAW")
                 {
-                    sendBytes = Encoding.GetEncoding("iso-8859-1").GetBytes(methode + " " + adressant + " :" + text + "\r\n");
-                    logging(nickname + ": " + text);
+                    String[] tosend = splitat(text,507-(methode.Length+adressant.Length));
+                    for (int i = 0; i < tosend.Length; i++)
+                    {
+                        sendBytes = Encoding.GetEncoding("iso-8859-1").GetBytes(methode + " " + adressant + " :" + tosend[i] + "\r\n");
+                        logging(nickname + ": " + text);
+                        inOut.Write(sendBytes, 0, sendBytes.Length);
+                    }
                 }
                 else
                 {
                     sendBytes = Encoding.GetEncoding("iso-8859-1").GetBytes(text + "\r\n");
+                    inOut.Write(sendBytes, 0, sendBytes.Length);
                 }
-                inOut.Write(sendBytes, 0, sendBytes.Length);
             }
             catch { }
         }
