@@ -88,11 +88,11 @@ namespace freetzbot
                 case "boxinfo":
                     if (parameter.Length > 1)
                     {
-                        boxinfo(sender, true, parameter[1]);
+                        boxinfo(sender, privat, parameter[1]);
                     }
                     else
                     {
-                        boxinfo(sender, true);
+                        boxinfo(sender, privat);
                     }
                     break;
                 case "boxlist":
@@ -429,7 +429,7 @@ namespace freetzbot
             else
             {
                 Senden("Aktuelle Befehle: about box boxfind boxinfo boxlist boxremove frag hilfe labor ping trunk uptime userlist whmf witz zeit.", privat, sender);
-                Senden("Hilfe zu jedem Befehl mit \"!help befehl\".", privat, sender);
+                Senden("Hilfe zu jedem Befehl mit \"!help befehl\". Um die anderen nicht zu belästigen kannst du mich auch per PM (query) anfragen", privat, sender);
             }
         }
 
