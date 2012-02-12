@@ -28,7 +28,7 @@ namespace freetzbot
         static public Boolean klappe = false;
         static public Boolean crashed = true;
         static public Boolean restart = false;
-        static public String zeilen = "941";
+        static public String zeilen = "1021";
         static public DateTime startzeit;
         static public List<string> logging_list = new List<string>();
 
@@ -116,6 +116,16 @@ namespace freetzbot
                     else
                     {
                         frag(sender, privat);
+                    }
+                    break;
+                case "freetz":
+                    if (parameter.Length > 1)
+                    {
+                        freetz(sender, privat, parameter[1]);
+                    }
+                    else
+                    {
+                        freetz(sender, privat);
                     }
                     break;
                 case "help":
@@ -395,6 +405,9 @@ namespace freetzbot
                     case "frag":
                         Senden("Dann werde ich den genannten Benutzer nach seiner Box fragen, z.b. !frag Anonymous", privat, sender);
                         break;
+                    case "freetz":
+                        Senden("Das erzeugt einen Link zum Freetz Trac mit dem angegebenen Suchkriterium, Beispiele: !freetz ngIRCd, !freetz \"Build System\", !freetz FAQ Benutzer", privat, sender);
+                        break;
                     case "hilfe":
                         Senden("Du scherzbold, hehe.", privat, sender);
                         break;
@@ -428,7 +441,7 @@ namespace freetzbot
             }
             else
             {
-                Senden("Aktuelle Befehle: about box boxfind boxinfo boxlist boxremove frag hilfe labor ping trunk uptime userlist whmf witz zeit.", privat, sender);
+                Senden("Aktuelle Befehle: about box boxfind boxinfo boxlist boxremove frag freetz hilfe labor ping trunk uptime userlist whmf witz zeit.", privat, sender);
                 Senden("Hilfe zu jedem Befehl mit \"!help befehl\". Um die anderen nicht zu belästigen kannst du mich auch per PM (query) anfragen", privat, sender);
             }
         }
@@ -588,6 +601,43 @@ namespace freetzbot
                     else
                     {
                         Senden("http://wehavemorefun.de/fritzbox/index.php/Special:Search?search=" + split[0], privat, sender);
+                    }
+                }
+            }
+        }
+
+        static private void freetz(String sender, Boolean privat, String parameter = "")
+        {
+            if (parameter == "")
+            {
+                Senden("http://freetz.org/wiki", privat, sender);
+            }
+            else
+            {
+                if (parameter.Contains("\""))
+                {
+                    String[] split = parameter.Split(new String[] { "\"" }, 3, StringSplitOptions.None);
+                    split[1] = split[1].Replace(' ', '_');
+                    String[] nick = split[2].Split(new String[] { " " }, 2, StringSplitOptions.None);
+                    if (nick.Length > 1)
+                    {
+                        Senden("@" + split[2] + ": Siehe: http://freetz.org/search?q=" + split[1] + "&wiki=on", privat, sender);
+                    }
+                    else
+                    {
+                        Senden("http://freetz.org/search?q=" + split[1] + "&wiki=on", privat, sender);
+                    }
+                }
+                else
+                {
+                    String[] split = parameter.Split(new String[] { " " }, 2, StringSplitOptions.None);
+                    if (split.Length > 1)
+                    {
+                        Senden("@" + split[1] + ": Siehe: http://freetz.org/search?q=" + split[0] + "&wiki=on", privat, sender);
+                    }
+                    else
+                    {
+                        Senden("http://freetz.org/search?q=" + split[0] + "&wiki=on", privat, sender);
                     }
                 }
             }
