@@ -28,7 +28,7 @@ namespace freetzbot
         static public Boolean klappe = false;
         static public Boolean crashed = true;
         static public Boolean restart = false;
-        static public String zeilen = "1021";
+        static public String zeilen = "1024";
         static public DateTime startzeit;
         static public List<string> logging_list = new List<string>();
 
@@ -164,6 +164,7 @@ namespace freetzbot
                     userlist(sender, true);
                     break;
                 case "whmf":
+                case "w":
                     if (parameter.Length > 1)
                     {
                         whmf(sender, privat, parameter[1]);
@@ -188,7 +189,10 @@ namespace freetzbot
                     {
                         Senden("Laut meiner Uhr ist es gerade " + DateTime.Now.ToString("HH:mm:ss") + ".", privat, sender);
                     }
-                    catch { }
+                    catch
+                    {
+                        Senden("Scheinbar ist meine Uhr kaputt, statt der Zeit habe ich nur eine Exception bekommen :(", privat, sender);
+                    }
                     break;
                 default:
                     break;
@@ -767,7 +771,6 @@ namespace freetzbot
             {
                 logging("Exception bei der boxfrage: " + ex.Message);
             }
-
             //Verarbeitung einer Nachricht, eine Nachricht sollte 3 gesplittete Elemente im Array haben
             try
             {
