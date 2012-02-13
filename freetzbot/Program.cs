@@ -28,7 +28,7 @@ namespace freetzbot
         static public Boolean klappe = false;
         static public Boolean crashed = true;
         static public Boolean restart = false;
-        static public String zeilen = "1028";
+        static public String zeilen = "1029";
         static public DateTime startzeit;
         static public List<string> logging_list = new List<string>();
 
@@ -473,8 +473,13 @@ namespace freetzbot
                 }
             }
             while (count > 0);
-            int modell;
-            switch (parameter)
+            int modell = 0;
+            String changeset = "";
+            if (parameter == "")
+            {
+                parameter = "7270";
+            }
+            switch (parameter.ToLower())
             {
                 case "ios":
                     modell = 1;
@@ -495,10 +500,13 @@ namespace freetzbot
                     modell = 6;
                     break;
                 default:
-                    modell = 6;
+                    changeset += "Für die " + parameter + " steht derzeit keine Labor Version zur Verfügung. ";
                     break;
             }
-            String changeset = "Die neueste 7270 labor Version ist am " + sb.ToString().Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 7, StringSplitOptions.None)[modell].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0] + " erschienen.";
+            if (modell != 0)
+            {
+                changeset += "Die neueste " + parameter + " labor Version ist am " + sb.ToString().Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 7, StringSplitOptions.None)[modell].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0] + " erschienen.";
+            }
             Senden(changeset, privat, sender);
         }
 
