@@ -28,7 +28,7 @@ namespace freetzbot
         static public Boolean klappe = false;
         static public Boolean crashed = true;
         static public Boolean restart = false;
-        static public String zeilen = "1024";
+        static public String zeilen = "1028";
         static public DateTime startzeit;
         static public List<string> logging_list = new List<string>();
 
@@ -37,7 +37,7 @@ namespace freetzbot
             String[] parameter = nachricht.Split(new String[] { " " }, 2, StringSplitOptions.None);
             if (sender == "Suchiman" || sender == "hippie2000")
             {
-                switch (parameter[0])
+                switch (parameter[0].ToLower())
                 {
                     case "klappe":
                         klappe = true;
@@ -60,7 +60,7 @@ namespace freetzbot
             {
                 privat = true;
             }
-            switch (parameter[0])
+            switch (parameter[0].ToLower())
             {
                 case "about":
                     Senden("Programmiert hat mich Suchiman, und ich bin dazu da, um Daten über Fritzboxen zu sammeln und andere kleine Dinge zu tuen. Ich bestehe derzeit aus " + zeilen + " Zeilen C# Code.", privat, sender);
@@ -119,6 +119,7 @@ namespace freetzbot
                     }
                     break;
                 case "freetz":
+                case "f":
                     if (parameter.Length > 1)
                     {
                         freetz(sender, privat, parameter[1]);
