@@ -917,7 +917,10 @@ namespace freetzbot
             {
                 c = new TcpClient(server, 6667);
                 empfangsthread.RunWorkerAsync();
-                Senden("NICK " + nickname + "\r\nUSER " + nickname + " " + nickname + " " + nickname + " :" + nickname + "\r\nJOIN " + raum, false, "", "RAW");
+                Thread.Sleep(10);
+                Senden("USER " + nickname + " " + nickname + " " + nickname + " :" + nickname + "\r\n", false, "", "RAW");
+                Senden("NICK " + nickname + "\r\n", false, "", "RAW");
+                Senden("JOIN " + raum + "\r\n", false, "", "RAW");
                 return true;
             }
             catch
@@ -1012,7 +1015,7 @@ namespace freetzbot
             {
                 try
                 {
-                    System.Diagnostics.Process.Start("/bin/sh", "/home/suchi/debugbot/start");
+                    System.Diagnostics.Process.Start("/bin/sh", "/home/suchi/ircbot/start");
                 }
                 catch (Exception ex)
                 {
