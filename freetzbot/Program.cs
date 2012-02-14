@@ -28,7 +28,7 @@ namespace freetzbot
         static public Boolean klappe = false;
         static public Boolean crashed = true;
         static public Boolean restart = false;
-        static public String zeilen = "1029";
+        static public String zeilen = "1086";
         static public DateTime startzeit;
         static public List<string> logging_list = new List<string>();
 
@@ -150,6 +150,16 @@ namespace freetzbot
                     else
                     {
                         labor(sender, privat);
+                    }
+                    break;
+                case "lmgtfy":
+                    if (parameter.Length > 1)
+                    {
+                        lmgtfy(sender, privat, parameter[1]);
+                    }
+                    else
+                    {
+                        lmgtfy(sender, privat);
                     }
                     break;
                 case "ping":
@@ -419,6 +429,9 @@ namespace freetzbot
                     case "labor":
                         Senden("Ich schaue mal auf das aktuelle Datum der Labor Firmwares, Parameter: '7270', '7390', 'fhem', '7390at', 'android', 'ios'.", privat, sender);
                         break;
+                    case "lmgtfy":
+                        Senden("Dazu sage ich jetzt mal nichts, finde es raus!", privat, sender);
+                        break;
                     case "ping":
                         Senden("Damit kannst du Testen ob ich noch Ansprechbar bin oder ob ich gestorben bin", privat, sender);
                         break;
@@ -446,7 +459,7 @@ namespace freetzbot
             }
             else
             {
-                Senden("Aktuelle Befehle: about box boxfind boxinfo boxlist boxremove frag freetz hilfe labor ping trunk uptime userlist whmf witz zeit.", privat, sender);
+                Senden("Aktuelle Befehle: about box boxfind boxinfo boxlist boxremove frag freetz hilfe labor lmgtfy ping trunk uptime userlist whmf witz zeit.", privat, sender);
                 Senden("Hilfe zu jedem Befehl mit \"!help befehl\". Um die anderen nicht zu belästigen kannst du mich auch per PM (query) anfragen", privat, sender);
             }
         }
@@ -508,6 +521,43 @@ namespace freetzbot
                 changeset += "Die neueste " + parameter + " labor Version ist am " + sb.ToString().Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 7, StringSplitOptions.None)[modell].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0] + " erschienen.";
             }
             Senden(changeset, privat, sender);
+        }
+
+        static private void lmgtfy(String sender, Boolean privat, String parameter = "")
+        {
+            if (parameter == "")
+            {
+                Senden("http://www.wehavemorefun.de/fritzbox/index.php", privat, sender);
+            }
+            else
+            {
+                if (parameter.Contains("\""))
+                {
+                    String[] split = parameter.Split(new String[] { "\"" }, 3, StringSplitOptions.None);
+                    split[1] = split[1].Replace(' ', '+');
+                    String[] nick = split[2].Split(new String[] { " " }, 2, StringSplitOptions.None);
+                    if (nick.Length > 1)
+                    {
+                        Senden("@" + split[2] + ": Siehe: http://lmgtfy.com/?q=" + split[1], privat, sender);
+                    }
+                    else
+                    {
+                        Senden("http://lmgtfy.com/?q=" + split[1], privat, sender);
+                    }
+                }
+                else
+                {
+                    String[] split = parameter.Split(new String[] { " " }, 2, StringSplitOptions.None);
+                    if (split.Length > 1)
+                    {
+                        Senden("@" + split[1] + ": Siehe: http://lmgtfy.com/?q=" + split[0], privat, sender);
+                    }
+                    else
+                    {
+                        Senden("http://lmgtfy.com/?q=" + split[0], privat, sender);
+                    }
+                }
+            }
         }
 
         static private void ping(String sender, Boolean privat)
