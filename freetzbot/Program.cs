@@ -28,7 +28,7 @@ namespace freetzbot
         static public Boolean klappe = false;
         static public Boolean crashed = true;
         static public Boolean restart = false;
-        static public String zeilen = "1086";
+        static public String zeilen = "1105";
         static public DateTime startzeit;
         static public List<string> logging_list = new List<string>();
 
@@ -133,6 +133,7 @@ namespace freetzbot
                 case "hilfe":
                 case "faq":
                 case "info":
+                case "man":
                     if (parameter.Length > 1)
                     {
                         hilfe(sender, privat, parameter[1]);
