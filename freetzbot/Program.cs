@@ -467,12 +467,9 @@ namespace freetzbot
 
         static private void labor(String sender, Boolean privat, String parameter = "")
         {
-            int modell = 0;
+            String webseite = get_web("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
             String changeset = "";
-            if (parameter == "")
-            {
-                parameter = "7270";
-            }
+            int modell = 0;
             switch (parameter.ToLower())
             {
                 case "ios":
@@ -493,11 +490,18 @@ namespace freetzbot
                 case "7270":
                     modell = 6;
                     break;
+                case "":
+                    String[] daten = new String[6];
+                    for (int i = 1; i < 7; i++)
+                    {
+                        daten[i-1] = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 7, StringSplitOptions.None)[i].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0];
+                    }
+                    changeset = "Aktuelle Labor Daten: iOS: " + daten[0] + ", Android: " + daten[1] + ", 7390: " + daten[2] + ", FHEM: " + daten[3] + ", 7390at: " + daten[4] + ", 7270: " + daten[5] + ".";
+                    break;
                 default:
                     changeset += "Für die " + parameter + " steht derzeit keine Labor Version zur Verfügung. ";
                     break;
             }
-            String webseite = get_web("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
             if (webseite != "")
             {
                 if (modell != 0)
@@ -508,7 +512,7 @@ namespace freetzbot
             }
             else
             {
-                Senden("Leider war es mir nicht möglich auf die Labor Webseite von AVM zuzugreifen", privat, sender);
+                Senden("Leider war es mir nicht möglich auf die Labor Webseite von AVM zuzugreifen",privat,sender);
             }
         }
 
@@ -727,7 +731,7 @@ namespace freetzbot
                 if (gefunden == false)
                 {
                     Thread.Sleep(10000);
-                    Senden("Hallo " + sender + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast :). Pro !box bitte nur eine Box nennen (nur die Boxversion) z.b. !box 7270v1 oder !box 7170.", true, sender, "NOTICE");
+                    Senden("Hallo " + sender + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast :). Pro !box bitte nur eine Box nennen (nur die Boxversion) z.b. !box 7270v1 oder !box 7170. Um die anderen im Channel nicht zu stören, sende es mir doch bitte per query/private Nachricht (z.b. /PRIVMSG FritzBot !box 7270)", true, sender, "NOTICE");
                     StreamWriter db = new StreamWriter("user.db", true, Encoding.GetEncoding("iso-8859-1"));
                     db.WriteLine(sender);
                     db.Close();
@@ -928,6 +932,7 @@ namespace freetzbot
             try
             {
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+                request.Timeout = 10000;
                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
                 resStream = response.GetResponseStream();
             }
