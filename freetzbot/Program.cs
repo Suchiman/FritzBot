@@ -468,6 +468,12 @@ namespace freetzbot
         static private void labor(String sender, Boolean privat, String parameter = "")
         {
             String webseite = get_web("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
+            if (webseite == "")
+            {
+                Senden("Leider war es mir nicht möglich auf die Labor Webseite von AVM zuzugreifen", privat, sender);
+                return;
+            }
+
             String changeset = "";
             int modell = 0;
             switch (parameter.ToLower())
@@ -502,18 +508,17 @@ namespace freetzbot
                     changeset += "Für die " + parameter + " steht derzeit keine Labor Version zur Verfügung. ";
                     break;
             }
-            if (webseite != "")
+
+            if (modell != 0)
             {
-                if (modell != 0)
-                {
-                    changeset += "Die neueste " + parameter + " labor Version ist am " + webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 7, StringSplitOptions.None)[modell].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0] + " erschienen.";
-                }
-                Senden(changeset, privat, sender);
+                String datum = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 7, StringSplitOptions.None)[modell].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0];
+                String url = "http://www.avm.de/de/Service/Service-Portale/Labor/" + webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 7, StringSplitOptions.None)[modell].Split(new String[] { "<a href=" }, 2, StringSplitOptions.None)[1].Split(new String[] { "\"" }, 3, StringSplitOptions.None)[1].Split(new String[] { "/" }, 2, StringSplitOptions.None)[0] + "/labor_feedback_versionen.php";
+                String feedback = get_web(url);
+                String version = feedback.Split(new String[] { "</strong>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "Version " }, 2, StringSplitOptions.None)[1];
+                changeset += "Die neueste " + parameter + " labor Version ist am " + datum + " erschienen mit der Versionsnummer: " + version + ". Changelog: " + url;
             }
-            else
-            {
-                Senden("Leider war es mir nicht möglich auf die Labor Webseite von AVM zuzugreifen",privat,sender);
-            }
+
+            Senden(changeset, privat, sender);
         }
 
         static private void lmgtfy(String sender, Boolean privat, String parameter = "")
