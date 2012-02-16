@@ -169,6 +169,7 @@ namespace freetzbot
                     trunk(sender, privat);
                     break;
                 case "uptime":
+                case "laufzeit":
                     uptime(sender, privat);
                     break;
                 case "userlist":
@@ -217,11 +218,11 @@ namespace freetzbot
                 StreamWriter db = new StreamWriter("box.db", true, Encoding.GetEncoding("iso-8859-1"));
                 db.WriteLine(sender + ":" + parameter);
                 db.Close();
-                Senden("Okay danke, ich werde es mir notieren.", privat, sender);
+                Senden("Okay danke, ich werde mir deine \"" + parameter + "\" notieren.", true, sender);
             }
             else
             {
-                hilfe(sender, privat, parameter = "box");
+                hilfe(sender, true, parameter = "box");
             }
         }
 
@@ -466,26 +467,6 @@ namespace freetzbot
 
         static private void labor(String sender, Boolean privat, String parameter = "")
         {
-            StringBuilder sb = new StringBuilder();
-            byte[] buf = new byte[8192];
-            HttpWebRequest request = (HttpWebRequest)
-                WebRequest.Create("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
-            HttpWebResponse response = (HttpWebResponse)
-                request.GetResponse();
-            Stream resStream = response.GetResponseStream();
-            String tempString = null;
-            int count = 0;
-
-            do
-            {
-                count = resStream.Read(buf, 0, buf.Length);
-                if (count != 0)
-                {
-                    tempString = Encoding.ASCII.GetString(buf, 0, count);
-                    sb.Append(tempString);
-                }
-            }
-            while (count > 0);
             int modell = 0;
             String changeset = "";
             if (parameter == "")
@@ -516,11 +497,19 @@ namespace freetzbot
                     changeset += "Für die " + parameter + " steht derzeit keine Labor Version zur Verfügung. ";
                     break;
             }
-            if (modell != 0)
+            String webseite = get_web("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
+            if (webseite != "")
             {
-                changeset += "Die neueste " + parameter + " labor Version ist am " + sb.ToString().Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 7, StringSplitOptions.None)[modell].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0] + " erschienen.";
+                if (modell != 0)
+                {
+                    changeset += "Die neueste " + parameter + " labor Version ist am " + webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 7, StringSplitOptions.None)[modell].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0] + " erschienen.";
+                }
+                Senden(changeset, privat, sender);
             }
-            Senden(changeset, privat, sender);
+            else
+            {
+                Senden("Leider war es mir nicht möglich auf die Labor Webseite von AVM zuzugreifen", privat, sender);
+            }
         }
 
         static private void lmgtfy(String sender, Boolean privat, String parameter = "")
@@ -567,29 +556,17 @@ namespace freetzbot
 
         static private void trunk(String sender, Boolean privat)
         {
-            StringBuilder sb = new StringBuilder();
-            byte[] buf = new byte[8192];
-            HttpWebRequest request = (HttpWebRequest)
-                WebRequest.Create("http://freetz.org/changeset");
-            HttpWebResponse response = (HttpWebResponse)
-                request.GetResponse();
-            Stream resStream = response.GetResponseStream();
-            String tempString = null;
-            int count = 0;
-
-            do
+            String webseite = get_web("http://freetz.org/changeset");
+            if (webseite != "")
             {
-                count = resStream.Read(buf, 0, buf.Length);
-                if (count != 0)
-                {
-                    tempString = Encoding.ASCII.GetString(buf, 0, count);
-                    sb.Append(tempString);
-                }
+                String changeset = "Der aktuellste Changeset ist " + webseite.Split(new String[] { "<h1>" }, 2, StringSplitOptions.None)[1].Split(new String[] { "</h1>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "Changeset " }, 2, StringSplitOptions.None)[1];
+                changeset += " und wurde am" + webseite.Split(new String[] { "<dd class=\"time\">" }, 2, StringSplitOptions.None)[1].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "   " }, 5, StringSplitOptions.None)[4] + " in den Trunk eingecheckt. Siehe: http://freetz.org/changeset";
+                Senden(changeset, privat, sender);
             }
-            while (count > 0);
-            String changeset = "Der aktuellste Changeset ist " + sb.ToString().Split(new String[] { "<h1>" }, 2, StringSplitOptions.None)[1].Split(new String[] { "</h1>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "Changeset " }, 2, StringSplitOptions.None)[1];
-            changeset += " und wurde am" + sb.ToString().Split(new String[] { "<dd class=\"time\">" }, 2, StringSplitOptions.None)[1].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "   " }, 5, StringSplitOptions.None)[4] + " in den Trunk eingecheckt. Siehe: http://freetz.org/changeset";
-            Senden(changeset, privat, sender);
+            else
+            {
+                Senden("Leider war es mir nicht möglich auf die Freetz Webseite zuzugreifen", privat, sender);
+            }
         }
 
         static private void uptime(String sender, Boolean privat)
@@ -803,11 +780,11 @@ namespace freetzbot
                     if (eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[1] == "JOIN")
                     {
                         String nick = eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[0].Split(new String[] { "!" }, 2, StringSplitOptions.None)[0].Split(new String[] { ":" }, 2, StringSplitOptions.None)[1];
+                        logging(nick + " hat den Raum betreten");
                         if (klappe == false)
                         {
                             boxfrage(nick);
                         }
-                        logging(nick + " hat den Raum betreten");
                         return;
                     }
                     //Prüfen ob der Raum verlassen wird
@@ -939,6 +916,37 @@ namespace freetzbot
                 gesplittet[0] = text;
             }
             return gesplittet;
+        }
+
+        static private String get_web(String url)
+        {
+            StringBuilder sb = new StringBuilder();
+            Stream resStream = null;
+            String tempString = null;
+            Byte[] buf = new Byte[8192];
+            int count = 0;
+            try
+            {
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+                resStream = response.GetResponseStream();
+            }
+            catch (Exception ex)
+            {
+                logging("Exception beim Webseiten Aufruf aufgetreten: " + ex.Message);
+                return "";
+            }
+            do
+            {
+                count = resStream.Read(buf, 0, buf.Length);
+                if (count != 0)
+                {
+                    tempString = Encoding.ASCII.GetString(buf, 0, count);
+                    sb.Append(tempString);
+                }
+            }
+            while (count > 0);
+            return sb.ToString();
         }
 
         static private void Senden(String text, Boolean privat, String adressant = "", String methode = "PRIVMSG")
