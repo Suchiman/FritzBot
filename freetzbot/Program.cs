@@ -60,9 +60,8 @@ namespace freetzbot
                         break;
                 }
             }
-
-            if (ignore("", true, sender)) return;
-            if (parameter.Length > 1) if (ignore("", true, parameter[1])) return;
+            if (ignore_check(sender)) return;
+            if (parameter.Length > 1) if (ignore_check(parameter[1])) return;
             if (klappe) privat = true;
 
             switch (parameter[0].ToLower())
@@ -443,6 +442,9 @@ namespace freetzbot
                     case "hilfe":
                         Senden("Du scherzbold, hehe.", privat, sender);
                         break;
+                    case "ignore":
+                        Senden("Schließt die angegebene Person von mir aus", privat, sender);
+                        break;
                     case "labor":
                         Senden("Ich schaue mal auf das aktuelle Datum der Labor Firmwares, Parameter: '7270', '7390', 'fhem', '7390at', 'android', 'ios'.", privat, sender);
                         break;
@@ -476,12 +478,12 @@ namespace freetzbot
             }
             else
             {
-                Senden("Aktuelle Befehle: about box boxfind boxinfo boxlist boxremove frag freetz hilfe labor lmgtfy ping trunk uptime userlist whmf witz zeit.", privat, sender);
+                Senden("Aktuelle Befehle: about box boxfind boxinfo boxlist boxremove frag freetz hilfe ignore labor lmgtfy ping trunk uptime userlist whmf witz zeit.", privat, sender);
                 Senden("Hilfe zu jedem Befehl mit \"!help befehl\". Um die anderen nicht zu belästigen kannst du mich auch per PM (query) anfragen", privat, sender);
             }
         }
 
-        static private Boolean ignore(String sender, Boolean privat, String parameter = "")
+        static private Boolean ignore_check(String parameter = "")
         {
             String[] Daten = db_lesen("ignore.db");
             for (int i = 0; i < Daten.Length; i++)
@@ -491,14 +493,25 @@ namespace freetzbot
                     return true;
                 }
             }
-            if (sender == parameter || sender == "Suchiman" || sender == "hippie2000")
-            {
-                StreamWriter db = new StreamWriter("ignore.db", true, Encoding.GetEncoding("iso-8859-1"));
-                db.WriteLine(parameter);
-                db.Close();
-                Senden("Ich werde " + parameter + " ab sofort keine beachtung mehr schenken", privat, sender);
-            }
             return false;
+        }
+
+        static private void ignore(String sender, Boolean privat, String parameter = "")
+        {
+            if (parameter != "")
+            {
+                if (sender == parameter || sender == "Suchiman" || sender == "hippie2000")
+                {
+                    StreamWriter db = new StreamWriter("ignore.db", true, Encoding.GetEncoding("iso-8859-1"));
+                    db.WriteLine(parameter);
+                    db.Close();
+                    Senden("Ich werde " + parameter + " ab sofort keine beachtung mehr schenken", privat, sender);
+                }
+            }
+            else
+            {
+                hilfe(sender, privat, "ignore");
+            }
         }
 
         static private void labor(String sender, Boolean privat, String parameter = "")
@@ -787,7 +800,7 @@ namespace freetzbot
 
         static private void boxfrage(String sender)
         {
-            if (ignore("", true, sender)) return;
+            if (ignore_check(sender)) return;
             try
             {
                 Boolean gefunden = false;
