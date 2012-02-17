@@ -39,6 +39,10 @@ namespace freetzbot
             {
                 switch (parameter[0].ToLower())
                 {
+                    case "unignore":
+                        unignore(parameter[1]);
+                        Senden("Alles klar", privat, sender);
+                        break;
                     case "klappe":
                         klappe = true;
                         Senden("Tschuldigung, bin ruhig", privat, sender);
@@ -56,10 +60,11 @@ namespace freetzbot
                         break;
                 }
             }
-            if (klappe)
-            {
-                privat = true;
-            }
+
+            if (ignore("", true, sender)) return;
+            if (parameter.Length > 1) if (ignore("", true, parameter[1])) return;
+            if (klappe) privat = true;
+
             switch (parameter[0].ToLower())
             {
                 case "about":
@@ -141,6 +146,16 @@ namespace freetzbot
                     else
                     {
                         hilfe(sender, privat);
+                    }
+                    break;
+                case "ignore":
+                    if (parameter.Length > 1)
+                    {
+                        ignore(sender, privat, parameter[1]);
+                    }
+                    else
+                    {
+                        ignore(sender, privat);
                     }
                     break;
                 case "labor":
@@ -466,6 +481,26 @@ namespace freetzbot
             }
         }
 
+        static private Boolean ignore(String sender, Boolean privat, String parameter = "")
+        {
+            String[] Daten = db_lesen("ignore.db");
+            for (int i = 0; i < Daten.Length; i++)
+            {
+                if (Daten[i] == parameter)
+                {
+                    return true;
+                }
+            }
+            if (sender == parameter || sender == "Suchiman" || sender == "hippie2000")
+            {
+                StreamWriter db = new StreamWriter("ignore.db", true, Encoding.GetEncoding("iso-8859-1"));
+                db.WriteLine(parameter);
+                db.Close();
+                Senden("Ich werde " + parameter + " ab sofort keine beachtung mehr schenken", privat, sender);
+            }
+            return false;
+        }
+
         static private void labor(String sender, Boolean privat, String parameter = "")
         {
             String webseite = get_web("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
@@ -515,6 +550,11 @@ namespace freetzbot
                 String datum = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 7, StringSplitOptions.None)[modell].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0];
                 String url = "http://www.avm.de/de/Service/Service-Portale/Labor/" + webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 7, StringSplitOptions.None)[modell].Split(new String[] { "<a href=" }, 2, StringSplitOptions.None)[1].Split(new String[] { "\"" }, 3, StringSplitOptions.None)[1].Split(new String[] { "/" }, 2, StringSplitOptions.None)[0] + "/labor_feedback_versionen.php";
                 String feedback = get_web(url);
+                if (feedback == "")
+                {
+                    Senden("Leider war es mir nicht möglich alle Daten von der AVM Webseite abzurufen", privat, sender);
+                    return;
+                }
                 String version = feedback.Split(new String[] { "</strong>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "Version " }, 2, StringSplitOptions.None)[1];
                 changeset += "Die neueste " + parameter + " labor Version ist am " + datum + " erschienen mit der Versionsnummer: " + version + ". Changelog: " + url;
             }
@@ -577,6 +617,27 @@ namespace freetzbot
             {
                 Senden("Leider war es mir nicht möglich auf die Freetz Webseite zuzugreifen", privat, sender);
             }
+        }
+
+        static private void unignore(String parameter)
+        {
+            String[] Daten = db_lesen("ignore.db");
+            int i = 0;
+            for (i = 0; i < Daten.Length; i++)
+            {
+                if (Daten[i] == parameter)
+                {
+                    List<String> tmp = new List<String>(Daten);
+                    tmp.RemoveAt(i);
+                    Daten = tmp.ToArray();
+                }
+            }
+            StreamWriter db = new StreamWriter("ignore.db", false, Encoding.GetEncoding("iso-8859-1"));
+            for (i = 0; i < Daten.Length; i++)
+            {
+                db.WriteLine(Daten[i]);
+            }
+            db.Close();
         }
 
         static private void uptime(String sender, Boolean privat)
@@ -704,7 +765,7 @@ namespace freetzbot
                     StreamWriter db = new StreamWriter("witze.db", true, Encoding.GetEncoding("iso-8859-1"));
                     db.WriteLine(witz[1]);
                     db.Close();
-                    Senden("Ist notiert", privat, sender);
+                    Senden("Ist notiert " + sender, privat, sender);
                 }
             }
             else
@@ -723,6 +784,7 @@ namespace freetzbot
 
         static private void boxfrage(String sender)
         {
+            if (ignore("", true, sender)) return;
             try
             {
                 Boolean gefunden = false;
