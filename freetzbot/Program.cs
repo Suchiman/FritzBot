@@ -882,6 +882,10 @@ namespace freetzbot
                     try
                     {
                         Daten = inStream.ReadLine();
+                        if (Daten == null)
+                        {
+                            return;//Wenn ReadLine null ergibt ist die Verbindung abgerissen -> empfangsthread beenden und Hauptthread die möglichkeit geben eine neue Verbindung aufzubauen.
+                        }
                     }
                     catch (Exception ex)
                     {
