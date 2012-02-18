@@ -28,9 +28,13 @@ namespace freetzbot
         static public Boolean klappe = false;
         static public Boolean crashed = true;
         static public Boolean restart = false;
-        static public String zeilen = "1105";
+        static public String zeilen = Convert.ToString(173 + 1101);
         static public DateTime startzeit;
         static public List<string> logging_list = new List<string>();
+        static public db boxdb = new db("box.db");
+        static public db userdb = new db("user.db");
+        static public db witzdb = new db("witze.db");
+        static public db ignoredb = new db("ignore.db");
 
         static private void bot_antwort(String sender, Boolean privat, String nachricht)
         {
@@ -230,9 +234,7 @@ namespace freetzbot
         {
             if (parameter != "")
             {
-                StreamWriter db = new StreamWriter("box.db", true, Encoding.GetEncoding("iso-8859-1"));
-                db.WriteLine(sender + ":" + parameter);
-                db.Close();
+                boxdb.Add(sender + ":" + parameter);
                 Senden("Okay danke, ich werde mir deine \"" + parameter + "\" notieren.", true, sender);
             }
             else
@@ -245,32 +247,23 @@ namespace freetzbot
         {
             if (parameter != "")
             {
-                Boolean gefunden = false;
-                String[] Daten = db_lesen("box.db");
-                String besitzer = "";
-                String[] temp;
-                foreach (String data in Daten)
+                String[] Daten = boxdb.GetContaining(parameter);
+                if (Daten.Length > 0)
                 {
-                    if (data.ToLower().Contains(parameter.ToLower()))
+                    String besitzer = "";
+                    String[] temp;
+                    for (int i = 0; i < Daten.Length; i++)
                     {
-                        temp = data.Split(new String[] { ":" }, 2, StringSplitOptions.None);
-                        if (!besitzer.ToLower().Contains(temp[0].ToLower()))
+                        temp = Daten[i].Split(new String[] { ":" }, 2, StringSplitOptions.None);
+                        if (besitzer == "")
                         {
-                            if (besitzer == "")
-                            {
-                                besitzer = temp[0];
-                                gefunden = true;
-                            }
-                            else
-                            {
-                                besitzer += ", " + temp[0];
-                                gefunden = true;
-                            }
+                            besitzer = temp[0];
+                        }
+                        else
+                        {
+                            besitzer += ", " + temp[0];
                         }
                     }
-                }
-                if (gefunden == true)
-                {
                     Senden("Folgende Benutzer scheinen diese Box zu besitzen: " + besitzer, privat, sender);
                 }
                 else
@@ -290,16 +283,13 @@ namespace freetzbot
             {
                 parameter = sender;
             }
-            Boolean gefunden = false;
-            String[] user = new String[2];
-            String[] Daten = db_lesen("box.db");
-            String boxen = "";
-            for (int i = 0; i < Daten.Length; i++)
+            String[] Daten = boxdb.GetContaining(parameter);
+            if (Daten.Length > 0)
             {
-                user = Daten[i].Split(new String[] { ":" }, 2, StringSplitOptions.None);
-                if (parameter.ToLower() == user[0].ToLower())
+                String boxen = "";
+                for (int i = 0; i < Daten.Length; i++)
                 {
-                    gefunden = true;
+                    String[] user = Daten[i].Split(new String[] { ":" }, 2, StringSplitOptions.None);
                     if (boxen != "")
                     {
                         boxen += ", " + user[1];
@@ -309,9 +299,6 @@ namespace freetzbot
                         boxen = user[1];
                     }
                 }
-            }
-            if (gefunden == true)
-            {
                 if (parameter == sender)
                 {
                     Senden("Du hast bei mir die Box/en " + boxen + " registriert.", privat, sender);
@@ -337,12 +324,11 @@ namespace freetzbot
         static private void boxlist(String sender, Boolean privat)
         {
             Boolean gefunden = false;
-            String[] Daten = db_lesen("box.db");
+            String[] Daten = boxdb.GetAll();
             String boxen = "";
-            String[] temp;
             foreach (String data in Daten)
             {
-                temp = data.Split(new String[] { ":" }, 2, StringSplitOptions.None);
+                String[] temp = data.Split(new String[] { ":" }, 2, StringSplitOptions.None);
                 if (!boxen.ToLower().Contains(temp[1].ToLower()))
                 {
                     if (boxen == "")
@@ -363,7 +349,7 @@ namespace freetzbot
             }
             else
             {
-                Senden("Diese Box scheint niemand zu besitzen.", privat, sender);
+                Senden("Da stimmt etwas nicht, es wurde bei mir keine Box registriert", privat, sender);
             }
         }
 
@@ -371,25 +357,14 @@ namespace freetzbot
         {
             if (parameter != "")
             {
-                String[] Daten = db_lesen("box.db");
-                int i = 0;
-                String suche = sender + ":" + parameter;
-                for (i = 0; i < Daten.Length; i++)
+                if (boxdb.Remove(sender + ":" + parameter))
                 {
-                    if (Daten[i] == suche)
-                    {
-                        List<String> tmp = new List<String>(Daten);
-                        tmp.RemoveAt(i);
-                        Daten = tmp.ToArray();
-                        Senden("Erledigt!", privat, sender);
-                    }
+                    Senden("Erledigt!", privat, sender);
                 }
-                StreamWriter db = new StreamWriter("box.db", false, Encoding.GetEncoding("iso-8859-1"));
-                for (i = 0; i < Daten.Length; i++)
+                else
                 {
-                    db.WriteLine(Daten[i]);
+                    Senden("Der Suchstring wurde nicht gefunden und deshalb nicht gelöscht", privat, sender);
                 }
-                db.Close();
             }
             else
             {
@@ -485,13 +460,9 @@ namespace freetzbot
 
         static private Boolean ignore_check(String parameter = "")
         {
-            String[] Daten = db_lesen("ignore.db");
-            for (int i = 0; i < Daten.Length; i++)
+            if(ignoredb.Find(parameter) != -1)
             {
-                if (Daten[i] == parameter)
-                {
-                    return true;
-                }
+                return true;
             }
             return false;
         }
@@ -502,9 +473,7 @@ namespace freetzbot
             {
                 if (sender == parameter || sender == "Suchiman" || sender == "hippie2000")
                 {
-                    StreamWriter db = new StreamWriter("ignore.db", true, Encoding.GetEncoding("iso-8859-1"));
-                    db.WriteLine(parameter);
-                    db.Close();
+                    ignoredb.Add(parameter);
                     Senden("Ich werde " + parameter + " ab sofort keine beachtung mehr schenken", privat, sender);
                 }
             }
@@ -637,23 +606,7 @@ namespace freetzbot
 
         static private void unignore(String parameter)
         {
-            String[] Daten = db_lesen("ignore.db");
-            int i = 0;
-            for (i = 0; i < Daten.Length; i++)
-            {
-                if (Daten[i] == parameter)
-                {
-                    List<String> tmp = new List<String>(Daten);
-                    tmp.RemoveAt(i);
-                    Daten = tmp.ToArray();
-                }
-            }
-            StreamWriter db = new StreamWriter("ignore.db", false, Encoding.GetEncoding("iso-8859-1"));
-            for (i = 0; i < Daten.Length; i++)
-            {
-                db.WriteLine(Daten[i]);
-            }
-            db.Close();
+            ignoredb.Remove(parameter);
         }
 
         static private void uptime(String sender, Boolean privat)
@@ -665,7 +618,7 @@ namespace freetzbot
         static private void userlist(String sender, Boolean privat)
         {
             Boolean gefunden = false;
-            String[] Daten = db_lesen("box.db");
+            String[] Daten = boxdb.GetAll();
             String besitzer = "";
             String[] temp;
             foreach (String data in Daten)
@@ -772,24 +725,21 @@ namespace freetzbot
 
         static private void witz(String sender, Boolean privat, String parameter = "")
         {
-            String[] Daten = db_lesen("witze.db");
             if (parameter != "")
             {
                 String[] witz = parameter.Split(new String[] { " " }, 2, StringSplitOptions.None);
                 if (witz[0] == "add")
                 {
-                    StreamWriter db = new StreamWriter("witze.db", true, Encoding.GetEncoding("iso-8859-1"));
-                    db.WriteLine(witz[1]);
-                    db.Close();
+                    witzdb.Add(witz[1]);
                     Senden("Ist notiert " + sender, privat, sender);
                 }
             }
             else
             {
                 Random rand = new Random();
-                if (Daten[rand.Next(Daten.Length)] != "")
+                if (witzdb.GetAt(rand.Next(witzdb.Size())) != "")
                 {
-                    Senden(Daten[rand.Next(Daten.Length)], privat, sender);
+                    Senden(witzdb.GetAt(rand.Next(witzdb.Size())), privat, sender);
                 }
                 else
                 {
@@ -803,22 +753,11 @@ namespace freetzbot
             if (ignore_check(sender)) return;
             try
             {
-                Boolean gefunden = false;
-                String[] Daten = db_lesen("user.db");
-                for (int i = 0; i < Daten.Length; i++)
-                {
-                    if (sender == Daten[i] || sender.Contains(Daten[i]))
-                    {
-                        gefunden = true;
-                    }
-                }
-                if (gefunden == false)
+                if (!(userdb.GetContaining(sender).Length > 0))
                 {
                     Thread.Sleep(10000);
                     Senden("Hallo " + sender + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast :). Pro !box bitte nur eine Box nennen (nur die Boxversion) z.b. !box 7270v1 oder !box 7170. Um die anderen im Channel nicht zu stören, sende es mir doch bitte per query/private Nachricht (z.b. /PRIVMSG FritzBot !box 7270)", true, sender, "NOTICE");
-                    StreamWriter db = new StreamWriter("user.db", true, Encoding.GetEncoding("iso-8859-1"));
-                    db.WriteLine(sender);
-                    db.Close();
+                    userdb.Add(sender);
                 }
             }
             catch { }
@@ -908,11 +847,11 @@ namespace freetzbot
                         logging(nick + ": " + nachricht);
                         try
                         {
-                        if (nachricht.ToCharArray()[0] == '!')
-                        {
-                            String befehl = nachricht.Split(new String[] { "!" }, 2, StringSplitOptions.None)[1];
-                            bot_antwort(nick, privat, befehl);
-                        }
+                            if (nachricht.ToCharArray()[0] == '!')
+                            {
+                                String befehl = nachricht.Split(new String[] { "!" }, 2, StringSplitOptions.None)[1];
+                                bot_antwort(nick, privat, befehl);
+                            }
                         }
                         catch (Exception ex)
                         {
@@ -958,27 +897,6 @@ namespace freetzbot
                 logging("Exception in unbekannten Code bereich des empfangsthread aufgefangen: " + ex.Message);
                 return;
             }
-        }
-
-        static private String[] db_lesen(String db)
-        {
-            if (!File.Exists(db))
-            {
-                StreamWriter create_db = new StreamWriter(db, true, Encoding.GetEncoding("iso-8859-1"));
-                create_db.WriteLine("");
-                create_db.Close();
-            }
-            StreamReader sr = new StreamReader(db, Encoding.GetEncoding("iso-8859-1"));
-            String[] Daten = new String[0];
-            int i = 0;
-            while (sr.Peek() >= 0)
-            {
-                Array.Resize(ref Daten, Daten.Length + 1);
-                Daten[i] = sr.ReadLine();
-                i++;
-            }
-            sr.Close();
-            return Daten;
         }
 
         static private String[] splitat(String text, int length)
