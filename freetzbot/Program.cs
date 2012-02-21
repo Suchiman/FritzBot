@@ -22,7 +22,7 @@ namespace freetzbot
         static private Boolean klappe = false;
         static private Boolean crashed = true;
         static private Boolean restart = false;
-        static private String zeilen = Convert.ToString(173 + 281 + 943);
+        static private String zeilen = Convert.ToString(173 + 288 + 943);
         static private DateTime startzeit;
         static private List<string> logging_list = new List<string>();
         static private db boxdb = new db("box.db");
@@ -50,11 +50,11 @@ namespace freetzbot
                             hilfe(connection, sender, receiver, "okay");
                             break;
                         case "join":
-                            connection.sendmsg("*rennt los zum channel " + parameter[1] + "*", receiver);
+                            connection.sendaction("rennt los zum channel " + parameter[1], receiver);
                             connection.join(parameter[1]);
                             break;
                         case "part":
-                            connection.sendmsg("*verlässt den channel " + parameter[1] + "*", receiver);
+                            connection.sendaction("verlässt den channel " + parameter[1], receiver);
                             connection.leave(parameter[1]);
                             break;
                         case "quit":
@@ -105,7 +105,7 @@ namespace freetzbot
                 switch (parameter[0].ToLower())
                 {
                     case "about":
-                        connection.sendmsg("Programmiert hat mich Suchiman, und ich bin dazu da, um Daten über Fritzboxen zu sammeln und andere kleine Dinge zu tuen. Ich bestehe derzeit aus " + zeilen + " Zeilen C# Code.", receiver);
+                        connection.sendmsg("Programmiert hat mich Suchiman, und ich bin dazu da, um Daten über Fritzboxen zu sammeln und andere kleine Dinge zu machen. Ich bestehe derzeit aus " + zeilen + " Zeilen C# Code.", receiver);
                         break;
                     case "box":
                         box(connection, sender, receiver, parameter[1]);
@@ -426,7 +426,7 @@ namespace freetzbot
                         connection.sendmsg("Schließt die angegebene Person von mir aus", receiver);
                         break;
                     case "join":
-                        connection.sendmsg("Daraufhin werde ich den angegebenen Channel betreten", receiver);
+                        connection.sendmsg("Daraufhin werde ich den angegebenen Channel betreten, Operator Befehl: z.b. !join #testchannel", receiver);
                         break;
                     case "klappe":
                         connection.sendmsg("Zwingt mich nur noch Privat zu antworten, Operator Befehl: kein parameter", receiver);
@@ -790,7 +790,7 @@ namespace freetzbot
                     logging(nick + " hat den Server verlassen");
                     return;
                 case "PART":
-                    logging(nick + " hat den Raum verlassen");
+                    logging(nick + " hat den Raum " + message + " verlassen");
                     return;
                 case "NICK":
                     logging(nick + " heißt jetzt " + message);

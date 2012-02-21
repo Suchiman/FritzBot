@@ -142,6 +142,12 @@ namespace freetzbot
             return laufzeit;
         }
 
+        public void sendaction(String message, String receiver)
+        {
+            String action = "\u0001ACTION " + message + "\u0001";
+            sendmsg(action, receiver);
+        }
+
         public void sendmsg(String message, String receiver)
         {
             try
@@ -209,6 +215,7 @@ namespace freetzbot
             //Beispiel einer Nachricht: ":Suchiman!~Suchiman@Robin-PC PRIVMSG #eingang :hi"
             //Beispiel einer PRIVMSG: ":Suchi!~email@91-67-134-206-dynip.superkabel.de PRIVMSG Suchiman :hi"
             //Beispiel eines Joins: ":Suchiman!~robinsue@91-67-134-206-dynip.superkabel.de JOIN :#eingang"
+            //Action: ":FritzBot!~FritzBot@91-67-134-206-dynip.superkabel.de PRIVMSG #fritzbox :\001ACTION rennt los zum channel #eingang\001"
             //Rename: :Suchi!~email@91-67-134-206-dynip.superkabel.de NICK :testi
             //Ping anforderung des Servers: "PING :fritz.box"
             try
