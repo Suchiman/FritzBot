@@ -11,279 +11,298 @@ namespace freetzbot
 {
     class Program
     {
-        static private System.ComponentModel.BackgroundWorker empfangsthread;
         static private System.ComponentModel.BackgroundWorker loggingthread;
 
-        static public TcpClient c;
-        static public String nickname = "FritzBot";
-
         #if DEBUG
-        static public String server = "suchiman.selfip.org";
-        static public String raum = "#eingang";
+        static private irc atw_inter = new irc("suchiman.selfip.org", 6667, "FritzBot");
         #else
-        static public String server = "irc.atw-inter.net";
-        static public String raum = "#fritzbox";
+        static private irc atw_inter = new irc("irc.atw-inter.net", 6667, "FritzBot");
         #endif
 
-        static public Boolean klappe = false;
-        static public Boolean crashed = true;
-        static public Boolean restart = false;
-        static public String zeilen = Convert.ToString(173 + 1101);
-        static public DateTime startzeit;
-        static public List<string> logging_list = new List<string>();
-        static public db boxdb = new db("box.db");
-        static public db userdb = new db("user.db");
-        static public db witzdb = new db("witze.db");
-        static public db ignoredb = new db("ignore.db");
+        static private Boolean klappe = false;
+        static private Boolean crashed = true;
+        static private Boolean restart = false;
+        static private String zeilen = Convert.ToString(173 + 281 + 943);
+        static private DateTime startzeit;
+        static private List<string> logging_list = new List<string>();
+        static private db boxdb = new db("box.db");
+        static private db userdb = new db("user.db");
+        static private db witzdb = new db("witze.db");
+        static private db ignoredb = new db("ignore.db");
 
-        static private void bot_antwort(String sender, Boolean privat, String nachricht)
+        static private void process_command(irc connection, String sender, String receiver, String message)
         {
-            String[] parameter = nachricht.Split(new String[] { " " }, 2, StringSplitOptions.None);
+            String[] parameter = message.Split(new String[] { " " }, 2, StringSplitOptions.None);
             if (sender == "Suchiman" || sender == "hippie2000")
             {
-                switch (parameter[0].ToLower())
+                if (parameter.Length > 1) //Wenn ein zusätzlicher Parameter angegebenen wurde....
                 {
-                    case "unignore":
-                        unignore(parameter[1]);
-                        Senden("Alles klar", privat, sender);
-                        break;
-                    case "klappe":
-                        klappe = true;
-                        Senden("Tschuldigung, bin ruhig", privat, sender);
-                        break;
-                    case "okay":
-                        klappe = false;
-                        Senden("Okay bin zurück ;-)", privat, sender);
-                        break;
-                    case "quit":
-                        Trennen();
-                        break;
-                    case "restart":
-                        restart = true;
-                        Trennen();
-                        break;
+                    switch (parameter[0].ToLower())
+                    {
+                        case "unignore":
+                            unignore(parameter[1]);
+                            connection.sendmsg("Alles klar", receiver);
+                            break;
+                        case "klappe":
+                            hilfe(connection, sender, receiver, "klappe");
+                            break;
+                        case "okay":
+                            hilfe(connection, sender, receiver, "okay");
+                            break;
+                        case "join":
+                            connection.sendmsg("*rennt los zum channel " + parameter[1] + "*", receiver);
+                            connection.join(parameter[1]);
+                            break;
+                        case "part":
+                            connection.sendmsg("*verlässt den channel " + parameter[1] + "*", receiver);
+                            connection.leave(parameter[1]);
+                            break;
+                        case "quit":
+                            hilfe(connection, sender, receiver, "quit");
+                            break;
+                        case "restart":
+                            hilfe(connection, sender, receiver, "restart");
+                            break;
+                    }
+                }
+                else //Wenn kein zusätzlicher Parameter angegeben wurde....
+                {
+                    switch (parameter[0].ToLower())
+                    {
+                        case "unignore":
+                            hilfe(connection, sender, receiver, "unignore");
+                            break;
+                        case "klappe":
+                            klappe = true;
+                            connection.sendmsg("Tschuldigung, bin ruhig", receiver);
+                            break;
+                        case "okay":
+                            klappe = false;
+                            connection.sendmsg("Okay bin zurück ;-)", receiver);
+                            break;
+                        case "join":
+                            hilfe(connection, sender, receiver, "join");
+                            break;
+                        case "part":
+                            hilfe(connection, sender, receiver, "part");
+                            break;
+                        case "quit":
+                            Trennen();
+                            break;
+                        case "restart":
+                            restart = true;
+                            Trennen();
+                            break;
+                    }
                 }
             }
             if (ignore_check(sender)) return;
             if (parameter.Length > 1) if (ignore_check(parameter[1])) return;
-            if (klappe) privat = true;
+            if (klappe) receiver = sender;
 
-            switch (parameter[0].ToLower())
+            if (parameter.Length > 1)//Wenn ein zusätzlicher Parameter angegebenen wurde....
             {
-                case "about":
-                    Senden("Programmiert hat mich Suchiman, und ich bin dazu da, um Daten über Fritzboxen zu sammeln und andere kleine Dinge zu tuen. Ich bestehe derzeit aus " + zeilen + " Zeilen C# Code.", privat, sender);
-                    break;
-                case "box":
-                    if (parameter.Length > 1)
-                    {
-                        box(sender, privat, parameter[1]);
-                    }
-                    else
-                    {
-                        box(sender, privat);
-                    }
-                    break;
-                case "boxfind":
-                    if (parameter.Length > 1)
-                    {
-                        boxfind(sender, true, parameter[1]);
-                    }
-                    else
-                    {
-                        boxfind(sender, true);
-                    }
-                    break;
-                case "boxinfo":
-                    if (parameter.Length > 1)
-                    {
-                        boxinfo(sender, privat, parameter[1]);
-                    }
-                    else
-                    {
-                        boxinfo(sender, privat);
-                    }
-                    break;
-                case "boxlist":
-                    boxlist(sender, true);
-                    break;
-                case "boxremove":
-                    if (parameter.Length > 1)
-                    {
-                        boxremove(sender, privat, parameter[1]);
-                    }
-                    else
-                    {
-                        boxremove(sender, privat);
-                    }
-                    break;
-                case "frag":
-                    if (parameter.Length > 1)
-                    {
-                        frag(sender, privat, parameter[1]);
-                    }
-                    else
-                    {
-                        frag(sender, privat);
-                    }
-                    break;
-                case "freetz":
-                case "f":
-                    if (parameter.Length > 1)
-                    {
-                        freetz(sender, privat, parameter[1]);
-                    }
-                    else
-                    {
-                        freetz(sender, privat);
-                    }
-                    break;
-                case "help":
-                case "hilfe":
-                case "faq":
-                case "info":
-                case "man":
-                    if (parameter.Length > 1)
-                    {
-                        hilfe(sender, privat, parameter[1]);
-                    }
-                    else
-                    {
-                        hilfe(sender, privat);
-                    }
-                    break;
-                case "ignore":
-                    if (parameter.Length > 1)
-                    {
-                        ignore(sender, privat, parameter[1]);
-                    }
-                    else
-                    {
-                        ignore(sender, privat);
-                    }
-                    break;
-                case "labor":
-                    if (parameter.Length > 1)
-                    {
-                        labor(sender, privat, parameter[1]);
-                    }
-                    else
-                    {
-                        labor(sender, privat);
-                    }
-                    break;
-                case "lmgtfy":
-                    if (parameter.Length > 1)
-                    {
-                        lmgtfy(sender, privat, parameter[1]);
-                    }
-                    else
-                    {
-                        lmgtfy(sender, privat);
-                    }
-                    break;
-                case "ping":
-                    ping(sender, privat);
-                    break;
-                case "trunk":
-                    trunk(sender, privat);
-                    break;
-                case "uptime":
-                case "laufzeit":
-                    uptime(sender, privat);
-                    break;
-                case "userlist":
-                    userlist(sender, true);
-                    break;
-                case "whmf":
-                case "w":
-                    if (parameter.Length > 1)
-                    {
-                        whmf(sender, privat, parameter[1]);
-                    }
-                    else
-                    {
-                        whmf(sender, privat);
-                    }
-                    break;
-                case "witz":
-                    if (parameter.Length > 1)
-                    {
-                        witz(sender, privat, parameter[1]);
-                    }
-                    else
-                    {
-                        witz(sender, privat);
-                    }
-                    break;
-                case "zeit":
-                    try
-                    {
-                        Senden("Laut meiner Uhr ist es gerade " + DateTime.Now.ToString("HH:mm:ss") + ".", privat, sender);
-                    }
-                    catch
-                    {
-                        Senden("Scheinbar ist meine Uhr kaputt, statt der Zeit habe ich nur eine Exception bekommen :(", privat, sender);
-                    }
-                    break;
-                default:
-                    break;
+                switch (parameter[0].ToLower())
+                {
+                    case "about":
+                        connection.sendmsg("Programmiert hat mich Suchiman, und ich bin dazu da, um Daten über Fritzboxen zu sammeln und andere kleine Dinge zu tuen. Ich bestehe derzeit aus " + zeilen + " Zeilen C# Code.", receiver);
+                        break;
+                    case "box":
+                        box(connection, sender, receiver, parameter[1]);
+                        break;
+                    case "boxfind":
+                        boxfind(connection, sender, receiver, parameter[1]);
+                        break;
+                    case "boxinfo":
+                        boxinfo(connection, sender, receiver, parameter[1]);
+                        break;
+                    case "boxlist":
+                        hilfe(connection, sender, receiver, "boxlist");
+                        break;
+                    case "boxremove":
+                        boxremove(connection, sender, receiver, parameter[1]);
+                        break;
+                    case "frag":
+                        frag(connection, sender, receiver, parameter[1]);
+                        break;
+                    case "freetz":
+                    case "f":
+                        freetz(connection, sender, receiver, parameter[1]);
+                        break;
+                    case "help":
+                    case "hilfe":
+                    case "faq":
+                    case "info":
+                    case "man":
+                        hilfe(connection, sender, receiver, parameter[1]);
+                        break;
+                    case "ignore":
+                        ignore(connection, sender, receiver, parameter[1]);
+                        break;
+                    case "labor":
+                        labor(connection, sender, receiver, parameter[1]);
+                        break;
+                    case "lmgtfy":
+                        lmgtfy(connection, sender, receiver, parameter[1]);
+                        break;
+                    case "ping":
+                        hilfe(connection, sender, receiver, "ping");
+                        break;
+                    case "trunk":
+                        hilfe(connection, sender, receiver, "trunk");
+                        break;
+                    case "uptime":
+                    case "laufzeit":
+                        hilfe(connection, sender, receiver, "uptime");
+                        break;
+                    case "userlist":
+                        hilfe(connection, sender, receiver, "userlist");
+                        break;
+                    case "whmf":
+                    case "w":
+                        whmf(connection, sender, receiver, parameter[1]);
+                        break;
+                    case "witz":
+                        witz(connection, sender, receiver, parameter[1]);
+                        break;
+                    case "zeit":
+                        try
+                        {
+                            connection.sendmsg("Laut meiner Uhr ist es gerade " + DateTime.Now.ToString("HH:mm:ss") + ".", receiver);
+                        }
+                        catch
+                        {
+                            connection.sendmsg("Scheinbar ist meine Uhr kaputt, statt der Zeit habe ich nur eine Exception bekommen :(", receiver);
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+            else //Wenn kein zusätzlicher Parameter angegeben wurde....
+            {
+                switch (parameter[0].ToLower())
+                {
+                    case "about":
+                        connection.sendmsg("Programmiert hat mich Suchiman, und ich bin dazu da, um Daten über Fritzboxen zu sammeln und andere kleine Dinge zu tuen. Ich bestehe derzeit aus " + zeilen + " Zeilen C# Code.", receiver);
+                        break;
+                    case "box":
+                        hilfe(connection, sender, receiver, "box");
+                        break;
+                    case "boxfind":
+                        hilfe(connection, sender, receiver, "boxfind");
+                        break;
+                    case "boxinfo":
+                        boxinfo(connection, sender, receiver, sender);
+                        break;
+                    case "boxlist":
+                        boxlist(connection, sender, receiver, "");
+                        break;
+                    case "boxremove":
+                        hilfe(connection, sender, receiver, "boxremove");
+                        break;
+                    case "frag":
+                        hilfe(connection, sender, receiver, "frag");
+                        break;
+                    case "freetz":
+                    case "f":
+                        freetz(connection, sender, receiver, "");
+                        break;
+                    case "help":
+                    case "hilfe":
+                    case "faq":
+                    case "info":
+                    case "man":
+                        hilfe(connection, sender, receiver, "");
+                        break;
+                    case "ignore":
+                        hilfe(connection, sender, receiver, "ignore");
+                        break;
+                    case "labor":
+                        labor(connection, sender, receiver, "");
+                        break;
+                    case "lmgtfy":
+                        hilfe(connection, sender, receiver, "lmgtfy");
+                        break;
+                    case "ping":
+                        ping(connection, sender, receiver, "");
+                        break;
+                    case "trunk":
+                        trunk(connection, sender, receiver, "");
+                        break;
+                    case "uptime":
+                    case "laufzeit":
+                        uptime(connection, sender, receiver, "");
+                        break;
+                    case "userlist":
+                        userlist(connection, sender, sender, "");
+                        break;
+                    case "whmf":
+                    case "w":
+                        whmf(connection, sender, receiver, "");
+                        break;
+                    case "witz":
+                        witz(connection, sender, receiver, "");
+                        break;
+                    case "zeit":
+                        try
+                        {
+                            connection.sendmsg("Laut meiner Uhr ist es gerade " + DateTime.Now.ToString("HH:mm:ss") + ".", receiver);
+                        }
+                        catch
+                        {
+                            connection.sendmsg("Scheinbar ist meine Uhr kaputt, statt der Zeit habe ich nur eine Exception bekommen :(", receiver);
+                        }
+                        break;
+                    default:
+                        break;
+                }
             }
         }
 
-        static private void box(String sender, Boolean privat, String parameter = "")
+        static private void box(irc connection, String sender, String receiver, String message)
         {
-            if (parameter != "")
+            if (boxdb.Find(sender + ":" + message) == -1)
             {
-                boxdb.Add(sender + ":" + parameter);
-                Senden("Okay danke, ich werde mir deine \"" + parameter + "\" notieren.", true, sender);
+                boxdb.Add(sender + ":" + message);
+                connection.sendmsg("Okay danke, ich werde mir deine \"" + message + "\" notieren.", receiver);
             }
             else
             {
-                hilfe(sender, true, parameter = "box");
+                connection.sendmsg("Wups, danke aber du hast mir deine \"" + message + "\" bereits mitgeteilt ;-).", receiver);
             }
         }
 
-        static private void boxfind(String sender, Boolean privat, String parameter = "")
+        static private void boxfind(irc connection, String sender, String receiver, String message)
         {
-            if (parameter != "")
+            String[] Daten = boxdb.GetContaining(message);
+            if (Daten.Length > 0)
             {
-                String[] Daten = boxdb.GetContaining(parameter);
-                if (Daten.Length > 0)
+                String besitzer = "";
+                String[] temp;
+                for (int i = 0; i < Daten.Length; i++)
                 {
-                    String besitzer = "";
-                    String[] temp;
-                    for (int i = 0; i < Daten.Length; i++)
+                    temp = Daten[i].Split(new String[] { ":" }, 2, StringSplitOptions.None);
+                    if (besitzer == "")
                     {
-                        temp = Daten[i].Split(new String[] { ":" }, 2, StringSplitOptions.None);
-                        if (besitzer == "")
-                        {
-                            besitzer = temp[0];
-                        }
-                        else
-                        {
-                            besitzer += ", " + temp[0];
-                        }
+                        besitzer = temp[0];
                     }
-                    Senden("Folgende Benutzer scheinen diese Box zu besitzen: " + besitzer, privat, sender);
+                    else
+                    {
+                        besitzer += ", " + temp[0];
+                    }
                 }
-                else
-                {
-                    Senden("Diese Box scheint niemand zu besitzen!", privat, sender);
-                }
+                connection.sendmsg("Folgende Benutzer scheinen diese Box zu besitzen: " + besitzer, receiver);
             }
             else
             {
-                hilfe(sender, privat, "boxfind");
+                connection.sendmsg("Diese Box scheint niemand zu besitzen!", receiver);
             }
         }
 
-        static private void boxinfo(String sender, Boolean privat, String parameter = "")
+        static private void boxinfo(irc connection, String sender, String receiver, String message)
         {
-            if (parameter == "")
-            {
-                parameter = sender;
-            }
-            String[] Daten = boxdb.GetContaining(parameter);
+            String[] Daten = boxdb.GetContaining(message);
             if (Daten.Length > 0)
             {
                 String boxen = "";
@@ -299,29 +318,29 @@ namespace freetzbot
                         boxen = user[1];
                     }
                 }
-                if (parameter == sender)
+                if (message == sender)
                 {
-                    Senden("Du hast bei mir die Box/en " + boxen + " registriert.", privat, sender);
+                    connection.sendmsg("Du hast bei mir die Box/en " + boxen + " registriert.", receiver);
                 }
                 else
                 {
-                    Senden(parameter + " sagte mir er hätte die Box/en " + boxen, privat, sender);
+                    connection.sendmsg(message + " sagte mir er hätte die Box/en " + boxen, receiver);
                 }
             }
             else
             {
-                if (parameter == sender)
+                if (message == sender)
                 {
-                    Senden("Du hast bei mir noch keine Box registriert.", privat, sender);
+                    connection.sendmsg("Du hast bei mir noch keine Box registriert.", receiver);
                 }
                 else
                 {
-                    Senden("Über den habe ich keine Informationen.", privat, sender);
+                    connection.sendmsg("Über den habe ich keine Informationen.", receiver);
                 }
             }
         }
 
-        static private void boxlist(String sender, Boolean privat)
+        static private void boxlist(irc connection, String sender, String receiver, String message)
         {
             Boolean gefunden = false;
             String[] Daten = boxdb.GetAll();
@@ -345,107 +364,114 @@ namespace freetzbot
             }
             if (gefunden == true)
             {
-                Senden("Folgende Boxen wurden bei mir registriert: " + boxen, privat, sender);
+                connection.sendmsg("Folgende Boxen wurden bei mir registriert: " + boxen, receiver);
             }
             else
             {
-                Senden("Da stimmt etwas nicht, es wurde bei mir keine Box registriert", privat, sender);
+                connection.sendmsg("Da stimmt etwas nicht, es wurde bei mir keine Box registriert", receiver);
             }
         }
 
-        static private void boxremove(String sender, Boolean privat, String parameter = "")
+        static private void boxremove(irc connection, String sender, String receiver, String message)
         {
-            if (parameter != "")
+            if (boxdb.Remove(sender + ":" + message))
             {
-                if (boxdb.Remove(sender + ":" + parameter))
-                {
-                    Senden("Erledigt!", privat, sender);
-                }
-                else
-                {
-                    Senden("Der Suchstring wurde nicht gefunden und deshalb nicht gelöscht", privat, sender);
-                }
+                connection.sendmsg("Erledigt!", receiver);
             }
             else
             {
-                hilfe(sender, privat, "boxremove");
+                connection.sendmsg("Der Suchstring wurde nicht gefunden und deshalb nicht gelöscht", receiver);
             }
         }
 
-        static private void frag(String sender, Boolean privat, String parameter = "")
+        static private void frag(irc connection, String sender, String receiver, String message)
         {
-            if (parameter != "")
-            {
-                Senden("Hallo " + parameter + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast. :)", privat, sender);
-            }
-            else
-            {
-                hilfe(sender, privat, "frag");
-            }
+            connection.sendmsg("Hallo " + message + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast. :)", receiver);
         }
 
-        static private void hilfe(String sender, Boolean privat, String parameter = "")
+        static private void hilfe(irc connection, String sender, String receiver, String message)
         {
-            if (parameter != "")
+            if (message != "")
             {
-                switch (parameter)
+                switch (message)
                 {
                     case "about":
-                        Senden("Ich würde dir dann kurz etwas über mich erzählen.", privat, sender);
+                        connection.sendmsg("Ich würde dir dann kurz etwas über mich erzählen.", receiver);
                         break;
                     case "box":
-                        Senden("Dies trägt deine Boxdaten ein, Beispiel: \"!box 7270\", bitte jede Box einzeln angeben.", privat, sender);
+                        connection.sendmsg("Dies trägt deine Boxdaten ein, Beispiel: \"!box 7270\", bitte jede Box einzeln angeben.", receiver);
                         break;
                     case "boxfind":
-                        Senden("Findet die Nutzer der angegebenen Box: Beispiel: \"!boxfind 7270\".", privat, sender);
+                        connection.sendmsg("Findet die Nutzer der angegebenen Box: Beispiel: \"!boxfind 7270\".", receiver);
                         break;
                     case "boxinfo":
-                        Senden("Zeigt die Box/en des angegebenen Benutzers an.", privat, sender);
+                        connection.sendmsg("Zeigt die Box/en des angegebenen Benutzers an.", receiver);
                         break;
                     case "boxlist":
-                        Senden("Dies listet alle registrierten Boxtypen auf.", privat, sender);
+                        connection.sendmsg("Dies listet alle registrierten Boxtypen auf.", receiver);
                         break;
                     case "boxremove":
-                        Senden("Entfernt die exakt von dir genannte Box aus deiner Boxinfo, als Beispiel: \"!boxremove 7270v1\".", privat, sender);
+                        connection.sendmsg("Entfernt die exakt von dir genannte Box aus deiner Boxinfo, als Beispiel: \"!boxremove 7270v1\".", receiver);
                         break;
                     case "frag":
-                        Senden("Dann werde ich den genannten Benutzer nach seiner Box fragen, z.b. !frag Anonymous", privat, sender);
+                        connection.sendmsg("Dann werde ich den genannten Benutzer nach seiner Box fragen, z.b. !frag Anonymous", receiver);
                         break;
                     case "freetz":
-                        Senden("Das erzeugt einen Link zum Freetz Trac mit dem angegebenen Suchkriterium, Beispiele: !freetz ngIRCd, !freetz \"Build System\", !freetz FAQ Benutzer", privat, sender);
+                        connection.sendmsg("Das erzeugt einen Link zum Freetz Trac mit dem angegebenen Suchkriterium, Beispiele: !freetz ngIRCd, !freetz \"Build System\", !freetz FAQ Benutzer", receiver);
                         break;
                     case "hilfe":
-                        Senden("Du scherzbold, hehe.", privat, sender);
+                        connection.sendmsg("Du scherzbold, hehe.", receiver);
                         break;
                     case "ignore":
-                        Senden("Schließt die angegebene Person von mir aus", privat, sender);
+                        connection.sendmsg("Schließt die angegebene Person von mir aus", receiver);
+                        break;
+                    case "join":
+                        connection.sendmsg("Daraufhin werde ich den angegebenen Channel betreten", receiver);
+                        break;
+                    case "klappe":
+                        connection.sendmsg("Zwingt mich nur noch Privat zu antworten, Operator Befehl: kein parameter", receiver);
                         break;
                     case "labor":
-                        Senden("Ich schaue mal auf das aktuelle Datum der Labor Firmwares, Parameter: '7270', '7390', 'fhem', '7390at', 'android', 'ios'.", privat, sender);
+                        connection.sendmsg("Ich schaue mal auf das aktuelle Datum der Labor Firmwares, Parameter: '7270', '7390', 'fhem', '7390at', 'android', 'ios'.", receiver);
                         break;
                     case "lmgtfy":
-                        Senden("Dazu sage ich jetzt mal nichts, finde es raus!", privat, sender);
+                        connection.sendmsg("Dazu sage ich jetzt mal nichts, finde es raus!", receiver);
+                        break;
+                    case "okay":
+                        connection.sendmsg("Erlaubt es mir wieder im Channel zu sprechen, Operator Befehl: kein parameter", receiver);
+                        break;
+                    case "part":
+                        connection.sendmsg("Den angegebenen Channel werde ich verlassen, Operator Befehl: z.b. !part #testchannel", receiver);
                         break;
                     case "ping":
-                        Senden("Damit kannst du Testen ob ich noch Ansprechbar bin oder ob ich gestorben bin", privat, sender);
+                        connection.sendmsg("Damit kannst du Testen ob ich noch Ansprechbar bin oder ob ich gestorben bin", receiver);
+                        break;
+                    case "quit":
+                        connection.sendmsg("Das wird mich beenden :(, Operator Befehl: kein parameter", receiver);
+                        break;
+                    case "restart":
+                        connection.sendmsg("Ich werde versuchen mich selbst neuzustarten, Operator Befehl: kein parameter", receiver);
                         break;
                     case "trunk":
-                        Senden("Dies zeigt den aktuellsten Changeset an.", privat, sender);
+                        connection.sendmsg("Dies zeigt den aktuellsten Changeset an.", receiver);
+                        break;
+                    case "unignore":
+                        connection.sendmsg("Die betroffene Person wird von der ignore Liste gestrichen, Operator Befehl: z.b. !unignore Testnick", receiver);
                         break;
                     case "uptime":
-                        Senden("Das zeigt meine aktuelle Laufzeit an.", privat, sender);
+                        connection.sendmsg("Das zeigt meine aktuelle Laufzeit an.", receiver);
                         break;
                     case "userlist":
-                        Senden("Das gibt eine Liste jener Benutzer aus, die mindestens eine Box bei mir registriert haben.", privat, sender);
+                        connection.sendmsg("Das gibt eine Liste jener Benutzer aus, die mindestens eine Box bei mir registriert haben.", receiver);
                         break;
                     case "whmf":
-                        Senden("Das erzeugt einen Link zu wehavemorefun mit dem angegebenen Suchkriterium, Beispiele: !whmf 7270, !whmf \"CAPI Treiber\", !whmf 7270 Benutzer", privat, sender);
+                        connection.sendmsg("Das erzeugt einen Link zu wehavemorefun mit dem angegebenen Suchkriterium, Beispiele: !whmf 7270, !whmf \"CAPI Treiber\", !whmf 7270 Benutzer", receiver);
                         break;
                     case "witz":
-                        Senden("Ich werde dann einen Witz erzählen, mit \"!witz add witztext\" kannst du einen neuen Witz hinzufügen.", privat, sender);
+                        connection.sendmsg("Ich werde dann einen Witz erzählen, mit \"!witz add witztext\" kannst du einen neuen Witz hinzufügen.", receiver);
                         break;
                     case "zeit":
-                        Senden("Das gibt die aktuelle Uhrzeit aus.", privat, sender);
+                        connection.sendmsg("Das gibt die aktuelle Uhrzeit aus.", receiver);
                         break;
                     default:
                         break;
@@ -453,8 +479,8 @@ namespace freetzbot
             }
             else
             {
-                Senden("Aktuelle Befehle: about box boxfind boxinfo boxlist boxremove frag freetz hilfe ignore labor lmgtfy ping trunk uptime userlist whmf witz zeit.", privat, sender);
-                Senden("Hilfe zu jedem Befehl mit \"!help befehl\". Um die anderen nicht zu belästigen kannst du mich auch per PM (query) anfragen", privat, sender);
+                connection.sendmsg("Aktuelle Befehle: about box boxfind boxinfo boxlist boxremove frag freetz hilfe ignore labor lmgtfy ping trunk uptime userlist whmf witz zeit.", receiver);
+                connection.sendmsg("Hilfe zu jedem Befehl mit \"!help befehl\". Um die anderen nicht zu belästigen kannst du mich auch per PM (query) anfragen", receiver);
             }
         }
 
@@ -467,34 +493,27 @@ namespace freetzbot
             return false;
         }
 
-        static private void ignore(String sender, Boolean privat, String parameter = "")
+        static private void ignore(irc connection, String sender, String receiver, String message)
         {
-            if (parameter != "")
+            if (sender == message || sender == "Suchiman" || sender == "hippie2000")
             {
-                if (sender == parameter || sender == "Suchiman" || sender == "hippie2000")
-                {
-                    ignoredb.Add(parameter);
-                    Senden("Ich werde " + parameter + " ab sofort keine beachtung mehr schenken", privat, sender);
-                }
-            }
-            else
-            {
-                hilfe(sender, privat, "ignore");
+                ignoredb.Add(message);
+                connection.sendmsg("Ich werde " + message + " ab sofort keine beachtung mehr schenken", receiver);
             }
         }
 
-        static private void labor(String sender, Boolean privat, String parameter = "")
+        static private void labor(irc connection, String sender, String receiver, String message)
         {
             String webseite = get_web("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
             if (webseite == "")
             {
-                Senden("Leider war es mir nicht möglich auf die Labor Webseite von AVM zuzugreifen", privat, sender);
+                connection.sendmsg("Leider war es mir nicht möglich auf die Labor Webseite von AVM zuzugreifen", receiver);
                 return;
             }
 
             String changeset = "";
             int modell = 0;
-            switch (parameter.ToLower())
+            switch (message.ToLower())
             {
                 case "ios":
                     modell = 1;
@@ -526,7 +545,7 @@ namespace freetzbot
                     changeset = "Aktuelle Labor Daten: iOS: " + daten[0] + ", Android: " + daten[1] + ", 7390: " + daten[2] + ", FHEM: " + daten[3] + ", 7390at: " + daten[4] + ", 7320: " + daten[5] + ", 7270: " + daten[6] + ".";
                     break;
                 default:
-                    changeset += "Für die " + parameter + " steht derzeit keine Labor Version zur Verfügung. ";
+                    changeset += "Für die " + message + " steht derzeit keine Labor Version zur Verfügung. ";
                     break;
             }
 
@@ -537,70 +556,63 @@ namespace freetzbot
                 String feedback = get_web(url);
                 if (feedback == "")
                 {
-                    Senden("Leider war es mir nicht möglich alle Daten von der AVM Webseite abzurufen", privat, sender);
+                    connection.sendmsg("Leider war es mir nicht möglich alle Daten von der AVM Webseite abzurufen", receiver);
                     return;
                 }
                 String version = feedback.Split(new String[] { "</strong>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "Version " }, 2, StringSplitOptions.None)[1];
-                changeset += "Die neueste " + parameter + " labor Version ist am " + datum + " erschienen mit der Versionsnummer: " + version + ". Changelog: " + url;
+                changeset += "Die neueste " + message + " labor Version ist am " + datum + " erschienen mit der Versionsnummer: " + version + ". Changelog: " + url;
             }
 
-            Senden(changeset, privat, sender);
+            connection.sendmsg(changeset, receiver);
         }
 
-        static private void lmgtfy(String sender, Boolean privat, String parameter = "")
+        static private void lmgtfy(irc connection, String sender, String receiver, String message)
         {
-            if (parameter == "")
+            if (message.Contains("\""))
             {
-                Senden("http://www.wehavemorefun.de/fritzbox/index.php", privat, sender);
-            }
-            else
-            {
-                if (parameter.Contains("\""))
+                String[] split = message.Split(new String[] { "\"" }, 3, StringSplitOptions.None);
+                split[1] = split[1].Replace(' ', '+');
+                String[] nick = split[2].Split(new String[] { " " }, 2, StringSplitOptions.None);
+                if (nick.Length > 1)
                 {
-                    String[] split = parameter.Split(new String[] { "\"" }, 3, StringSplitOptions.None);
-                    split[1] = split[1].Replace(' ', '+');
-                    String[] nick = split[2].Split(new String[] { " " }, 2, StringSplitOptions.None);
-                    if (nick.Length > 1)
-                    {
-                        Senden("@" + split[2] + ": Siehe: http://lmgtfy.com/?q=" + split[1], privat, sender);
-                    }
-                    else
-                    {
-                        Senden("http://lmgtfy.com/?q=" + split[1], privat, sender);
-                    }
+                    connection.sendmsg("@" + split[2] + ": Siehe: http://lmgtfy.com/?q=" + split[1], receiver);
                 }
                 else
                 {
-                    String[] split = parameter.Split(new String[] { " " }, 2, StringSplitOptions.None);
-                    if (split.Length > 1)
-                    {
-                        Senden("@" + split[1] + ": Siehe: http://lmgtfy.com/?q=" + split[0], privat, sender);
-                    }
-                    else
-                    {
-                        Senden("http://lmgtfy.com/?q=" + split[0], privat, sender);
-                    }
+                    connection.sendmsg("http://lmgtfy.com/?q=" + split[1], receiver);
+                }
+            }
+            else
+            {
+                String[] split = message.Split(new String[] { " " }, 2, StringSplitOptions.None);
+                if (split.Length > 1)
+                {
+                    connection.sendmsg("@" + split[1] + ": Siehe: http://lmgtfy.com/?q=" + split[0], receiver);
+                }
+                else
+                {
+                    connection.sendmsg("http://lmgtfy.com/?q=" + split[0], receiver);
                 }
             }
         }
 
-        static private void ping(String sender, Boolean privat)
+        static private void ping(irc connection, String sender, String receiver, String message)
         {
-            Senden("Pong " + sender, privat, sender);
+            connection.sendmsg("Pong " + sender, receiver);
         }
 
-        static private void trunk(String sender, Boolean privat)
+        static private void trunk(irc connection, String sender, String receiver, String message)
         {
             String webseite = get_web("http://freetz.org/changeset");
             if (webseite != "")
             {
                 String changeset = "Der aktuellste Changeset ist " + webseite.Split(new String[] { "<h1>" }, 2, StringSplitOptions.None)[1].Split(new String[] { "</h1>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "Changeset " }, 2, StringSplitOptions.None)[1];
                 changeset += " und wurde am" + webseite.Split(new String[] { "<dd class=\"time\">" }, 2, StringSplitOptions.None)[1].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "   " }, 5, StringSplitOptions.None)[4] + " in den Trunk eingecheckt. Siehe: http://freetz.org/changeset";
-                Senden(changeset, privat, sender);
+                connection.sendmsg(changeset, receiver);
             }
             else
             {
-                Senden("Leider war es mir nicht möglich auf die Freetz Webseite zuzugreifen", privat, sender);
+                connection.sendmsg("Leider war es mir nicht möglich auf die Freetz Webseite zuzugreifen", receiver);
             }
         }
 
@@ -609,13 +621,14 @@ namespace freetzbot
             ignoredb.Remove(parameter);
         }
 
-        static private void uptime(String sender, Boolean privat)
+        static private void uptime(irc connection, String sender, String receiver, String message)
         {
             TimeSpan laufzeit = DateTime.Now.Subtract(startzeit);
-            Senden("Meine Laufzeit beträgt " + laufzeit.Days + " Tage, " + laufzeit.Hours + " Stunden, " + laufzeit.Minutes + " Minuten und " + laufzeit.Seconds + " Sekunden.", privat, sender);
+            TimeSpan connecttime = connection.uptime();
+            connection.sendmsg("Meine Laufzeit beträgt " + laufzeit.Days + " Tage, " + laufzeit.Hours + " Stunden, " + laufzeit.Minutes + " Minuten und " + laufzeit.Seconds + " Sekunden und bin mit diesem Server seit " + connecttime.Days + " Tage, " + connecttime.Hours + " Stunden, " + connecttime.Minutes + " Minuten und " + connecttime.Seconds + " Sekunden verbunden", receiver);
         }
 
-        static private void userlist(String sender, Boolean privat)
+        static private void userlist(irc connection, String sender, String receiver, String message)
         {
             Boolean gefunden = false;
             String[] Daten = boxdb.GetAll();
@@ -640,98 +653,98 @@ namespace freetzbot
             }
             if (gefunden == true)
             {
-                Senden("Diese Benutzer haben bei mir mindestens eine Box registriert: " + besitzer, privat, sender);
+                connection.sendmsg("Diese Benutzer haben bei mir mindestens eine Box registriert: " + besitzer, receiver);
             }
             else
             {
-                Senden("Ich fürchte, mir ist ein Fehler unterlaufen. Ich kann keine registrierten Benutzer feststellen.", privat, sender);
+                connection.sendmsg("Ich fürchte, mir ist ein Fehler unterlaufen. Ich kann keine registrierten Benutzer feststellen.", receiver);
             }
         }
 
-        static private void whmf(String sender, Boolean privat, String parameter = "")
+        static private void whmf(irc connection, String sender, String receiver, String message)
         {
-            if (parameter == "")
+            if (message == "")
             {
-                Senden("http://www.wehavemorefun.de/fritzbox/index.php", privat, sender);
+                connection.sendmsg("http://www.wehavemorefun.de/fritzbox/index.php", receiver);
             }
             else
             {
                 //Parameter: "CAPI Treiber" peter
-                if (parameter.Contains("\""))
+                if (message.Contains("\""))
                 {
-                    String[] split = parameter.Split(new String[] { "\"" }, 3, StringSplitOptions.None);
+                    String[] split = message.Split(new String[] { "\"" }, 3, StringSplitOptions.None);
                     split[1] = split[1].Replace(' ', '_');
                     String[] nick = split[2].Split(new String[] { " " }, 2, StringSplitOptions.None);
                     if (nick.Length > 1)
                     {
-                        Senden("@" + split[2] + ": Siehe: http://wehavemorefun.de/fritzbox/index.php/Special:Search?search=" + split[1], privat, sender);
+                        connection.sendmsg("@" + split[2] + ": Siehe: http://wehavemorefun.de/fritzbox/index.php/Special:Search?search=" + split[1], receiver);
                     }
                     else
                     {
-                        Senden("http://wehavemorefun.de/fritzbox/index.php/Special:Search?search=" + split[1], privat, sender);
+                        connection.sendmsg("http://wehavemorefun.de/fritzbox/index.php/Special:Search?search=" + split[1], receiver);
                     }
                 }
                 else
                 {
-                    String[] split = parameter.Split(new String[] { " " }, 2, StringSplitOptions.None);
+                    String[] split = message.Split(new String[] { " " }, 2, StringSplitOptions.None);
                     if (split.Length > 1)
                     {
-                        Senden("@" + split[1] + ": Siehe: http://wehavemorefun.de/fritzbox/index.php/Special:Search?search=" + split[0], privat, sender);
+                        connection.sendmsg("@" + split[1] + ": Siehe: http://wehavemorefun.de/fritzbox/index.php/Special:Search?search=" + split[0], receiver);
                     }
                     else
                     {
-                        Senden("http://wehavemorefun.de/fritzbox/index.php/Special:Search?search=" + split[0], privat, sender);
+                        connection.sendmsg("http://wehavemorefun.de/fritzbox/index.php/Special:Search?search=" + split[0], receiver);
                     }
                 }
             }
         }
 
-        static private void freetz(String sender, Boolean privat, String parameter = "")
+        static private void freetz(irc connection, String sender, String receiver, String message)
         {
-            if (parameter == "")
+            if (message == "")
             {
-                Senden("http://freetz.org/wiki", privat, sender);
+                connection.sendmsg("http://freetz.org/wiki", receiver);
             }
             else
             {
-                if (parameter.Contains("\""))
+                if (message.Contains("\""))
                 {
-                    String[] split = parameter.Split(new String[] { "\"" }, 3, StringSplitOptions.None);
+                    String[] split = message.Split(new String[] { "\"" }, 3, StringSplitOptions.None);
                     split[1] = split[1].Replace(' ', '_');
                     String[] nick = split[2].Split(new String[] { " " }, 2, StringSplitOptions.None);
                     if (nick.Length > 1)
                     {
-                        Senden("@" + split[2] + ": Siehe: http://freetz.org/search?q=" + split[1] + "&wiki=on", privat, sender);
+                        connection.sendmsg("@" + split[2] + ": Siehe: http://freetz.org/search?q=" + split[1] + "&wiki=on", receiver);
                     }
                     else
                     {
-                        Senden("http://freetz.org/search?q=" + split[1] + "&wiki=on", privat, sender);
+                        connection.sendmsg("http://freetz.org/search?q=" + split[1] + "&wiki=on", receiver);
                     }
                 }
                 else
                 {
-                    String[] split = parameter.Split(new String[] { " " }, 2, StringSplitOptions.None);
+                    String[] split = message.Split(new String[] { " " }, 2, StringSplitOptions.None);
                     if (split.Length > 1)
                     {
-                        Senden("@" + split[1] + ": Siehe: http://freetz.org/search?q=" + split[0] + "&wiki=on", privat, sender);
+                        connection.sendmsg("@" + split[1] + ": Siehe: http://freetz.org/search?q=" + split[0] + "&wiki=on", receiver);
                     }
                     else
                     {
-                        Senden("http://freetz.org/search?q=" + split[0] + "&wiki=on", privat, sender);
+                        connection.sendmsg("http://freetz.org/search?q=" + split[0] + "&wiki=on", receiver);
                     }
                 }
             }
         }
 
-        static private void witz(String sender, Boolean privat, String parameter = "")
+        static private void witz(irc connection, String sender, String receiver, String message)
         {
-            if (parameter != "")
+            if (message != "")
             {
-                String[] witz = parameter.Split(new String[] { " " }, 2, StringSplitOptions.None);
+                String[] witz = message.Split(new String[] { " " }, 2, StringSplitOptions.None);
                 if (witz[0] == "add")
                 {
                     witzdb.Add(witz[1]);
-                    Senden("Ist notiert " + sender, privat, sender);
+                    connection.sendmsg("Ist notiert " + sender, receiver);
                 }
             }
             else
@@ -739,16 +752,16 @@ namespace freetzbot
                 Random rand = new Random();
                 if (witzdb.GetAt(rand.Next(witzdb.Size())) != "")
                 {
-                    Senden(witzdb.GetAt(rand.Next(witzdb.Size())), privat, sender);
+                    connection.sendmsg(witzdb.GetAt(rand.Next(witzdb.Size())), receiver);
                 }
                 else
                 {
-                    Senden("Mir fällt gerade kein Fritz!Witz ein", privat, sender);
+                    connection.sendmsg("Mir fällt gerade kein Fritz!Witz ein", receiver);
                 }
             }
         }
 
-        static private void boxfrage(String sender)
+        static private void boxfrage(irc connection, String sender, String receiver, String message)
         {
             if (ignore_check(sender)) return;
             try
@@ -756,176 +769,48 @@ namespace freetzbot
                 if (!(userdb.GetContaining(sender).Length > 0))
                 {
                     Thread.Sleep(10000);
-                    Senden("Hallo " + sender + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast :). Pro !box bitte nur eine Box nennen (nur die Boxversion) z.b. !box 7270v1 oder !box 7170. Um die anderen im Channel nicht zu stören, sende es mir doch bitte per query/private Nachricht (z.b. /PRIVMSG FritzBot !box 7270)", true, sender, "NOTICE");
+                    connection.sendmsg("Hallo " + sender + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast :). Pro !box bitte nur eine Box nennen (nur die Boxversion) z.b. !box 7270v1 oder !box 7170. Um die anderen im Channel nicht zu stören, sende es mir doch bitte per query/private Nachricht (z.b. /PRIVMSG FritzBot !box 7270)", receiver);
                     userdb.Add(sender);
                 }
             }
             catch { }
         }
 
-        static private void verarbeitung(String eingehend)
+        static private void process_incomming(irc connection, String source, String nick, String message)
         {
-            //Beispiel einer v6 Nachricht: ":User!~info@2001:67c:1401:2100:5ab0:35fa:fe76:feb0 PRIVMSG #eingang :hehe"
-            //Beispiel einer Nachricht: ":Suchiman!~Suchiman@Robin-PC PRIVMSG #eingang :hi"
-            //Beispiel eines Joins: ":Suchiman!~robinsue@91-67-134-206-dynip.superkabel.de JOIN :#eingang"
-            Boolean privat = true;
-
-            //Auf Ping Prüfen, Wichtig: wird Pong ausgelassen kickt dich der Server
-            try
+            switch (source)
             {
-                String[] ping = eingehend.Split(new String[] { ":" }, 3, StringSplitOptions.None);
-                if (ping[0] == "PING ")
-                {
-                    Senden("PONG " + ping[1], false, "", "RAW");
-                }
+                case "LOG":
+                    logging(message);
+                    return;
+                case "JOIN":
+                    logging(nick + " hat den Raum " + message + " betreten");
+                    return;
+                case "QUIT":
+                    logging(nick + " hat den Server verlassen");
+                    return;
+                case "PART":
+                    logging(nick + " hat den Raum verlassen");
+                    return;
+                case "NICK":
+                    logging(nick + " heißt jetzt " + message);
+                    return;
+                default:
+                    break;
             }
-            catch (Exception ex)
+            if (source.ToCharArray()[0] == '#')
             {
-                logging("Exception bei der Ping verarbeitung: " + ex.Message);
-            }
-            try
-            {
-                String[] privat_check = eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None);
-                if (privat_check.Length > 2)
-                {
-                    if (privat_check[2] == raum)
-                    {
-                        privat = false;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                logging("Exception bei der Verarbeitung ob es eine Private nachricht ist: " + ex.Message);
-            }
-
-            try
-            {
-                if (eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None).LongLength > 2)
-                {
-                    //Join checken
-                    if (eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[1] == "JOIN")
-                    {
-                        String nick = eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[0].Split(new String[] { "!" }, 2, StringSplitOptions.None)[0].Split(new String[] { ":" }, 2, StringSplitOptions.None)[1];
-                        logging(nick + " hat den Raum betreten");
-                        if (klappe == false)
-                        {
-                            boxfrage(nick);
-                        }
-                        return;
-                    }
-                    //Prüfen ob der Raum verlassen wird
-                    if (eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[1] == "PART")
-                    {
-                        String nick = eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[0].Split(new String[] { "!" }, 2, StringSplitOptions.None)[0].Split(new String[] { ":" }, 2, StringSplitOptions.None)[1];
-                        logging(nick + " hat den Raum verlassen");
-                        return;
-                    }
-                    //Prüfen ob der Server verlassen wird
-                    if (eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[1] == "QUIT")
-                    {
-                        String nick = eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None)[0].Split(new String[] { "!" }, 2, StringSplitOptions.None)[0].Split(new String[] { ":" }, 2, StringSplitOptions.None)[1];
-                        logging(nick + " hat den Server verlassen");
-                        return;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                logging("Exception bei der boxfrage: " + ex.Message);
-            }
-            //Verarbeitung einer Nachricht, eine Nachricht sollte 3 gesplittete Elemente im Array haben
-            try
-            {
-                String[] verarbeitung = eingehend.Split(new String[] { " " }, 4, StringSplitOptions.None);
-                if (verarbeitung.Length > 3)
-                {
-                    if (verarbeitung[3].Contains(":"))
-                    {
-                        String nachricht = verarbeitung[3].Split(new String[] { ":" }, 2, StringSplitOptions.None)[1];
-                        String nick = verarbeitung[0].Split(new String[] { "!" }, 2, StringSplitOptions.None)[0].Split(new String[] { ":" }, 2, StringSplitOptions.None)[1];
-                        logging(nick + ": " + nachricht);
-                        try
-                        {
-                            if (nachricht.ToCharArray()[0] == '!')
-                            {
-                                String befehl = nachricht.Split(new String[] { "!" }, 2, StringSplitOptions.None)[1];
-                                bot_antwort(nick, privat, befehl);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            logging("Exception im Bot Antwort thread aufgetreten: " + ex.Message);
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                logging("Exception bei der Verarbeitung: " + ex.Message);
-            }
-        }
-
-        static private void empfangsthread_DoWork(Object sender, DoWorkEventArgs e)
-        {
-            try
-            {
-                StreamReader inStream = new StreamReader(c.GetStream(), Encoding.GetEncoding("iso-8859-1"));
-                while (true)
-                {
-                    if (empfangsthread.CancellationPending)
-                    {
-                        logging("Beendung wurde angefordert");
-                        return;
-                    }
-                    String Daten = "";
-                    try
-                    {
-                        Daten = inStream.ReadLine();
-                        if (Daten == null)
-                        {
-                            return;//Wenn ReadLine null ergibt ist die Verbindung abgerissen -> empfangsthread beenden und Hauptthread die möglichkeit geben eine neue Verbindung aufzubauen.
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        logging("Exception beim TCP lesen aufgefangen: " + ex.Message);
-                        return;//Exception an kritischer Stelle, Thread beenden, wird von Main thread neugestartet
-                    }
-                    Thread thread = new Thread(delegate() { verarbeitung(Daten); });
-                    thread.Start();
-                }
-            }
-            catch (Exception ex)
-            {
-                logging("Exception in unbekannten Code bereich des empfangsthread aufgefangen: " + ex.Message);
-                return;
-            }
-        }
-
-        static private String[] splitat(String text, int length)
-        {
-            String[] gesplittet = new String[0];
-            if (text.Length >= length)
-            {
-                Decimal loops = Math.Ceiling((decimal)text.Length / (decimal)length);
-                int splitlength = length;
-                for (int i = 0; i < loops; i++)
-                {
-                    if (!(i < loops - 1))
-                    {
-                        splitlength = text.Length % length;
-                    }
-                    Array.Resize(ref gesplittet, gesplittet.Length + 1);
-                    gesplittet[i] = text.Substring(length * i, splitlength);
-                }
+                logging(source + " " + nick + ": " + message);
             }
             else
             {
-                Array.Resize(ref gesplittet, gesplittet.Length + 1);
-                gesplittet[0] = text;
+                logging("Von " + nick + ": " + message);
+                source = nick;
             }
-            return gesplittet;
+            if (message.ToCharArray()[0] == '!')
+            {
+                process_command(connection, nick, source, message.Remove(0, 1));
+            }
         }
 
         static private String get_web(String url)
@@ -960,70 +845,24 @@ namespace freetzbot
             return sb.ToString();
         }
 
-        static private void Senden(String text, Boolean privat, String adressant = "", String methode = "PRIVMSG")
-        {
-            if (!privat || adressant == "")
-            {
-                adressant = raum;
-            }
-            try
-            {
-                Byte[] sendBytes;
-                NetworkStream inOut = c.GetStream();
-                if (methode != "RAW")
-                {
-                    String[] tosend = splitat(text,507-(methode.Length+adressant.Length));
-                    for (int i = 0; i < tosend.Length; i++)
-                    {
-                        sendBytes = Encoding.GetEncoding("iso-8859-1").GetBytes(methode + " " + adressant + " :" + tosend[i] + "\r\n");
-                        logging(nickname + ": " + text);
-                        inOut.Write(sendBytes, 0, sendBytes.Length);
-                    }
-                }
-                else
-                {
-                    sendBytes = Encoding.GetEncoding("iso-8859-1").GetBytes(text + "\r\n");
-                    inOut.Write(sendBytes, 0, sendBytes.Length);
-                }
-            }
-            catch { }
-        }
-
-        static private Boolean Verbinden()
-        {
-            try
-            {
-                c = new TcpClient(server, 6667);
-                empfangsthread.RunWorkerAsync();
-                Thread.Sleep(10);
-                Senden("USER " + nickname + " " + nickname + " " + nickname + " :" + nickname + "\r\n", false, "", "RAW");
-                Senden("NICK " + nickname + "\r\n", false, "", "RAW");
-                Senden("JOIN " + raum + "\r\n", false, "", "RAW");
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
         static private void Trennen()
         {
             crashed = false;
-            empfangsthread.CancelAsync();
-            Senden("QUIT :I'll be back", false, "", "RAW");
+            atw_inter.disconnect();
         }
 
         static public void init()
         {
-            empfangsthread = new System.ComponentModel.BackgroundWorker();
-            empfangsthread.WorkerSupportsCancellation = true;
-            empfangsthread.DoWork += new System.ComponentModel.DoWorkEventHandler(empfangsthread_DoWork);
             loggingthread = new System.ComponentModel.BackgroundWorker();
             loggingthread.WorkerSupportsCancellation = true;
             loggingthread.DoWork += new System.ComponentModel.DoWorkEventHandler(log_thread);
             loggingthread.RunWorkerAsync();
             startzeit = DateTime.Now;
+
+            atw_inter.quit_message = "I'll be back";
+            atw_inter.Received += new irc.ReceivedEventHandler(process_incomming);
+            atw_inter.connect();
+            atw_inter.join("#fritzbox");
         }
 
         static private void logging(String to_log)
@@ -1066,10 +905,9 @@ namespace freetzbot
         static private void Main(String[] args)
         {
             init();
-            Verbinden();
             while (crashed)
             {
-                while (empfangsthread.IsBusy)
+                while (atw_inter.running())
                 {
                     Thread.Sleep(500);
                 }
@@ -1077,11 +915,11 @@ namespace freetzbot
                 {
                     logging("Verbindung verloren :( versuche Verbindung wiederherzustellen");
                     int count = 0;
-                    while (!empfangsthread.IsBusy)
+                    while (!atw_inter.running())
                     {
                         count++;
                         logging("Versuch " + count);
-                        if (!Verbinden())
+                        if (!atw_inter.connect())
                         {
                             Thread.Sleep(5000);
                         }
