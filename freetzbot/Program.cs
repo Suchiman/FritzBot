@@ -111,7 +111,7 @@ namespace freetzbot
                         box(connection, sender, receiver, parameter[1]);
                         break;
                     case "boxfind":
-                        boxfind(connection, sender, receiver, parameter[1]);
+                        boxfind(connection, sender, sender, parameter[1]);
                         break;
                     case "boxinfo":
                         boxinfo(connection, sender, receiver, parameter[1]);

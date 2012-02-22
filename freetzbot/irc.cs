@@ -75,7 +75,7 @@ namespace freetzbot
         {
             if (channel.ToCharArray()[0] != '#')
             {
-                channel = "#" + channel;
+                log("Diesem channel kann ich nicht joinen");
             }
             sendraw("JOIN " + channel);
             if (!rooms.Contains(channel)) rooms.Add(channel);
