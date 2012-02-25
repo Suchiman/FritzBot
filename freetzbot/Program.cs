@@ -937,13 +937,20 @@ namespace freetzbot
             loggingthread.RunWorkerAsync();
             startzeit = DateTime.Now;
             String[] config = servers.GetAll();
-            if (config.Length > 0)
+            try
             {
-                foreach (String connection_server in config)
+                if (config.Length > 0)
                 {
-                    String[] parameter = connection_server.Split(new String[] { "," }, 5, StringSplitOptions.None);
-                    instantiate_connection(parameter[0], Convert.ToInt32(parameter[1]), parameter[2], parameter[3], parameter[4]);
+                    foreach (String connection_server in config)
+                    {
+                        String[] parameter = connection_server.Split(new String[] { "," }, 5, StringSplitOptions.None);
+                        instantiate_connection(parameter[0], Convert.ToInt32(parameter[1]), parameter[2], parameter[3], parameter[4]);
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                logging("Exception in der Initialesierung der Server: " + ex.Message);
             }
         }
 
