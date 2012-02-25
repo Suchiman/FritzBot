@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Net;
-using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 
@@ -13,22 +12,17 @@ namespace freetzbot
     {
         static private System.ComponentModel.BackgroundWorker loggingthread;
 
-        #if DEBUG
-        static private irc atw_inter = new irc("suchiman.selfip.org", 6667, "FritzBot");
-        #else
-        static private irc atw_inter = new irc("irc.atw-inter.net", 6667, "FritzBot");
-        #endif
-
-        static private Boolean klappe = false;
-        static private Boolean crashed = true;
         static private Boolean restart = false;
-        static private String zeilen = Convert.ToString(173 + 288 + 943);
+        static private String zeilen = Convert.ToString(64 + 172 + 335 + 995);
         static private DateTime startzeit;
         static private List<string> logging_list = new List<string>();
         static private db boxdb = new db("box.db");
         static private db userdb = new db("user.db");
         static private db witzdb = new db("witze.db");
         static private db ignoredb = new db("ignore.db");
+        static private db servers = new db("servers.cfg");
+        static private settings configuration = new settings("config.cfg");
+        static private List<irc> irc_connections = new List<irc>();
 
         static private void process_command(irc connection, String sender, String receiver, String message)
         {
@@ -39,6 +33,12 @@ namespace freetzbot
                 {
                     switch (parameter[0].ToLower())
                     {
+                        case "connect":
+                            connect(connection, sender, receiver, parameter[1]);
+                            break;
+                        case "leave":
+                            leave(connection, sender, receiver, parameter[1]);
+                            break;
                         case "unignore":
                             unignore(parameter[1]);
                             connection.sendmsg("Alles klar", receiver);
@@ -69,15 +69,21 @@ namespace freetzbot
                 {
                     switch (parameter[0].ToLower())
                     {
+                        case "connect":
+                            hilfe(connection, sender, receiver, "connect");
+                            break;
+                        case "leave":
+                            hilfe(connection, sender, receiver, "leave");
+                            break;
                         case "unignore":
                             hilfe(connection, sender, receiver, "unignore");
                             break;
                         case "klappe":
-                            klappe = true;
+                            configuration.set("klappe", "true");
                             connection.sendmsg("Tschuldigung, bin ruhig", receiver);
                             break;
                         case "okay":
-                            klappe = false;
+                            configuration.set("klappe", "false");
                             connection.sendmsg("Okay bin zurück ;-)", receiver);
                             break;
                         case "join":
@@ -98,7 +104,7 @@ namespace freetzbot
             }
             if (ignore_check(sender)) return;
             if (parameter.Length > 1) if (ignore_check(parameter[1])) return;
-            if (klappe) receiver = sender;
+            if (configuration.get("klappe") == "true") receiver = sender;
 
             if (parameter.Length > 1)//Wenn ein zusätzlicher Parameter angegebenen wurde....
             {
@@ -260,6 +266,66 @@ namespace freetzbot
             }
         }
 
+        static private void leave(irc connection, String sender, String receiver, String message)
+        {
+            String[] config_servers_array = servers.GetAll();
+            for (int i = 0; i < config_servers_array.Length; i++)
+            {
+                if (config_servers_array[i].Split(',')[0] == message)
+                {
+                    servers.Remove(servers.GetAt(i));
+                }
+            }
+            for (int i = 0; i < irc_connections.Count; i++)
+            {
+                if (irc_connections[i].hostname == message)
+                {
+                    irc_connections[i].disconnect();
+                    irc_connections[i] = null;
+                    irc_connections.RemoveAt(i);
+                }
+            }
+        }
+
+        static private void connect(irc connection, String sender, String receiver, String message)
+        {
+            String[] parameter = message.Split(new String[] { "," }, 5, StringSplitOptions.None);
+            if (parameter.Length < 5)
+            {
+                hilfe(connection, sender, receiver, "connect");
+            }
+            if (parameter[2].Length > 9)
+            {
+                connection.sendmsg("Hörmal, das RFC erlaubt nur Nicknames mit 9 Zeichen", receiver);
+            }
+            try
+            {
+                Convert.ToInt32(parameter[1]);
+            }
+            catch
+            {
+                connection.sendmsg("Der PORT sollte eine gültige Ganzahl sein, Prüfe das", receiver);
+                return;
+            }
+            try
+            {
+                try
+                {
+                    IPHostEntry hostInfo = Dns.GetHostEntry(parameter[0]);
+                }
+                catch
+                {
+                    connection.sendmsg("Ich konnte die Adresse nicht auflösen, Prüfe nochmal ob deine Eingabe korrekt ist", receiver);
+                }
+                instantiate_connection(parameter[0], Convert.ToInt32(parameter[1]), parameter[2], parameter[3], parameter[4]);
+                servers.Add(message);
+            }
+            catch
+            {
+                connection.sendmsg("Das hat nicht funktioniert, sorry", receiver);
+            }
+        }
+
         static private void box(irc connection, String sender, String receiver, String message)
         {
             if (boxdb.Find(sender + ":" + message) == -1)
@@ -413,6 +479,9 @@ namespace freetzbot
                     case "boxremove":
                         connection.sendmsg("Entfernt die exakt von dir genannte Box aus deiner Boxinfo, als Beispiel: \"!boxremove 7270v1\".", receiver);
                         break;
+                    case "connect":
+                        connection.sendmsg("Baut eine Verbindung zu einem anderen IRC Server auf, Syntax: !connect server,port,nick,quit_message,initial_channel", receiver);
+                        break;
                     case "frag":
                         connection.sendmsg("Dann werde ich den genannten Benutzer nach seiner Box fragen, z.b. !frag Anonymous", receiver);
                         break;
@@ -433,6 +502,9 @@ namespace freetzbot
                         break;
                     case "labor":
                         connection.sendmsg("Ich schaue mal auf das aktuelle Datum der Labor Firmwares, Parameter: '7270', '7390', 'fhem', '7390at', 'android', 'ios'.", receiver);
+                        break;
+                    case "leave":
+                        connection.sendmsg("Zum angegebenen Server werde ich die Verbindung trennen, Operator Befehl: !leave test.de", receiver);
                         break;
                     case "lmgtfy":
                         connection.sendmsg("Dazu sage ich jetzt mal nichts, finde es raus!", receiver);
@@ -795,6 +867,10 @@ namespace freetzbot
                 case "NICK":
                     logging(nick + " heißt jetzt " + message);
                     return;
+                case "KICK":
+                    logging(nick + " hat mich aus dem Raum " + message + " geworfen");
+                    connection.leave(message);
+                    return;
                 default:
                     break;
             }
@@ -847,22 +923,51 @@ namespace freetzbot
 
         static private void Trennen()
         {
-            crashed = false;
-            atw_inter.disconnect();
+            for (int i = 0; i < irc_connections.ToArray().Length; i++)
+            {
+                irc_connections[i].disconnect();
+            }
         }
 
-        static public void init()
+        static private void init()
         {
             loggingthread = new System.ComponentModel.BackgroundWorker();
             loggingthread.WorkerSupportsCancellation = true;
             loggingthread.DoWork += new System.ComponentModel.DoWorkEventHandler(log_thread);
             loggingthread.RunWorkerAsync();
             startzeit = DateTime.Now;
+            String[] config = servers.GetAll();
+            if (config.Length > 0)
+            {
+                foreach (String connection_server in config)
+                {
+                    String[] parameter = connection_server.Split(new String[] { "," }, 5, StringSplitOptions.None);
+                    instantiate_connection(parameter[0], Convert.ToInt32(parameter[1]), parameter[2], parameter[3], parameter[4]);
+                }
+            }
+        }
 
-            atw_inter.quit_message = "I'll be back";
-            atw_inter.Received += new irc.ReceivedEventHandler(process_incomming);
-            atw_inter.connect();
-            atw_inter.join("#fritzbox");
+        static private void instantiate_connection(String server, int port, String nick, String quit_message, String initial_channel)
+        {
+            irc connection = new irc(server, port, nick);
+            connection.quit_message = quit_message;
+            connection.Received += new irc.ReceivedEventHandler(process_incomming);
+            connection.connect();
+            connection.AutoReconnect = true;
+            connection.join(initial_channel);
+            irc_connections.Add(connection);
+        }
+
+        static private Boolean running_check()
+        {
+            for (int i = 0; i < irc_connections.ToArray().Length; i++)
+            {
+                if (irc_connections[i].running())
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         static private void logging(String to_log)
@@ -905,27 +1010,9 @@ namespace freetzbot
         static private void Main(String[] args)
         {
             init();
-            while (crashed)
+            while (running_check())
             {
-                while (atw_inter.running())
-                {
-                    Thread.Sleep(500);
-                }
-                if (crashed)
-                {
-                    logging("Verbindung verloren :( versuche Verbindung wiederherzustellen");
-                    int count = 0;
-                    while (!atw_inter.running())
-                    {
-                        count++;
-                        logging("Versuch " + count);
-                        if (!atw_inter.connect())
-                        {
-                            Thread.Sleep(5000);
-                        }
-                    }
-                    logging("Verbindung nach dem " + count + " versuch erfolgreich wiederhergestellt");
-                }
+                Thread.Sleep(2000);
             }
             if (restart == true)
             {

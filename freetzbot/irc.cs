@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Net.Sockets;
 using System.IO;
+using System.Net.Sockets;
+using System.Text;
 using System.Threading;
 
 namespace freetzbot
@@ -14,12 +14,15 @@ namespace freetzbot
         public String quit_message;
 
         private Thread empfangs_thread;
+        private Thread watchthread;
         private Boolean cancelthread;
-        private string hostname;
+        public string hostname;
         private int port;
         private String nickname;
         private TcpClient connection;
         private DateTime connecttime;
+        public Boolean AutoReconnect;
+        public int AutoReconnectIntervall;
         private List<string> rooms = new List<string>();
 
         public irc(String server, int server_port, String nick)
@@ -30,6 +33,38 @@ namespace freetzbot
             cancelthread = false;
             quit_message = "";
             empfangs_thread = new Thread(delegate() { empfangsthread(); });
+            watchthread = new Thread(delegate() { reconnect(); });
+            AutoReconnect = false;
+            AutoReconnectIntervall = 5000;
+        }
+
+        private void reconnect()
+        {
+            int count = 1;
+            while (true)
+            {
+                try
+                {
+                    if (!empfangs_thread.IsAlive)
+                    {
+                        log("Verbindung abgerissen, versuche Verbindung wiederherzustellen");
+                        log("Versuch " + count);
+                        while (!connect())
+                        {
+                            Thread.Sleep(AutoReconnectIntervall);
+                            count++;
+                            log("Versuch " + count);
+                        }
+                        log("Verbindung nach dem " + count + " versuch erfolgreich wiederhergestellt");
+                        count = 1;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    log("Exception beim AutoReconnect aufgetreten: " + ex.Message);
+                }
+                Thread.Sleep(AutoReconnectIntervall);
+            }
         }
 
         public Boolean connect()
@@ -40,8 +75,14 @@ namespace freetzbot
                 {
                     empfangs_thread.Abort();
                 }
+                if (AutoReconnect && !watchthread.IsAlive)
+                {
+                    watchthread = new Thread(delegate() { reconnect(); });
+                    watchthread.Start();
+                }
                 connection = new TcpClient(hostname, port);
                 empfangs_thread = new Thread(delegate() { empfangsthread(); });
+                Thread.Sleep(5);//Fix versuch für den Bug, dass der empfangsthread die volle CPU Kapazität beim auslesen aus dem stream verbraucht
                 empfangs_thread.Start();
                 sendraw("NICK " + nickname);
                 sendraw("USER " + nickname + " 8 * :" + nickname);
@@ -133,7 +174,7 @@ namespace freetzbot
 
         public Boolean running()
         {
-            return empfangs_thread.IsAlive;
+            return watchthread.IsAlive;
         }
 
         public TimeSpan uptime()
@@ -217,6 +258,7 @@ namespace freetzbot
             //Beispiel eines Joins: ":Suchiman!~robinsue@91-67-134-206-dynip.superkabel.de JOIN :#eingang"
             //Action: ":FritzBot!~FritzBot@91-67-134-206-dynip.superkabel.de PRIVMSG #fritzbox :\001ACTION rennt los zum channel #eingang\001"
             //Rename: :Suchi!~email@91-67-134-206-dynip.superkabel.de NICK :testi
+            //KICK: :Suchiman!~email@91-67-134-206-dynip.superkabel.de KICK #fritzbox FritzBot :Suchiman
             //Ping anforderung des Servers: "PING :fritz.box"
             try
             {
@@ -262,6 +304,12 @@ namespace freetzbot
                     if (splitmessage[1] == "NICK")
                     {
                         Received(this, "NICK", nick, what);
+                        return;
+                    }
+                    //Kick Prüfen
+                    if (splitmessage[1] == "KICK")
+                    {
+                        Received(this, "KICK", nick, what);
                         return;
                     }
                 }

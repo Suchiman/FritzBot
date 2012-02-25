@@ -98,6 +98,7 @@ namespace freetzbot
             threadsafe.WaitOne();
             datenbank.RemoveAt(index);
             threadsafe.ReleaseMutex();
+            Write();
             return true;
         }
         /// <summary>
@@ -107,7 +108,7 @@ namespace freetzbot
         /// <returns>Einen Integer der die Position in der Datenbank representiert</returns>
         public int Find(String to_find)
         {
-            for (int i = 0; i < datenbank.ToArray().Length; i++)
+            for (int i = 0; i < datenbank.Count; i++)
             {
                 if (datenbank[i] == to_find)
                 {
@@ -124,7 +125,7 @@ namespace freetzbot
         public String[] GetContaining(String to_get)
         {
             List<String> found = new List<String>();
-            for (int i = 0; i < datenbank.ToArray().Length; i++)
+            for (int i = 0; i < datenbank.Count; i++)
             {
                 if (datenbank[i].ToLower().Contains(to_get.ToLower()))
                 {
@@ -156,7 +157,7 @@ namespace freetzbot
         /// <returns>Gibt einen Integer mit der Anzahl der Zeilen der DB zurück</returns>
         public int Size()
         {
-            return datenbank.ToArray().Length;
+            return datenbank.Count;
         }
         /// <summary>
         /// Lädt die Datenbank aus der Datei neu in den Buffer
