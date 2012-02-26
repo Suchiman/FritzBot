@@ -64,14 +64,17 @@ namespace freetzbot
         /// <summary>
         /// Schreibt die Datenbank in eine Datei
         /// </summary>
-        private void Write()
+        public void Write()
         {
             threadsafe.WaitOne();
             String[] Daten = datenbank.ToArray();
             StreamWriter db = new StreamWriter(datenbank_name, false, Encoding.GetEncoding("iso-8859-1"));
             for (int i = 0; i < Daten.Length; i++)
             {
-                db.WriteLine(Daten[i]);
+                if (Daten[i].Length > 0)
+                {
+                    db.WriteLine(Daten[i]);
+                }
             }
             db.Close();
             threadsafe.ReleaseMutex();
