@@ -13,7 +13,7 @@ namespace freetzbot
         static private System.ComponentModel.BackgroundWorker loggingthread;
 
         static private Boolean restart = false;
-        static private String zeilen = Convert.ToString(64 + 172 + 335 + 995);
+        static private String zeilen = Convert.ToString(71 + 173 + 336 + 1037);
         static private DateTime startzeit;
         static private List<string> logging_list = new List<string>();
         static private db boxdb = new db("box.db");
@@ -939,9 +939,9 @@ namespace freetzbot
             String[] config = servers.GetAll();
             try
             {
-                if (config.Length > 0)
+                foreach (String connection_server in config)
                 {
-                    foreach (String connection_server in config)
+                    if (connection_server.Length > 0)
                     {
                         String[] parameter = connection_server.Split(new String[] { "," }, 5, StringSplitOptions.None);
                         instantiate_connection(parameter[0], Convert.ToInt32(parameter[1]), parameter[2], parameter[3], parameter[4]);
