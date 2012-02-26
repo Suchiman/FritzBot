@@ -50,8 +50,12 @@ namespace freetzbot
             StreamReader db = new StreamReader(datenbank_name, Encoding.GetEncoding("iso-8859-1"));
             for (int i = 0; db.Peek() >= 0; i++)
             {
-                Array.Resize(ref Daten, Daten.Length + 1);
-                Daten[i] = db.ReadLine();
+                String TempRead = db.ReadLine();
+                if (TempRead.Length > 0)
+                {
+                    Array.Resize(ref Daten, Daten.Length + 1);
+                    Daten[i] = TempRead;
+                }
             }
             db.Close();
             threadsafe.ReleaseMutex();
