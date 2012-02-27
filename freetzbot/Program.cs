@@ -709,7 +709,7 @@ namespace freetzbot
                     for (int i = 1; i < 8; i++)
                     {
                         String Date = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None)[i].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0];
-                        if (Date == LaborDates[i-1])
+                        if (Date != LaborDates[i-1])
                         {
                             LaborDates[i - 1] = Date;
                             if (output == "")
