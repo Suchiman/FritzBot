@@ -23,7 +23,7 @@ namespace freetzbot
         private DateTime connecttime;
         public Boolean AutoReconnect;
         public int AutoReconnectIntervall;
-        private List<string> rooms = new List<string>();
+        public List<string> rooms = new List<string>();
 
         public irc(String server, int server_port, String nick)
         {
