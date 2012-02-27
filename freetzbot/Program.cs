@@ -13,7 +13,7 @@ namespace freetzbot
         static private System.ComponentModel.BackgroundWorker loggingthread;
 
         static private Boolean restart = false;
-        static private String zeilen = Convert.ToString(71 + 180 + 336 + 1237);
+        static private String zeilen = Convert.ToString(71 + 180 + 336 + 1226);
         static private DateTime startzeit;
         static private List<string> logging_list = new List<string>();
         static private db boxdb = new db("box.db");
@@ -685,15 +685,13 @@ namespace freetzbot
 
         static private void labor_check()
         {
-            List<DateTime> LaborDates = new List<DateTime>();
-            String webseite;
+            List<String> LaborDates = new List<String>();
             String output = "";
-            webseite = get_web("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
+            String webseite = get_web("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
             for (int i = 1; i < 8; i++)
             {
-                String temp = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None)[i].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0];
-                String[] date = temp.Split('.');
-                LaborDates.Add(new DateTime(Convert.ToInt32(date[2]), Convert.ToInt32(date[1]), Convert.ToInt32(date[0])));
+                String Date = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None)[i].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0];
+                LaborDates.Add(Date);
             }
             while (true)
             {
@@ -710,12 +708,10 @@ namespace freetzbot
                     } while (webseite == "" || webseite == null);
                     for (int i = 1; i < 8; i++)
                     {
-                        DateTime avm;
-                        String temp = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None)[i].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0];
-                        String[] date = temp.Split('.');
-                        avm = new DateTime(Convert.ToInt32(date[2]), Convert.ToInt32(date[1]), Convert.ToInt32(date[0]));
-                        if (!avm.Equals(LaborDates[i-1]))
+                        String Date = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None)[i].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0];
+                        if (Date == LaborDates[i-1])
                         {
+                            LaborDates[i - 1] = Date;
                             if (output == "")
                             {
                                 output = "Neue Labor Versionen gesichtet!";
@@ -723,31 +719,24 @@ namespace freetzbot
                             switch (i)
                             {
                                 case 1:
-                                    //Ios
                                     output += ", iOS App";
                                     break;
                                 case 2:
-                                    //android
                                     output += ", Android App";
                                     break;
                                 case 3:
-                                    //7390
                                     output += ", 7390";
                                     break;
                                 case 4:
-                                    //fhem
                                     output += ", 7390 FHEM";
                                     break;
                                 case 5:
-                                    //7390at
                                     output += ", 7390 AT-CH";
                                     break;
                                 case 6:
-                                    //7320
                                     output += ", 7320";
                                     break;
                                 case 7:
-                                    //7270
                                     output += ", 7270";
                                     break;
                                 default:
