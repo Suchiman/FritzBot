@@ -54,7 +54,7 @@ namespace freetzbot
                 if (TempRead.Length > 0)
                 {
                     Array.Resize(ref Daten, Daten.Length + 1);
-                    Daten[i] = TempRead;
+                    Daten[Daten.Length - 1] = TempRead;
                 }
             }
             db.Close();

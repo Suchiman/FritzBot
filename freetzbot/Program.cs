@@ -13,7 +13,7 @@ namespace freetzbot
         static private System.ComponentModel.BackgroundWorker loggingthread;
 
         static private Boolean restart = false;
-        static private String zeilen = Convert.ToString(71 + 180 + 336 + 1037);
+        static private String zeilen = Convert.ToString(71 + 180 + 336 + 1144);
         static private DateTime startzeit;
         static private List<string> logging_list = new List<string>();
         static private db boxdb = new db("box.db");
@@ -43,11 +43,11 @@ namespace freetzbot
                             unignore(parameter[1]);
                             connection.sendmsg("Alles klar", receiver);
                             break;
-                        case "klappe":
-                            hilfe(connection, sender, receiver, "klappe");
+                        case "settings":
+                            settings_command(connection, sender, receiver, parameter[1]);
                             break;
-                        case "okay":
-                            hilfe(connection, sender, receiver, "okay");
+                        case "db":
+                            db_command(connection, sender, receiver, parameter[1]);
                             break;
                         case "join":
                             connection.sendaction("rennt los zum channel " + parameter[1], receiver);
@@ -78,13 +78,11 @@ namespace freetzbot
                         case "unignore":
                             hilfe(connection, sender, receiver, "unignore");
                             break;
-                        case "klappe":
-                            configuration.set("klappe", "true");
-                            connection.sendmsg("Tschuldigung, bin ruhig", receiver);
+                        case "settings":
+                            hilfe(connection, sender, receiver, "settings");
                             break;
-                        case "okay":
-                            configuration.set("klappe", "false");
-                            connection.sendmsg("Okay bin zurück ;-)", receiver);
+                        case "db":
+                            hilfe(connection, sender, receiver, "db");
                             break;
                         case "join":
                             hilfe(connection, sender, receiver, "join");
@@ -263,6 +261,116 @@ namespace freetzbot
                     default:
                         break;
                 }
+            }
+        }
+
+        private static void db_command(irc connection, String sender, String receiver, String message)
+        {
+            try
+            {
+                String[] split = message.Split(' ');
+                if (split[1] == "reload")
+                {
+                    switch (split[0])
+                    {
+                        case "box":
+                            boxdb.Reload();
+                            break;
+                        case "user":
+                            userdb.Reload();
+                            break;
+                        case "witz":
+                            witzdb.Reload();
+                            break;
+                        case "ignore":
+                            ignoredb.Reload();
+                            break;
+                        case "server":
+                            servers.Reload();
+                            break;
+                        case "all":
+                            boxdb.Reload();
+                            userdb.Reload();
+                            witzdb.Reload();
+                            ignoredb.Reload();
+                            servers.Reload();
+                            break;
+                        default:
+                            connection.sendmsg("Das sieht nach einem Syntax fehler aus", receiver);
+                            return;
+                    }
+                }
+                if (split[1] == "flush")
+                {
+                    switch (split[0])
+                    {
+                        case "box":
+                            boxdb.Write();
+                            break;
+                        case "user":
+                            userdb.Write();
+                            break;
+                        case "witz":
+                            witzdb.Write();
+                            break;
+                        case "ignore":
+                            ignoredb.Write();
+                            break;
+                        case "server":
+                            servers.Write();
+                            break;
+                        case "all":
+                            boxdb.Write();
+                            userdb.Write();
+                            witzdb.Write();
+                            ignoredb.Write();
+                            servers.Write();
+                            break;
+                        default:
+                            connection.sendmsg("Das sieht nach einem Syntax fehler aus", receiver);
+                            return;
+                    }
+                }
+                connection.sendmsg("Okay", receiver);
+            }
+            catch (Exception ex)
+            {
+                logging("Bei einer Datenbank Operation ist eine Exception aufgetreten: " + ex.Message);
+                connection.sendmsg("Wups, das hat eine Exception verursacht", receiver);
+            }
+        }
+
+        private static void settings_command(irc connection, String sender, String receiver, String message)
+        {
+            String[] split = message.Split(' ');
+            switch (split[0])
+            {
+                case "set":
+                    try
+                    {
+                        configuration.set(split[1], split[2]);
+                    }
+                    catch
+                    {
+                        connection.sendmsg("Wups, das hat eine Exception ausgelöst", receiver);
+                        return;
+                    }
+                    connection.sendmsg("Okay", receiver);
+                    break;
+                case "get":
+                    try
+                    {
+                        connection.sendmsg(configuration.get(split[1]), receiver);
+                    }
+                    catch
+                    {
+                        connection.sendmsg("Wups, das hat eine Exception ausgelöst", receiver);
+                        return;
+                    }
+                    break;
+                default:
+                    connection.sendmsg("Wups, da stimmt wohl etwas mit der Syntax nicht", receiver);
+                    break;
             }
         }
 
@@ -482,6 +590,9 @@ namespace freetzbot
                     case "connect":
                         connection.sendmsg("Baut eine Verbindung zu einem anderen IRC Server auf, Syntax: !connect server,port,nick,quit_message,initial_channel", receiver);
                         break;
+                    case "db":
+                        connection.sendmsg("Führt Operationen an meiner Datenbank aus, Operator Befehl: !db dbname reload / flush", receiver);
+                        break;
                     case "frag":
                         connection.sendmsg("Dann werde ich den genannten Benutzer nach seiner Box fragen, z.b. !frag Anonymous", receiver);
                         break;
@@ -497,9 +608,6 @@ namespace freetzbot
                     case "join":
                         connection.sendmsg("Daraufhin werde ich den angegebenen Channel betreten, Operator Befehl: z.b. !join #testchannel", receiver);
                         break;
-                    case "klappe":
-                        connection.sendmsg("Zwingt mich nur noch Privat zu antworten, Operator Befehl: kein parameter", receiver);
-                        break;
                     case "labor":
                         connection.sendmsg("Ich schaue mal auf das aktuelle Datum der Labor Firmwares, Parameter: '7270', '7390', 'fhem', '7390at', 'android', 'ios'.", receiver);
                         break;
@@ -508,9 +616,6 @@ namespace freetzbot
                         break;
                     case "lmgtfy":
                         connection.sendmsg("Dazu sage ich jetzt mal nichts, finde es raus!", receiver);
-                        break;
-                    case "okay":
-                        connection.sendmsg("Erlaubt es mir wieder im Channel zu sprechen, Operator Befehl: kein parameter", receiver);
                         break;
                     case "part":
                         connection.sendmsg("Den angegebenen Channel werde ich verlassen, Operator Befehl: z.b. !part #testchannel", receiver);
@@ -523,6 +628,9 @@ namespace freetzbot
                         break;
                     case "restart":
                         connection.sendmsg("Ich werde versuchen mich selbst neuzustarten, Operator Befehl: kein parameter", receiver);
+                        break;
+                    case "settings":
+                        connection.sendmsg("Ändert meine Einstellungen, Operator Befehl: !settings get name, !settings set name wert", receiver);
                         break;
                     case "trunk":
                         connection.sendmsg("Dies zeigt den aktuellsten Changeset an.", receiver);
