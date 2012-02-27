@@ -1150,6 +1150,7 @@ namespace freetzbot
             connection.Received += new irc.ReceivedEventHandler(process_incomming);
             connection.connect();
             connection.AutoReconnect = true;
+            Thread.Sleep(1000);
             connection.join(initial_channel);
             irc_connections.Add(connection);
         }
