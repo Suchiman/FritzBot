@@ -1008,7 +1008,7 @@ namespace freetzbot
             else
             {
                 Random rand = new Random();
-                if (witzdb.GetAt(rand.Next(witzdb.Size())) != "")
+                if (witzdb.Size() > 0)
                 {
                     connection.sendmsg(witzdb.GetAt(rand.Next(witzdb.Size())), receiver);
                 }
