@@ -13,7 +13,7 @@ namespace freetzbot
         static private System.ComponentModel.BackgroundWorker loggingthread;
 
         static private Boolean restart = false;
-        static private String zeilen = Convert.ToString(71 + 180 + 336 + 1276);
+        static private String zeilen = Convert.ToString(71 + 180 + 336 + 1367);
         static private DateTime startzeit;
         static private List<string> logging_list = new List<string>();
         static private db boxdb = new db("box.db");
@@ -171,6 +171,9 @@ namespace freetzbot
                     case "ping":
                         hilfe(connection, sender, receiver, "ping");
                         break;
+                    case "seen":
+                        seen(connection, sender, receiver, parameter[1]);
+                        break;
                     case "trunk":
                         hilfe(connection, sender, receiver, "trunk");
                         break;
@@ -253,6 +256,9 @@ namespace freetzbot
                     case "ping":
                         ping(connection, sender, receiver, "");
                         break;
+                    case "seen":
+                        hilfe(connection, sender, receiver, "seen");
+                        break;
                     case "trunk":
                         trunk(connection, sender, receiver, "");
                         break;
@@ -283,6 +289,28 @@ namespace freetzbot
                     default:
                         break;
                 }
+            }
+        }
+
+        private static void seen(irc connection, String sender, String receiver, String message)
+        {
+            if (userdb.GetContaining(message).Length > 0)
+            {
+                if (userdb.GetContaining(message)[0].Contains(","))
+                {
+                    String datum = userdb.GetContaining(message)[0].Split(',')[1];
+                    DateTime seen;
+                    DateTime.TryParse(datum, out seen);
+                    connection.sendmsg("Den habe ich hier zuletzt am " + seen.ToString("dd.MM.yyyy ") + "um" + seen.ToString(" HH:mm:ss ") + "Uhr gesehen", receiver);
+                }
+                else
+                {
+                    connection.sendmsg("Der ist doch gerade hier ;)", receiver);
+                }
+            }
+            else
+            {
+                connection.sendmsg("Diesen Benutzer habe ich noch nie gesehen", receiver);
             }
         }
 
@@ -651,6 +679,9 @@ namespace freetzbot
                     case "restart":
                         connection.sendmsg("Ich werde versuchen mich selbst neuzustarten, Operator Befehl: kein parameter", receiver);
                         break;
+                    case "seen":
+                        connection.sendmsg("Gibt aus wann der Nutzer zuletzt gesehen wurde.", receiver);
+                        break;
                     case "settings":
                         connection.sendmsg("Ändert meine Einstellungen, Operator Befehl: !settings get name, !settings set name wert", receiver);
                         break;
@@ -681,7 +712,7 @@ namespace freetzbot
             }
             else
             {
-                connection.sendmsg("Aktuelle Befehle: about box boxfind boxinfo boxlist boxremove frag freetz hilfe ignore labor lmgtfy ping trunk uptime userlist whmf witz zeit.", receiver);
+                connection.sendmsg("Aktuelle Befehle: about box boxfind boxinfo boxlist boxremove frag freetz hilfe ignore labor lmgtfy ping seen trunk uptime userlist whmf witz zeit.", receiver);
                 connection.sendmsg("Hilfe zu jedem Befehl mit \"!help befehl\". Um die anderen nicht zu belästigen kannst du mich auch per PM (query) anfragen", receiver);
             }
         }
@@ -1069,13 +1100,31 @@ namespace freetzbot
                     return;
                 case "JOIN":
                     logging(nick + " hat den Raum " + message + " betreten");
+                    if ((userdb.GetContaining(nick).Length > 0))
+                    {
+                        if (userdb.GetContaining(nick)[0].Contains(","))
+                        {
+                            userdb.Remove(userdb.GetContaining(nick)[0]);
+                            userdb.Add(nick);
+                        }
+                    }
                     boxfrage(connection, nick, source, nick);
                     return;
                 case "QUIT":
                     logging(nick + " hat den Server verlassen");
+                    if (!userdb.GetContaining(nick)[0].Contains(","))
+                    {
+                        userdb.Remove(userdb.GetContaining(nick)[0]);
+                        userdb.Add(nick + "," + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
+                    }
                     return;
                 case "PART":
                     logging(nick + " hat den Raum " + message + " verlassen");
+                    if (!userdb.GetContaining(nick)[0].Contains(","))
+                    {
+                        userdb.Remove(userdb.GetContaining(nick)[0]);
+                        userdb.Add(nick + "," + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
+                    }
                     return;
                 case "NICK":
                     logging(nick + " heißt jetzt " + message);
