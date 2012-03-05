@@ -13,7 +13,7 @@ namespace freetzbot
         static private System.ComponentModel.BackgroundWorker loggingthread;
 
         static private Boolean restart = false;
-        static private String zeilen = Convert.ToString(71 + 180 + 336 + 1226);
+        static private String zeilen = Convert.ToString(71 + 180 + 336 + 1276);
         static private DateTime startzeit;
         static private List<string> logging_list = new List<string>();
         static private db boxdb = new db("box.db");
@@ -188,6 +188,9 @@ namespace freetzbot
             {
                 switch (parameter[0].ToLower())
                 {
+                    case "mem":
+                        connection.sendmsg("GC Totalmem: " + GC.GetTotalMemory(true).ToString() + ", WorkingSet: " + (System.Diagnostics.Process.GetCurrentProcess().WorkingSet64 / 1024).ToString() + "kB", receiver);
+                        break;
                     case "about":
                         connection.sendmsg("Programmiert hat mich Suchiman, und ich bin dazu da, um Daten über Fritzboxen zu sammeln und andere kleine Dinge zu tuen. Ich bestehe derzeit aus " + zeilen + " Zeilen C# Code.", receiver);
                         break;
@@ -1021,7 +1024,7 @@ namespace freetzbot
 
         static private void boxfrage(irc connection, String sender, String receiver, String message)
         {
-            if (ignore_check(sender)) return;
+            if (ignore_check(sender) || configuration.get("boxfrage") == "false") return;
             try
             {
                 if (!(userdb.GetContaining(sender).Length > 0))
@@ -1031,7 +1034,10 @@ namespace freetzbot
                     userdb.Add(sender);
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                logging("Da ist etwas beim erfragen der Box schiefgelaufen:" + ex.Message);
+            }
         }
 
         static private void process_incomming(irc connection, String source, String nick, String message)
@@ -1043,6 +1049,7 @@ namespace freetzbot
                     return;
                 case "JOIN":
                     logging(nick + " hat den Raum " + message + " betreten");
+                    boxfrage(connection, nick, source, nick);
                     return;
                 case "QUIT":
                     logging(nick + " hat den Server verlassen");
@@ -1110,8 +1117,25 @@ namespace freetzbot
         static private void Trennen()
         {
             laborthread.Abort();
-            for (int i = 0; i < irc_connections.ToArray().Length; i++)
+            for (int i = 0; i < irc_connections.Count; i++)
             {
+                String raumliste = null;
+                foreach (String raum in irc_connections[i].rooms)
+                {
+                    if (raumliste == null)
+                    {
+                        raumliste = raum;
+                    }
+                    else
+                    {
+                        raumliste += ":" + raum;
+                    }
+                }
+                int position = servers.Find(servers.GetContaining(irc_connections[i].hostname)[0]);
+                String[] substr = servers.GetAt(position).Split(new String[] { "," }, 5, StringSplitOptions.None);
+                substr[4] = raumliste;
+                servers.Remove(servers.GetAt(position));
+                servers.Add(substr[0] + "," + substr[1] + "," + substr[2] + "," + substr[3] + "," + substr[4]);
                 irc_connections[i].disconnect();
             }
         }
@@ -1141,6 +1165,9 @@ namespace freetzbot
             }
             laborthread = new Thread(delegate() { labor_check(); });
             laborthread.Start();
+            Thread consolenthread = new Thread(new ThreadStart(consoleread));
+            consolenthread.IsBackground = true;
+            consolenthread.Start();
         }
 
         static private void instantiate_connection(String server, int port, String nick, String quit_message, String initial_channel)
@@ -1151,13 +1178,24 @@ namespace freetzbot
             connection.connect();
             connection.AutoReconnect = true;
             Thread.Sleep(1000);
-            connection.join(initial_channel);
+            if (initial_channel.Contains(":"))
+            {
+                String[] channels = initial_channel.Split(':');
+                foreach (String channel in channels)
+                {
+                    connection.join(channel);
+                }
+            }
+            else
+            {
+                connection.join(initial_channel);
+            }
             irc_connections.Add(connection);
         }
 
         static private Boolean running_check()
         {
-            for (int i = 0; i < irc_connections.ToArray().Length; i++)
+            for (int i = 0; i < irc_connections.Count; i++)
             {
                 if (irc_connections[i].running())
                 {
@@ -1201,6 +1239,17 @@ namespace freetzbot
                 Console.WriteLine(logging_list[0]);
                 logging_list.RemoveAt(0);
                 log.Close();
+            }
+        }
+
+        static private void consoleread()
+        {
+            while (true)
+            {
+                if (Console.ReadLine() == "exit")
+                {
+                    Trennen();
+                }
             }
         }
 
