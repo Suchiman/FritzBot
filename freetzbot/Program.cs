@@ -24,6 +24,9 @@ namespace freetzbot
         static private settings configuration = new settings("config.cfg");
         static private List<irc> irc_connections = new List<irc>();
         static private Thread laborthread;
+        static private Thread antifloodingthread;
+        static private int antifloodingcount;
+        static private Boolean floodingnotificated;
 
         static private void process_command(irc connection, String sender, String receiver, String message)
         {
@@ -103,6 +106,21 @@ namespace freetzbot
             }
             if (ignore_check(sender)) return;
             if (parameter.Length > 1) if (ignore_check(parameter[1])) return;
+            int floodingcount;
+            int.TryParse(configuration.get("floodingcount"), out floodingcount);
+            if (antifloodingcount >= floodingcount)
+            {
+                if (floodingnotificated == false)
+                {
+                    floodingnotificated = true;
+                    connection.sendmsg("Flooding Protection aktiviert", receiver);
+                }
+                return;
+            }
+            else
+            {
+                antifloodingcount++;
+            }
             if (configuration.get("klappe") == "true") receiver = sender;
 
             if (parameter.Length > 1)//Wenn ein zusätzlicher Parameter angegebenen wurde....
@@ -758,7 +776,9 @@ namespace freetzbot
                         }
                     }
                     output = "";
-                    Thread.Sleep(Convert.ToInt32(configuration.get("labor_check_intervall")));
+                    int labor_check_intervall;
+                    int.TryParse(configuration.get("labor_check_intervall"), out labor_check_intervall);
+                    Thread.Sleep(labor_check_intervall);
                 }
             }
         }
@@ -1168,6 +1188,28 @@ namespace freetzbot
             Thread consolenthread = new Thread(new ThreadStart(consoleread));
             consolenthread.IsBackground = true;
             consolenthread.Start();
+            antifloodingcount = 0;
+            antifloodingthread = new Thread(new ThreadStart(antiflooding));
+            antifloodingthread.IsBackground = true;
+            antifloodingthread.Start();
+        }
+
+        static private void antiflooding()
+        {
+            while (true)
+            {
+                int time;
+                int.TryParse(configuration.get("floodingcount_reduction"), out time);
+                Thread.Sleep(time);
+                if (antifloodingcount > 0)
+                {
+                    antifloodingcount--;
+                }
+                if (antifloodingcount == 0)
+                {
+                    floodingnotificated = false;
+                }
+            }
         }
 
         static private void instantiate_connection(String server, int port, String nick, String quit_message, String initial_channel)
