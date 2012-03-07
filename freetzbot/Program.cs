@@ -13,7 +13,7 @@ namespace freetzbot
         static private System.ComponentModel.BackgroundWorker loggingthread;
 
         static private Boolean restart = false;
-        static private String zeilen = Convert.ToString(71 + 180 + 336 + 1367);
+        static private String zeilen = Convert.ToString(71 + 180 + 336 + 1442);
         static private DateTime startzeit;
         static private List<string> logging_list = new List<string>();
         static private db boxdb = new db("box.db");
@@ -159,6 +159,9 @@ namespace freetzbot
                     case "man":
                         hilfe(connection, sender, receiver, parameter[1]);
                         break;
+                    case "mem":
+                        hilfe(connection, sender, receiver, "mem");
+                        break;
                     case "ignore":
                         ignore(connection, sender, receiver, parameter[1]);
                         break;
@@ -209,9 +212,6 @@ namespace freetzbot
             {
                 switch (parameter[0].ToLower())
                 {
-                    case "mem":
-                        connection.sendmsg("GC Totalmem: " + GC.GetTotalMemory(true).ToString() + ", WorkingSet: " + (System.Diagnostics.Process.GetCurrentProcess().WorkingSet64 / 1024).ToString() + "kB", receiver);
-                        break;
                     case "about":
                         connection.sendmsg("Programmiert hat mich Suchiman, und ich bin dazu da, um Daten über Fritzboxen zu sammeln und andere kleine Dinge zu tuen. Ich bestehe derzeit aus " + zeilen + " Zeilen C# Code.", receiver);
                         break;
@@ -243,6 +243,9 @@ namespace freetzbot
                     case "info":
                     case "man":
                         hilfe(connection, sender, receiver, "");
+                        break;
+                    case "mem":
+                        connection.sendmsg("GC Totalmem: " + GC.GetTotalMemory(true).ToString() + "Byte, WorkingSet: " + (System.Diagnostics.Process.GetCurrentProcess().WorkingSet64 / 1024).ToString() + "kB", receiver);
                         break;
                     case "ignore":
                         hilfe(connection, sender, receiver, "ignore");
@@ -667,6 +670,9 @@ namespace freetzbot
                     case "lmgtfy":
                         connection.sendmsg("Dazu sage ich jetzt mal nichts, finde es raus!", receiver);
                         break;
+                    case "mem":
+                        connection.sendmsg("Meine aktuelle Speicherlast berechnet vom GC (Gargabe Collector) und die insgesamt Last", receiver);
+                        break;
                     case "part":
                         connection.sendmsg("Den angegebenen Channel werde ich verlassen, Operator Befehl: z.b. !part #testchannel", receiver);
                         break;
@@ -712,7 +718,7 @@ namespace freetzbot
             }
             else
             {
-                connection.sendmsg("Aktuelle Befehle: about box boxfind boxinfo boxlist boxremove frag freetz hilfe ignore labor lmgtfy ping seen trunk uptime userlist whmf witz zeit.", receiver);
+                connection.sendmsg("Aktuelle Befehle: about box boxfind boxinfo boxlist boxremove frag freetz hilfe ignore labor lmgtfy mem ping seen trunk uptime userlist whmf witz zeit.", receiver);
                 connection.sendmsg("Hilfe zu jedem Befehl mit \"!help befehl\". Um die anderen nicht zu belästigen kannst du mich auch per PM (query) anfragen", receiver);
             }
         }
@@ -738,12 +744,21 @@ namespace freetzbot
         static private void labor_check()
         {
             List<String> LaborDates = new List<String>();
+            Boolean[] released = new Boolean[7];
             String output = "";
             String webseite = get_web("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
             for (int i = 1; i < 8; i++)
             {
                 String Date = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None)[i].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0];
                 LaborDates.Add(Date);
+
+                String changelog_url_element = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None)[i];
+                changelog_url_element = changelog_url_element.Split(new String[] { "<div class=\"boxBottom\">" }, 2, StringSplitOptions.None)[0];
+
+                if (changelog_url_element.Contains("<p>Die neuen Leistungsmerkmale aus diesem Labor"))
+                {
+                    released[i - 1] = true;
+                }
             }
             while (true)
             {
@@ -761,12 +776,55 @@ namespace freetzbot
                     for (int i = 1; i < 8; i++)
                     {
                         String Date = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None)[i].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0];
+
+                        String changelog_url_element = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None)[i];
+                        changelog_url_element = changelog_url_element.Split(new String[] { "<div class=\"boxBottom\">" }, 2, StringSplitOptions.None)[0];
+
+                        if (changelog_url_element.Contains("<p>Die neuen Leistungsmerkmale aus diesem Labor"))
+                        {
+                            if (released[i - 1] != true)
+                            {
+                                released[i - 1] = true;
+                                output = "Labor Version wurde als Stabil released!";
+                                switch (i)
+                                {
+                                    case 1:
+                                        output += ", iOS App";
+                                        break;
+                                    case 2:
+                                        output += ", Android App";
+                                        break;
+                                    case 3:
+                                        output += ", 7390";
+                                        break;
+                                    case 4:
+                                        output += ", 7390 FHEM";
+                                        break;
+                                    case 5:
+                                        output += ", 7390 AT-CH";
+                                        break;
+                                    case 6:
+                                        output += ", 7320";
+                                        break;
+                                    case 7:
+                                        output += ", 7270";
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            released[i - 1] = false;
+                        }
+
                         if (Date != LaborDates[i-1])
                         {
                             LaborDates[i - 1] = Date;
                             if (output == "")
                             {
-                                output = "Neue Labor Versionen gesichtet!";
+                                output += "Neue Labor Versionen gesichtet!";
                             }
                             switch (i)
                             {
@@ -852,7 +910,14 @@ namespace freetzbot
                     String[] daten = new String[7];
                     for (int i = 1; i < 8; i++)
                     {
-                        daten[i-1] = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None)[i].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0];
+                        daten[i - 1] = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None)[i].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0];
+
+                        String changelog_url_element = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None)[i];
+                        changelog_url_element = changelog_url_element.Split(new String[] { "<div class=\"boxBottom\">" }, 2, StringSplitOptions.None)[0];
+                        if (changelog_url_element.Contains("<p>Die neuen Leistungsmerkmale aus diesem Labor"))
+                        {
+                            daten[i - 1] = "Released";
+                        }
                     }
                     changeset = "Aktuelle Labor Daten: iOS: " + daten[0] + ", Android: " + daten[1] + ", 7390: " + daten[2] + ", FHEM: " + daten[3] + ", 7390at: " + daten[4] + ", 7320: " + daten[5] + ", 7270: " + daten[6] + ".";
                     break;
@@ -864,15 +929,25 @@ namespace freetzbot
             if (modell != 0)
             {
                 String datum = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None)[modell].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0];
-                String url = "http://www.avm.de/de/Service/Service-Portale/Labor/" + webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None)[modell].Split(new String[] { "<a href=" }, 2, StringSplitOptions.None)[1].Split(new String[] { "\"" }, 3, StringSplitOptions.None)[1].Split(new String[] { "/" }, 2, StringSplitOptions.None)[0] + "/labor_feedback_versionen.php";
-                String feedback = get_web(url);
-                if (feedback == "")
+                String changelog_url_element = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None)[modell];
+                changelog_url_element = changelog_url_element.Split(new String[] { "<div class=\"boxBottom\">" }, 2, StringSplitOptions.None)[0];
+                if (changelog_url_element.Contains("<p>Die neuen Leistungsmerkmale aus diesem Labor"))
                 {
-                    connection.sendmsg("Leider war es mir nicht möglich alle Daten von der AVM Webseite abzurufen", receiver);
-                    return;
+                    connection.sendmsg("Aktuell ist keine Laborversion verfügbar da die Features in eine neue Release Firmware eingeflossen sind", receiver);
                 }
-                String version = feedback.Split(new String[] { "</strong>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "Version " }, 2, StringSplitOptions.None)[1];
-                changeset += "Die neueste " + message + " labor Version ist am " + datum + " erschienen mit der Versionsnummer: " + version + ". Changelog: " + url;
+                else
+                {
+                    changelog_url_element = changelog_url_element.Split(new String[] { "<a href=" }, 2, StringSplitOptions.None)[1].Split(new String[] { "\"" }, 3, StringSplitOptions.None)[1].Split(new String[] { "/" }, 2, StringSplitOptions.None)[0];
+                    String url = "http://www.avm.de/de/Service/Service-Portale/Labor/" + changelog_url_element + "/labor_feedback_versionen.php";
+                    String feedback = get_web(url);
+                    if (feedback == "")
+                    {
+                        connection.sendmsg("Leider war es mir nicht möglich alle Daten von der AVM Webseite abzurufen", receiver);
+                        return;
+                    }
+                    String version = feedback.Split(new String[] { "</strong>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "Version " }, 2, StringSplitOptions.None)[1];
+                    changeset += "Die neueste " + message + " labor Version ist am " + datum + " erschienen mit der Versionsnummer: " + version + ". Changelog: " + url;
+                }
             }
 
             connection.sendmsg(changeset, receiver);
