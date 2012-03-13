@@ -13,7 +13,7 @@ namespace freetzbot
         static private System.ComponentModel.BackgroundWorker loggingthread;
 
         static private Boolean restart = false;
-        static private String zeilen = Convert.ToString(71 + 178 + 336 + 1448);
+        static private String zeilen = Convert.ToString(71 + 178 + 336 + 1473);
         static private DateTime startzeit;
         static private List<string> logging_list = new List<string>();
         static private db boxdb = new db("box.db");
@@ -707,7 +707,7 @@ namespace freetzbot
                         connection.sendmsg("Das erzeugt einen Link zu wehavemorefun mit dem angegebenen Suchkriterium, Beispiele: !whmf 7270, !whmf \"CAPI Treiber\", !whmf 7270 Benutzer", receiver);
                         break;
                     case "witz":
-                        connection.sendmsg("Ich werde dann einen Witz erzählen, mit \"!witz add witztext\" kannst du einen neuen Witz hinzufügen.", receiver);
+                        connection.sendmsg("Ich werde dann einen Witz erzählen, mit \"!witz add witztext\" kannst du einen neuen Witz hinzufügen. Mit !witz stichwort kannst du einen speziellen Witz suchen", receiver);
                         break;
                     case "zeit":
                         connection.sendmsg("Das gibt die aktuelle Uhrzeit aus.", receiver);
@@ -1132,6 +1132,31 @@ namespace freetzbot
                 {
                     witzdb.Add(witz[1]);
                     connection.sendmsg("Ist notiert " + sender, receiver);
+                }
+                else
+                {
+                    String[] splitted = message.Split(' ');
+                    List<String> alle_witze = new List<String>(witzdb.GetAll());
+                    List<String> such_witze = new List<String>(alle_witze);
+                    for (int i = 0; i < alle_witze.Count; i++)
+                    {
+                        foreach (String data in splitted)
+                        {
+                            if (!alle_witze[i].ToLower().Contains(data.ToLower()))
+                            {
+                                such_witze.Remove(alle_witze[i]);
+                            }
+                        }
+                    }
+                    if (such_witze.Count > 0)
+                    {
+                        Random rand = new Random();
+                        connection.sendmsg(such_witze[rand.Next(such_witze.Count)], receiver);
+                    }
+                    else
+                    {
+                        connection.sendmsg("Tut mir leid ich kenne leider keinen Witz der alle deine Stichwörter beinhaltet", receiver);
+                    }
                 }
             }
             else
