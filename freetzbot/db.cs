@@ -22,10 +22,6 @@ namespace freetzbot
         {
             threadsafe = new Mutex();
             datenbank_name = db;
-            if (!File.Exists(datenbank_name))
-            {
-                Initdb();
-            }
             datenbank = new List<String>(Read());
         }
         /// <summary>
@@ -33,11 +29,9 @@ namespace freetzbot
         /// </summary>
         private void Initdb()
         {
-            threadsafe.WaitOne();
             StreamWriter db = new StreamWriter(datenbank_name, true, Encoding.GetEncoding("iso-8859-1"));
             db.WriteLine("");
             db.Close();
-            threadsafe.ReleaseMutex();
         }
         /// <summary>
         /// Liest die Datenbank von einer Datei ein
@@ -46,6 +40,10 @@ namespace freetzbot
         private String[] Read()
         {
             threadsafe.WaitOne();
+            if (!File.Exists(datenbank_name))
+            {
+                Initdb();
+            }
             String[] Daten = new String[0];
             StreamReader db = new StreamReader(datenbank_name, Encoding.GetEncoding("iso-8859-1"));
             for (int i = 0; db.Peek() >= 0; i++)

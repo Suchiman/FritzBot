@@ -13,7 +13,7 @@ namespace freetzbot
         static private System.ComponentModel.BackgroundWorker loggingthread;
 
         static private Boolean restart = false;
-        static private String zeilen = Convert.ToString(71 + 180 + 336 + 1442);
+        static private String zeilen = Convert.ToString(71 + 178 + 336 + 1448);
         static private DateTime startzeit;
         static private List<string> logging_list = new List<string>();
         static private db boxdb = new db("box.db");
@@ -1175,7 +1175,8 @@ namespace freetzbot
                     return;
                 case "JOIN":
                     logging(nick + " hat den Raum " + message + " betreten");
-                    if ((userdb.GetContaining(nick).Length > 0))
+                    boxfrage(connection, nick, nick, nick);
+                    if (userdb.GetContaining(nick).Length > 0)
                     {
                         if (userdb.GetContaining(nick)[0].Contains(","))
                         {
@@ -1183,22 +1184,27 @@ namespace freetzbot
                             userdb.Add(nick);
                         }
                     }
-                    boxfrage(connection, nick, source, nick);
                     return;
                 case "QUIT":
                     logging(nick + " hat den Server verlassen");
-                    if (!userdb.GetContaining(nick)[0].Contains(","))
+                    if (userdb.GetContaining(nick).Length > 0)
                     {
-                        userdb.Remove(userdb.GetContaining(nick)[0]);
-                        userdb.Add(nick + "," + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
+                        if (!userdb.GetContaining(nick)[0].Contains(","))
+                        {
+                            userdb.Remove(userdb.GetContaining(nick)[0]);
+                            userdb.Add(nick + "," + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
+                        }
                     }
                     return;
                 case "PART":
                     logging(nick + " hat den Raum " + message + " verlassen");
-                    if (!userdb.GetContaining(nick)[0].Contains(","))
+                    if (userdb.GetContaining(nick).Length > 0)
                     {
-                        userdb.Remove(userdb.GetContaining(nick)[0]);
-                        userdb.Add(nick + "," + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
+                        if (!userdb.GetContaining(nick)[0].Contains(","))
+                        {
+                            userdb.Remove(userdb.GetContaining(nick)[0]);
+                            userdb.Add(nick + "," + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
+                        }
                     }
                     return;
                 case "NICK":
