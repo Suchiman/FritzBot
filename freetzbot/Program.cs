@@ -13,7 +13,7 @@ namespace freetzbot
         static private System.ComponentModel.BackgroundWorker loggingthread;
 
         static private Boolean restart = false;
-        static private String zeilen = Convert.ToString(71 + 178 + 336 + 1654);
+        static private String zeilen = Convert.ToString(71 + 178 + 336 + 1704);
         static private DateTime startzeit;
         static private List<string> logging_list = new List<string>();
         static private Mutex logging_safe = new Mutex();
@@ -23,6 +23,7 @@ namespace freetzbot
         static private db witzdb = new db("witze.db");
         static private db ignoredb = new db("ignore.db");
         static private db aliasdb = new db("alias.db");
+        static private db fwdb = new db("fwdb.db");
         static private db servers = new db("servers.cfg");
         static private settings configuration = new settings("config.cfg");
         static private List<irc> irc_connections = new List<irc>();
@@ -401,35 +402,77 @@ namespace freetzbot
 
         private static void fw(irc connection, String sender, String receiver, String message)
         {
+            if (message.Contains(" "))
+            {
+                String[] splitted = message.Split(' ');
+                if (splitted[0] == "add")
+                {
+                    fwdb.Add(splitted[1]);
+                    connection.sendmsg("Der FW Alias wurde hinzugefügt", receiver);
+                    return;
+                }
+            }
             String ftp = "ftp://ftp.avm.de/fritz.box/";
             String output = "";
-            connection.sendmsg("Starte FTP Anforderung", receiver);
-            String directory = ftp_directory(ftp);
-            String[] directories = directory.Split(new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (String data in directories)
+            String[] fws = fwdb.GetContaining(message + "=");
+            if (fws.Length > 0)
             {
-                if (data.ToLower().Contains(message.ToLower()))
+                String[] fw = fws[0].Split(new String[] { "=" }, 2, StringSplitOptions.None);
+                String subdirectory = ftp_directory(ftp + fw[1] + "/firmware/");
+                String[] subdirectories = subdirectory.Split(new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (String subdata in subdirectories)
                 {
-                    String subdirectory = ftp_directory(ftp + data + "/firmware/");
-                    String[] subdirectories = subdirectory.Split(new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
-                    foreach (String subdata in subdirectories)
+                    String finaldirectory = ftp_directory(ftp + fw[1] + "/firmware/" + subdata + "/");
+                    String[] finaldirectories = finaldirectory.Split(new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (String finaldata in finaldirectories)
                     {
-                        String finaldirectory = ftp_directory(ftp + data + "/firmware/" + subdata);
-                        String[] finaldirectories = finaldirectory.Split(new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
-                        foreach (String finaldata in finaldirectories)
+                        if (finaldata.Length >= 14)
                         {
-                            if (finaldata.Length >= 14)
+                            String version = finaldata.Substring(finaldata.Length - 14, 8);
+                            if (version.Contains("."))
                             {
-                                String version = finaldata.Substring(finaldata.Length - 14, 8);
-                                if (version.Contains("."))
+                                if (output != "")
                                 {
-                                    if (output != "")
+                                    output += ", " + subdata + "/" + version;
+                                }
+                                else
+                                {
+                                    output = subdata + "/" + version;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                String directory = ftp_directory(ftp);
+                String[] directories = directory.Split(new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (String data in directories)
+                {
+                    if (data.ToLower().Contains(message.ToLower()))
+                    {
+                        String subdirectory = ftp_directory(ftp + data + "/firmware/");
+                        String[] subdirectories = subdirectory.Split(new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (String subdata in subdirectories)
+                        {
+                            String finaldirectory = ftp_directory(ftp + data + "/firmware/" + subdata + "/");
+                            String[] finaldirectories = finaldirectory.Split(new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+                            foreach (String finaldata in finaldirectories)
+                            {
+                                if (finaldata.Length >= 14)
+                                {
+                                    String version = finaldata.Substring(finaldata.Length - 14, 8);
+                                    if (version.Contains("."))
                                     {
-                                        output += ", " + subdata + "/" + version;
-                                    }
-                                    else
-                                    {
-                                        output = subdata + "/" + version;
+                                        if (output != "")
+                                        {
+                                            output += ", " + subdata + "/" + version;
+                                        }
+                                        else
+                                        {
+                                            output = subdata + "/" + version;
+                                        }
                                     }
                                 }
                             }
@@ -437,7 +480,14 @@ namespace freetzbot
                     }
                 }
             }
-            connection.sendmsg(output, receiver);
+            if (output == "")
+            {
+                connection.sendmsg("Ich habe zu deiner Angabe leider nichts gefunden", receiver);
+            }
+            else
+            {
+                connection.sendmsg(output, receiver);
+            }
             //zb deutsch/4.80, deutsc_at_ch/4.82 - also folder/version
         }
 
