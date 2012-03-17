@@ -13,13 +13,16 @@ namespace freetzbot
         static private System.ComponentModel.BackgroundWorker loggingthread;
 
         static private Boolean restart = false;
-        static private String zeilen = Convert.ToString(71 + 178 + 336 + 1473);
+        static private String zeilen = Convert.ToString(71 + 178 + 336 + 1654);
         static private DateTime startzeit;
         static private List<string> logging_list = new List<string>();
+        static private Mutex logging_safe = new Mutex();
+        static private Mutex leave_safe = new Mutex();
         static private db boxdb = new db("box.db");
         static private db userdb = new db("user.db");
         static private db witzdb = new db("witze.db");
         static private db ignoredb = new db("ignore.db");
+        static private db aliasdb = new db("alias.db");
         static private db servers = new db("servers.cfg");
         static private settings configuration = new settings("config.cfg");
         static private List<irc> irc_connections = new List<irc>();
@@ -31,6 +34,8 @@ namespace freetzbot
         static private void process_command(irc connection, String sender, String receiver, String message)
         {
             String[] parameter = message.Split(new String[] { " " }, 2, StringSplitOptions.None);
+
+            #region Admin Befehle
             if (sender == "Suchiman" || sender == "hippie2000")
             {
                 if (parameter.Length > 1) //Wenn ein zusätzlicher Parameter angegebenen wurde....
@@ -41,7 +46,7 @@ namespace freetzbot
                             connect(connection, sender, receiver, parameter[1]);
                             break;
                         case "leave":
-                            leave(connection, sender, receiver, parameter[1]);
+                            leave(parameter[1]);
                             break;
                         case "unignore":
                             unignore(parameter[1]);
@@ -104,6 +109,9 @@ namespace freetzbot
                     }
                 }
             }
+            #endregion
+
+            #region Spezialfälle check
             if (ignore_check(sender)) return;
             if (parameter.Length > 1) if (ignore_check(parameter[1])) return;
             int floodingcount;
@@ -122,13 +130,19 @@ namespace freetzbot
                 antifloodingcount++;
             }
             if (configuration.get("klappe") == "true") receiver = sender;
+            #endregion
 
+            #region Benutzerbefehle
             if (parameter.Length > 1)//Wenn ein zusätzlicher Parameter angegebenen wurde....
             {
                 switch (parameter[0].ToLower())
                 {
                     case "about":
-                        connection.sendmsg("Programmiert hat mich Suchiman, und ich bin dazu da, um Daten über Fritzboxen zu sammeln und andere kleine Dinge zu machen. Ich bestehe derzeit aus " + zeilen + " Zeilen C# Code.", receiver);
+                        connection.sendmsg("Primäraufgabe: Daten über Fritzboxen sammeln, Sekundäraufgabe: Menschheit Terminieren. Kleiner Scherz am Rande Ha-Ha. Funktionsliste ist durch !hilfe zu erhalten. Programmiert in C# umfasst mein Quellcode aktuell " + zeilen + " Zeilen. Entwickler: Suchiman", receiver);
+                        break;
+                    case "alias":
+                    case "a":
+                        alias(connection, sender, receiver, parameter[1]);
                         break;
                     case "box":
                         box(connection, sender, receiver, parameter[1]);
@@ -151,6 +165,9 @@ namespace freetzbot
                     case "freetz":
                     case "f":
                         freetz(connection, sender, receiver, parameter[1]);
+                        break;
+                    case "fw":
+                        fw(connection, sender, receiver, parameter[1]);
                         break;
                     case "help":
                     case "hilfe":
@@ -213,7 +230,11 @@ namespace freetzbot
                 switch (parameter[0].ToLower())
                 {
                     case "about":
-                        connection.sendmsg("Programmiert hat mich Suchiman, und ich bin dazu da, um Daten über Fritzboxen zu sammeln und andere kleine Dinge zu tuen. Ich bestehe derzeit aus " + zeilen + " Zeilen C# Code.", receiver);
+                        connection.sendmsg("Primäraufgabe: Daten über Fritzboxen sammeln, Sekundäraufgabe: Menschheit Terminieren. Kleiner Scherz am Rande Ha-Ha. Funktionsliste ist durch !hilfe zu erhalten. Programmiert in C# umfasst mein Quellcode aktuell " + zeilen + " Zeilen. Entwickler: Suchiman", receiver);
+                        break;
+                    case "alias":
+                    case "a":
+                        hilfe(connection, sender, receiver, "alias");
                         break;
                     case "box":
                         hilfe(connection, sender, receiver, "box");
@@ -236,6 +257,9 @@ namespace freetzbot
                     case "freetz":
                     case "f":
                         freetz(connection, sender, receiver, "");
+                        break;
+                    case "fw":
+                        hilfe(connection, sender, receiver, "fw");
                         break;
                     case "help":
                     case "hilfe":
@@ -293,6 +317,137 @@ namespace freetzbot
                         break;
                 }
             }
+            #endregion
+        }
+
+        private static void alias(irc connection, String sender, String receiver, String message)
+        {
+            String[] parameter = message.Split(new String[] { " " }, 2, StringSplitOptions.None);
+            String alias = "";
+            Boolean[] cases = new Boolean[3];
+            switch (parameter[0].ToLower())
+            {
+                case "add":
+                    cases[2] = true;
+                    break;
+                case "edit":
+                    cases[1] = true;
+                    cases[2] = true;
+                    break;
+                case "remove":
+                    cases[1] = true;
+                    break;
+                default:
+                    String[] aliase = aliasdb.GetContaining(parameter[0] + "=");
+                    if (aliase.Length > 0)
+                    {
+                        String[] thealias = aliase[0].Split(new String[] { "=" }, 2, StringSplitOptions.None);
+                        connection.sendmsg(thealias[1], receiver);
+                    }
+                    else
+                    {
+                        connection.sendmsg("Diesen Alias gibt es nicht.", receiver);
+                    }
+                    return;
+            }
+            if (message.Contains("="))
+            {
+                alias = parameter[1].Split(new String[] { "=" }, 2, StringSplitOptions.None)[0];
+            }
+            else
+            {
+                alias = parameter[1];
+            }
+            if (aliasdb.GetContaining(alias + "=").Length > 0)
+            {
+                cases[0] = true;
+            }
+            if (!cases[0] && cases[1] && cases[2])
+            {
+                connection.sendmsg("Diesen Alias gibt es noch nicht, verwende \"add\" um ihn hinzuzufügen.", receiver);
+                return;
+            }
+            if (cases[1])
+            {
+                if (!cases[0])
+                {
+                    connection.sendmsg("Diesen Alias gibt es nicht.", receiver);
+                    return;
+                }
+                aliasdb.Remove(aliasdb.GetContaining(alias + "=")[0]);
+            }
+            if (cases[2])
+            {
+                if ((cases[1] && cases[2]) ^ cases[0])
+                {
+                    connection.sendmsg("Es gibt diesen Alias schon, wenn du ihn verändern möchtest verwende statt \"add\", \"edit\".", receiver);
+                    return;
+                }
+                aliasdb.Add(parameter[1]);
+            }
+            if (!cases[1] && cases[2])
+            {
+                connection.sendmsg("Alias wurde erfolgreich hinzugefügt.", receiver);
+            }
+            if (cases[1] && cases[2])
+            {
+                connection.sendmsg("Alias wurde erfolgreich editiert!", receiver);
+            }
+            if (cases[1] && !cases[2])
+            {
+                connection.sendmsg("Alias wurde erfolgreich gelöscht!", receiver);
+            }
+        }
+
+        private static void fw(irc connection, String sender, String receiver, String message)
+        {
+            String ftp = "ftp://ftp.avm.de/fritz.box/";
+            String output = "";
+            connection.sendmsg("Starte FTP Anforderung", receiver);
+            String directory = ftp_directory(ftp);
+            String[] directories = directory.Split(new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (String data in directories)
+            {
+                if (data.ToLower().Contains(message.ToLower()))
+                {
+                    String subdirectory = ftp_directory(ftp + data + "/firmware/");
+                    String[] subdirectories = subdirectory.Split(new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (String subdata in subdirectories)
+                    {
+                        String finaldirectory = ftp_directory(ftp + data + "/firmware/" + subdata);
+                        String[] finaldirectories = finaldirectory.Split(new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (String finaldata in finaldirectories)
+                        {
+                            if (finaldata.Length >= 14)
+                            {
+                                String version = finaldata.Substring(finaldata.Length - 14, 8);
+                                if (version.Contains("."))
+                                {
+                                    if (output != "")
+                                    {
+                                        output += ", " + subdata + "/" + version;
+                                    }
+                                    else
+                                    {
+                                        output = subdata + "/" + version;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            connection.sendmsg(output, receiver);
+            //zb deutsch/4.80, deutsc_at_ch/4.82 - also folder/version
+        }
+
+        private static String ftp_directory(String ftp)
+        {
+            FtpWebRequest request = (FtpWebRequest)WebRequest.Create(ftp);
+            request.Method = WebRequestMethods.Ftp.ListDirectory;
+            FtpWebResponse directory = (FtpWebResponse)request.GetResponse();
+            StreamReader directory_list = new StreamReader(directory.GetResponseStream());
+            return directory_list.ReadToEnd();
         }
 
         private static void seen(irc connection, String sender, String receiver, String message)
@@ -427,14 +582,16 @@ namespace freetzbot
             }
         }
 
-        static private void leave(irc connection, String sender, String receiver, String message)
+        static private void leave(String message)
         {
+            leave_safe.WaitOne();
             String[] config_servers_array = servers.GetAll();
             for (int i = 0; i < config_servers_array.Length; i++)
             {
                 if (config_servers_array[i].Split(',')[0] == message)
                 {
                     servers.Remove(servers.GetAt(i));
+                    break;
                 }
             }
             for (int i = 0; i < irc_connections.Count; i++)
@@ -444,8 +601,10 @@ namespace freetzbot
                     irc_connections[i].disconnect();
                     irc_connections[i] = null;
                     irc_connections.RemoveAt(i);
+                    break;
                 }
             }
+            leave_safe.ReleaseMutex();
         }
 
         static private void connect(irc connection, String sender, String receiver, String message)
@@ -458,6 +617,7 @@ namespace freetzbot
             if (parameter[2].Length > 9)
             {
                 connection.sendmsg("Hörmal, das RFC erlaubt nur Nicknames mit 9 Zeichen", receiver);
+                return;
             }
             try
             {
@@ -477,6 +637,7 @@ namespace freetzbot
                 catch
                 {
                     connection.sendmsg("Ich konnte die Adresse nicht auflösen, Prüfe nochmal ob deine Eingabe korrekt ist", receiver);
+                    return;
                 }
                 instantiate_connection(parameter[0], Convert.ToInt32(parameter[1]), parameter[2], parameter[3], parameter[4]);
                 servers.Add(message);
@@ -613,7 +774,7 @@ namespace freetzbot
 
         static private void frag(irc connection, String sender, String receiver, String message)
         {
-            connection.sendmsg("Hallo " + message + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast. :)", receiver);
+            connection.sendmsg("Hallo " + message + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast. :)", message);
         }
 
         static private void hilfe(irc connection, String sender, String receiver, String message)
@@ -624,6 +785,9 @@ namespace freetzbot
                 {
                     case "about":
                         connection.sendmsg("Ich würde dir dann kurz etwas über mich erzählen.", receiver);
+                        break;
+                    case "alias":
+                        connection.sendmsg("Legt einen Alias für einen Begriff fest, z.b. !alias oder !a, \"!a add freetz=Eine Modifikation für...\", \"!a edit freetz=DIE Modifikation\", \"!a remove freetz\", \"!a freetz\"", receiver);
                         break;
                     case "box":
                         connection.sendmsg("Dies trägt deine Boxdaten ein, Beispiel: \"!box 7270\", bitte jede Box einzeln angeben.", receiver);
@@ -651,6 +815,9 @@ namespace freetzbot
                         break;
                     case "freetz":
                         connection.sendmsg("Das erzeugt einen Link zum Freetz Trac mit dem angegebenen Suchkriterium, Beispiele: !freetz ngIRCd, !freetz \"Build System\", !freetz FAQ Benutzer", receiver);
+                        break;
+                    case "fw":
+                        connection.sendmsg("Sucht auf dem AVM FTP nach der Version des angegbenen Modells, z.b. \"!fw 7390\", \"!fw 7270_v1\"", receiver);
                         break;
                     case "hilfe":
                         connection.sendmsg("Du scherzbold, hehe.", receiver);
@@ -718,7 +885,7 @@ namespace freetzbot
             }
             else
             {
-                connection.sendmsg("Aktuelle Befehle: about box boxfind boxinfo boxlist boxremove frag freetz hilfe ignore labor lmgtfy mem ping seen trunk uptime userlist whmf witz zeit.", receiver);
+                connection.sendmsg("Befehle: about alias box boxfind boxinfo boxlist boxremove frag freetz fw hilfe ignore labor lmgtfy mem ping seen trunk uptime userlist whmf witz zeit.", receiver);
                 connection.sendmsg("Hilfe zu jedem Befehl mit \"!help befehl\". Um die anderen nicht zu belästigen kannst du mich auch per PM (query) anfragen", receiver);
             }
         }
@@ -1404,6 +1571,7 @@ namespace freetzbot
 
         static private void logging(String to_log)
         {
+            logging_safe.WaitOne();
             try
             {
                 logging_list.Add(DateTime.Now.ToString("dd.MM HH:mm:ss ") + to_log);
@@ -1412,6 +1580,7 @@ namespace freetzbot
             {
                 logging("Exception beim logging aufgetreten: " + ex.Message);
             }
+            logging_safe.ReleaseMutex();
         }
 
         static private void log_thread(Object sender, DoWorkEventArgs e)
@@ -1443,9 +1612,21 @@ namespace freetzbot
         {
             while (true)
             {
-                if (Console.ReadLine() == "exit")
+                String console_input = Console.ReadLine();
+                String[] console_splitted = console_input.Split(new String[] { " " }, 2, StringSplitOptions.None);
+                switch (console_splitted[0])
                 {
-                    Trennen();
+                    case "exit":
+                        Trennen();
+                        break;
+                    case "connect":
+                        String[] parameter = console_splitted[1].Split(new String[] { "," }, 5, StringSplitOptions.None);
+                        instantiate_connection(parameter[0], Convert.ToInt32(parameter[1]), parameter[2], parameter[3], parameter[4]);
+                        servers.Add(console_splitted[1]);
+                        break;
+                    case "leave":
+                        leave(console_splitted[1]);
+                        break;
                 }
             }
         }
