@@ -13,7 +13,7 @@ namespace freetzbot
         static private System.ComponentModel.BackgroundWorker loggingthread;
 
         static private Boolean restart = false;
-        static private String zeilen = Convert.ToString(71 + 178 + 336 + 1704);
+        static private String zeilen = Convert.ToString(71 + 178 + 336 + 1713);
         static private DateTime startzeit;
         static private List<string> logging_list = new List<string>();
         static private Mutex logging_safe = new Mutex();
@@ -412,37 +412,15 @@ namespace freetzbot
                     return;
                 }
             }
+
             String ftp = "ftp://ftp.avm.de/fritz.box/";
             String output = "";
+
+            //Ordner der Box bestimmen, wenn möglich Alias verwenden, ansonsten versuchen zu finden
             String[] fws = fwdb.GetContaining(message + "=");
             if (fws.Length > 0)
             {
-                String[] fw = fws[0].Split(new String[] { "=" }, 2, StringSplitOptions.None);
-                String subdirectory = ftp_directory(ftp + fw[1] + "/firmware/");
-                String[] subdirectories = subdirectory.Split(new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
-                foreach (String subdata in subdirectories)
-                {
-                    String finaldirectory = ftp_directory(ftp + fw[1] + "/firmware/" + subdata + "/");
-                    String[] finaldirectories = finaldirectory.Split(new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
-                    foreach (String finaldata in finaldirectories)
-                    {
-                        if (finaldata.Length >= 14)
-                        {
-                            String version = finaldata.Substring(finaldata.Length - 14, 8);
-                            if (version.Contains("."))
-                            {
-                                if (output != "")
-                                {
-                                    output += ", " + subdata + "/" + version;
-                                }
-                                else
-                                {
-                                    output = subdata + "/" + version;
-                                }
-                            }
-                        }
-                    }
-                }
+                ftp += fws[0].Split(new String[] { "=" }, 2, StringSplitOptions.None)[1] + "/";
             }
             else
             {
@@ -450,36 +428,22 @@ namespace freetzbot
                 String[] directories = directory.Split(new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
                 foreach (String data in directories)
                 {
-                    if (data.ToLower().Contains(message.ToLower()))
+                    String pfad = data.Split(new String[] { " " }, StringSplitOptions.RemoveEmptyEntries)[8];
+                    if (pfad.ToLower().Contains(message.ToLower()))
                     {
-                        String subdirectory = ftp_directory(ftp + data + "/firmware/");
-                        String[] subdirectories = subdirectory.Split(new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
-                        foreach (String subdata in subdirectories)
-                        {
-                            String finaldirectory = ftp_directory(ftp + data + "/firmware/" + subdata + "/");
-                            String[] finaldirectories = finaldirectory.Split(new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
-                            foreach (String finaldata in finaldirectories)
-                            {
-                                if (finaldata.Length >= 14)
-                                {
-                                    String version = finaldata.Substring(finaldata.Length - 14, 8);
-                                    if (version.Contains("."))
-                                    {
-                                        if (output != "")
-                                        {
-                                            output += ", " + subdata + "/" + version;
-                                        }
-                                        else
-                                        {
-                                            output = subdata + "/" + version;
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        ftp += pfad + "/";
+                        break;
                     }
                 }
             }
+            if (ftp == "ftp://ftp.avm.de/fritz.box/")
+            {
+                connection.sendmsg("Ich habe zu deiner Angabe leider nichts gefunden", receiver);
+                return;
+            }
+            output = ftp + " - ";
+            //Box Ordner ist nun gefunden, Firmware Image muss gefunden werden, vorsicht könnte bereits hier sein oder erst in einem weiteren Unterordner
+            output += ftp_recursiv(ftp);
             if (output == "")
             {
                 connection.sendmsg("Ich habe zu deiner Angabe leider nichts gefunden", receiver);
@@ -488,13 +452,58 @@ namespace freetzbot
             {
                 connection.sendmsg(output, receiver);
             }
-            //zb deutsch/4.80, deutsc_at_ch/4.82 - also folder/version
+        }
+
+        private static String ftp_recursiv(String ftp)
+        {
+            String boxdirectory_content = ftp_directory(ftp);
+            String[] boxes = boxdirectory_content.Split(new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+            String found = "";
+            foreach (String daten in boxes)
+            {
+                if (daten.ToCharArray()[0] == 'd')
+                {
+                    String pfad = daten.Split(new String[] { " " }, 9, StringSplitOptions.RemoveEmptyEntries)[8];
+                    String thereturn = ftp_recursiv(ftp + pfad + "/");
+                    if (thereturn != "" && thereturn != " ")
+                    {
+                        if (found != "")
+                        {
+                            found += ", " + thereturn;
+                        }
+                        else
+                        {
+                            found += thereturn;
+                        }
+                    }
+                }
+                if (daten.ToCharArray()[0] == '-')
+                {
+                    if (daten.Contains(".image"))//Scheinbar haben wir nun ein image gefunden
+                    {
+                        String file = daten.Split(new String[] { " " }, StringSplitOptions.RemoveEmptyEntries)[8];
+                        String[] file_splitted = file.Split('.'); //fritz.box_fon_5010.23.04.27.image
+                        String[] ftp_splitted = ftp.Split(new String[] { "/" }, StringSplitOptions.RemoveEmptyEntries);
+                        String final = ftp_splitted[ftp_splitted.Length - 1];
+                        final += "/" + file_splitted[file_splitted.Length - 4] + "." + file_splitted[file_splitted.Length - 3] + "." + file_splitted[file_splitted.Length - 2];
+                        if (found != "")
+                        {
+                            found += ", " + final;
+                        }
+                        else
+                        {
+                            found += final;
+                        }
+                    }
+                }
+            }
+            return found;
         }
 
         private static String ftp_directory(String ftp)
         {
             FtpWebRequest request = (FtpWebRequest)WebRequest.Create(ftp);
-            request.Method = WebRequestMethods.Ftp.ListDirectory;
+            request.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
             FtpWebResponse directory = (FtpWebResponse)request.GetResponse();
             StreamReader directory_list = new StreamReader(directory.GetResponseStream());
             return directory_list.ReadToEnd();
