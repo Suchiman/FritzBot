@@ -13,7 +13,7 @@ namespace freetzbot
         static private System.ComponentModel.BackgroundWorker loggingthread;
 
         static private Boolean restart = false;
-        static private String zeilen = Convert.ToString(71 + 178 + 336 + 1713);
+        static private String zeilen = Convert.ToString(71 + 178 + 336 + 1718);
         static private DateTime startzeit;
         static private List<string> logging_list = new List<string>();
         static private Mutex logging_safe = new Mutex();
@@ -1404,12 +1404,17 @@ namespace freetzbot
             if (ignore_check(sender) || configuration.get("boxfrage") == "false") return;
             try
             {
-                if (!(userdb.GetContaining(sender).Length > 0))
+                String[] users = userdb.GetAll();
+                foreach (String user in users)
                 {
-                    Thread.Sleep(10000);
-                    connection.sendmsg("Hallo " + sender + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast :). Pro !box bitte nur eine Box nennen (nur die Boxversion) z.b. !box 7270v1 oder !box 7170. Um die anderen im Channel nicht zu stören, sende es mir doch bitte per query/private Nachricht (z.b. /PRIVMSG FritzBot !box 7270)", receiver);
-                    userdb.Add(sender);
+                    if (user.Contains(sender) || sender.Contains(user))
+                    {
+                        return;
+                    }
                 }
+                Thread.Sleep(10000);
+                connection.sendmsg("Hallo " + sender + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast :). Pro !box bitte nur eine Box nennen (nur die Boxversion) z.b. !box 7270v1 oder !box 7170. Um die anderen im Channel nicht zu stören, sende es mir doch bitte per query/private Nachricht (z.b. /PRIVMSG FritzBot !box 7270)", receiver);
+                userdb.Add(sender);
             }
             catch (Exception ex)
             {
