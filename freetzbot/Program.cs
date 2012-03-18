@@ -13,7 +13,7 @@ namespace freetzbot
         static private System.ComponentModel.BackgroundWorker loggingthread;
 
         static private Boolean restart = false;
-        static private String zeilen = Convert.ToString(71 + 178 + 336 + 1718);
+        static private String zeilen = Convert.ToString(71 + 178 + 336 + 1767);
         static private DateTime startzeit;
         static private List<string> logging_list = new List<string>();
         static private Mutex logging_safe = new Mutex();
@@ -139,7 +139,7 @@ namespace freetzbot
                 switch (parameter[0].ToLower())
                 {
                     case "about":
-                        connection.sendmsg("Primäraufgabe: Daten über Fritzboxen sammeln, Sekundäraufgabe: Menschheit Terminieren. Kleiner Scherz am Rande Ha-Ha. Funktionsliste ist durch !hilfe zu erhalten. Programmiert in C# umfasst mein Quellcode aktuell " + zeilen + " Zeilen. Entwickler: Suchiman", receiver);
+                        connection.sendmsg("Primäraufgabe: Daten über Fritzboxen sammeln, Sekundäraufgabe: Menschheit eliminieren. Kleiner Scherz am Rande Ha-Ha. Funktionsliste ist durch !hilfe zu erhalten. Programmiert in C# umfasst mein Quellcode derzeit " + zeilen + " Zeilen. Entwickler: Suchiman", receiver);
                         break;
                     case "alias":
                     case "a":
@@ -231,7 +231,7 @@ namespace freetzbot
                 switch (parameter[0].ToLower())
                 {
                     case "about":
-                        connection.sendmsg("Primäraufgabe: Daten über Fritzboxen sammeln, Sekundäraufgabe: Menschheit Terminieren. Kleiner Scherz am Rande Ha-Ha. Funktionsliste ist durch !hilfe zu erhalten. Programmiert in C# umfasst mein Quellcode aktuell " + zeilen + " Zeilen. Entwickler: Suchiman", receiver);
+                        connection.sendmsg("Primäraufgabe: Daten über Fritzboxen sammeln, Sekundäraufgabe: Menschheit eliminieren. Kleiner Scherz am Rande Ha-Ha. Funktionsliste ist durch !hilfe zu erhalten. Programmiert in C# umfasst mein Quellcode derzeit " + zeilen + " Zeilen. Entwickler: Suchiman", receiver);
                         break;
                     case "alias":
                     case "a":
@@ -329,25 +329,64 @@ namespace freetzbot
             switch (parameter[0].ToLower())
             {
                 case "add":
-                    cases[2] = true;
+                    if (parameter[1].Contains("="))
+                    {
+                        cases[2] = true;
+                    }
+                    else
+                    {
+                        connection.sendmsg("Das habe ich jetzt nicht als Gültigen Alias erkannt, es muss einmal \"=\" enthalten sein, damit ich weiß was der Alias ist", receiver);
+                    }
                     break;
                 case "edit":
-                    cases[1] = true;
-                    cases[2] = true;
+                    if (parameter[1].Contains("="))
+                    {
+                        cases[1] = true;
+                        cases[2] = true;
+                    }
+                    else
+                    {
+                        connection.sendmsg("Das habe ich jetzt nicht als Gültigen Alias erkannt, es muss einmal \"=\" enthalten sein, damit ich weiß was der Alias ist", receiver);
+                    }
                     break;
                 case "remove":
                     cases[1] = true;
                     break;
                 default:
-                    String[] aliase = aliasdb.GetContaining(parameter[0] + "=");
-                    if (aliase.Length > 0)
+                    String[] splitted = message.Split(' ');
+                    if (splitted.Length > 0)
                     {
-                        String[] thealias = aliase[0].Split(new String[] { "=" }, 2, StringSplitOptions.None);
-                        connection.sendmsg(thealias[1], receiver);
-                    }
-                    else
-                    {
-                        connection.sendmsg("Diesen Alias gibt es nicht.", receiver);
+                        String[] aliase = aliasdb.GetContaining(splitted[0] + "=");
+                        if (aliase.Length > 0)
+                        {
+                            String[] thealias = aliase[0].Split(new String[] { "=" }, 2, StringSplitOptions.None);
+                            String output = "";
+                            int forindex = 0;
+                            if (thealias[1].Split('$').Length - 1 < splitted.Length)
+                            {
+                                forindex = thealias[1].Split('$').Length - 1;
+                            }
+                            else
+                            {
+                                forindex = splitted.Length - 1;
+                            }
+                            output = thealias[1];
+                            for (int i = 0; i < forindex; i++)
+                            {
+                                while (true)
+                                {
+                                    int index = output.IndexOf("$" + (i + 1));
+                                    if (index == -1) break;
+                                    output = output.Remove(index, 2);
+                                    output = output.Insert(index, splitted[i + 1]);
+                                }
+                            }
+                            connection.sendmsg(output, receiver);
+                        }
+                        else
+                        {
+                            connection.sendmsg("Diesen Alias gibt es nicht.", receiver);
+                        }
                     }
                     return;
             }
@@ -555,12 +594,20 @@ namespace freetzbot
                         case "server":
                             servers.Reload();
                             break;
+                        case "fw":
+                            fwdb.Reload();
+                            break;
+                        case "alias":
+                            aliasdb.Reload();
+                            break;
                         case "all":
                             boxdb.Reload();
                             userdb.Reload();
                             witzdb.Reload();
                             ignoredb.Reload();
                             servers.Reload();
+                            fwdb.Reload();
+                            aliasdb.Reload();
                             break;
                         default:
                             connection.sendmsg("Das sieht nach einem Syntax fehler aus", receiver);
@@ -833,7 +880,8 @@ namespace freetzbot
 
         static private void frag(irc connection, String sender, String receiver, String message)
         {
-            connection.sendmsg("Hallo " + message + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast. :)", message);
+            connection.sendmsg("Hallo " + message + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast :).", message);
+            connection.sendmsg("Pro !box bitte nur eine Box nennen (nur die Boxversion) z.b. !box 7270v1 oder !box 7170. Um die anderen im Channel nicht zu stören, sende es mir doch bitte per query/private Nachricht (z.b. /PRIVMSG FritzBot !box 7270) und achte darauf, dass du den Nicknamen trägst dem die Box zugeordnet werden soll", message);
         }
 
         static private void hilfe(irc connection, String sender, String receiver, String message)
@@ -846,7 +894,7 @@ namespace freetzbot
                         connection.sendmsg("Ich würde dir dann kurz etwas über mich erzählen.", receiver);
                         break;
                     case "alias":
-                        connection.sendmsg("Legt einen Alias für einen Begriff fest, z.b. !alias oder !a, \"!a add freetz=Eine Modifikation für...\", \"!a edit freetz=DIE Modifikation\", \"!a remove freetz\", \"!a freetz\"", receiver);
+                        connection.sendmsg("Legt einen Alias für einen Begriff fest, z.b. !alias oder !a, \"!a add freetz=Eine Modifikation für...\", \"!a edit freetz=DIE Modifikation\", \"!a remove freetz\", \"!a freetz\", Variablen wie z.b. $1 sind möglich.", receiver);
                         break;
                     case "box":
                         connection.sendmsg("Dies trägt deine Boxdaten ein, Beispiel: \"!box 7270\", bitte jede Box einzeln angeben.", receiver);
