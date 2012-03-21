@@ -13,7 +13,7 @@ namespace freetzbot
         static private System.ComponentModel.BackgroundWorker loggingthread;
 
         static private Boolean restart = false;
-        static private String zeilen = Convert.ToString(71 + 178 + 336 + 1767);
+        static private String zeilen = Convert.ToString(71 + 178 + 336 + 1793);
         static private DateTime startzeit;
         static private List<string> logging_list = new List<string>();
         static private Mutex logging_safe = new Mutex();
@@ -335,7 +335,7 @@ namespace freetzbot
                     }
                     else
                     {
-                        connection.sendmsg("Das habe ich jetzt nicht als Gültigen Alias erkannt, es muss einmal \"=\" enthalten sein, damit ich weiß was der Alias ist", receiver);
+                        connection.sendmsg("Das habe ich jetzt nicht als gültigen Alias erkannt, es muss einmal \"=\" enthalten sein, damit ich weiß was der Alias ist", receiver);
                     }
                     break;
                 case "edit":
@@ -346,7 +346,7 @@ namespace freetzbot
                     }
                     else
                     {
-                        connection.sendmsg("Das habe ich jetzt nicht als Gültigen Alias erkannt, es muss einmal \"=\" enthalten sein, damit ich weiß was der Alias ist", receiver);
+                        connection.sendmsg("Das habe ich jetzt nicht als gültigen Alias erkannt, es muss einmal \"=\" enthalten sein, damit ich weiß was der Alias ist", receiver);
                     }
                     break;
                 case "remove":
@@ -441,6 +441,7 @@ namespace freetzbot
 
         private static void fw(irc connection, String sender, String receiver, String message)
         {
+            Boolean recovery = false;
             if (message.Contains(" "))
             {
                 String[] splitted = message.Split(' ');
@@ -449,6 +450,11 @@ namespace freetzbot
                     fwdb.Add(splitted[1]);
                     connection.sendmsg("Der FW Alias wurde hinzugefügt", receiver);
                     return;
+                }
+                if (splitted[1] == "all")
+                {
+                    recovery = true;
+                    message = splitted[0];
                 }
             }
 
@@ -482,7 +488,7 @@ namespace freetzbot
             }
             output = ftp + " - ";
             //Box Ordner ist nun gefunden, Firmware Image muss gefunden werden, vorsicht könnte bereits hier sein oder erst in einem weiteren Unterordner
-            output += ftp_recursiv(ftp);
+            output += ftp_recursiv(ftp, recovery);
             if (output == "")
             {
                 connection.sendmsg("Ich habe zu deiner Angabe leider nichts gefunden", receiver);
@@ -493,7 +499,7 @@ namespace freetzbot
             }
         }
 
-        private static String ftp_recursiv(String ftp)
+        private static String ftp_recursiv(String ftp, Boolean recovery)
         {
             String boxdirectory_content = ftp_directory(ftp);
             String[] boxes = boxdirectory_content.Split(new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
@@ -503,7 +509,7 @@ namespace freetzbot
                 if (daten.ToCharArray()[0] == 'd')
                 {
                     String pfad = daten.Split(new String[] { " " }, 9, StringSplitOptions.RemoveEmptyEntries)[8];
-                    String thereturn = ftp_recursiv(ftp + pfad + "/");
+                    String thereturn = ftp_recursiv(ftp + pfad + "/", recovery);
                     if (thereturn != "" && thereturn != " ")
                     {
                         if (found != "")
@@ -518,13 +524,33 @@ namespace freetzbot
                 }
                 if (daten.ToCharArray()[0] == '-')
                 {
-                    if (daten.Contains(".image"))//Scheinbar haben wir nun ein image gefunden
+                    if (daten.Contains(".image") || (daten.Contains(".recover-image.exe") && recovery))//Scheinbar haben wir nun ein image gefunden
                     {
                         String file = daten.Split(new String[] { " " }, StringSplitOptions.RemoveEmptyEntries)[8];
                         String[] file_splitted = file.Split('.'); //fritz.box_fon_5010.23.04.27.image
                         String[] ftp_splitted = ftp.Split(new String[] { "/" }, StringSplitOptions.RemoveEmptyEntries);
                         String final = ftp_splitted[ftp_splitted.Length - 1];
-                        final += "/" + file_splitted[file_splitted.Length - 4] + "." + file_splitted[file_splitted.Length - 3] + "." + file_splitted[file_splitted.Length - 2];
+                        if (daten.Contains(".recover-image.exe"))
+                        {
+                            int result;
+                            if (file_splitted[file_splitted.Length - 5].Contains("_"))
+                            {
+                                String[] recoversplit = file_splitted[file_splitted.Length - 5].Split('_');
+                                final += "-Recovery/" + recoversplit[recoversplit.Length - 1] + "." + file_splitted[file_splitted.Length - 4] + "." + file_splitted[file_splitted.Length - 3];
+                            }
+                            else if (!int.TryParse(file_splitted[file_splitted.Length - 5], out result))
+                            {
+                                final += "-Recovery/" + file_splitted[file_splitted.Length - 4] + "." + file_splitted[file_splitted.Length - 3];
+                            }
+                            else
+                            {
+                                final += "-Recovery/" + file_splitted[file_splitted.Length - 5] + "." + file_splitted[file_splitted.Length - 4] + "." + file_splitted[file_splitted.Length - 3];
+                            }
+                        }
+                        else
+                        {
+                            final += "/" + file_splitted[file_splitted.Length - 4] + "." + file_splitted[file_splitted.Length - 3] + "." + file_splitted[file_splitted.Length - 2];
+                        }
                         if (found != "")
                         {
                             found += ", " + final;
@@ -881,7 +907,7 @@ namespace freetzbot
         static private void frag(irc connection, String sender, String receiver, String message)
         {
             connection.sendmsg("Hallo " + message + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast :).", message);
-            connection.sendmsg("Pro !box bitte nur eine Box nennen (nur die Boxversion) z.b. !box 7270v1 oder !box 7170. Um die anderen im Channel nicht zu stören, sende es mir doch bitte per query/private Nachricht (z.b. /PRIVMSG FritzBot !box 7270) und achte darauf, dass du den Nicknamen trägst dem die Box zugeordnet werden soll", message);
+            connection.sendmsg("Pro !box bitte nur eine Box nennen (nur die Boxversion) z.b. !box 7270v1 oder !box 7170. Um die anderen im Channel nicht zu stören, sende es mir doch bitte per query/private Nachricht (z.b. /msg FritzBot !box 7270) und achte darauf, dass du den Nicknamen trägst dem die Box zugeordnet werden soll", message);
         }
 
         static private void hilfe(irc connection, String sender, String receiver, String message)
@@ -924,7 +950,7 @@ namespace freetzbot
                         connection.sendmsg("Das erzeugt einen Link zum Freetz Trac mit dem angegebenen Suchkriterium, Beispiele: !freetz ngIRCd, !freetz \"Build System\", !freetz FAQ Benutzer", receiver);
                         break;
                     case "fw":
-                        connection.sendmsg("Sucht auf dem AVM FTP nach der Version des angegbenen Modells, z.b. \"!fw 7390\", \"!fw 7270_v1\"", receiver);
+                        connection.sendmsg("Sucht auf dem AVM FTP nach der Version des angegbenen Modells, z.b. \"!fw 7390\", \"!fw 7270_v1\", um Recoverys miteinzubeziehen verwende \"!fw 7390 all\"", receiver);
                         break;
                     case "hilfe":
                         connection.sendmsg("Du scherzbold, hehe.", receiver);
@@ -1462,7 +1488,7 @@ namespace freetzbot
                 }
                 Thread.Sleep(10000);
                 connection.sendmsg("Hallo " + sender + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast :).", receiver);
-                connection.sendmsg("Pro !box bitte nur eine Box nennen (nur die Boxversion) z.b. !box 7270v1 oder !box 7170. Um die anderen im Channel nicht zu stören, sende es mir doch bitte per query/private Nachricht (z.b. /PRIVMSG FritzBot !box 7270) und achte darauf, dass du den Nicknamen trägst dem die Box zugeordnet werden soll", receiver);
+                connection.sendmsg("Pro !box bitte nur eine Box nennen (nur die Boxversion) z.b. !box 7270v1 oder !box 7170. Um die anderen im Channel nicht zu stören, sende es mir doch bitte per query/private Nachricht (z.b. /msg FritzBot !box 7270) und achte darauf, dass du den Nicknamen trägst dem die Box zugeordnet werden soll", receiver);
                 userdb.Add(sender);
             }
             catch (Exception ex)
