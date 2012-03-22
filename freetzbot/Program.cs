@@ -13,7 +13,7 @@ namespace freetzbot
         static private System.ComponentModel.BackgroundWorker loggingthread;
 
         static private Boolean restart = false;
-        static private String zeilen = Convert.ToString(71 + 178 + 336 + 1793);
+        static private String zeilen = Convert.ToString(71 + 178 + 336 + 1840);
         static private DateTime startzeit;
         static private List<string> logging_list = new List<string>();
         static private Mutex logging_safe = new Mutex();
@@ -442,20 +442,40 @@ namespace freetzbot
         private static void fw(irc connection, String sender, String receiver, String message)
         {
             Boolean recovery = false;
+            Boolean source = false;
+            Boolean firmware = false;
             if (message.Contains(" "))
             {
                 String[] splitted = message.Split(' ');
-                if (splitted[0] == "add")
+                switch (splitted[1].ToLower())
                 {
-                    fwdb.Add(splitted[1]);
-                    connection.sendmsg("Der FW Alias wurde hinzugefügt", receiver);
-                    return;
+                    case "add":
+                        fwdb.Add(splitted[1]);
+                        connection.sendmsg("Der FW Alias wurde hinzugefügt", receiver);
+                        return;
+                    case "all":
+                        firmware = true;
+                        recovery = true;
+                        source = true;
+                        message = splitted[0];
+                        break;
+                    case "source":
+                        source = true;
+                        message = splitted[0];
+                        break;
+                    case "recovery":
+                        recovery = true;
+                        message = splitted[0];
+                        break;
+                    default:
+                        firmware = true;
+                        message = splitted[0];
+                        break;
                 }
-                if (splitted[1] == "all")
-                {
-                    recovery = true;
-                    message = splitted[0];
-                }
+            }
+            else
+            {
+                firmware = true;
             }
 
             String ftp = "ftp://ftp.avm.de/fritz.box/";
@@ -486,20 +506,91 @@ namespace freetzbot
                 connection.sendmsg("Ich habe zu deiner Angabe leider nichts gefunden", receiver);
                 return;
             }
-            output = ftp + " - ";
+            output = ftp;
             //Box Ordner ist nun gefunden, Firmware Image muss gefunden werden, vorsicht könnte bereits hier sein oder erst in einem weiteren Unterordner
-            output += ftp_recursiv(ftp, recovery);
-            if (output == "")
+            String[] ftp_recur = ftp_recursiv(ftp).Split(new String[] { ";" }, StringSplitOptions.RemoveEmptyEntries);
+            String recoveries  = "";
+            String sources = "";
+            String firmwares = "";
+            foreach (String datei in ftp_recur)
+            {
+                String[] slashsplit = datei.Split(new String[] { "/" }, 2, StringSplitOptions.None);
+                String[] file_splitted = slashsplit[1].Split('.'); //fritz.box_fon_5010.23.04.27.image
+                String final = slashsplit[0] + "/";
+                if (slashsplit[1].Contains(".recover-image.exe"))
+                {
+                    int result;
+                    if (file_splitted[file_splitted.Length - 5].Contains("_"))
+                    {
+                        String[] recoversplit = file_splitted[file_splitted.Length - 5].Split('_');
+                        final += recoversplit[recoversplit.Length - 1] + "." + file_splitted[file_splitted.Length - 4] + "." + file_splitted[file_splitted.Length - 3];
+                    }
+                    else if (!int.TryParse(file_splitted[file_splitted.Length - 5], out result))
+                    {
+                        final += file_splitted[file_splitted.Length - 4] + "." + file_splitted[file_splitted.Length - 3];
+                    }
+                    else
+                    {
+                        final += file_splitted[file_splitted.Length - 5] + "." + file_splitted[file_splitted.Length - 4] + "." + file_splitted[file_splitted.Length - 3];
+                    }
+                    if (recoveries != "")
+                    {
+                        recoveries += ", " + final;
+                    }
+                    else
+                    {
+                        recoveries += final;
+                    }
+                }
+                if (slashsplit[1].Contains(".image"))
+                {
+                    final += file_splitted[file_splitted.Length - 4] + "." + file_splitted[file_splitted.Length - 3] + "." + file_splitted[file_splitted.Length - 2];
+                    if (firmwares != "")
+                    {
+                        firmwares += ", " + final;
+                    }
+                    else
+                    {
+                        firmwares += final;
+                    }
+                }
+                if (slashsplit[1].Contains(".tar.gz"))//fritzbox7170-source-files-04.87.tar.gz
+                {
+                    String[] dotsplit = slashsplit[1].Split('.');
+                    final = dotsplit[dotsplit.Length - 4] + "." + dotsplit[dotsplit.Length - 3];
+                    if (sources != "")
+                    {
+                        sources += ", " + final;
+                    }
+                    else
+                    {
+                        sources += final;
+                    }
+                }
+            }
+            if (firmwares == "")
             {
                 connection.sendmsg("Ich habe zu deiner Angabe leider nichts gefunden", receiver);
             }
             else
             {
+                if (firmware && firmwares != "")
+                {
+                    output += " - Firmwares: " + firmwares;
+                }
+                if (recovery && recoveries != "")
+                {
+                    output += " - Recoverys: " + recoveries;
+                }
+                if (source && sources != "")
+                {
+                    output += " - Sources: " + sources;
+                }
                 connection.sendmsg(output, receiver);
             }
         }
 
-        private static String ftp_recursiv(String ftp, Boolean recovery)
+        private static String ftp_recursiv(String ftp)
         {
             String boxdirectory_content = ftp_directory(ftp);
             String[] boxes = boxdirectory_content.Split(new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
@@ -509,57 +600,13 @@ namespace freetzbot
                 if (daten.ToCharArray()[0] == 'd')
                 {
                     String pfad = daten.Split(new String[] { " " }, 9, StringSplitOptions.RemoveEmptyEntries)[8];
-                    String thereturn = ftp_recursiv(ftp + pfad + "/", recovery);
-                    if (thereturn != "" && thereturn != " ")
-                    {
-                        if (found != "")
-                        {
-                            found += ", " + thereturn;
-                        }
-                        else
-                        {
-                            found += thereturn;
-                        }
-                    }
+                    found += ftp_recursiv(ftp + pfad + "/") + ";";
                 }
-                if (daten.ToCharArray()[0] == '-')
+                if (daten.ToCharArray()[0] == '-' && (daten.Contains(".image") || daten.Contains(".recover-image.exe") || daten.Contains(".tar.gz")))
                 {
-                    if (daten.Contains(".image") || (daten.Contains(".recover-image.exe") && recovery))//Scheinbar haben wir nun ein image gefunden
-                    {
-                        String file = daten.Split(new String[] { " " }, StringSplitOptions.RemoveEmptyEntries)[8];
-                        String[] file_splitted = file.Split('.'); //fritz.box_fon_5010.23.04.27.image
-                        String[] ftp_splitted = ftp.Split(new String[] { "/" }, StringSplitOptions.RemoveEmptyEntries);
-                        String final = ftp_splitted[ftp_splitted.Length - 1];
-                        if (daten.Contains(".recover-image.exe"))
-                        {
-                            int result;
-                            if (file_splitted[file_splitted.Length - 5].Contains("_"))
-                            {
-                                String[] recoversplit = file_splitted[file_splitted.Length - 5].Split('_');
-                                final += "-Recovery/" + recoversplit[recoversplit.Length - 1] + "." + file_splitted[file_splitted.Length - 4] + "." + file_splitted[file_splitted.Length - 3];
-                            }
-                            else if (!int.TryParse(file_splitted[file_splitted.Length - 5], out result))
-                            {
-                                final += "-Recovery/" + file_splitted[file_splitted.Length - 4] + "." + file_splitted[file_splitted.Length - 3];
-                            }
-                            else
-                            {
-                                final += "-Recovery/" + file_splitted[file_splitted.Length - 5] + "." + file_splitted[file_splitted.Length - 4] + "." + file_splitted[file_splitted.Length - 3];
-                            }
-                        }
-                        else
-                        {
-                            final += "/" + file_splitted[file_splitted.Length - 4] + "." + file_splitted[file_splitted.Length - 3] + "." + file_splitted[file_splitted.Length - 2];
-                        }
-                        if (found != "")
-                        {
-                            found += ", " + final;
-                        }
-                        else
-                        {
-                            found += final;
-                        }
-                    }
+                    String file = daten.Split(new String[] { " " }, StringSplitOptions.RemoveEmptyEntries)[8];
+                    String[] ftp_splitted = ftp.Split(new String[] { "/" }, StringSplitOptions.RemoveEmptyEntries);
+                    found += ";" + ftp_splitted[ftp_splitted.Length - 1] + "/" + file;
                 }
             }
             return found;
@@ -950,7 +997,7 @@ namespace freetzbot
                         connection.sendmsg("Das erzeugt einen Link zum Freetz Trac mit dem angegebenen Suchkriterium, Beispiele: !freetz ngIRCd, !freetz \"Build System\", !freetz FAQ Benutzer", receiver);
                         break;
                     case "fw":
-                        connection.sendmsg("Sucht auf dem AVM FTP nach der Version des angegbenen Modells, z.b. \"!fw 7390\", \"!fw 7270_v1\", um Recoverys miteinzubeziehen verwende \"!fw 7390 all\"", receiver);
+                        connection.sendmsg("Sucht auf dem AVM FTP nach der Version des angegbenen Modells, z.b. \"!fw 7390\", \"!fw 7270_v1\", \"!fw 7390 source\", \"!fw 7390 recovery\" \"!fw 7390 all\"", receiver);
                         break;
                     case "hilfe":
                         connection.sendmsg("Du scherzbold, hehe.", receiver);
@@ -1025,7 +1072,7 @@ namespace freetzbot
 
         static private Boolean ignore_check(String parameter = "")
         {
-            if(ignoredb.Find(parameter) != -1)
+            if (ignoredb.Find(parameter) != -1)
             {
                 return true;
             }
@@ -1119,7 +1166,7 @@ namespace freetzbot
                             released[i - 1] = false;
                         }
 
-                        if (Date != LaborDates[i-1])
+                        if (Date != LaborDates[i - 1])
                         {
                             LaborDates[i - 1] = Date;
                             if (output == "")
