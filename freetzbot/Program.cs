@@ -1725,8 +1725,8 @@ namespace freetzbot
             irc connection = new irc(server, port, nick);
             connection.quit_message = quit_message;
             connection.Received += new irc.ReceivedEventHandler(process_incomming);
-            connection.connect();
             connection.AutoReconnect = true;
+            connection.connect();
             Thread.Sleep(1000);
             if (initial_channel.Contains(":"))
             {

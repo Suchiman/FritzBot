@@ -75,11 +75,6 @@ namespace freetzbot
                 {
                     empfangs_thread.Abort();
                 }
-                if (AutoReconnect && !watchthread.IsAlive)
-                {
-                    watchthread = new Thread(delegate() { reconnect(); });
-                    watchthread.Start();
-                }
                 connection = new TcpClient(hostname, port);
                 empfangs_thread = new Thread(delegate() { empfangsthread(); });
                 Thread.Sleep(5);//Fix versuch für den Bug, dass der empfangsthread die volle CPU Kapazität beim auslesen aus dem stream verbraucht
@@ -89,6 +84,11 @@ namespace freetzbot
                 log("Verbindung mit Server " + hostname + " hergestellt");
                 connecttime = DateTime.Now;
                 rejoin();
+                if (AutoReconnect && !watchthread.IsAlive)
+                {
+                    watchthread = new Thread(delegate() { reconnect(); });
+                    watchthread.Start();
+                }
                 return true;
             }
             catch (Exception ex)
@@ -100,6 +100,7 @@ namespace freetzbot
 
         public void disconnect()
         {
+            watchthread.Abort();
             if (quit_message == "")
             {
                 sendraw("QUIT");
