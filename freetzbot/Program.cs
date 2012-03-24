@@ -332,7 +332,7 @@ namespace freetzbot
 
         private static void google(irc connection, String sender, String receiver, String message)
         {
-            String output = "http://www.google.de/#q=";
+            String output = "https://www.google.de/search?q=";
             if (message == "")
             {
                 output = "http://www.google.de/";
@@ -1456,12 +1456,13 @@ namespace freetzbot
                     output = nick + ": Siehe: " + output;
                 }
             }
+            output = output.Replace("%23", "#");
             connection.sendmsg(output, receiver);
         }
 
         static private void freetz(irc connection, String sender, String receiver, String message)
         {
-            String output = "http://wehavemorefun.de/fritzbox/index.php/Special:Search?search=";
+            String output = "http://freetz.org/search?q=";
             String nick = "";
             String uri = "";
             if (message == "")
@@ -1494,6 +1495,7 @@ namespace freetzbot
                     output = nick + ": Siehe: " + output;
                 }
             }
+            output = output.Replace("%23", "#");
             connection.sendmsg(output, receiver);
         }
 
