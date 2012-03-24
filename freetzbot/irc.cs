@@ -145,10 +145,6 @@ namespace freetzbot
             List<String> splitted = new List<String>();
             while (true)
             {
-                if (length > text.Length)
-                {
-                    length = text.Length;
-                }
                 if (length >= text.Length)
                 {
                     splitted.Add(text);

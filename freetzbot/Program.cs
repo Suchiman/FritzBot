@@ -13,7 +13,7 @@ namespace freetzbot
         static private System.ComponentModel.BackgroundWorker loggingthread;
 
         static private Boolean restart = false;
-        static private String zeilen = Convert.ToString(71 + 178 + 317 + 1880);
+        static private String zeilen = Convert.ToString(71 + 178 + 313 + 1891);
         static private DateTime startzeit;
         static private List<string> logging_list = new List<string>();
         static private Mutex logging_safe = new Mutex();
@@ -31,6 +31,7 @@ namespace freetzbot
         static private Thread antifloodingthread;
         static private int antifloodingcount;
         static private Boolean floodingnotificated;
+        static private List<int> witz_randoms = new List<int>();
 
         static private void process_command(irc connection, String sender, String receiver, String message)
         {
@@ -1535,9 +1536,19 @@ namespace freetzbot
             else
             {
                 Random rand = new Random();
+                if (witz_randoms.Count >= 10)
+                {
+                    witz_randoms.RemoveAt(0);
+                }
+                int random = rand.Next(witzdb.Size());
+                for (int i = 0; !(!witz_randoms.Contains(random) && i < 10); i++)
+                {
+                    random = rand.Next(witzdb.Size());
+                }
+                witz_randoms.Add(random);
                 if (witzdb.Size() > 0)
                 {
-                    connection.sendmsg(witzdb.GetAt(rand.Next(witzdb.Size())), receiver);
+                    connection.sendmsg(witzdb.GetAt(random), receiver);
                 }
                 else
                 {
