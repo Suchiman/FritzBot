@@ -13,7 +13,7 @@ namespace freetzbot
         static private System.ComponentModel.BackgroundWorker loggingthread;
 
         static private Boolean restart = false;
-        static private String zeilen = Convert.ToString(71 + 178 + 336 + 1840);
+        static private String zeilen = Convert.ToString(71 + 178 + 317 + 1880);
         static private DateTime startzeit;
         static private List<string> logging_list = new List<string>();
         static private Mutex logging_safe = new Mutex();
@@ -170,6 +170,10 @@ namespace freetzbot
                     case "fw":
                         fw(connection, sender, receiver, parameter[1]);
                         break;
+                    case "g":
+                    case "google":
+                        google(connection, sender, receiver, parameter[1]);
+                        break;
                     case "help":
                     case "hilfe":
                     case "faq":
@@ -255,6 +259,10 @@ namespace freetzbot
                     case "frag":
                         hilfe(connection, sender, receiver, "frag");
                         break;
+                    case "g":
+                    case "google":
+                        hilfe(connection, sender, receiver, "google");
+                        break;
                     case "freetz":
                     case "f":
                         freetz(connection, sender, receiver, "");
@@ -319,6 +327,20 @@ namespace freetzbot
                 }
             }
             #endregion
+        }
+
+        private static void google(irc connection, String sender, String receiver, String message)
+        {
+            String output = "http://www.google.de/#q=";
+            if (message == "")
+            {
+                output = "http://www.google.de/";
+            }
+            else
+            {
+                output += System.Web.HttpUtility.UrlEncode(Encoding.GetEncoding("iso-8859-1").GetBytes("\"" + message + "\""));
+            }
+            connection.sendmsg(output, receiver);
         }
 
         private static void alias(irc connection, String sender, String receiver, String message)
@@ -509,7 +531,7 @@ namespace freetzbot
             output = ftp;
             //Box Ordner ist nun gefunden, Firmware Image muss gefunden werden, vorsicht könnte bereits hier sein oder erst in einem weiteren Unterordner
             String[] ftp_recur = ftp_recursiv(ftp).Split(new String[] { ";" }, StringSplitOptions.RemoveEmptyEntries);
-            String recoveries  = "";
+            String recoveries = "";
             String sources = "";
             String firmwares = "";
             foreach (String datei in ftp_recur)
@@ -580,7 +602,7 @@ namespace freetzbot
                 }
                 if (recovery && recoveries != "")
                 {
-                    output += " - Recoverys: " + recoveries;
+                    output += " - Recoveries: " + recoveries;
                 }
                 if (source && sources != "")
                 {
@@ -999,6 +1021,9 @@ namespace freetzbot
                     case "fw":
                         connection.sendmsg("Sucht auf dem AVM FTP nach der Version des angegbenen Modells, z.b. \"!fw 7390\", \"!fw 7270_v1\", \"!fw 7390 source\", \"!fw 7390 recovery\" \"!fw 7390 all\"", receiver);
                         break;
+                    case "google":
+                        connection.sendmsg("Syntax: (!g) !google etwas das du suchen möchtest", receiver);
+                        break;
                     case "hilfe":
                         connection.sendmsg("Du scherzbold, hehe.", receiver);
                         break;
@@ -1065,7 +1090,7 @@ namespace freetzbot
             }
             else
             {
-                connection.sendmsg("Befehle: about alias box boxfind boxinfo boxlist boxremove frag freetz fw hilfe ignore labor lmgtfy mem ping seen trunk uptime userlist whmf witz zeit.", receiver);
+                connection.sendmsg("Befehle: about alias box boxfind boxinfo boxlist boxremove frag freetz fw google hilfe ignore labor lmgtfy mem ping seen trunk uptime userlist whmf witz zeit.", receiver);
                 connection.sendmsg("Hilfe zu jedem Befehl mit \"!help befehl\". Um die anderen nicht zu belästigen kannst du mich auch per PM (query) anfragen", receiver);
             }
         }
@@ -1397,77 +1422,78 @@ namespace freetzbot
 
         static private void whmf(irc connection, String sender, String receiver, String message)
         {
+            String output = "http://wehavemorefun.de/fritzbox/index.php/Special:Search?search=";
+            String nick = "";
+            String uri = "";
             if (message == "")
             {
-                connection.sendmsg("http://www.wehavemorefun.de/fritzbox/index.php", receiver);
+                output = "http://www.wehavemorefun.de/fritzbox/index.php";
             }
             else
             {
-                //Parameter: "CAPI Treiber" peter
                 if (message.Contains("\""))
                 {
                     String[] split = message.Split(new String[] { "\"" }, 3, StringSplitOptions.None);
-                    split[1] = split[1].Replace(' ', '_');
-                    String[] nick = split[2].Split(new String[] { " " }, 2, StringSplitOptions.None);
-                    if (nick.Length > 1)
+                    uri = split[1];
+                    if (split[2] != "")
                     {
-                        connection.sendmsg("@" + split[2] + ": Siehe: http://wehavemorefun.de/fritzbox/index.php/Special:Search?search=" + split[1], receiver);
-                    }
-                    else
-                    {
-                        connection.sendmsg("http://wehavemorefun.de/fritzbox/index.php/Special:Search?search=" + split[1], receiver);
+                        nick = split[2].Remove(0, 1);
                     }
                 }
                 else
                 {
                     String[] split = message.Split(new String[] { " " }, 2, StringSplitOptions.None);
+                    uri = split[0];
                     if (split.Length > 1)
                     {
-                        connection.sendmsg("@" + split[1] + ": Siehe: http://wehavemorefun.de/fritzbox/index.php/Special:Search?search=" + split[0], receiver);
-                    }
-                    else
-                    {
-                        connection.sendmsg("http://wehavemorefun.de/fritzbox/index.php/Special:Search?search=" + split[0], receiver);
+                        nick = split[1];
                     }
                 }
+                output += System.Web.HttpUtility.UrlEncode(Encoding.GetEncoding("iso-8859-1").GetBytes(uri));
+                if (nick != "")
+                {
+                    output = nick + ": Siehe: " + output;
+                }
             }
+            connection.sendmsg(output, receiver);
         }
 
         static private void freetz(irc connection, String sender, String receiver, String message)
         {
+            String output = "http://wehavemorefun.de/fritzbox/index.php/Special:Search?search=";
+            String nick = "";
+            String uri = "";
             if (message == "")
             {
-                connection.sendmsg("http://freetz.org/wiki", receiver);
+                output = "http://freetz.org/wiki";
             }
             else
             {
                 if (message.Contains("\""))
                 {
                     String[] split = message.Split(new String[] { "\"" }, 3, StringSplitOptions.None);
-                    split[1] = split[1].Replace(' ', '_');
-                    String[] nick = split[2].Split(new String[] { " " }, 2, StringSplitOptions.None);
-                    if (nick.Length > 1)
+                    uri = split[1];
+                    if (split[2] != "")
                     {
-                        connection.sendmsg("@" + split[2] + ": Siehe: http://freetz.org/search?q=" + split[1] + "&wiki=on", receiver);
-                    }
-                    else
-                    {
-                        connection.sendmsg("http://freetz.org/search?q=" + split[1] + "&wiki=on", receiver);
+                        nick = split[2].Remove(0, 1);
                     }
                 }
                 else
                 {
                     String[] split = message.Split(new String[] { " " }, 2, StringSplitOptions.None);
+                    uri = split[0];
                     if (split.Length > 1)
                     {
-                        connection.sendmsg("@" + split[1] + ": Siehe: http://freetz.org/search?q=" + split[0] + "&wiki=on", receiver);
-                    }
-                    else
-                    {
-                        connection.sendmsg("http://freetz.org/search?q=" + split[0] + "&wiki=on", receiver);
+                        nick = split[1];
                     }
                 }
+                output += System.Web.HttpUtility.UrlEncode(Encoding.GetEncoding("iso-8859-1").GetBytes(uri)) + "&wiki=on";
+                if (nick != "")
+                {
+                    output = nick + ": Siehe: " + output;
+                }
             }
+            connection.sendmsg(output, receiver);
         }
 
         static private void witz(irc connection, String sender, String receiver, String message)
@@ -1595,6 +1621,17 @@ namespace freetzbot
                 default:
                     break;
             }
+            if (message.Contains("#96*6*"))
+            {
+                if (DateTime.Now.Hour > 5 && DateTime.Now.Hour < 16)
+                {
+                    connection.sendmsg("Kein Bier vor 4", source);
+                }
+                else
+                {
+                    connection.sendmsg("Bier holen", source);
+                }
+            }
             if (source.ToCharArray()[0] == '#')
             {
                 logging(source + " " + nick + ": " + message);
@@ -1707,7 +1744,10 @@ namespace freetzbot
             while (true)
             {
                 int time;
-                int.TryParse(configuration.get("floodingcount_reduction"), out time);
+                if (!int.TryParse(configuration.get("floodingcount_reduction"), out time))
+                {
+                    time = 5000;//Standard Wert wenn die Konvertierung fehlschlägt
+                }
                 Thread.Sleep(time);
                 if (antifloodingcount > 0)
                 {

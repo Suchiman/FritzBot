@@ -45,7 +45,7 @@ namespace freetzbot
             {
                 try
                 {
-                    if (!empfangs_thread.IsAlive)
+                    if (!empfangs_thread.IsAlive || !connection.Client.Connected)
                     {
                         log("Verbindung abgerissen, versuche Verbindung wiederherzustellen");
                         log("Versuch " + count);
@@ -77,7 +77,6 @@ namespace freetzbot
                 }
                 connection = new TcpClient(hostname, port);
                 empfangs_thread = new Thread(delegate() { empfangsthread(); });
-                Thread.Sleep(5);//Fix versuch für den Bug, dass der empfangsthread die volle CPU Kapazität beim auslesen aus dem stream verbraucht
                 empfangs_thread.Start();
                 sendraw("NICK " + nickname);
                 sendraw("USER " + nickname + " 8 * :" + nickname);
@@ -101,14 +100,12 @@ namespace freetzbot
         public void disconnect()
         {
             watchthread.Abort();
-            if (quit_message == "")
+            String output = "QUIT";
+            if (quit_message != "")
             {
-                sendraw("QUIT");
+                output += " :" + quit_message;
             }
-            else
-            {
-                sendraw("QUIT :" + quit_message);
-            }
+            sendraw(output);
             cancelthread = true;
             log("Server " + hostname + " verlassen");
         }
@@ -118,6 +115,7 @@ namespace freetzbot
             if (channel.ToCharArray()[0] != '#')
             {
                 log("Diesem channel kann ich nicht joinen");
+                return;
             }
             sendraw("JOIN " + channel);
             if (!rooms.Contains(channel)) rooms.Add(channel);
@@ -126,46 +124,39 @@ namespace freetzbot
 
         private void rejoin()
         {
-            for (int i = 0; i < rooms.ToArray().Length; i++)
+            foreach (String room in rooms)
             {
-                join(rooms[i]);
+                join(room);
             }
         }
 
         public void leave(String channel)
         {
-            if (channel.ToCharArray()[0] != '#')
+            if (rooms.Contains(channel))
             {
-                channel = "#" + channel;
+                sendraw("PART " + channel);
+                rooms.Remove(channel);
+                log("Verlasse Raum " + channel);
             }
-            sendraw("PART " + channel);
-            if (rooms.Contains(channel)) rooms.Remove(channel);
-            log("Verlasse Raum " + channel);
         }
 
-        private String[] splitat(String text, int length)
+        private String[] splitlength(String text, int length)
         {
-            String[] gesplittet = new String[0];
-            if (text.Length >= length)
+            List<String> splitted = new List<String>();
+            while (true)
             {
-                Decimal loops = Math.Ceiling((Decimal)text.Length / (Decimal)length);
-                int splitlength = length;
-                for (int i = 0; i < loops; i++)
+                if (length > text.Length)
                 {
-                    if (!(i < loops - 1))
-                    {
-                        splitlength = text.Length % length;
-                    }
-                    Array.Resize(ref gesplittet, gesplittet.Length + 1);
-                    gesplittet[i] = text.Substring(length * i, splitlength);
+                    length = text.Length;
                 }
+                if (length >= text.Length)
+                {
+                    splitted.Add(text);
+                    return splitted.ToArray();
+                }
+                splitted.Add(text.Remove(length));
+                text = text.Remove(0, length);
             }
-            else
-            {
-                Array.Resize(ref gesplittet, gesplittet.Length + 1);
-                gesplittet[0] = text;
-            }
-            return gesplittet;
         }
 
         private void log(String to_log)
@@ -180,33 +171,22 @@ namespace freetzbot
 
         public TimeSpan uptime()
         {
-            TimeSpan laufzeit = DateTime.Now.Subtract(connecttime);
-            return laufzeit;
+            return DateTime.Now.Subtract(connecttime);
         }
 
         public void sendaction(String message, String receiver)
         {
-            String action = "\u0001ACTION " + message + "\u0001";
-            sendmsg(action, receiver);
+            sendmsg("\u0001ACTION " + message + "\u0001", receiver);
         }
 
         public void sendmsg(String message, String receiver)
         {
-            try
+            String output = "PRIVMSG " + receiver + " :";
+            String[] tosend = splitlength(message, 500 - (output.Length));
+            foreach (String send in tosend)
             {
-                String methode = "PRIVMSG";
-                StreamWriter stream = new StreamWriter(connection.GetStream(), Encoding.GetEncoding("iso-8859-1"));
-                stream.AutoFlush = true;
-                String[] tosend = splitat(message, 507 - (methode.Length + receiver.Length));
-                for (int i = 0; i < tosend.Length; i++)
-                {
-                    stream.Write(methode + " " + receiver + " :" + tosend[i] + "\r\n");
-                    log("An " + receiver + ": " + tosend[i]);
-                }
-            }
-            catch (Exception ex)
-            {
-                log("Exception beim Senden einer Nachricht: " + ex);
+                sendraw(output + send);
+                log("An " + receiver + ": " + send);
             }
         }
 
@@ -220,7 +200,7 @@ namespace freetzbot
             }
             catch (Exception ex)
             {
-                log("Exception beim Senden eines Kommandos: " + ex);
+                log("Exception beim Senden: " + ex);
             }
         }
 
@@ -228,7 +208,7 @@ namespace freetzbot
         {
             try
             {
-                StreamReader stream = new StreamReader(connection.GetStream(), Encoding.GetEncoding("iso-8859-1"));
+                StreamReader stream = new StreamReader(connection.GetStream(), Encoding.GetEncoding("iso-8859-1")); 
                 while (true)
                 {
                     if (cancelthread)
@@ -238,7 +218,7 @@ namespace freetzbot
                     String Daten = stream.ReadLine();
                     if (Daten == null)
                     {
-                        return;//Wenn ReadLine null ergibt ist die Verbindung abgerissen -> empfangsthread beenden
+                        throw new Exception("connection lost");
                     }
                     Thread thread = new Thread(delegate() { process_respond(Daten); });
                     thread.Start();
