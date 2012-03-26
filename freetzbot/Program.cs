@@ -13,7 +13,7 @@ namespace freetzbot
         static private System.ComponentModel.BackgroundWorker loggingthread;
 
         static private Boolean restart = false;
-        static private String zeilen = Convert.ToString(71 + 178 + 313 + 1891);
+        static private String zeilen = Convert.ToString(71 + 178 + 313 + 1908);
         static private DateTime startzeit;
         static private List<string> logging_list = new List<string>();
         static private Mutex logging_safe = new Mutex();
@@ -36,6 +36,8 @@ namespace freetzbot
         static private void process_command(irc connection, String sender, String receiver, String message)
         {
             String[] parameter = message.Split(new String[] { " " }, 2, StringSplitOptions.None);
+            Boolean answered_user = true;
+            Boolean answered_admin = true;
 
             #region Admin Befehle
             if (sender == "Suchiman" || sender == "hippie2000")
@@ -74,6 +76,9 @@ namespace freetzbot
                         case "restart":
                             hilfe(connection, sender, receiver, "restart");
                             break;
+                        default:
+                            answered_admin = false;
+                            break;
                     }
                 }
                 else //Wenn kein zusätzlicher Parameter angegeben wurde....
@@ -107,6 +112,9 @@ namespace freetzbot
                         case "restart":
                             restart = true;
                             Trennen();
+                            break;
+                        default:
+                            answered_admin = false;
                             break;
                     }
                 }
@@ -228,6 +236,7 @@ namespace freetzbot
                         }
                         break;
                     default:
+                        answered_user = false;
                         break;
                 }
             }
@@ -324,10 +333,16 @@ namespace freetzbot
                         }
                         break;
                     default:
+                        answered_user = false;
                         break;
                 }
             }
             #endregion
+
+            if (!answered_user && !answered_admin)
+            {
+                alias(connection, sender, receiver, parameter[0], true);
+            }
         }
 
         private static void google(irc connection, String sender, String receiver, String message)
@@ -344,7 +359,7 @@ namespace freetzbot
             connection.sendmsg(output, receiver);
         }
 
-        private static void alias(irc connection, String sender, String receiver, String message)
+        private static void alias(irc connection, String sender, String receiver, String message, Boolean not_answered = false)
         {
             String[] parameter = message.Split(new String[] { " " }, 2, StringSplitOptions.None);
             String alias = "";
@@ -406,7 +421,7 @@ namespace freetzbot
                             }
                             connection.sendmsg(output, receiver);
                         }
-                        else
+                        else if(!not_answered)
                         {
                             connection.sendmsg("Diesen Alias gibt es nicht.", receiver);
                         }
@@ -1229,6 +1244,7 @@ namespace freetzbot
                     }
                     if (output != "")
                     {
+                        output += " - http://www.avm.de/de/Service/Service-Portale/Labor/index.php";
                         for (int i = 0; i < irc_connections.Count; i++)
                         {
                             for (int c = 0; c < irc_connections[i].rooms.Count; c++)
@@ -1292,7 +1308,7 @@ namespace freetzbot
                             daten[i - 1] = "Released";
                         }
                     }
-                    changeset = "Aktuelle Labor Daten: iOS: " + daten[0] + ", Android: " + daten[1] + ", 7390: " + daten[2] + ", FHEM: " + daten[3] + ", 7390at: " + daten[4] + ", 7320: " + daten[5] + ", 7270: " + daten[6] + ".";
+                    changeset = "Aktuelle Labor Daten: iOS: " + daten[0] + ", Android: " + daten[1] + ", 7390: " + daten[2] + ", FHEM: " + daten[3] + ", 7390at: " + daten[4] + ", 7320: " + daten[5] + ", 7270: " + daten[6] + " - http://www.avm.de/de/Service/Service-Portale/Labor/index.php";
                     break;
                 default:
                     changeset += "Für die " + message + " steht derzeit keine Labor Version zur Verfügung. ";
@@ -1322,7 +1338,6 @@ namespace freetzbot
                     changeset += "Die neueste " + message + " labor Version ist am " + datum + " erschienen mit der Versionsnummer: " + version + ". Changelog: " + url;
                 }
             }
-
             connection.sendmsg(changeset, receiver);
         }
 
