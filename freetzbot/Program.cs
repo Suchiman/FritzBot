@@ -341,7 +341,7 @@ namespace freetzbot
 
             if (!answered_user && !answered_admin)
             {
-                alias(connection, sender, receiver, parameter[0], true);
+                alias(connection, sender, receiver, message, true);
             }
         }
 
@@ -1841,24 +1841,36 @@ namespace freetzbot
         {
             while (true)
             {
-                while (!(logging_list.Count > 0))
-                {
-                    Thread.Sleep(500);
-                }
-                StreamWriter log;
                 try
                 {
-                    log = new StreamWriter("log.txt", true, Encoding.GetEncoding("iso-8859-1"));
+                    while (!(logging_list.Count > 0))
+                    {
+                        Thread.Sleep(500);
+                    }
+                    FileInfo loginfo = new FileInfo("log.txt");
+                    if (loginfo.Exists)
+                    {
+                        if (loginfo.Length >= 1048576)
+                        {
+                            if (!Directory.Exists("oldlogs"))
+                            {
+                                Directory.CreateDirectory("oldlogs");
+                            }
+                            if (!File.Exists("oldlogs/log" + DateTime.Now.Day + "." + DateTime.Now.Month + ".txt"))
+                            {
+                                loginfo.MoveTo("oldlogs/log" + DateTime.Now.Day + "." + DateTime.Now.Month + ".txt");
+                            }
+                        }
+                    }
+                    File.AppendAllText("log.txt", logging_list[0] + "\r\n", Encoding.GetEncoding("iso-8859-1"));
+                    Console.WriteLine(logging_list[0]);
+                    logging_list.RemoveAt(0);
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine("Fehler beim Zugriff auf den Serverlog: " + ex.Message);
                     return;
                 }
-                log.WriteLine(logging_list[0]);
-                Console.WriteLine(logging_list[0]);
-                logging_list.RemoveAt(0);
-                log.Close();
             }
         }
 
