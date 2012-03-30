@@ -23,16 +23,9 @@ namespace freetzbot
         {
             if (!File.Exists(settingsfile))
             {
-                StreamWriter sstream = new StreamWriter(settingsfile, false, Encoding.GetEncoding("iso-8859-1"));
-                sstream.Write("");
-                sstream.Close();
+                File.AppendAllText(settingsfile, "");
             }
-            StreamReader stream = new StreamReader(settingsfile, Encoding.GetEncoding("iso-8859-1"));
-            while (stream.Peek() >= 0)
-            {
-                settingslist.Add(stream.ReadLine());
-            }
-            stream.Close();
+            settingslist = new List<String>(File.ReadAllLines(settingsfile, Encoding.GetEncoding("iso-8859-1")));
         }
 
         public String get(String option)
@@ -67,12 +60,14 @@ namespace freetzbot
             {
                 settingslist.Add(option + "=" + to_set);
             }
-            StreamWriter stream = new StreamWriter(settingsfile, false, Encoding.GetEncoding("iso-8859-1"));
-            foreach (String data in settingslist)
+            for (int i = 0; i < settingslist.Count; i++)
             {
-                stream.WriteLine(data);
+                if (settingslist[i] == "")
+                {
+                    settingslist.RemoveAt(i);
+                }
             }
-            stream.Close();
+            File.WriteAllLines(settingsfile, settingslist.ToArray(), Encoding.GetEncoding("iso-8859-1"));
             threadsafe.ReleaseMutex();
         }
     }

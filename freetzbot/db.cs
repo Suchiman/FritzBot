@@ -22,42 +22,29 @@ namespace freetzbot
         {
             threadsafe = new Mutex();
             datenbank_name = db;
-            datenbank = new List<String>(Read());
+            Read();
         }
         /// <summary>
         /// Erstellt eine leere Datenbank Datei
         /// </summary>
         private void Initdb()
         {
-            StreamWriter db = new StreamWriter(datenbank_name, true, Encoding.GetEncoding("iso-8859-1"));
-            db.WriteLine("");
-            db.Close();
+            File.AppendAllText(datenbank_name, "");
         }
         /// <summary>
         /// Liest die Datenbank von einer Datei ein
         /// </summary>
         /// <returns>Gibt ein String Array mit dem Datenbank Inhalt zurück</returns>
-        private String[] Read()
+        private void Read()
         {
             threadsafe.WaitOne();
             if (!File.Exists(datenbank_name))
             {
                 Initdb();
             }
-            String[] Daten = new String[0];
-            StreamReader db = new StreamReader(datenbank_name, Encoding.GetEncoding("iso-8859-1"));
-            for (int i = 0; db.Peek() >= 0; i++)
-            {
-                String TempRead = db.ReadLine();
-                if (TempRead.Length > 0)
-                {
-                    Array.Resize(ref Daten, Daten.Length + 1);
-                    Daten[Daten.Length - 1] = TempRead;
-                }
-            }
-            db.Close();
+            datenbank = new List<String>(File.ReadAllLines(datenbank_name, Encoding.GetEncoding("iso-8859-1")));
+            Cleanup();
             threadsafe.ReleaseMutex();
-            return Daten;
         }
         /// <summary>
         /// Schreibt die Datenbank in eine Datei
@@ -65,16 +52,8 @@ namespace freetzbot
         public void Write()
         {
             threadsafe.WaitOne();
-            String[] Daten = datenbank.ToArray();
-            StreamWriter db = new StreamWriter(datenbank_name, false, Encoding.GetEncoding("iso-8859-1"));
-            for (int i = 0; i < Daten.Length; i++)
-            {
-                if (Daten[i].Length > 0)
-                {
-                    db.WriteLine(Daten[i]);
-                }
-            }
-            db.Close();
+            Cleanup();
+            File.WriteAllLines(datenbank_name, datenbank.ToArray(), Encoding.GetEncoding("iso-8859-1"));
             threadsafe.ReleaseMutex();
         }
         /// <summary>
@@ -85,8 +64,8 @@ namespace freetzbot
         {
             threadsafe.WaitOne();
             datenbank.Add(to_add);
+            File.AppendAllText(datenbank_name, to_add, Encoding.GetEncoding("iso-8859-1"));
             threadsafe.ReleaseMutex();
-            Write();
         }
         /// <summary>
         /// Entfernt den angegebenen String aus der Datenbank
@@ -170,9 +149,22 @@ namespace freetzbot
         public void Reload()
         {
             threadsafe.WaitOne();
-            datenbank.Clear();
+            datenbank = null;
             threadsafe.ReleaseMutex();
-            datenbank = new List<String>(Read());
+            Read();
+        }
+        /// <summary>
+        /// Löscht alle leeren Strings aus der Datenbank
+        /// </summary>
+        private void Cleanup()
+        {
+            for (int i = 0; i < datenbank.Count; i++)
+            {
+                if (datenbank[i] == "")
+                {
+                    datenbank.RemoveAt(i);
+                }
+            }
         }
     }
 }

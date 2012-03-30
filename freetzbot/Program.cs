@@ -13,7 +13,7 @@ namespace freetzbot
         static private System.ComponentModel.BackgroundWorker loggingthread;
 
         static private Boolean restart = false;
-        static private String zeilen = Convert.ToString(71 + 178 + 313 + 1908);
+        static private String zeilen = Convert.ToString(74 + 170 + 313 + 2037);
         static private DateTime startzeit;
         static private List<string> logging_list = new List<string>();
         static private Mutex logging_safe = new Mutex();
@@ -125,7 +125,10 @@ namespace freetzbot
             if (ignore_check(sender)) return;
             if (parameter.Length > 1) if (ignore_check(parameter[1])) return;
             int floodingcount;
-            int.TryParse(configuration.get("floodingcount"), out floodingcount);
+            if (!int.TryParse(configuration.get("floodingcount"), out floodingcount))
+            {
+                floodingcount = 5;//Default wert
+            }
             if (antifloodingcount >= floodingcount)
             {
                 if (floodingnotificated == false)
@@ -341,7 +344,107 @@ namespace freetzbot
 
             if (!answered_user && !answered_admin)
             {
-                alias(connection, sender, receiver, message, true);
+                if (!alias(connection, sender, receiver, message, true) && !receiver.Contains("#"))
+                {
+                    connection.sendmsg("Hallo, kann ich dir helfen ? Probiers doch mal mit !hilfe", receiver);
+                }
+            }
+        }
+
+        private static String[] news_parse(String url)
+        {
+            String news = get_web(url);
+            List<String> newstopic = new List<String>();
+            List<String> subnews = new List<String>();
+            List<String> uberschriftblau = new List<String>(news.Split(new String[] { "<span class=\"uberschriftblau\">" }, 21, StringSplitOptions.None));
+            uberschriftblau.RemoveAt(0);
+            foreach (String uberschrift in uberschriftblau)
+            {
+                String text = uberschrift;
+                int nbsp = uberschrift.IndexOf("&nbsp;");
+                if (nbsp != -1)
+                {
+                    text = text.Remove(nbsp);
+                }
+                newstopic.Add(text.Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0]);
+            }
+            List<String> fliesstextblau = new List<String>(news.Split(new String[] { "<span class=\"fliesstextblau\">" }, 21, StringSplitOptions.None));
+            fliesstextblau.RemoveAt(0);
+            foreach (String fliesstext in fliesstextblau)
+            {
+                String text = fliesstext.Replace("&nbsp;", " ");
+                subnews.Add(text.Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0]);
+            }
+            List<String> news_new = new List<String>();
+            for (int i = 0; i < uberschriftblau.Count; i++)
+            {
+                news_new.Add(newstopic[i] + ":" + subnews[i]);
+            }
+            return news_new.ToArray();
+        }
+
+        private static void news()
+        {
+            String baseurl = "http://webgw.avm.de/download/UpdateNews.jsp";
+            String[] news_de_old = news_parse(baseurl + "?lang=de");
+            String[] news_en_old = news_parse(baseurl + "?lang=en");
+            while (true)
+            {
+                String[] news_de = news_parse(baseurl + "?lang=de");
+                String[] news_en = news_parse(baseurl + "?lang=en");
+                if (news_de_old[0] != news_de[0])
+                {
+                    List<String> differs = new List<String>();
+                    for (int i = 0; i < news_de.Length; i++)
+                    {
+                        if (news_de_old[0] != news_de[i])
+                        {
+                            differs.Add(news_de[i]);
+                        }
+                    }
+                    String output = "Neue Deutsche News gesichtet! ";
+                    foreach (String thenews in differs)
+                    {
+                        output += ", " + thenews;
+                    }
+                    announce(output);
+                    news_de_old = news_de;
+                }
+                if (news_en_old[0] != news_en[0])
+                {
+                    List<String> differs = new List<String>();
+                    for (int i = 0; i < news_de.Length; i++)
+                    {
+                        if (news_de_old[0] != news_de[i])
+                        {
+                            differs.Add(news_de[i]);
+                        }
+                    }
+                    String output = "Neue englische News gesichtet! ";
+                    foreach (String thenews in differs)
+                    {
+                        output += ", " + thenews;
+                    }
+                    announce(output);
+                    news_en_old = news_en;
+                }
+                int sleep;
+                if (!int.TryParse(configuration.get("news_check_intervall"), out sleep))
+                {
+                    sleep = 300000;
+                }
+                Thread.Sleep(sleep);
+            }
+        }
+
+        private static void announce(String message)
+        {
+            foreach(irc connection in irc_connections)
+            {
+                foreach(String room in connection.rooms)
+                {
+                    connection.sendmsg(message, room);
+                }
             }
         }
 
@@ -359,7 +462,7 @@ namespace freetzbot
             connection.sendmsg(output, receiver);
         }
 
-        private static void alias(irc connection, String sender, String receiver, String message, Boolean not_answered = false)
+        private static Boolean alias(irc connection, String sender, String receiver, String message, Boolean not_answered = false)
         {
             String[] parameter = message.Split(new String[] { " " }, 2, StringSplitOptions.None);
             String alias = "";
@@ -420,13 +523,15 @@ namespace freetzbot
                                 }
                             }
                             connection.sendmsg(output, receiver);
+                            return true;
                         }
                         else if(!not_answered)
                         {
                             connection.sendmsg("Diesen Alias gibt es nicht.", receiver);
+                            return false;
                         }
                     }
-                    return;
+                    return false;
             }
             if (message.Contains("="))
             {
@@ -443,14 +548,14 @@ namespace freetzbot
             if (!cases[0] && cases[1] && cases[2])
             {
                 connection.sendmsg("Diesen Alias gibt es noch nicht, verwende \"add\" um ihn hinzuzufügen.", receiver);
-                return;
+                return false;
             }
             if (cases[1])
             {
                 if (!cases[0])
                 {
                     connection.sendmsg("Diesen Alias gibt es nicht.", receiver);
-                    return;
+                    return false;
                 }
                 aliasdb.Remove(aliasdb.GetContaining(alias + "=")[0]);
             }
@@ -459,7 +564,7 @@ namespace freetzbot
                 if ((cases[1] && cases[2]) ^ cases[0])
                 {
                     connection.sendmsg("Es gibt diesen Alias schon, wenn du ihn verändern möchtest verwende statt \"add\", \"edit\".", receiver);
-                    return;
+                    return false;
                 }
                 aliasdb.Add(parameter[1]);
             }
@@ -475,6 +580,7 @@ namespace freetzbot
             {
                 connection.sendmsg("Alias wurde erfolgreich gelöscht!", receiver);
             }
+            return false;
         }
 
         private static void fw(irc connection, String sender, String receiver, String message)
@@ -1245,17 +1351,14 @@ namespace freetzbot
                     if (output != "")
                     {
                         output += " - http://www.avm.de/de/Service/Service-Portale/Labor/index.php";
-                        for (int i = 0; i < irc_connections.Count; i++)
-                        {
-                            for (int c = 0; c < irc_connections[i].rooms.Count; c++)
-                            {
-                                irc_connections[i].sendmsg(output, irc_connections[i].rooms[c]);
-                            }
-                        }
+                        announce(output);
                     }
                     output = "";
                     int labor_check_intervall;
-                    int.TryParse(configuration.get("labor_check_intervall"), out labor_check_intervall);
+                    if (!int.TryParse(configuration.get("labor_check_intervall"), out labor_check_intervall))
+                    {
+                        labor_check_intervall = 300000;
+                    }
                     Thread.Sleep(labor_check_intervall);
                 }
             }
@@ -1466,6 +1569,13 @@ namespace freetzbot
                     }
                 }
                 output += System.Web.HttpUtility.UrlEncode(Encoding.GetEncoding("iso-8859-1").GetBytes(uri));
+                if (configuration.get("whmf_url_resolve") == "true")
+                {
+                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(output);
+                    request.Timeout = 10000;
+                    HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+                    output = response.ResponseUri.ToString();
+                }
                 if (nick != "")
                 {
                     output = nick + ": Siehe: " + output;
@@ -1667,6 +1777,10 @@ namespace freetzbot
             else
             {
                 logging("Von " + nick + ": " + message);
+                if (message.ToCharArray()[0] != '!' && !nick.Contains("."))
+                {
+                    connection.sendmsg("Hallo, kann ich dir helfen ? Probiers doch mal mit !hilfe", nick);
+                }
                 source = nick;
             }
             if (message.ToCharArray()[0] == '!')
@@ -1710,10 +1824,10 @@ namespace freetzbot
         static private void Trennen()
         {
             laborthread.Abort();
-            for (int i = 0; i < irc_connections.Count; i++)
+            foreach(irc connections in irc_connections)
             {
                 String raumliste = null;
-                foreach (String raum in irc_connections[i].rooms)
+                foreach (String raum in connections.rooms)
                 {
                     if (raumliste == null)
                     {
@@ -1724,12 +1838,12 @@ namespace freetzbot
                         raumliste += ":" + raum;
                     }
                 }
-                int position = servers.Find(servers.GetContaining(irc_connections[i].hostname)[0]);
+                int position = servers.Find(servers.GetContaining(connections.hostname)[0]);
                 String[] substr = servers.GetAt(position).Split(new String[] { "," }, 5, StringSplitOptions.None);
                 substr[4] = raumliste;
                 servers.Remove(servers.GetAt(position));
                 servers.Add(substr[0] + "," + substr[1] + "," + substr[2] + "," + substr[3] + "," + substr[4]);
-                irc_connections[i].disconnect();
+                connections.disconnect();
             }
         }
 
@@ -1765,6 +1879,9 @@ namespace freetzbot
             antifloodingthread = new Thread(new ThreadStart(antiflooding));
             antifloodingthread.IsBackground = true;
             antifloodingthread.Start();
+            Thread newsthread = new Thread(new ThreadStart(news));
+            newsthread.IsBackground = true;
+            newsthread.Start();
         }
 
         static private void antiflooding()
