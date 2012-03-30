@@ -18,7 +18,7 @@ namespace freetzbot
         private Boolean cancelthread;
         public string hostname;
         private int port;
-        private String nickname;
+        public String nickname;
         private TcpClient connection;
         private DateTime connecttime;
         public Boolean AutoReconnect;

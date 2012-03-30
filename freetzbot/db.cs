@@ -64,7 +64,7 @@ namespace freetzbot
         {
             threadsafe.WaitOne();
             datenbank.Add(to_add);
-            File.AppendAllText(datenbank_name, to_add, Encoding.GetEncoding("iso-8859-1"));
+            File.AppendAllText(datenbank_name, to_add + "\r\n", Encoding.GetEncoding("iso-8859-1"));
             threadsafe.ReleaseMutex();
         }
         /// <summary>

@@ -119,6 +119,10 @@ namespace freetzbot
                     }
                 }
             }
+            else
+            {
+                answered_admin = false;
+            }
             #endregion
 
             #region Spezialfälle check
@@ -344,7 +348,7 @@ namespace freetzbot
 
             if (!answered_user && !answered_admin)
             {
-                if (!alias(connection, sender, receiver, message, true) && !receiver.Contains("#"))
+                if (!alias(connection, sender, receiver, message, true) && !receiver.Contains("#") && receiver != connection.nickname)
                 {
                     connection.sendmsg("Hallo, kann ich dir helfen ? Probiers doch mal mit !hilfe", receiver);
                 }
@@ -1777,7 +1781,7 @@ namespace freetzbot
             else
             {
                 logging("Von " + nick + ": " + message);
-                if (message.ToCharArray()[0] != '!' && !nick.Contains("."))
+                if (message.ToCharArray()[0] != '!' && !nick.Contains(".") && nick != connection.nickname)
                 {
                     connection.sendmsg("Hallo, kann ich dir helfen ? Probiers doch mal mit !hilfe", nick);
                 }
