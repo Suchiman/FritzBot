@@ -12,6 +12,21 @@
     <AssemblyName>freetzbot</AssemblyName>
     <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -22,6 +37,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -33,6 +49,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -41,14 +58,67 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="command.cs" />
+    <Compile Include="commands\about.cs" />
+    <Compile Include="commands\alias.cs" />
+    <Compile Include="commands\box.cs" />
+    <Compile Include="commands\boxfind.cs" />
+    <Compile Include="commands\boxinfo.cs" />
+    <Compile Include="commands\boxlist.cs" />
+    <Compile Include="commands\boxremove.cs" />
+    <Compile Include="commands\connect.cs" />
+    <Compile Include="commands\db_command.cs" />
+    <Compile Include="commands\frag.cs" />
+    <Compile Include="commands\freetz.cs" />
+    <Compile Include="commands\fw.cs" />
+    <Compile Include="commands\google.cs" />
+    <Compile Include="commands\hilfe.cs" />
+    <Compile Include="commands\ignore.cs" />
+    <Compile Include="commands\join.cs" />
+    <Compile Include="commands\labor.cs" />
+    <Compile Include="commands\leave.cs" />
+    <Compile Include="commands\lmgtfy.cs" />
+    <Compile Include="commands\mem.cs" />
+    <Compile Include="commands\news.cs" />
+    <Compile Include="commands\part.cs" />
+    <Compile Include="commands\ping.cs" />
+    <Compile Include="commands\quit.cs" />
+    <Compile Include="commands\restart.cs" />
+    <Compile Include="commands\seen.cs" />
+    <Compile Include="commands\settings.cs" />
+    <Compile Include="commands\trunk.cs" />
+    <Compile Include="commands\unignore.cs" />
+    <Compile Include="commands\uptime.cs" />
+    <Compile Include="commands\userlist.cs" />
+    <Compile Include="commands\witz.cs" />
+    <Compile Include="commands\zeit.cs" />
     <Compile Include="db.cs" />
     <Compile Include="irc.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="settings.cs" />
+    <Compile Include="toolbox.cs" />
+    <Compile Include="commands\whmf.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="ToDo.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
+      <Visible>False</Visible>
+      <ProductName>Windows Installer 3.1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

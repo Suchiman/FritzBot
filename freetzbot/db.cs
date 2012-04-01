@@ -11,7 +11,7 @@ namespace freetzbot
     /// </summary>
     class db
     {
-        private String datenbank_name;
+        public String datenbank_name;
         private List<String> datenbank;
         private static Mutex threadsafe;
         /// <summary>
