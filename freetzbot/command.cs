@@ -2,7 +2,7 @@
 
 namespace freetzbot
 {
-    interface command
+    public interface command
     {
         String[] get_name();
         String get_helptext();

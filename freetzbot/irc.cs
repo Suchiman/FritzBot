@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace freetzbot
 {
-    class irc
+    public class irc
     {
         public delegate void ReceivedEventHandler(irc connection, String source, String nick, String message);
         public event ReceivedEventHandler Received;

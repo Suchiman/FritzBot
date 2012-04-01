@@ -37,86 +37,30 @@ namespace freetzbot.commands
 
         public void run(irc connection, String sender, String receiver, String message)
         {
-            String output = "Okay";
+            String output = "Ich konnte die gewünschte Datenbank nicht finden";
             try
             {
                 String[] split = message.Split(' ');
                 if (split[1] == "reload")
                 {
-                    switch (split[0])
+                    foreach (db database in freetzbot.Program.databases)
                     {
-                        case "box":
-                            toolbox.getDatabaseByName("box.db").Reload();
-                            break;
-                        case "user":
-                            toolbox.getDatabaseByName("user.db").Reload();
-                            break;
-                        case "witz":
-                            toolbox.getDatabaseByName("witze.db").Reload();
-                            break;
-                        case "ignore":
-                            toolbox.getDatabaseByName("ignore.db").Reload();
-                            break;
-                        case "server":
-                            toolbox.getDatabaseByName("servers.cfg").Reload();
-                            break;
-                        case "fw":
-                            toolbox.getDatabaseByName("fwdb.db").Reload();
-                            break;
-                        case "alias":
-                            toolbox.getDatabaseByName("alias.db").Reload();
-                            break;
-                        case "all":
-                            toolbox.getDatabaseByName("box.db").Reload();
-                            toolbox.getDatabaseByName("user.db").Reload();
-                            toolbox.getDatabaseByName("witze.db").Reload();
-                            toolbox.getDatabaseByName("ignore.db").Reload();
-                            toolbox.getDatabaseByName("servers.cfg").Reload();
-                            toolbox.getDatabaseByName("fwdb.db").Reload();
-                            toolbox.getDatabaseByName("alias.db").Reload();
-                            break;
-                        default:
-                            output = "Wups, die Datenbank kenn ich nich";
-                            break;
+                        if (database.datenbank_name == split[0] || split[0] == "all")
+                        {
+                            toolbox.getDatabaseByName(database.datenbank_name).Reload();
+                            output = "Okay";
+                        }
                     }
                 }
                 else if (split[1] == "flush")
                 {
-                    switch (split[0])
+                    foreach (db database in freetzbot.Program.databases)
                     {
-                        case "box":
-                            toolbox.getDatabaseByName("box.db").Write();
-                            break;
-                        case "user":
-                            toolbox.getDatabaseByName("user.db").Write();
-                            break;
-                        case "witz":
-                            toolbox.getDatabaseByName("witze.db").Write();
-                            break;
-                        case "ignore":
-                            toolbox.getDatabaseByName("ignore.db").Write();
-                            break;
-                        case "server":
-                            toolbox.getDatabaseByName("servers.cfg").Write();
-                            break;
-                        case "fw":
-                            toolbox.getDatabaseByName("fwdb.db").Write();
-                            break;
-                        case "alias":
-                            toolbox.getDatabaseByName("alias.db").Write();
-                            break;
-                        case "all":
-                            toolbox.getDatabaseByName("box.db").Write();
-                            toolbox.getDatabaseByName("user.db").Write();
-                            toolbox.getDatabaseByName("witze.db").Write();
-                            toolbox.getDatabaseByName("ignore.db").Write();
-                            toolbox.getDatabaseByName("servers.cfg").Write();
-                            toolbox.getDatabaseByName("fwdb.db").Write();
-                            toolbox.getDatabaseByName("alias.db").Write();
-                            break;
-                        default:
-                            output = "Wups, die Datenbank kenn ich nich";
-                            break;
+                        if (database.datenbank_name == split[0] || split[0] == "all")
+                        {
+                            toolbox.getDatabaseByName(database.datenbank_name).Write();
+                            output = "Okay";
+                        }
                     }
                 }
                 else
@@ -124,7 +68,6 @@ namespace freetzbot.commands
                     output = "Das hat nicht funktioniert, denk dran: !db datenbank befehl";
                 }
                 connection.sendmsg(output, receiver);
-
             }
             catch (Exception ex)
             {

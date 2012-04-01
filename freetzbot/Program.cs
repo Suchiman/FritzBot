@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading;
 
 namespace freetzbot
@@ -258,40 +259,15 @@ namespace freetzbot
             antifloodingthread.IsBackground = true;
             antifloodingthread.Start();
 
-            commands.Add(new commands.about());
-            commands.Add(new commands.alias());
-            commands.Add(new commands.box());
-            commands.Add(new commands.boxfind());
-            commands.Add(new commands.boxinfo());
-            commands.Add(new commands.boxlist());
-            commands.Add(new commands.boxremove());
-            commands.Add(new commands.connect());
-            commands.Add(new commands.db_command());
-            commands.Add(new commands.frag());
-            commands.Add(new commands.freetz());
-            commands.Add(new commands.fw());
-            commands.Add(new commands.google());
-            commands.Add(new commands.hilfe());
-            commands.Add(new commands.ignore());
-            commands.Add(new commands.join());
-            commands.Add(new commands.labor());
-            commands.Add(new commands.leave());
-            commands.Add(new commands.lmgtfy());
-            commands.Add(new commands.mem());
-            commands.Add(new commands.news());
-            commands.Add(new commands.part());
-            commands.Add(new commands.ping());
-            commands.Add(new commands.quit());
-            commands.Add(new commands.restart());
-            commands.Add(new commands.seen());
-            commands.Add(new commands.settings());
-            commands.Add(new commands.trunk());
-            commands.Add(new commands.unignore());
-            commands.Add(new commands.uptime());
-            commands.Add(new commands.userlist());
-            commands.Add(new commands.whmf());
-            commands.Add(new commands.witz());
-            commands.Add(new commands.zeit());
+            // Dynamisches hinzufügen der Funktionen
+            List<Type> typelist = new List<Type>();
+            foreach(Type t in Assembly.GetExecutingAssembly().GetTypes())
+            {
+                if (t.Namespace == "freetzbot.commands")
+                {
+                    commands.Add((command)Activator.CreateInstance(t));
+                }
+            }
         }
 
         private static void Main(String[] args)

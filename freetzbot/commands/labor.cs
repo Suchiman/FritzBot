@@ -39,112 +39,101 @@ namespace freetzbot.commands
 
         public labor()
         {
-            laborthread = new Thread(new ThreadStart(labor_check));
+            labor_daten = new labordaten[7];
+            boxdata = new Dictionary<String, int>();
+            boxdatareverse = new Dictionary<int, String>();
+            boxdata.Add("ios", 1);
+            boxdata.Add("android", 2);
+            boxdata.Add("7390", 3);
+            boxdata.Add("fhem", 4);
+            boxdata.Add("7390at", 5);
+            boxdata.Add("7320", 6);
+            boxdata.Add("7270", 7);
+            boxdatareverse.Add(1, "iOS App");
+            boxdatareverse.Add(2, "Android App");
+            boxdatareverse.Add(3, "7390");
+            boxdatareverse.Add(4, "7390 FHEM");
+            boxdatareverse.Add(5, "7390 AT-CH");
+            boxdatareverse.Add(6, "7320");
+            boxdatareverse.Add(7, "7270");
+            Thread laborthread = new Thread(() => { this.labor_check(); });
             laborthread.IsBackground = true;
             laborthread.Start();
         }
 
-        Thread laborthread = new Thread(new ThreadStart(labor_check));
-
-        public void run(irc connection, String sender, String receiver, String message)
+        private labordaten[] labor_daten;
+        private Dictionary<String, int> boxdata;
+        private Dictionary<int, String> boxdatareverse;
+        
+        private void update_labor_cache()
         {
             String webseite = toolbox.get_web("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
             if (webseite == "")
             {
-                connection.sendmsg("Leider war es mir nicht möglich auf die Labor Webseite von AVM zuzugreifen", receiver);
-                return;
+                throw new Exception("Verbindungsfehler");
             }
-
-            String changeset = "";
-            int modell = 0;
-            switch (message.ToLower())
+            for (int i = 1; i < 8; i++)
             {
-                case "ios":
-                    modell = 1;
-                    break;
-                case "android":
-                    modell = 2;
-                    break;
-                case "7390":
-                    modell = 3;
-                    break;
-                case "fhem":
-                    modell = 4;
-                    break;
-                case "7390at":
-                    modell = 5;
-                    break;
-                case "7320":
-                    modell = 6;
-                    break;
-                case "7270":
-                    modell = 7;
-                    break;
-                case "":
-                    String[] daten = new String[7];
-                    for (int i = 1; i < 8; i++)
-                    {
-                        daten[i - 1] = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None)[i].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0];
-
-                        String changelog_url_element = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None)[i];
-                        changelog_url_element = changelog_url_element.Split(new String[] { "<div class=\"boxBottom\">" }, 2, StringSplitOptions.None)[0];
-                        if (changelog_url_element.Contains("<p>Die neuen Leistungsmerkmale aus diesem Labor"))
-                        {
-                            daten[i - 1] = "Released";
-                        }
-                    }
-                    changeset = "Aktuelle Labor Daten: iOS: " + daten[0] + ", Android: " + daten[1] + ", 7390: " + daten[2] + ", FHEM: " + daten[3] + ", 7390at: " + daten[4] + ", 7320: " + daten[5] + ", 7270: " + daten[6] + " - http://www.avm.de/de/Service/Service-Portale/Labor/index.php";
-                    break;
-                default:
-                    changeset += "Für die " + message + " steht derzeit keine Labor Version zur Verfügung. ";
-                    break;
-            }
-
-            if (modell != 0)
-            {
-                String datum = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None)[modell].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0];
-                String changelog_url_element = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None)[modell];
+                labor_daten[i - 1].daten = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None)[i].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0];
+                String changelog_url_element = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None)[i];
                 changelog_url_element = changelog_url_element.Split(new String[] { "<div class=\"boxBottom\">" }, 2, StringSplitOptions.None)[0];
                 if (changelog_url_element.Contains("<p>Die neuen Leistungsmerkmale aus diesem Labor"))
+                {
+                    labor_daten[i - 1].daten = "Released";
+                }
+                else
+                {
+                    changelog_url_element = changelog_url_element.Split(new String[] { "<a href=" }, 2, StringSplitOptions.None)[1].Split(new String[] { "\"" }, 3, StringSplitOptions.None)[1].Split(new String[] { "/" }, 2, StringSplitOptions.None)[0];
+                    labor_daten[i - 1].url = "http://www.avm.de/de/Service/Service-Portale/Labor/" + changelog_url_element + "/labor_feedback_versionen.php";
+                    String feedback = toolbox.get_web(labor_daten[i - 1].url);
+                    if (feedback == "")
+                    {
+                        throw new Exception("Verbindungsfehler");
+                    }
+                    labor_daten[i - 1].version = feedback.Split(new String[] { "</strong>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "Version " }, 2, StringSplitOptions.None)[1];
+                }
+            }
+        }
+
+        public void run(irc connection, String sender, String receiver, String message)
+        {
+            String changeset = "";
+            int modell = 0;
+            try
+            {
+                update_labor_cache();
+            }
+            catch (Exception ex)
+            {
+                connection.sendmsg("Es war mir nicht möglich den Labor Cache zu erneuern. Grund: " + ex.Message + ". Verwende Cache", receiver);
+            }
+            if (boxdata.ContainsKey(message.ToLower()))
+            {
+                modell = boxdata[message.ToLower()];
+                if (labor_daten[modell].daten == "Released")
                 {
                     connection.sendmsg("Aktuell ist keine Laborversion verfügbar da die Features in eine neue Release Firmware eingeflossen sind", receiver);
                 }
                 else
                 {
-                    changelog_url_element = changelog_url_element.Split(new String[] { "<a href=" }, 2, StringSplitOptions.None)[1].Split(new String[] { "\"" }, 3, StringSplitOptions.None)[1].Split(new String[] { "/" }, 2, StringSplitOptions.None)[0];
-                    String url = "http://www.avm.de/de/Service/Service-Portale/Labor/" + changelog_url_element + "/labor_feedback_versionen.php";
-                    String feedback = toolbox.get_web(url);
-                    if (feedback == "")
-                    {
-                        connection.sendmsg("Leider war es mir nicht möglich alle Daten von der AVM Webseite abzurufen", receiver);
-                        return;
-                    }
-                    String version = feedback.Split(new String[] { "</strong>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "Version " }, 2, StringSplitOptions.None)[1];
-                    changeset += "Die neueste " + message + " labor Version ist am " + datum + " erschienen mit der Versionsnummer: " + version + ". Changelog: " + url;
+                    changeset += "Die neueste " + message + " labor Version ist am " + labor_daten[modell].daten + " erschienen mit der Versionsnummer: " + labor_daten[modell].version + ". Changelog: " + labor_daten[modell].url;
                 }
+            }
+            else if (message.ToLower() == "")
+            {
+                changeset = "Aktuelle Labor Daten: iOS: " + labor_daten[0].daten + ", Android: " + labor_daten[1].daten + ", 7390: " + labor_daten[2].daten + ", FHEM: " + labor_daten[3].daten + ", 7390at: " + labor_daten[4].daten + ", 7320: " + labor_daten[5].daten + ", 7270: " + labor_daten[6].daten + " - http://www.avm.de/de/Service/Service-Portale/Labor/index.php";
+            }
+            else
+            {
+                changeset += "Für die " + message + " steht derzeit keine Labor Version zur Verfügung. ";
             }
             connection.sendmsg(changeset, receiver);
         }
 
-        private static void labor_check()
+        private void labor_check()
         {
-            List<String> LaborDates = new List<String>();
-            Boolean[] released = new Boolean[7];
+            labordaten[] labor_old = labor_daten;
             String output = "";
-            String webseite = toolbox.get_web("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
-            for (int i = 1; i < 8; i++)
-            {
-                String Date = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None)[i].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0];
-                LaborDates.Add(Date);
-
-                String changelog_url_element = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None)[i];
-                changelog_url_element = changelog_url_element.Split(new String[] { "<div class=\"boxBottom\">" }, 2, StringSplitOptions.None)[0];
-
-                if (changelog_url_element.Contains("<p>Die neuen Leistungsmerkmale aus diesem Labor"))
-                {
-                    released[i - 1] = true;
-                }
-            }
             while (true)
             {
                 if (freetzbot.Program.configuration.get("labor_check") == "false")
@@ -155,88 +144,45 @@ namespace freetzbot.commands
                 {
                     do
                     {
-                        Thread.Sleep(1000);
-                        webseite = toolbox.get_web("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
-                    } while (webseite == "" || webseite == null);
+                        try
+                        {
+                            update_labor_cache();
+                            break;
+                        }
+                        catch
+                        {
+                            Thread.Sleep(1000);
+                        }
+                    } while (true);
+                    String released = "";
+                    String labors = "";
                     for (int i = 1; i < 8; i++)
                     {
-                        String Date = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None)[i].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0];
-
-                        String changelog_url_element = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None)[i];
-                        changelog_url_element = changelog_url_element.Split(new String[] { "<div class=\"boxBottom\">" }, 2, StringSplitOptions.None)[0];
-
-                        if (changelog_url_element.Contains("<p>Die neuen Leistungsmerkmale aus diesem Labor"))
+                        if (labor_daten[i - 1].daten != labor_old[i - 1].daten)
                         {
-                            if (released[i - 1] != true)
+                            if (labor_daten[i - 1].daten == "Released")
                             {
-                                released[i - 1] = true;
-                                output = "Labor Version wurde als Stabil released!";
-                                switch (i)
-                                {
-                                    case 1:
-                                        output += ", iOS App";
-                                        break;
-                                    case 2:
-                                        output += ", Android App";
-                                        break;
-                                    case 3:
-                                        output += ", 7390";
-                                        break;
-                                    case 4:
-                                        output += ", 7390 FHEM";
-                                        break;
-                                    case 5:
-                                        output += ", 7390 AT-CH";
-                                        break;
-                                    case 6:
-                                        output += ", 7320";
-                                        break;
-                                    case 7:
-                                        output += ", 7270";
-                                        break;
-                                    default:
-                                        break;
-                                }
+                                released += ", " + boxdatareverse[i];
                             }
+                            else
+                            {
+                                labors += ", " + boxdatareverse[i];
+                            }
+                        }
+                    }
+                    if (released != "")
+                    {
+                        output = "Labor Version wurde als neue Firmware released!" + released.Remove(0, 2);
+                    }
+                    if (labors != "")
+                    {
+                        if (output != "")
+                        {
+                            output += ", Neue Labor Versionen gesichtet!" + labors.Remove(0, 2);
                         }
                         else
                         {
-                            released[i - 1] = false;
-                        }
-
-                        if (Date != LaborDates[i - 1])
-                        {
-                            LaborDates[i - 1] = Date;
-                            if (output == "")
-                            {
-                                output += "Neue Labor Versionen gesichtet!";
-                            }
-                            switch (i)
-                            {
-                                case 1:
-                                    output += ", iOS App";
-                                    break;
-                                case 2:
-                                    output += ", Android App";
-                                    break;
-                                case 3:
-                                    output += ", 7390";
-                                    break;
-                                case 4:
-                                    output += ", 7390 FHEM";
-                                    break;
-                                case 5:
-                                    output += ", 7390 AT-CH";
-                                    break;
-                                case 6:
-                                    output += ", 7320";
-                                    break;
-                                case 7:
-                                    output += ", 7270";
-                                    break;
-                                default:
-                                    break;
-                            }
+                            output += "Neue Labor Versionen gesichtet!" + labors.Remove(0, 2);
                         }
                     }
                     if (output != "")
@@ -254,5 +200,14 @@ namespace freetzbot.commands
                 }
             }
         }
+    }
+}
+namespace freetzbot
+{
+    public struct labordaten
+    {
+        public String daten;
+        public String version;
+        public String url;
     }
 }
