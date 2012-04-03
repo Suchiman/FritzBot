@@ -35,11 +35,9 @@ namespace freetzbot.commands
             return accept_every_param;
         }
 
-        private String zeilen = Convert.ToString(50 + 101 + 86 + 71 + 52 + 43 + 53 + 72 + 60 + 45 + 43 + 43 + 70 + 147 + 43 + 68 + 66 + 213 + 44 + 47 + 77 + 53 + 222 + 78 + 44 + 80 + 79 + 50 + 70 + 78 + 65 + 51 + 164 + 45 + 198 + 14 + 74 + 313 + 170 + 317);
-
         public void run(irc connection, String sender, String receiver, String message)
         {
-            connection.sendmsg("Primäraufgabe: Daten über Fritzboxen sammeln, Sekundäraufgabe: Menschheit eliminieren. Kleiner Scherz am Rande Ha-Ha. Funktionsliste ist durch !hilfe zu erhalten. Programmiert in C# umfasst mein Quellcode derzeit " + zeilen + " Zeilen. Entwickler: Suchiman", receiver);
+            connection.sendmsg("Primäraufgabe: Daten über Fritzboxen sammeln, Sekundäraufgabe: Menschheit eliminieren. Kleiner Scherz am Rande Ha-Ha. Funktionsliste ist durch !hilfe zu erhalten. Programmiert in C# umfasst mein Quellcode derzeit 3582 Zeilen. Entwickler: Suchiman", receiver);
         }
     }
 }

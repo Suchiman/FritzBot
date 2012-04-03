@@ -85,7 +85,8 @@ namespace freetzbot.commands
                 {
                     changelog_url_element = changelog_url_element.Split(new String[] { "<a href=" }, 2, StringSplitOptions.None)[1].Split(new String[] { "\"" }, 3, StringSplitOptions.None)[1];
                     labor_daten[i - 1].url = "http://www.avm.de/de/Service/Service-Portale/Labor/" + changelog_url_element;
-                    String feedback = toolbox.get_web(labor_daten[i - 1].url);
+                    String url = labor_daten[i - 1].url.Remove(labor_daten[i - 1].url.LastIndexOf('/')) + "/labor_feedback_versionen.php";
+                    String feedback = toolbox.get_web(url);
                     if (feedback == "")
                     {
                         throw new Exception("Verbindungsfehler");
@@ -110,13 +111,13 @@ namespace freetzbot.commands
             if (boxdata.ContainsKey(message.ToLower()))
             {
                 modell = boxdata[message.ToLower()];
-                if (labor_daten[modell].daten == "Released")
+                if (labor_daten[modell - 1].daten == "Released")
                 {
                     connection.sendmsg("Aktuell ist keine Laborversion verfügbar da die Features in eine neue Release Firmware eingeflossen sind", receiver);
                 }
                 else
                 {
-                    changeset += "Die neueste " + message + " labor Version ist am " + labor_daten[modell].daten + " erschienen mit der Versionsnummer: " + labor_daten[modell].version + ". Laborseite: " + labor_daten[modell].url;
+                    changeset += "Die neueste " + message + " labor Version ist am " + labor_daten[modell - 1].daten + " erschienen mit der Versionsnummer: " + labor_daten[modell - 1].version + ". Laborseite: " + labor_daten[modell - 1].url;
                 }
             }
             else if (message.ToLower() == "")
