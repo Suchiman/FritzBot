@@ -38,6 +38,11 @@ namespace freetzbot.commands
         public void run(irc connection, String sender, String receiver, String message)
         {
             db seendb = toolbox.getDatabaseByName("seen.db");
+            if (message.ToLower() == connection.nickname.ToLower())
+            {
+                connection.sendmsg("Ich bin gerade hier und was ich schreibe siehst du ja auch :-)", receiver);
+                return;
+            }
             if (seendb.GetContaining(message + ";").Length > 0)
             {
                 String output = "";
@@ -52,7 +57,11 @@ namespace freetzbot.commands
                     DateTime said;
                     if (DateTime.TryParse(daten[2], out said))
                     {
-                        output += "Am " + said.ToString("dd.MM.yyyy ") + "um" + said.ToString(" HH:mm:ss ") + "Uhr sagte er zuletzt: \"" + daten[3] + "\"";
+                        if (output != "")
+                        {
+                            output += " ";
+                        }
+                        output += "Am " + said.ToString("dd.MM.yyyy ") + "um" + said.ToString(" HH:mm:ss ") + "Uhr sagte er/sie zuletzt: \"" + daten[3] + "\"";
                     }
                 }
                 if (output != "")

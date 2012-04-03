@@ -37,7 +37,7 @@ namespace freetzbot.commands
 
         public void run(irc connection, String sender, String receiver, String message)
         {
-            connection.sendmsg("Primäraufgabe: Daten über Fritzboxen sammeln, Sekundäraufgabe: Menschheit eliminieren. Kleiner Scherz am Rande Ha-Ha. Funktionsliste ist durch !hilfe zu erhalten. Programmiert in C# umfasst mein Quellcode derzeit 3582 Zeilen. Entwickler: Suchiman", receiver);
+            connection.sendmsg("Primäraufgabe: Daten über Fritzboxen sammeln, Sekundäraufgabe: Menschheit eliminieren. Kleiner Scherz am Rande Ha-Ha. Funktionsliste ist durch !hilfe zu erhalten. Programmiert in C# umfasst mein Quellcode derzeit 3565 Zeilen. Entwickler: Suchiman", receiver);
         }
     }
 }
