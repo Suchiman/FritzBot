@@ -38,10 +38,10 @@ namespace freetzbot.commands
         public void run(irc connection, String sender, String receiver, String message)
         {
             db seendb = toolbox.getDatabaseByName("seen.db");
-            if (seendb.GetContaining(message).Length > 0)
+            if (seendb.GetContaining(message + ";").Length > 0)
             {
                 String output = "";
-                String[] daten = seendb.GetContaining(message)[0].Split(';');//User;Joined;Messaged;Message
+                String[] daten = seendb.GetContaining(message + ";")[0].Split(';');//User;Joined;Messaged;Message
                 DateTime seen;
                 if (DateTime.TryParse(daten[1], out seen))
                 {
@@ -99,48 +99,50 @@ namespace freetzbot.commands
             try
             {
                 db seendb = toolbox.getDatabaseByName("seen.db");
-                if (!(seendb.GetContaining(nick).Length > 0))
+                if (!(seendb.GetContaining(nick + ";").Length > 0))
                 {
                     seendb.Add(nick + ";;;");
                 }
-                String data = seendb.GetContaining(nick)[0];
+                String data = seendb.GetContaining(nick + ";")[0];
                 String datum = DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss");
                 String[] split = data.Split(';'); //User;Joined;Messaged;Message
-                String output = nick + ";";
+                String joindate = "";
+                String messagedate = "";
+                String messagetext = "";
                 if (joined == 0)
                 {
-                    output += ";";
+                    joindate = "";
                 }
                 if (joined == 1)
                 {
-                    output += split[1] + ";";
+                    joindate = split[1];
                 }
                 if (joined == 2)
                 {
-                    output += datum + ";";
+                    joindate = datum;
                 }
                 if (messaged == 0)
                 {
-                    output += ";";
+                    messagedate = "";
                 }
                 if (messaged == 1)
                 {
-                    output += split[1] + ";";
+                    messagedate = split[2];
                 }
                 if (messaged == 2)
                 {
-                    output += datum + ";";
+                    messagedate = datum;
                 }
                 if (message != "")
                 {
-                    output += message;
+                    messagetext = message;
                 }
                 else
                 {
-                    output += split[2];
+                    messagetext = split[3];
                 }
                 seendb.Remove(data);
-                seendb.Add(output);
+                seendb.Add(nick + ";" + joindate + ";" + messagedate + ";" + messagetext);
             }
             catch
             {

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 
 namespace freetzbot.commands
 {
@@ -37,32 +38,7 @@ namespace freetzbot.commands
 
         public void run(irc connection, String sender, String receiver, String message)
         {
-            if (message.Contains("\""))
-            {
-                String[] split = message.Split(new String[] { "\"" }, 3, StringSplitOptions.None);
-                split[1] = split[1].Replace(' ', '+');
-                String[] nick = split[2].Split(new String[] { " " }, 2, StringSplitOptions.None);
-                if (nick.Length > 1)
-                {
-                    connection.sendmsg("@" + split[2] + ": Siehe: http://lmgtfy.com/?q=" + split[1], receiver);
-                }
-                else
-                {
-                    connection.sendmsg("http://lmgtfy.com/?q=" + split[1], receiver);
-                }
-            }
-            else
-            {
-                String[] split = message.Split(new String[] { " " }, 2, StringSplitOptions.None);
-                if (split.Length > 1)
-                {
-                    connection.sendmsg("@" + split[1] + ": Siehe: http://lmgtfy.com/?q=" + split[0], receiver);
-                }
-                else
-                {
-                    connection.sendmsg("http://lmgtfy.com/?q=" + split[0], receiver);
-                }
-            }
+            connection.sendmsg("http://lmgtfy.com/?q=" + System.Web.HttpUtility.UrlEncode(Encoding.GetEncoding("iso-8859-1").GetBytes(message)), receiver);
         }
     }
 }

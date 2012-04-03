@@ -7,7 +7,7 @@ namespace freetzbot.commands
 {
     class loadmodule : command
     {
-        private String[] name = { "loadmodule" };
+        private String[] name = { "modprobe", "loadmodule" };
         private String helptext = "Aktiviert einen meiner Befehle";
         private Boolean op_needed = true;
         private Boolean parameter_needed = true;

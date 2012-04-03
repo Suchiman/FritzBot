@@ -6,7 +6,7 @@ namespace freetzbot.commands
 {
     class unloadmodule : command
     {
-        private String[] name = { "unloadmodule" };
+        private String[] name = { "rmmod", "unloadmodule" };
         private String helptext = "Deaktiviert einen meiner Befehle";
         private Boolean op_needed = true;
         private Boolean parameter_needed = true;
