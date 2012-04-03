@@ -56,9 +56,9 @@ namespace freetzbot.commands
             newsthread.Start();
         }
 
-        Thread newsthread = new Thread(new ThreadStart(news_thread));
+        Thread newsthread;
 
-        private static void news_thread()
+        private void news_thread()
         {
             String baseurl = "http://webgw.avm.de/download/UpdateNews.jsp";
             String[] news_de_old = news_parse(baseurl + "?lang=de");
@@ -72,34 +72,40 @@ namespace freetzbot.commands
                     List<String> differs = new List<String>();
                     for (int i = 0; i < news_de.Length; i++)
                     {
-                        if (news_de_old[0] != news_de[i])
+                        if (news_de_old[0] == news_de[i])
                         {
-                            differs.Add(news_de[i]);
+                            break;
                         }
+                        differs.Add(news_de[i]);
                     }
                     String output = "Neue Deutsche News gesichtet! ";
                     foreach (String thenews in differs)
                     {
                         output += ", " + thenews;
                     }
+                    output = output.Remove(30,1);
+                    output = output.Insert(30,"-");
                     toolbox.announce(output);
                     news_de_old = news_de;
                 }
                 if (news_en_old[0] != news_en[0])
                 {
                     List<String> differs = new List<String>();
-                    for (int i = 0; i < news_de.Length; i++)
+                    for (int i = 0; i < news_en.Length; i++)
                     {
-                        if (news_de_old[0] != news_de[i])
+                        if (news_en_old[0] == news_en[i])
                         {
-                            differs.Add(news_de[i]);
+                            break;
                         }
+                        differs.Add(news_en[i]);
                     }
                     String output = "Neue englische News gesichtet! ";
                     foreach (String thenews in differs)
                     {
                         output += ", " + thenews;
                     }
+                    output = output.Remove(30, 1);
+                    output = output.Insert(30, "-");
                     toolbox.announce(output);
                     news_en_old = news_en;
                 }
@@ -132,9 +138,11 @@ namespace freetzbot.commands
             List<String> fliesstextblau = new List<String>(news.Split(new String[] { "<span class=\"fliesstextblau\">" }, 21, StringSplitOptions.None));
             fliesstextblau.RemoveAt(0);
             foreach (String fliesstext in fliesstextblau)
-            {
+            {//href="http://download.avm.de/fritz.box/fritzbox.fon_wlan_7390/firmware/english/info.txt"><u>Weitere
                 String text = fliesstext.Replace("&nbsp;", " ");
-                subnews.Add(text.Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0]);
+                String thesubnews = text.Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0];
+                String theurl = text.Split(new String[] { "\"><u>Weitere" }, 2, StringSplitOptions.None)[0].Split(new String[] { "href=\"" }, 2, StringSplitOptions.None)[1];
+                subnews.Add(thesubnews + " - " + theurl);
             }
             List<String> news_new = new List<String>();
             for (int i = 0; i < uberschriftblau.Count; i++)

@@ -83,8 +83,8 @@ namespace freetzbot.commands
                 }
                 else
                 {
-                    changelog_url_element = changelog_url_element.Split(new String[] { "<a href=" }, 2, StringSplitOptions.None)[1].Split(new String[] { "\"" }, 3, StringSplitOptions.None)[1].Split(new String[] { "/" }, 2, StringSplitOptions.None)[0];
-                    labor_daten[i - 1].url = "http://www.avm.de/de/Service/Service-Portale/Labor/" + changelog_url_element + "/labor_feedback_versionen.php";
+                    changelog_url_element = changelog_url_element.Split(new String[] { "<a href=" }, 2, StringSplitOptions.None)[1].Split(new String[] { "\"" }, 3, StringSplitOptions.None)[1];
+                    labor_daten[i - 1].url = "http://www.avm.de/de/Service/Service-Portale/Labor/" + changelog_url_element;
                     String feedback = toolbox.get_web(labor_daten[i - 1].url);
                     if (feedback == "")
                     {
@@ -116,7 +116,7 @@ namespace freetzbot.commands
                 }
                 else
                 {
-                    changeset += "Die neueste " + message + " labor Version ist am " + labor_daten[modell].daten + " erschienen mit der Versionsnummer: " + labor_daten[modell].version + ". Changelog: " + labor_daten[modell].url;
+                    changeset += "Die neueste " + message + " labor Version ist am " + labor_daten[modell].daten + " erschienen mit der Versionsnummer: " + labor_daten[modell].version + ". Laborseite: " + labor_daten[modell].url;
                 }
             }
             else if (message.ToLower() == "")
@@ -172,17 +172,17 @@ namespace freetzbot.commands
                     }
                     if (released != "")
                     {
-                        output = "Labor Version wurde als neue Firmware released!" + released.Remove(0, 2);
+                        output = "Labor Version wurde als neue Firmware released! -" + released.Remove(0, 1);
                     }
                     if (labors != "")
                     {
                         if (output != "")
                         {
-                            output += ", Neue Labor Versionen gesichtet!" + labors.Remove(0, 2);
+                            output += ", Neue Labor Versionen gesichtet! -" + labors.Remove(0, 1);
                         }
                         else
                         {
-                            output += "Neue Labor Versionen gesichtet!" + labors.Remove(0, 2);
+                            output += "Neue Labor Versionen gesichtet! -" + labors.Remove(0, 1);
                         }
                     }
                     if (output != "")

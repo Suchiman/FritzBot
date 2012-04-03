@@ -13,15 +13,15 @@ namespace freetzbot
     {
         public String datenbank_name;
         private List<String> datenbank;
-        private static Mutex threadsafe;
+        private static Boolean in_use;
         /// <summary>
         /// Die zu verwendende Datenbank
         /// </summary>
         /// <param name="db">Die Datenbank</param>
         public db(String db)
         {
-            threadsafe = new Mutex();
             datenbank_name = db;
+            Boolean in_use = false;
             Read();
         }
         /// <summary>
@@ -37,24 +37,32 @@ namespace freetzbot
         /// <returns>Gibt ein String Array mit dem Datenbank Inhalt zurück</returns>
         private void Read()
         {
-            threadsafe.WaitOne();
+            while (in_use)
+            {
+                Thread.Sleep(50);
+            }
+            in_use = true;
             if (!File.Exists(datenbank_name))
             {
                 Initdb();
             }
             datenbank = new List<String>(File.ReadAllLines(datenbank_name, Encoding.GetEncoding("iso-8859-1")));
             Cleanup();
-            threadsafe.ReleaseMutex();
+            in_use = false;
         }
         /// <summary>
         /// Schreibt die Datenbank in eine Datei
         /// </summary>
         public void Write()
         {
-            threadsafe.WaitOne();
+            while (in_use)
+            {
+                Thread.Sleep(50);
+            }
+            in_use = true;
             Cleanup();
             File.WriteAllLines(datenbank_name, datenbank.ToArray(), Encoding.GetEncoding("iso-8859-1"));
-            threadsafe.ReleaseMutex();
+            in_use = false;
         }
         /// <summary>
         /// Fügt den angegebenen String am ende der Datenbank an
@@ -62,10 +70,14 @@ namespace freetzbot
         /// <param name="to_add">Der String der in die Datenbank eingefügt werden soll</param>
         public void Add(String to_add)
         {
-            threadsafe.WaitOne();
+            while (in_use)
+            {
+                Thread.Sleep(50);
+            }
+            in_use = true;
             datenbank.Add(to_add);
             File.AppendAllText(datenbank_name, to_add + "\r\n", Encoding.GetEncoding("iso-8859-1"));
-            threadsafe.ReleaseMutex();
+            in_use = false;
         }
         /// <summary>
         /// Entfernt den angegebenen String aus der Datenbank
@@ -79,9 +91,13 @@ namespace freetzbot
             {
                 return false;
             }
-            threadsafe.WaitOne();
+            while (in_use)
+            {
+                Thread.Sleep(50);
+            }
+            in_use = true;
             datenbank.RemoveAt(index);
-            threadsafe.ReleaseMutex();
+            in_use = false;
             Write();
             return true;
         }
@@ -92,13 +108,20 @@ namespace freetzbot
         /// <returns>Einen Integer der die Position in der Datenbank representiert</returns>
         public int Find(String to_find)
         {
+            while (in_use)
+            {
+                Thread.Sleep(50);
+            }
+            in_use = true;
             for (int i = 0; i < datenbank.Count; i++)
             {
                 if (datenbank[i] == to_find)
                 {
+                    in_use = false;
                     return i;
                 }
             }
+            in_use = false;
             return -1;
         }
         /// <summary>
@@ -108,6 +131,11 @@ namespace freetzbot
         /// <returns></returns>
         public String[] GetContaining(String to_get)
         {
+            while (in_use)
+            {
+                Thread.Sleep(50);
+            }
+            in_use = true;
             List<String> found = new List<String>();
             for (int i = 0; i < datenbank.Count; i++)
             {
@@ -116,6 +144,7 @@ namespace freetzbot
                     found.Add(datenbank[i]);
                 }
             }
+            in_use = false;
             return found.ToArray();
         }
         /// <summary>
@@ -148,9 +177,13 @@ namespace freetzbot
         /// </summary>
         public void Reload()
         {
-            threadsafe.WaitOne();
+            while (in_use)
+            {
+                Thread.Sleep(50);
+            }
+            in_use = true;
             datenbank = null;
-            threadsafe.ReleaseMutex();
+            in_use = false;
             Read();
         }
         /// <summary>

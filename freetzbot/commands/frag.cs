@@ -52,10 +52,15 @@ namespace freetzbot.commands
                     {
                         if (user.Contains(sender) || sender.Contains(user))
                         {
+                            toolbox.getDatabaseByName("user.db").Add(sender);
                             return;
                         }
+                        if (user.Contains(","))
+                        {
+                            toolbox.getDatabaseByName("user.db").Remove(user);
+                            toolbox.getDatabaseByName("user.db").Add(user.Split(',')[0]);
+                        }
                     }
-                    toolbox.getDatabaseByName("user.db").Add(sender);
                     System.Threading.Thread.Sleep(10000);
                 }
                 connection.sendmsg("Hallo " + sender + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast :).", receiver);

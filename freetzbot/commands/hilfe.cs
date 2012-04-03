@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace freetzbot.commands
 {
@@ -39,22 +40,22 @@ namespace freetzbot.commands
         {
             if (message == "")
             {
-                String befehle = "";
+                List<String> befehle = new List<String>();
                 foreach (command thecommand in freetzbot.Program.commands)
                 {
                     if (thecommand.get_op_needed() && toolbox.op_check(sender) || !thecommand.get_op_needed())
                     {
-                        if (befehle == "")
-                        {
-                            befehle += thecommand.get_name()[0];
-                        }
-                        else
-                        {
-                            befehle += ", " + thecommand.get_name()[0];
-                        }
+                        befehle.Add(thecommand.get_name()[0]);
                     }
                 }
-                connection.sendmsg("Derzeit verfügbare Befehle: " + befehle, receiver);
+                befehle.Sort();
+                String output = "";
+                foreach (String data in befehle)
+                {
+                    output += ", " + data;
+                }
+                output = output.Remove(0, 2);
+                connection.sendmsg("Derzeit verfügbare Befehle: " + output, receiver);
                 connection.sendmsg("Hilfe zu jedem Befehl mit \"!help befehl\". Um die anderen nicht zu belästigen kannst du mich auch per PM (query) anfragen", receiver);
             }
             else

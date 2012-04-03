@@ -57,18 +57,16 @@ namespace freetzbot
                             if ((thecommand.get_parameter_needed() && !(parameter.Length > 1) || !thecommand.get_parameter_needed() && parameter.Length > 1) && !thecommand.get_accept_every_param())
                             {
                                 connection.sendmsg(thecommand.get_helptext(), receiver);
-                                answered = true;
                             }
                             else if (parameter.Length > 1)
                             {
                                 thecommand.run(connection, sender, receiver, parameter[1]);
-                                answered = true;
                             }
                             else
                             {
                                 thecommand.run(connection, sender, receiver, "");
-                                answered = true;
                             }
+                            answered = true;
                         }
                     }
                 }
@@ -92,36 +90,15 @@ namespace freetzbot
                 case "JOIN":
                     toolbox.logging(nick + " hat den Raum " + message + " betreten");
                     freetzbot.commands.frag.boxfrage(connection, nick, nick, nick);
-                    if (toolbox.getDatabaseByName("user.db").GetContaining(nick).Length > 0)
-                    {
-                        if (toolbox.getDatabaseByName("user.db").GetContaining(nick)[0].Contains(","))
-                        {
-                            toolbox.getDatabaseByName("user.db").Remove(toolbox.getDatabaseByName("user.db").GetContaining(nick)[0]);
-                            toolbox.getDatabaseByName("user.db").Add(nick);
-                        }
-                    }
+                    freetzbot.commands.seen.joined(nick);
                     return;
                 case "QUIT":
                     toolbox.logging(nick + " hat den Server verlassen");
-                    if (toolbox.getDatabaseByName("user.db").GetContaining(nick).Length > 0)
-                    {
-                        if (!toolbox.getDatabaseByName("user.db").GetContaining(nick)[0].Contains(","))
-                        {
-                            toolbox.getDatabaseByName("user.db").Remove(toolbox.getDatabaseByName("user.db").GetContaining(nick)[0]);
-                            toolbox.getDatabaseByName("user.db").Add(nick + "," + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
-                        }
-                    }
+                    freetzbot.commands.seen.quit(nick);
                     return;
                 case "PART":
                     toolbox.logging(nick + " hat den Raum " + message + " verlassen");
-                    if (toolbox.getDatabaseByName("user.db").GetContaining(nick).Length > 0)
-                    {
-                        if (!toolbox.getDatabaseByName("user.db").GetContaining(nick)[0].Contains(","))
-                        {
-                            toolbox.getDatabaseByName("user.db").Remove(toolbox.getDatabaseByName("user.db").GetContaining(nick)[0]);
-                            toolbox.getDatabaseByName("user.db").Add(nick + "," + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
-                        }
-                    }
+                    freetzbot.commands.seen.quit(nick);
                     return;
                 case "NICK":
                     toolbox.logging(nick + " heißt jetzt " + message);
@@ -147,6 +124,7 @@ namespace freetzbot
             if (source.ToCharArray()[0] == '#')
             {
                 toolbox.logging(source + " " + nick + ": " + message);
+                freetzbot.commands.seen.messaged(nick, message);
             }
             else
             {
@@ -155,6 +133,7 @@ namespace freetzbot
                 {
                     connection.sendmsg("Hallo, kann ich dir helfen ? Probiers doch mal mit !hilfe", nick);
                 }
+                freetzbot.commands.seen.messaged(nick, message);
                 source = nick;
             }
             if (message.ToCharArray()[0] == '!')
