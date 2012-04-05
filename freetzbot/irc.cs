@@ -77,6 +77,7 @@ namespace freetzbot
                 }
                 connection = new TcpClient(hostname, port);
                 empfangs_thread = new Thread(delegate() { empfangsthread(); });
+                empfangs_thread.Name = "EmpfangsThread" + hostname;
                 empfangs_thread.Start();
                 sendraw("NICK " + nickname);
                 sendraw("USER " + nickname + " 8 * :" + nickname);
@@ -86,6 +87,7 @@ namespace freetzbot
                 if (AutoReconnect && !watchthread.IsAlive)
                 {
                     watchthread = new Thread(delegate() { reconnect(); });
+                    watchthread.Name = "WatchThread" + hostname;
                     watchthread.Start();
                 }
                 return true;
@@ -217,6 +219,7 @@ namespace freetzbot
                         throw new Exception("connection lost");
                     }
                     Thread thread = new Thread(delegate() { process_respond(Daten); });
+                    thread.Name = "Process" + hostname;
                     thread.Start();
                 }
             }

@@ -40,6 +40,11 @@ namespace freetzbot.commands
             startzeit = DateTime.Now;
         }
 
+        public void destruct()
+        {
+
+        }
+
         private DateTime startzeit;
 
         public void run(irc connection, String sender, String receiver, String message)

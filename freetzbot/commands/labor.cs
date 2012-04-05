@@ -56,15 +56,22 @@ namespace freetzbot.commands
             boxdatareverse.Add(5, "7390 AT-CH");
             boxdatareverse.Add(6, "7320");
             boxdatareverse.Add(7, "7270");
-            Thread laborthread = new Thread(() => { this.labor_check(); });
+            laborthread = new Thread(new ThreadStart(this.labor_check));
+            laborthread.Name = "LaborThread";
             laborthread.IsBackground = true;
             laborthread.Start();
+        }
+
+        public void destruct()
+        {
+            laborthread.Abort();
         }
 
         private labordaten[] labor_daten;
         private Dictionary<String, int> boxdata;
         private Dictionary<int, String> boxdatareverse;
-        
+        Thread laborthread;
+
         private void update_labor_cache()
         {
             String webseite = toolbox.get_web("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
@@ -91,6 +98,7 @@ namespace freetzbot.commands
                     {
                         throw new Exception("Verbindungsfehler");
                     }
+                    labor_daten[i - 1].url = toolbox.short_url(labor_daten[i - 1].url);
                     labor_daten[i - 1].version = feedback.Split(new String[] { "</strong>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "Version " }, 2, StringSplitOptions.None)[1];
                 }
             }
@@ -122,7 +130,7 @@ namespace freetzbot.commands
             }
             else if (message.ToLower() == "")
             {
-                changeset = "Aktuelle Labor Daten: iOS: " + labor_daten[0].daten + ", Android: " + labor_daten[1].daten + ", 7390: " + labor_daten[2].daten + ", FHEM: " + labor_daten[3].daten + ", 7390at: " + labor_daten[4].daten + ", 7320: " + labor_daten[5].daten + ", 7270: " + labor_daten[6].daten + " - http://www.avm.de/de/Service/Service-Portale/Labor/index.php";
+                changeset = "Aktuelle Labor Daten: iOS: " + labor_daten[0].daten + ", Android: " + labor_daten[1].daten + ", 7390: " + labor_daten[2].daten + ", FHEM: " + labor_daten[3].daten + ", 7390at: " + labor_daten[4].daten + ", 7320: " + labor_daten[5].daten + ", 7270: " + labor_daten[6].daten + " - " + toolbox.short_url("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
             }
             else
             {

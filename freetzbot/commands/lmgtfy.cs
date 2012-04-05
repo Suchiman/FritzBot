@@ -36,6 +36,11 @@ namespace freetzbot.commands
             return accept_every_param;
         }
 
+        public void destruct()
+        {
+
+        }
+
         public void run(irc connection, String sender, String receiver, String message)
         {
             connection.sendmsg("http://lmgtfy.com/?q=" + System.Web.HttpUtility.UrlEncode(Encoding.GetEncoding("iso-8859-1").GetBytes(message)), receiver);

@@ -10,5 +10,6 @@ namespace freetzbot
         Boolean get_parameter_needed();
         Boolean get_accept_every_param();
         void run(irc connection, String sender, String receiver, String message);
+        void destruct();
     }
 }

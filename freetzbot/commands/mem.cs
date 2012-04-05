@@ -35,6 +35,11 @@ namespace freetzbot.commands
             return accept_every_param;
         }
 
+        public void destruct()
+        {
+
+        }
+
         public void run(irc connection, String sender, String receiver, String message)
         {
             connection.sendmsg("GC Totalmem: " + GC.GetTotalMemory(true).ToString() + "Byte, WorkingSet: " + (System.Diagnostics.Process.GetCurrentProcess().WorkingSet64 / 1024).ToString() + "kB", receiver);

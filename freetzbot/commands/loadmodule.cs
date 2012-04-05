@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Reflection;
 
 namespace freetzbot.commands
@@ -38,11 +36,16 @@ namespace freetzbot.commands
             return accept_every_param;
         }
 
+        public void destruct()
+        {
+
+        }
+
         public void run(irc connection, String sender, String receiver, String message)
         {
             try
             {
-                Type t = Assembly.GetExecutingAssembly().GetType(message);
+                Type t = Assembly.GetExecutingAssembly().GetType("freetzbot.commands." + message);
                 if (t == null)
                 {
                     connection.sendmsg("Modul wurde nicht gefunden", receiver);

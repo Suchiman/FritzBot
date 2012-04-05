@@ -87,11 +87,13 @@
     <Compile Include="commands\restart.cs" />
     <Compile Include="commands\seen.cs" />
     <Compile Include="commands\settings.cs" />
+    <Compile Include="commands\shorturl.cs" />
     <Compile Include="commands\trunk.cs" />
     <Compile Include="commands\unignore.cs" />
     <Compile Include="commands\unloadmodule.cs" />
     <Compile Include="commands\uptime.cs" />
     <Compile Include="commands\userlist.cs" />
+    <Compile Include="commands\webinterface.cs" />
     <Compile Include="commands\witz.cs" />
     <Compile Include="commands\zeit.cs" />
     <Compile Include="db.cs" />
@@ -103,6 +105,7 @@
     <Compile Include="commands\whmf.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="commands\APIsampe.txt" />
     <Content Include="ToDo.txt" />
   </ItemGroup>
   <ItemGroup>

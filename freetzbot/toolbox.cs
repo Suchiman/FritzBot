@@ -58,6 +58,7 @@ namespace freetzbot
                 if (!loggingthread.IsAlive)
                 {
                     loggingthread = new Thread(new ThreadStart(log_thread));
+                    loggingthread.Name = "LoggingThread";
                     loggingthread.IsBackground = true;
                     loggingthread.Start();
                 }
@@ -123,6 +124,11 @@ namespace freetzbot
             }
             while (count > 0);
             return sb.ToString();
+        }
+
+        public static String short_url(String url)
+        {
+            return get_web("http://tinyurl.com/api-create.php?url=" + url);
         }
 
         public static db getDatabaseByName(String name)

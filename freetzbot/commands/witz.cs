@@ -36,6 +36,11 @@ namespace freetzbot.commands
             return accept_every_param;
         }
 
+        public void destruct()
+        {
+
+        }
+
         static private List<int> witz_randoms = new List<int>();
 
         public void run(irc connection, String sender, String receiver, String message)

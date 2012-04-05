@@ -231,10 +231,12 @@ namespace freetzbot
             }
 
             Thread consolenthread = new Thread(new ThreadStart(consoleread));
+            consolenthread.Name = "ConsolenThread";
             consolenthread.IsBackground = true;
             consolenthread.Start();
             antifloodingcount = 0;
             antifloodingthread = new Thread(new ThreadStart(antiflooding));
+            antifloodingthread.Name = "AntifloodingThread";
             antifloodingthread.IsBackground = true;
             antifloodingthread.Start();
 

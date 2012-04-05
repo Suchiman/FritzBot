@@ -36,6 +36,11 @@ namespace freetzbot.commands
             return accept_every_param;
         }
 
+        public void destruct()
+        {
+
+        }
+
         public void run(irc connection, String sender, String receiver, String message)
         {
             String output = "http://freetz.org/search?q=";

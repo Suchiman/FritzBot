@@ -37,6 +37,21 @@ namespace freetzbot.commands
             return accept_every_param;
         }
 
+        public news()
+        {
+            newsthread = new Thread(new ThreadStart(this.news_thread));
+            newsthread.Name = "NewsThread";
+            newsthread.IsBackground = true;
+            newsthread.Start();
+        }
+
+        public void destruct()
+        {
+            newsthread.Abort();
+        }
+
+        Thread newsthread;
+
         public void run(irc connection, String sender, String receiver, String message)
         {
             if (newsthread.IsAlive)
@@ -49,65 +64,77 @@ namespace freetzbot.commands
             }
         }
 
-        public news()
-        {
-            newsthread = new Thread(new ThreadStart(news_thread));
-            newsthread.IsBackground = true;
-            newsthread.Start();
-        }
-
-        Thread newsthread;
-
         private void news_thread()
         {
             String baseurl = "http://webgw.avm.de/download/UpdateNews.jsp";
-            String[] news_de_old = news_parse(baseurl + "?lang=de");
-            String[] news_en_old = news_parse(baseurl + "?lang=en");
+            Boolean failed = false;
+            String[] news_de_old = new String[0];
+            String[] news_en_old = new String[0];
+            do
+            {
+                try
+                {
+                    news_de_old = news_parse(baseurl + "?lang=de");
+                    news_en_old = news_parse(baseurl + "?lang=en");
+                    failed = false;
+                }
+                catch
+                {
+                    failed = true;
+                }
+            } while (failed);
             while (true)
             {
-                String[] news_de = news_parse(baseurl + "?lang=de");
-                String[] news_en = news_parse(baseurl + "?lang=en");
-                if (news_de_old[0] != news_de[0])
+                try
                 {
-                    List<String> differs = new List<String>();
-                    for (int i = 0; i < news_de.Length; i++)
+                    String[] news_de = news_parse(baseurl + "?lang=de");
+                    String[] news_en = news_parse(baseurl + "?lang=en");
+                    if (news_de_old[0] != news_de[0])
                     {
-                        if (news_de_old[0] == news_de[i])
+                        List<String> differs = new List<String>();
+                        for (int i = 0; i < news_de.Length; i++)
                         {
-                            break;
+                            if (news_de_old[0] == news_de[i])
+                            {
+                                break;
+                            }
+                            differs.Add(news_de[i]);
                         }
-                        differs.Add(news_de[i]);
+                        String output = "Neue Deutsche News gesichtet! ";
+                        foreach (String thenews in differs)
+                        {
+                            output += ", " + thenews;
+                        }
+                        output = output.Remove(30, 1);
+                        output = output.Insert(30, "-");
+                        toolbox.announce(output);
+                        news_de_old = news_de;
                     }
-                    String output = "Neue Deutsche News gesichtet! ";
-                    foreach (String thenews in differs)
+                    if (news_en_old[0] != news_en[0])
                     {
-                        output += ", " + thenews;
+                        List<String> differs = new List<String>();
+                        for (int i = 0; i < news_en.Length; i++)
+                        {
+                            if (news_en_old[0] == news_en[i])
+                            {
+                                break;
+                            }
+                            differs.Add(news_en[i]);
+                        }
+                        String output = "Neue englische News gesichtet! ";
+                        foreach (String thenews in differs)
+                        {
+                            output += ", " + thenews;
+                        }
+                        output = output.Remove(30, 1);
+                        output = output.Insert(30, "-");
+                        toolbox.announce(output);
+                        news_en_old = news_en;
                     }
-                    output = output.Remove(30,1);
-                    output = output.Insert(30,"-");
-                    toolbox.announce(output);
-                    news_de_old = news_de;
                 }
-                if (news_en_old[0] != news_en[0])
+                catch
                 {
-                    List<String> differs = new List<String>();
-                    for (int i = 0; i < news_en.Length; i++)
-                    {
-                        if (news_en_old[0] == news_en[i])
-                        {
-                            break;
-                        }
-                        differs.Add(news_en[i]);
-                    }
-                    String output = "Neue englische News gesichtet! ";
-                    foreach (String thenews in differs)
-                    {
-                        output += ", " + thenews;
-                    }
-                    output = output.Remove(30, 1);
-                    output = output.Insert(30, "-");
-                    toolbox.announce(output);
-                    news_en_old = news_en;
+
                 }
                 int sleep;
                 if (!int.TryParse(freetzbot.Program.configuration.get("news_check_intervall"), out sleep))
@@ -121,33 +148,28 @@ namespace freetzbot.commands
         private static String[] news_parse(String url)
         {
             String news = toolbox.get_web(url);
-            List<String> newstopic = new List<String>();
-            List<String> subnews = new List<String>();
-            List<String> uberschriftblau = new List<String>(news.Split(new String[] { "<span class=\"uberschriftblau\">" }, 21, StringSplitOptions.None));
-            uberschriftblau.RemoveAt(0);
-            foreach (String uberschrift in uberschriftblau)
+            if (news == "" || news == null)
             {
-                String text = uberschrift;
-                int nbsp = uberschrift.IndexOf("&nbsp;");
-                if (nbsp != -1)
-                {
-                    text = text.Remove(nbsp);
-                }
-                newstopic.Add(text.Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0]);
+                throw new Exception("Konnte die Webseite nicht lesen");
             }
-            List<String> fliesstextblau = new List<String>(news.Split(new String[] { "<span class=\"fliesstextblau\">" }, 21, StringSplitOptions.None));
-            fliesstextblau.RemoveAt(0);
-            foreach (String fliesstext in fliesstextblau)
-            {//href="http://download.avm.de/fritz.box/fritzbox.fon_wlan_7390/firmware/english/info.txt"><u>Weitere
-                String text = fliesstext.Replace("&nbsp;", " ");
-                String thesubnews = text.Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0];
-                String theurl = text.Split(new String[] { "\"><u>Weitere" }, 2, StringSplitOptions.None)[0].Split(new String[] { "href=\"" }, 2, StringSplitOptions.None)[1];
-                subnews.Add(thesubnews + " - " + theurl);
-            }
+            String[] newssplit = news.Split(new String[] { "<span class=\"uberschriftblau\">" }, 21, StringSplitOptions.None);
             List<String> news_new = new List<String>();
-            for (int i = 0; i < uberschriftblau.Count; i++)
+            for (int i = 1; i < newssplit.Length; i++)
             {
-                news_new.Add(newstopic[i] + ":" + subnews[i]);
+                String[] splitted = newssplit[i].Split(new String[] { "</span>" }, 3, StringSplitOptions.None);
+                int nbsp = splitted[0].IndexOf("&nbsp;");
+                if(nbsp != -1)
+                {
+                    splitted[0] = splitted[0].Remove(nbsp);
+                }
+                splitted[1] = splitted[1].Remove(0, 35);
+                splitted[1] = splitted[1].Replace("&nbsp;", " ");
+                splitted[2] = splitted[2].Split(new String[] { "\"><u>Weitere" }, 2, StringSplitOptions.None)[0].Split(new String[] { "href=\"" }, 2, StringSplitOptions.None)[1];
+                news_new.Add(splitted[0] + ":" + splitted[1] + " - " + toolbox.short_url(splitted[2]));
+            }
+            if (news_new.Count < 20 || news_new[0] == "")
+            {
+                throw new Exception("Verarbeitungsfehler");
             }
             return news_new.ToArray();
         }

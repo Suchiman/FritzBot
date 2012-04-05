@@ -1,13 +1,14 @@
 ﻿using System;
+using System.Net;
 
 namespace freetzbot.commands
 {
-    class restart : command
+    class shorturl : command
     {
-        private String[] name = { "restart" };
-        private String helptext = "Ich werde versuchen mich selbst neuzustarten, Operator Befehl: kein parameter";
-        private Boolean op_needed = true;
-        private Boolean parameter_needed = false;
+        private String[] name = { "shorturl", "urlshort", "urlshortener" };
+        private String helptext = "Kürzt eine URL bei einem URL shortener";
+        private Boolean op_needed = false;
+        private Boolean parameter_needed = true;
         private Boolean accept_every_param = false;
 
         public String[] get_name()
@@ -40,11 +41,14 @@ namespace freetzbot.commands
 
         }
 
+        public shorturl()
+        {
+
+        }
+
         public void run(irc connection, String sender, String receiver, String message)
         {
-            freetzbot.Program.restart = true;
-            freetzbot.Program.Trennen();
+            connection.sendmsg(toolbox.short_url(message), receiver);
         }
-        
     }
 }

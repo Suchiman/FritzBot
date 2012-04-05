@@ -5,7 +5,7 @@ namespace freetzbot.commands
 {
     class hilfe : command
     {
-        private String[] name = { "hilfe", "help", "faq", "info", "man" };
+        private String[] name = { "hilfe", "help", "faq", "info", "man", "lsmod" };
         private String helptext = "Die Hilfe!";
         private Boolean op_needed = false;
         private Boolean parameter_needed = false;
@@ -34,6 +34,11 @@ namespace freetzbot.commands
         public Boolean get_accept_every_param()
         {
             return accept_every_param;
+        }
+
+        public void destruct()
+        {
+
         }
 
         public void run(irc connection, String sender, String receiver, String message)

@@ -37,6 +37,11 @@ namespace freetzbot.commands
             return accept_every_param;
         }
 
+        public void destruct()
+        {
+
+        }
+
         public void run(irc connection, String sender, String receiver, String message)
         {
             try
@@ -45,6 +50,7 @@ namespace freetzbot.commands
                 {
                     if (freetzbot.Program.commands[i].get_name()[0] == message)
                     {
+                        freetzbot.Program.commands[i].destruct();
                         freetzbot.Program.commands[i] = null;
                         freetzbot.Program.commands.RemoveAt(i);
                         connection.sendmsg("Modul erfolgreich entladen", receiver);

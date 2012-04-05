@@ -36,6 +36,11 @@ namespace freetzbot.commands
             return accept_every_param;
         }
 
+        public void destruct()
+        {
+
+        }
+
         static private Mutex leave_safe = new Mutex();
 
         public void run(irc connection, String sender, String receiver, String message)
