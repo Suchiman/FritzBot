@@ -1,11 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace freetzbot.commands
 {
-    class ignore : command
+    class auth : command
     {
-        private String[] name = { "ignore" };
-        private String helptext = "Schließt die angegebene Person von mir aus";
+        private String[] name = { "auth" };
+        private String helptext = "Authentifiziert dich wenn du ein Passwort festgelegt hast. z.b. !auth passwort";
         private Boolean op_needed = false;
         private Boolean parameter_needed = true;
         private Boolean accept_every_param = false;
@@ -42,10 +44,19 @@ namespace freetzbot.commands
 
         public void run(irc connection, String sender, String receiver, String message)
         {
-            if (sender == message || toolbox.op_check(sender))
+            if (sender != receiver)
             {
-                freetzbot.Program.TheUsers[message].ignored = true;
-                connection.sendmsg("Ich werde " + message + " ab sofort keine beachtung mehr schenken", receiver);
+                connection.sendmsg("Ohje das solltest du besser im Query tuen", receiver);
+                return;
+            }
+            if (freetzbot.Program.TheUsers[sender].CheckPassword(message))
+            {
+                freetzbot.Program.TheUsers[sender].authenticated = true;
+                connection.sendmsg("Du bist jetzt authentifiziert", sender);
+            }
+            else
+            {
+                connection.sendmsg("Das Passwort war falsch", sender);
             }
         }
     }

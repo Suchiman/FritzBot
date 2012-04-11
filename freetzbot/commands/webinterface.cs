@@ -3,6 +3,9 @@ using System.Net;
 using System.Threading;
 using System.IO;
 using System.Text;
+using System.Security.Cryptography;
+using System.Reflection;
+using System.Collections.Generic;
 
 namespace freetzbot.commands
 {
@@ -45,11 +48,21 @@ namespace freetzbot.commands
             listener.Abort();
         }
 
-        HttpListener listener;
-        Thread listener_thread;
+        private HttpListener listener;
+        private Thread listener_thread;
+        private List<pageinterface> pages;
 
         public webinterface()
         {
+            pages = new List<pageinterface>();
+            List<Type> typelist = new List<Type>();
+            foreach (Type t in Assembly.GetExecutingAssembly().GetTypes())
+            {
+                if (t.Namespace == "freetzbot.webpages")
+                {
+                    pages.Add((pageinterface)Activator.CreateInstance(t));
+                }
+            }
             listener = new HttpListener();
             listener.Prefixes.Add("http://+:6666/");
             listener.Start();
@@ -71,48 +84,6 @@ namespace freetzbot.commands
             }
         }
 
-        private String getresponse(String url, String[] post)
-        {
-            String output = "";
-            /*
-            switch (url)
-            {
-                case "/":
-                    output += "<html><body>hallo welt</body></html>";
-                    break;
-                case "/index":
-                    output += "<!DOCTYPE html><html><body>";
-                    foreach (String data in post)
-                    {
-                        output += "<br>" + data + "<br>";
-                    }
-                    output += "<form action=\"index\" method=\"POST\">";
-                    output += "<input type=\"text\" name=\"sometext\"><br>";
-                    output += "<input type=\"text\" name=\"othertext\"><br>";
-                    output += "<input type=\"submit\">";
-                    output += "</form>";
-                    output += "</body></html>";
-                    break;
-                default:
-                    output += "<html><body>Hallihall&ouml;chen</body></html>";
-                    break;
-            }*/
-            String[] boxdatabase = toolbox.getDatabaseByName("box.db").GetAll();
-            output += "<!DOCTYPE html><html><body><table border=2px>";
-            foreach (String data in boxdatabase)
-            {
-                String[] split = data.Split(':');
-                output += "<tr>";
-                foreach (String tddata in split)
-                {
-                    output += "<td>" + tddata + "</td>";
-                }
-                output += "</tr>";
-            }
-            output += "</table></body></html>";
-            return output;
-        }
-
         private void httplistener()
         {
             while (true)
@@ -121,22 +92,86 @@ namespace freetzbot.commands
                 HttpListenerRequest request = context.Request;
                 HttpListenerResponse response = context.Response;
                 response.Headers.Add(HttpResponseHeader.Server, "FreetzBot");
-                String[] post = new String[0];
+                String url = request.RawUrl;
+                html_response theresponse = new html_response();
+                html_request therequest = new html_request();
+                therequest.useradress = request.RemoteEndPoint.Address;
+                therequest.host = request.Url.Scheme + "://" + request.Url.Host + ":" + request.Url.Port;
+                therequest.cookies = request.Cookies;
                 if (request.HasEntityBody)
                 {
                     StreamReader stream = new StreamReader(request.InputStream, request.ContentEncoding);
                     String streamdata = stream.ReadToEnd();
-                    streamdata = System.Web.HttpUtility.UrlDecode(streamdata, request.ContentEncoding);
+                    List<String> post = new List<String>();
                     if (streamdata.Contains("&"))
                     {
-                        post = streamdata.Split('&');
+                        post = new List<String>(streamdata.Split('&'));
+                    }
+                    else
+                    {
+                        post.Add(streamdata);
+                    }
+                    foreach (String data in post)
+                    {
+                        String[] split = data.Split('=');
+                        split[0] = System.Web.HttpUtility.UrlDecode(split[0], request.ContentEncoding);
+                        split[1] = System.Web.HttpUtility.UrlDecode(split[1], request.ContentEncoding);
+                        therequest.postdata.Add(split[0], split[1]);
                     }
                     stream.Close();
                 }
-                String responseString = getresponse(request.RawUrl, post);
-                StreamWriter output = new StreamWriter(response.OutputStream);
-                output.Write(responseString);
-                output.Close();
+                if (url.Contains("?"))
+                {
+                    String[] urlsub = url.Split('?');
+                    url = urlsub[0];
+                    List<String> getdata = new List<String>();
+                    if (urlsub[1].Contains("&"))
+                    {
+                        getdata = new List<String>(urlsub[1].Split('&'));
+                    }
+                    else
+                    {
+                        getdata.Add(urlsub[1]);
+                    }
+                    foreach (String data in getdata)
+                    {
+                        String[] split = data.Split('=');
+                        therequest.getdata.Add(split[0], split[1]);
+                    }
+                }
+                foreach (pageinterface thepage in pages)
+                {
+                    if (thepage.get_url() == url)
+                    {
+                        theresponse = thepage.gen_page(therequest);
+                    }
+                }
+                if (theresponse.refer == "")
+                {
+                    response.Headers.Add(HttpResponseHeader.ContentType, theresponse.content_type);
+                    response.StatusCode = theresponse.status_code;
+                    if (theresponse.status_code == 404)
+                    {
+                        theresponse.page = "<!DOCTYPE html><html><body>";
+                        theresponse.page += "<center>Die angegebene Seite konnte nicht gefunden werden!</center>";
+                        theresponse.page += "</body></html>";
+                    }
+                    else
+                    {
+                        response.Cookies = theresponse.cookies;
+                    }
+                }
+                else
+                {
+                    response.Redirect(theresponse.refer);
+                }
+                try
+                {
+                    StreamWriter output = new StreamWriter(response.OutputStream, Encoding.GetEncoding("iso-8859-1"));
+                    output.Write(theresponse.page);
+                    output.Close();
+                }
+                catch { }
             }
         }
     }

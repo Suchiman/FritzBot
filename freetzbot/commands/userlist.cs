@@ -42,30 +42,18 @@ namespace freetzbot.commands
 
         public void run(irc connection, String sender, String receiver, String message)
         {
-            Boolean gefunden = false;
-            String[] Daten = toolbox.getDatabaseByName("box.db").GetAll();
-            String besitzer = "";
-            String[] temp;
-            foreach (String data in Daten)
+            String output = "";
+            foreach (User oneuser in freetzbot.Program.TheUsers)
             {
-                temp = data.Split(new String[] { ":" }, 2, StringSplitOptions.None);
-                if (!besitzer.Contains(temp[0]))
+                if (oneuser.boxes.Count > 0)
                 {
-                    if (besitzer == "")
-                    {
-                        besitzer = temp[0];
-                        gefunden = true;
-                    }
-                    else
-                    {
-                        besitzer += ", " + temp[0];
-                        gefunden = true;
-                    }
+                    output += ", " + oneuser.names[0];
                 }
             }
-            if (gefunden == true)
+            output = output.Remove(0, 2);
+            if (output != "")
             {
-                connection.sendmsg("Diese Benutzer haben bei mir mindestens eine Box registriert: " + besitzer, receiver);
+                connection.sendmsg("Diese Benutzer haben bei mir mindestens eine Box registriert: " + output, receiver);
             }
             else
             {

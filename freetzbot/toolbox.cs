@@ -71,6 +71,15 @@ namespace freetzbot
             logging_safe.ReleaseMutex();
         }
 
+        public static String crypt(String to_crypt)
+        {
+            byte[] tocode = Encoding.UTF8.GetBytes(to_crypt.ToCharArray());
+            System.Security.Cryptography.SHA512 crypt = new System.Security.Cryptography.SHA512Managed();
+            byte[] hash = crypt.ComputeHash(tocode);
+            crypt.Clear();
+            return BitConverter.ToString(hash).Replace("-", "");
+        }
+
         public static void instantiate_connection(String server, int port, String nick, String quit_message, String initial_channel)
         {
             irc connection = new irc(server, port, nick);
@@ -128,7 +137,14 @@ namespace freetzbot
 
         public static String short_url(String url)
         {
-            return get_web("http://tinyurl.com/api-create.php?url=" + url);
+            try
+            {
+                return get_web("http://tinyurl.com/api-create.php?url=" + url);
+            }
+            catch
+            {
+                return url;
+            }
         }
 
         public static db getDatabaseByName(String name)
@@ -185,20 +201,16 @@ namespace freetzbot
 
         public static Boolean op_check(String nickname)
         {
-            if (nickname == "hippie2000" || nickname == "Suchiman")
+            if (freetzbot.Program.TheUsers[nickname].is_op && freetzbot.Program.TheUsers[nickname].authenticated)
             {
                 return true;
             }
             return false;
         }
 
-        public static Boolean ignore_check(String parameter = "")
+        public static Boolean ignore_check(String nickname)
         {
-            if (toolbox.getDatabaseByName("ignore.db").Find(parameter) != -1)
-            {
-                return true;
-            }
-            return false;
+            return freetzbot.Program.TheUsers[nickname].ignored;
         }
     }
 }

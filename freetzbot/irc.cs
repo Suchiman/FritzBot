@@ -87,7 +87,7 @@ namespace freetzbot
                 if (AutoReconnect && !watchthread.IsAlive)
                 {
                     watchthread = new Thread(delegate() { reconnect(); });
-                    watchthread.Name = "WatchThread" + hostname;
+                    watchthread.Name = "WatchThread " + hostname;
                     watchthread.Start();
                 }
                 return true;
@@ -144,17 +144,19 @@ namespace freetzbot
 
         private String[] splitlength(String text, int length)
         {
-            List<String> splitted = new List<String>();
-            while (true)
+            List<String> output = new List<String>();
+            List<String> splitted = new List<String>(text.Split(' '));
+            for (int i = 0; splitted.Count > 0; i++)
             {
-                if (length >= text.Length)
+                output.Add("");
+                while (output[i].Length < length - 10 && splitted.Count > 0)
                 {
-                    splitted.Add(text);
-                    return splitted.ToArray();
+                    output[i] += " " + splitted[0];
+                    splitted.RemoveAt(0);
                 }
-                splitted.Add(text.Remove(length));
-                text = text.Remove(0, length);
+                output[i].Remove(0, 1);
             }
+            return output.ToArray();
         }
 
         private void log(String to_log)
@@ -219,7 +221,7 @@ namespace freetzbot
                         throw new Exception("connection lost");
                     }
                     Thread thread = new Thread(delegate() { process_respond(Daten); });
-                    thread.Name = "Process" + hostname;
+                    thread.Name = "Process " + hostname;
                     thread.Start();
                 }
             }

@@ -51,21 +51,7 @@ namespace freetzbot.commands
             {
                 if (check_db)
                 {
-                    if (toolbox.ignore_check(sender) || freetzbot.Program.configuration.get("boxfrage") == "false") return;
-                    String[] users = toolbox.getDatabaseByName("user.db").GetAll();
-                    foreach (String user in users)
-                    {
-                        if (user.Contains(sender) || sender.Contains(user))
-                        {
-                            toolbox.getDatabaseByName("user.db").Add(sender);
-                            return;
-                        }
-                        if (user.Contains(","))
-                        {
-                            toolbox.getDatabaseByName("user.db").Remove(user);
-                            toolbox.getDatabaseByName("user.db").Add(user.Split(',')[0]);
-                        }
-                    }
+                    if (freetzbot.Program.configuration.get("boxfrage") == "false" || freetzbot.Program.TheUsers[sender].asked) return;
                     System.Threading.Thread.Sleep(10000);
                 }
                 connection.sendmsg("Hallo " + sender + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast :).", receiver);

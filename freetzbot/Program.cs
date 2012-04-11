@@ -8,6 +8,12 @@ namespace freetzbot
     class Program
     {
         public static Boolean restart = false;
+
+        public static Boolean await_response = false;
+        public static String awaited_response = "";
+        public static String awaited_nick = "";
+
+        public static UserCollection TheUsers;
         
         public static List<db> databases = new List<db>();
         public static settings configuration = new settings("config.cfg");
@@ -21,29 +27,31 @@ namespace freetzbot
         private static void process_command(irc connection, String sender, String receiver, String message)
         {
             String[] parameter = message.Split(new String[] { " " }, 2, StringSplitOptions.None);
-            if (toolbox.ignore_check(sender)) return;
             Boolean answered = false;
 
             #region Antiflooding checks
-            int floodingcount;
-            if (!int.TryParse(configuration.get("floodingcount"), out floodingcount))
+            if (!toolbox.op_check(sender))
             {
-                floodingcount = 5;//Default wert
-            }
-            if (antifloodingcount >= floodingcount)
-            {
-                if (floodingnotificated == false)
+                int floodingcount;
+                if (!int.TryParse(configuration.get("floodingcount"), out floodingcount))
                 {
-                    floodingnotificated = true;
-                    connection.sendmsg("Flooding Protection aktiviert", receiver);
+                    floodingcount = 5;//Default wert
                 }
-                return;
+                if (antifloodingcount >= floodingcount)
+                {
+                    if (floodingnotificated == false)
+                    {
+                        floodingnotificated = true;
+                        connection.sendmsg("Flooding Protection aktiviert", receiver);
+                    }
+                    return;
+                }
+                else
+                {
+                    antifloodingcount++;
+                }
+                if (configuration.get("klappe") == "true") receiver = sender;
             }
-            else
-            {
-                antifloodingcount++;
-            }
-            if (configuration.get("klappe") == "true") receiver = sender;
             #endregion
 
             foreach (command thecommand in commands)
@@ -88,20 +96,28 @@ namespace freetzbot
                     toolbox.logging(message);
                     return;
                 case "JOIN":
-                    toolbox.logging(nick + " hat den Raum " + message + " betreten");
-                    freetzbot.commands.frag.boxfrage(connection, nick, nick, nick);
-                    freetzbot.commands.seen.joined(nick);
+                    if (!(nick == connection.nickname))
+                    {
+                        toolbox.logging(nick + " hat den Raum " + message + " betreten");
+                        if (toolbox.ignore_check(nick)) return;
+                        freetzbot.commands.frag.boxfrage(connection, nick, nick, nick);
+                        TheUsers[nick].last_seen = DateTime.MinValue;
+                    }
                     return;
                 case "QUIT":
                     toolbox.logging(nick + " hat den Server verlassen");
-                    freetzbot.commands.seen.quit(nick);
+                    TheUsers[nick].SetSeen();
+                    TheUsers[nick].authenticated = false;
                     return;
                 case "PART":
                     toolbox.logging(nick + " hat den Raum " + message + " verlassen");
-                    freetzbot.commands.seen.quit(nick);
+                    TheUsers[nick].SetSeen();
+                    TheUsers[nick].authenticated = false;
                     return;
                 case "NICK":
                     toolbox.logging(nick + " heißt jetzt " + message);
+                    TheUsers[nick].AddName(message);
+                    TheUsers[nick].authenticated = false;
                     return;
                 case "KICK":
                     toolbox.logging(nick + " hat mich aus dem Raum " + message + " geworfen");
@@ -110,7 +126,7 @@ namespace freetzbot
                 default:
                     break;
             }
-            if (message.Contains("#96*6*"))
+            if (message.Contains("#96*6*") && !toolbox.ignore_check(nick))
             {
                 if (DateTime.Now.Hour > 5 && DateTime.Now.Hour < 16)
                 {
@@ -124,20 +140,35 @@ namespace freetzbot
             if (source.ToCharArray()[0] == '#')
             {
                 toolbox.logging(source + " " + nick + ": " + message);
-                freetzbot.commands.seen.messaged(nick, message);
+                if (toolbox.ignore_check(nick)) return;
+                if (!nick.Contains(".") && nick != connection.nickname)
+                {
+                    TheUsers[nick].SetMessage(message);
+                }
             }
             else
             {
                 toolbox.logging("Von " + nick + ": " + message);
-                if (message.ToCharArray()[0] != '!' && !nick.Contains(".") && nick != connection.nickname)
+                if (toolbox.ignore_check(nick)) return;
+                if (message.ToCharArray()[0] != '!' && !nick.Contains(".") && nick != connection.nickname && !await_response)
                 {
                     connection.sendmsg("Hallo, kann ich dir helfen ? Probiers doch mal mit !hilfe", nick);
                 }
-                freetzbot.commands.seen.messaged(nick, message);
+                if (!nick.Contains(".") && nick != connection.nickname)
+                {
+                    TheUsers[nick].SetMessage(message);
+                }
+                if (await_response && (awaited_nick == "" || awaited_nick == nick))
+                {
+                    await_response = false;
+                    awaited_nick = "";
+                    awaited_response = message;
+                }
                 source = nick;
             }
             if (message.ToCharArray()[0] == '!')
             {
+                if (toolbox.ignore_check(nick)) return;
                 process_command(connection, nick, source, message.Remove(0, 1));
             }
         }
@@ -213,6 +244,7 @@ namespace freetzbot
 
         private static void init()
         {
+            TheUsers = new UserCollection();
             String[] config = toolbox.getDatabaseByName("servers.cfg").GetAll();
             try
             {

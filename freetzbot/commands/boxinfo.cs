@@ -42,32 +42,16 @@ namespace freetzbot.commands
 
         public void run(irc connection, String sender, String receiver, String message)
         {
-            String[] Daten = toolbox.getDatabaseByName("box.db").GetContaining(message);
-            if (Daten.Length > 0)
+            String output = "";
+            if (message == "")
             {
-                String boxen = "";
-                for (int i = 0; i < Daten.Length; i++)
-                {
-                    String[] user = Daten[i].Split(new String[] { ":" }, 2, StringSplitOptions.None);
-                    if (boxen != "")
-                    {
-                        boxen += ", " + user[1];
-                    }
-                    else
-                    {
-                        boxen = user[1];
-                    }
-                }
-                if (message == sender)
-                {
-                    connection.sendmsg("Du hast bei mir die Box/en " + boxen + " registriert.", receiver);
-                }
-                else
-                {
-                    connection.sendmsg(message + " sagte mir er hätte die Box/en " + boxen, receiver);
-                }
+                message = sender;
             }
-            else
+            foreach (String box in freetzbot.Program.TheUsers[message].boxes)
+            {
+                output += ", " + box;
+            }
+            if (output == "")
             {
                 if (message == sender)
                 {
@@ -77,6 +61,16 @@ namespace freetzbot.commands
                 {
                     connection.sendmsg("Über den habe ich keine Informationen.", receiver);
                 }
+                return;
+            }
+            output = output.Remove(0, 2);
+            if (message == sender)
+            {
+                connection.sendmsg("Du hast bei mir die Box/en " + output + " registriert.", receiver);
+            }
+            else
+            {
+                connection.sendmsg(message + " sagte mir er/sie hätte die Box/en " + output, receiver);
             }
         }
     }

@@ -42,10 +42,10 @@ namespace freetzbot.commands
 
         public void run(irc connection, String sender, String receiver, String message)
         {
-            if (toolbox.getDatabaseByName("box.db").Find(sender + ":" + message) == -1)
+            if (freetzbot.Program.TheUsers[sender].AddBox(message))
             {
-                toolbox.getDatabaseByName("box.db").Add(sender + ":" + message);
                 connection.sendmsg("Okay danke, ich werde mir deine \"" + message + "\" notieren.", receiver);
+                connection.sendmsg("Neue Box wurde registriert: User: " + sender + ", Box: " + message, "hippie2000");
             }
             else
             {

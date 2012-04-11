@@ -50,14 +50,14 @@ namespace freetzbot.commands
                 String[] witz = message.Split(new String[] { " " }, 2, StringSplitOptions.None);
                 if (witz[0] == "add")
                 {
-                    toolbox.getDatabaseByName("witze.db").Add(witz[1]);
+                    freetzbot.Program.TheUsers[sender].AddJoke(witz[1]);
                     connection.sendmsg("Ist notiert " + sender, receiver);
                 }
                 else
                 {
                     String[] splitted = message.Split(' ');
-                    List<String> alle_witze = new List<String>(toolbox.getDatabaseByName("witze.db").GetAll());
-                    List<String> such_witze = new List<String>(alle_witze);
+                    List<String> alle_witze = freetzbot.Program.TheUsers.AllJokes();
+                    List<String> such_witze = alle_witze;
                     for (int i = 0; i < alle_witze.Count; i++)
                     {
                         foreach (String data in splitted)
@@ -86,15 +86,16 @@ namespace freetzbot.commands
                 {
                     witz_randoms.RemoveAt(0);
                 }
-                int random = rand.Next(toolbox.getDatabaseByName("witze.db").Size());
+                List<String> jokes = freetzbot.Program.TheUsers.AllJokes();
+                int random = rand.Next(jokes.Count - 1);
                 for (int i = 0; !(!witz_randoms.Contains(random) && i < 10); i++)
                 {
-                    random = rand.Next(toolbox.getDatabaseByName("witze.db").Size());
+                    random = rand.Next(jokes.Count - 1);
                 }
                 witz_randoms.Add(random);
-                if (toolbox.getDatabaseByName("witze.db").Size() > 0)
+                if (jokes.Count > 0)
                 {
-                    connection.sendmsg(toolbox.getDatabaseByName("witze.db").GetAt(random), receiver);
+                    connection.sendmsg(jokes[random], receiver);
                 }
                 else
                 {

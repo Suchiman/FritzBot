@@ -1,13 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace freetzbot.commands
 {
-    class about : command
+    class op : command
     {
-        private String[] name = { "about" };
-        private String helptext = "Ich würde dir dann kurz etwas über mich erzählen.";
-        private Boolean op_needed = false;
-        private Boolean parameter_needed = false;
+        private String[] name = { "op" };
+        private String helptext = "Erteilt einem Benutzer Operator rechte";
+        private Boolean op_needed = true;
+        private Boolean parameter_needed = true;
         private Boolean accept_every_param = false;
 
         public String[] get_name()
@@ -42,7 +44,15 @@ namespace freetzbot.commands
 
         public void run(irc connection, String sender, String receiver, String message)
         {
-            connection.sendmsg("Primäraufgabe: Daten über Fritzboxen sammeln, Sekundäraufgabe: Menschheit eliminieren. Funktionsliste ist durch !hilfe zu erhalten. Programmiert in C# umfasst mein Quellcode derzeit 4866 Zeilen. Entwickler: Suchiman", receiver);
+            if (freetzbot.Program.TheUsers.Exists(message))
+            {
+                freetzbot.Program.TheUsers[message].is_op = true;
+                connection.sendmsg("Okay", receiver);
+            }
+            else
+            {
+                connection.sendmsg("Den Benutzer kenne ich nicht", receiver);
+            }
         }
     }
 }

@@ -130,7 +130,7 @@ namespace freetzbot.commands
             }
             else if (message.ToLower() == "")
             {
-                changeset = "Aktuelle Labor Daten: iOS: " + labor_daten[0].daten + ", Android: " + labor_daten[1].daten + ", 7390: " + labor_daten[2].daten + ", FHEM: " + labor_daten[3].daten + ", 7390at: " + labor_daten[4].daten + ", 7320: " + labor_daten[5].daten + ", 7270: " + labor_daten[6].daten + " - " + toolbox.short_url("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
+                changeset = "Aktuelle Labor Daten: iOS: " + labor_daten[0].daten + ", Android: " + labor_daten[1].daten + ", 7390: " + labor_daten[2].daten + ", FHEM: " + labor_daten[3].daten + ", 7390at: " + labor_daten[4].daten + ", 7320: " + labor_daten[5].daten + ", 7270: " + labor_daten[6].daten + " - Zum Labor: " + toolbox.short_url("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
             }
             else
             {
@@ -196,7 +196,7 @@ namespace freetzbot.commands
                     }
                     if (output != "")
                     {
-                        output += " - http://www.avm.de/de/Service/Service-Portale/Labor/index.php";
+                        output += " - Zum Labor: " + toolbox.short_url("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
                         toolbox.announce(output);
                     }
                     output = "";

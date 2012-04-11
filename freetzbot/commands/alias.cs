@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace freetzbot.commands
 {
     class alias : command
     {
         private String[] name = { "alias", "a" };
-        private String helptext = "Legt einen Alias für einen Begriff fest, z.b. !alias oder !a, \"!a add freetz=Eine Modifikation für...\", \"!a edit freetz=DIE Modifikation\", \"!a remove freetz\", \"!a freetz\", Variablen wie z.b. $1 sind möglich.";
+        private String helptext = "Legt einen Alias für einen Begriff fest, z.b. !alias oder !a, \"!a add freetz Eine Modifikation für...\", \"!a edit freetz DIE Modifikation\", \"!a remove freetz\", \"!a freetz\", Variablen wie z.b. $1 sind möglich.";
         private Boolean op_needed = false;
         private Boolean parameter_needed = true;
         private Boolean accept_every_param = false;
@@ -47,123 +48,122 @@ namespace freetzbot.commands
 
         public static Boolean alias_command(irc connection, String sender, String receiver, String message, Boolean not_answered = false)
         {
-            String[] parameter = message.Split(new String[] { " " }, 2, StringSplitOptions.None);
-            String alias = "";
+            String[] parameter = message.Split(' ');
             Boolean[] cases = new Boolean[3];
             switch (parameter[0].ToLower())
             {
                 case "add":
-                    if (parameter[1].Contains("="))
+                    if (freetzbot.Program.TheUsers.AllAliases()[parameter[1]] == "")
                     {
-                        cases[2] = true;
+                        freetzbot.Program.TheUsers[sender].alias[parameter[1]] = String.Join(" ", parameter, 2, parameter.Length - 2);
+                        connection.sendmsg("Der Alias wurde erfolgreich hinzugefügt", receiver);
+                        return true;
                     }
-                    else
-                    {
-                        connection.sendmsg("Das habe ich jetzt nicht als gültigen Alias erkannt, es muss einmal \"=\" enthalten sein, damit ich weiß was der Alias ist", receiver);
-                    }
-                    break;
+                    connection.sendmsg("Diesen Alias gibt es bereits", receiver);
+                    return false;
                 case "edit":
-                    if (parameter[1].Contains("="))
+                    freetzbot.Program.TheUsers[sender].alias[parameter[1]] = String.Join(" ", parameter, 2, parameter.Length - 2);
+                    connection.sendmsg("Der Alias wurde erfolgreich bearbeitet", receiver);
+                    return true;
+                case "remove":
+                    if (freetzbot.Program.TheUsers[sender].alias[parameter[1]] != "")
                     {
-                        cases[1] = true;
-                        cases[2] = true;
+                        freetzbot.Program.TheUsers[sender].alias[parameter[1]] = "";
+                        connection.sendmsg("Alias wurde gelöscht", receiver);
+                    }
+                    else if (toolbox.op_check(sender))
+                    {
+                        foreach (User oneuser in freetzbot.Program.TheUsers)
+                        {
+                            if (oneuser.alias[parameter[1]] != "")
+                            {
+                                oneuser.alias[parameter[1]] = "";
+                                connection.sendmsg("Alias wurde gelöscht", receiver);
+                                return true;
+                            }
+                        }
+                        connection.sendmsg("Alias wurde nicht gefunden", receiver);
                     }
                     else
                     {
-                        connection.sendmsg("Das habe ich jetzt nicht als gültigen Alias erkannt, es muss einmal \"=\" enthalten sein, damit ich weiß was der Alias ist", receiver);
+                        connection.sendmsg("Du scheinst keinen solchen Alias definiert zu haben", receiver);
                     }
-                    break;
-                case "remove":
-                    cases[1] = true;
-                    break;
+                    return true;
                 default:
-                    String[] splitted = message.Split(' ');
-                    if (splitted.Length > 0)
+                    String thealias = freetzbot.Program.TheUsers.AllAliases()[parameter[0]];
+                    if (thealias != "")
                     {
-                        String[] aliase = toolbox.getDatabaseByName("alias.db").GetContaining(splitted[0] + "=");
-                        if (aliase.Length > 0)
+                        for (int i = 0; thealias.Contains("$") && parameter.Length > 1; i++)
                         {
-                            String[] thealias = aliase[0].Split(new String[] { "=" }, 2, StringSplitOptions.None);
-                            String output = "";
-                            int forindex = 0;
-                            if (thealias[1].Split('$').Length - 1 < splitted.Length)
+                            while (true)
                             {
-                                forindex = thealias[1].Split('$').Length - 1;
+                                int index = thealias.IndexOf("$" + (i + 1));
+                                if (index == -1) break;
+                                thealias = thealias.Remove(index, 2);
+                                thealias = thealias.Insert(index, parameter[i + 1]);
                             }
-                            else
-                            {
-                                forindex = splitted.Length - 1;
-                            }
-                            output = thealias[1];
-                            for (int i = 0; i < forindex; i++)
-                            {
-                                while (true)
-                                {
-                                    int index = output.IndexOf("$" + (i + 1));
-                                    if (index == -1) break;
-                                    output = output.Remove(index, 2);
-                                    output = output.Insert(index, splitted[i + 1]);
-                                }
-                            }
-                            connection.sendmsg(output, receiver);
-                            return true;
                         }
-                        else if(!not_answered)
-                        {
-                            connection.sendmsg("Diesen Alias gibt es nicht.", receiver);
-                            return false;
-                        }
+                        connection.sendmsg(thealias, receiver);
+                        return true;
+                    }
+                    if (!not_answered)
+                    {
+                        connection.sendmsg("Diesen Alias gibt es nicht.", receiver);
                     }
                     return false;
             }
-            if (message.Contains("="))
+        }
+    }
+}
+
+namespace freetzbot
+{
+    public class alias_db
+    {
+        public List<String> alias;
+        public List<String> description;
+        public alias_db()
+        {
+            alias = new List<String>();
+            description = new List<String>();
+        }
+        public String this[String thealias]
+        {
+            get
             {
-                alias = parameter[1].Split(new String[] { "=" }, 2, StringSplitOptions.None)[0];
-            }
-            else
-            {
-                alias = parameter[1];
-            }
-            if (toolbox.getDatabaseByName("alias.db").GetContaining(alias + "=").Length > 0)
-            {
-                cases[0] = true;
-            }
-            if (!cases[0] && cases[1] && cases[2])
-            {
-                connection.sendmsg("Diesen Alias gibt es noch nicht, verwende \"add\" um ihn hinzuzufügen.", receiver);
-                return false;
-            }
-            if (cases[1])
-            {
-                if (!cases[0])
+                for (int i = 0; i < alias.Count; i++)
                 {
-                    connection.sendmsg("Diesen Alias gibt es nicht.", receiver);
-                    return false;
+                    if (alias[i] == thealias)
+                    {
+                        return description[i];
+                    }
                 }
-                toolbox.getDatabaseByName("alias.db").Remove(toolbox.getDatabaseByName("alias.db").GetContaining(alias + "=")[0]);
+                return "";
             }
-            if (cases[2])
+            set
             {
-                if ((cases[1] && cases[2]) ^ cases[0])
+                for (int i = 0; i < alias.Count; i++)
                 {
-                    connection.sendmsg("Es gibt diesen Alias schon, wenn du ihn verändern möchtest verwende statt \"add\", \"edit\".", receiver);
-                    return false;
+                    if (alias[i] == thealias)
+                    {
+                        if (value == "")
+                        {
+                            alias.RemoveAt(i);
+                            description.RemoveAt(i);
+                        }
+                        else
+                        {
+                            description[i] = value;
+                        }
+                        return;
+                    }
                 }
-                toolbox.getDatabaseByName("alias.db").Add(parameter[1]);
+                if (value != "")
+                {
+                    alias.Add(thealias);
+                    description.Add(value);
+                }
             }
-            if (!cases[1] && cases[2])
-            {
-                connection.sendmsg("Alias wurde erfolgreich hinzugefügt.", receiver);
-            }
-            if (cases[1] && cases[2])
-            {
-                connection.sendmsg("Alias wurde erfolgreich editiert!", receiver);
-            }
-            if (cases[1] && !cases[2])
-            {
-                connection.sendmsg("Alias wurde erfolgreich gelöscht!", receiver);
-            }
-            return false;
         }
     }
 }

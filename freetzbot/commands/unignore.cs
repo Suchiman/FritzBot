@@ -42,7 +42,7 @@ namespace freetzbot.commands
 
         public void run(irc connection, String sender, String receiver, String message)
         {
-            toolbox.getDatabaseByName("ignore.db").Remove(message);
+            freetzbot.Program.TheUsers[message].ignored = false;
         }
     }
 }

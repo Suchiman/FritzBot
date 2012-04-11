@@ -6,7 +6,7 @@ namespace freetzbot.commands
     class shorturl : command
     {
         private String[] name = { "shorturl", "urlshort", "urlshortener" };
-        private String helptext = "Kürzt eine URL bei einem URL shortener";
+        private String helptext = "Kürzt den angegebenen Link zu einer tinyurl. Achte darauf, dass die URL ein gültiges http://adresse.tld Format hat. z.b. \"!shorturl http://google.de\"";
         private Boolean op_needed = false;
         private Boolean parameter_needed = true;
         private Boolean accept_every_param = false;

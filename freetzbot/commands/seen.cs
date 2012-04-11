@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 
 namespace freetzbot.commands
 {
@@ -42,32 +43,37 @@ namespace freetzbot.commands
 
         public void run(irc connection, String sender, String receiver, String message)
         {
-            db seendb = toolbox.getDatabaseByName("seen.db");
             if (message.ToLower() == connection.nickname.ToLower())
             {
                 connection.sendmsg("Ich bin gerade hier und was ich schreibe siehst du ja auch :-)", receiver);
                 return;
             }
-            if (seendb.GetContaining(message + ";").Length > 0)
+            if (freetzbot.Program.TheUsers.Exists(message))
             {
                 String output = "";
-                String[] daten = seendb.GetContaining(message + ";")[0].Split(';');//User;Joined;Messaged;Message
-                DateTime seen;
-                if (DateTime.TryParse(daten[1], out seen))
+
+                freetzbot.Program.await_response = true;
+                connection.sendraw("NAMES");
+                while (freetzbot.Program.await_response)
                 {
-                    output = "Den habe ich hier zuletzt am " + seen.ToString("dd.MM.yyyy ") + "um" + seen.ToString(" HH:mm:ss ") + "Uhr gesehen.";
+                    Thread.Sleep(50);
                 }
-                if (daten[2] != "")
+                String response = freetzbot.Program.awaited_response;
+                if (response.Contains(message))
                 {
-                    DateTime said;
-                    if (DateTime.TryParse(daten[2], out said))
+                    freetzbot.Program.TheUsers[message].last_seen = DateTime.MinValue;
+                }
+                if (freetzbot.Program.TheUsers[message].last_seen != DateTime.MinValue)
+                {
+                    output = "Den/Die habe ich hier zuletzt am " + freetzbot.Program.TheUsers[message].last_seen.ToString("dd.MM.yyyy ") + "um" + freetzbot.Program.TheUsers[message].last_seen.ToString(" HH:mm:ss ") + "Uhr gesehen.";
+                }
+                if (freetzbot.Program.TheUsers[message].last_messaged != DateTime.MinValue)
+                {
+                    if (output != "")
                     {
-                        if (output != "")
-                        {
-                            output += " ";
-                        }
-                        output += "Am " + said.ToString("dd.MM.yyyy ") + "um" + said.ToString(" HH:mm:ss ") + "Uhr sagte er/sie zuletzt: \"" + daten[3] + "\"";
+                        output += " ";
                     }
+                    output += "Am " + freetzbot.Program.TheUsers[message].last_messaged.ToString("dd.MM.yyyy ") + "um" + freetzbot.Program.TheUsers[message].last_messaged.ToString(" HH:mm:ss ") + "Uhr sagte er/sie zuletzt: \"" + freetzbot.Program.TheUsers[message].last_message + "\"";
                 }
                 if (output != "")
                 {
@@ -81,86 +87,6 @@ namespace freetzbot.commands
             else
             {
                 connection.sendmsg("Diesen Benutzer habe ich noch nie gesehen", receiver);
-            }
-        }
-
-        public static void joined(String nick)
-        {
-            if (!nick.Contains("."))
-            {
-                setdata(nick, 1, "", 0);
-            }
-        }
-
-        public static void quit(String nick)
-        {
-            if (!nick.Contains("."))
-            {
-                setdata(nick, 1, "", 2);
-            }
-        }
-
-        public static void messaged(String nick, String message)
-        {
-            if (!nick.Contains("."))
-            {
-                setdata(nick, 2, message);
-            }
-        }
-
-        public static void setdata(String nick, int messaged = 1, String message = "", int joined = 0)
-        {
-            try
-            {
-                db seendb = toolbox.getDatabaseByName("seen.db");
-                if (!(seendb.GetContaining(nick + ";").Length > 0))
-                {
-                    seendb.Add(nick + ";;;");
-                }
-                String data = seendb.GetContaining(nick + ";")[0];
-                String datum = DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss");
-                String[] split = data.Split(';'); //User;Joined;Messaged;Message
-                String joindate = "";
-                String messagedate = "";
-                String messagetext = "";
-                if (joined == 0)
-                {
-                    joindate = "";
-                }
-                if (joined == 1)
-                {
-                    joindate = split[1];
-                }
-                if (joined == 2)
-                {
-                    joindate = datum;
-                }
-                if (messaged == 0)
-                {
-                    messagedate = "";
-                }
-                if (messaged == 1)
-                {
-                    messagedate = split[2];
-                }
-                if (messaged == 2)
-                {
-                    messagedate = datum;
-                }
-                if (message != "")
-                {
-                    messagetext = message;
-                }
-                else
-                {
-                    messagetext = split[3];
-                }
-                seendb.Remove(data);
-                seendb.Add(nick + ";" + joindate + ";" + messagedate + ";" + messagetext);
-            }
-            catch
-            {
-
             }
         }
     }

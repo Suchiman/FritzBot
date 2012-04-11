@@ -42,14 +42,16 @@ namespace freetzbot.commands
 
         public void run(irc connection, String sender, String receiver, String message)
         {
-            if (toolbox.getDatabaseByName("box.db").Remove(sender + ":" + message))
+            for (int i = 0; i < freetzbot.Program.TheUsers[sender].boxes.Count; i++)
             {
-                connection.sendmsg("Erledigt!", receiver);
+                if (freetzbot.Program.TheUsers[sender].boxes[i] == message)
+                {
+                    freetzbot.Program.TheUsers[sender].boxes.RemoveAt(i);
+                    connection.sendmsg("Erledigt!", receiver);
+                    return;
+                }
             }
-            else
-            {
-                connection.sendmsg("Der Suchstring wurde nicht gefunden und deshalb nicht gelöscht", receiver);
-            }
+            connection.sendmsg("Der Suchstring wurde nicht gefunden und deshalb nicht gelöscht", receiver);
         }
     }
 }

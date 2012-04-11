@@ -21,7 +21,7 @@ namespace freetzbot
         public db(String db)
         {
             datenbank_name = db;
-            Boolean in_use = false;
+            in_use = false;
             Read();
         }
         /// <summary>

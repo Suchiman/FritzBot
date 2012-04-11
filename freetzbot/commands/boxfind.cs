@@ -42,23 +42,21 @@ namespace freetzbot.commands
 
         public void run(irc connection, String sender, String receiver, String message)
         {
-            String[] Daten = toolbox.getDatabaseByName("box.db").GetContaining(message);
-            if (Daten.Length > 0)
+            String besitzer = "";
+            foreach (User oneuser in freetzbot.Program.TheUsers)
             {
-                String besitzer = "";
-                String[] temp;
-                for (int i = 0; i < Daten.Length; i++)
+                foreach (String box in oneuser.boxes)
                 {
-                    temp = Daten[i].Split(new String[] { ":" }, 2, StringSplitOptions.None);
-                    if (besitzer == "")
+                    if (box.Contains(message))
                     {
-                        besitzer = temp[0];
-                    }
-                    else
-                    {
-                        besitzer += ", " + temp[0];
+                        besitzer += ", " + oneuser.names[0];
+                        break;
                     }
                 }
+            }
+            besitzer = besitzer.Remove(0, 2);
+            if (besitzer != "")
+            {
                 connection.sendmsg("Folgende Benutzer scheinen diese Box zu besitzen: " + besitzer, receiver);
             }
             else
