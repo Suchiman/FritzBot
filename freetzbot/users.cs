@@ -211,6 +211,21 @@ namespace freetzbot
             }
         }
 
+        public void CleanUp()
+        {
+            List<User> newUsers = new List<User>();
+            foreach (User oneuser in TheUsers)
+            {
+                if (oneuser.last_seen > DateTime.Today.AddMonths(-6) || oneuser.boxes.Count > 0)
+                {
+                    newUsers.Add(oneuser);
+                }
+            }
+            TheUsers.Clear();
+            TheUsers = null;
+            TheUsers = newUsers;
+        }
+
         public void GroupUser(String user1, String user2)
         {
             int u1 = 0, u2 = 0;

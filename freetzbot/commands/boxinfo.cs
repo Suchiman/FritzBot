@@ -47,9 +47,17 @@ namespace freetzbot.commands
             {
                 message = sender;
             }
-            foreach (String box in freetzbot.Program.TheUsers[message].boxes)
+            if (freetzbot.Program.TheUsers.Exists(message))
             {
-                output += ", " + box;
+                foreach (String box in freetzbot.Program.TheUsers[message].boxes)
+                {
+                    output += ", " + box;
+                }
+            }
+            else
+            {
+                connection.sendmsg("Den habe ich hier noch nie gesehen, sry", receiver);
+                return;
             }
             if (output == "")
             {

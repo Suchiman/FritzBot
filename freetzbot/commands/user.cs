@@ -7,7 +7,7 @@ namespace freetzbot.commands
     class user : command
     {
         private String[] name = { "user" };
-        private String helptext = "Führt Operationen an meiner Benutzerdatenbank aus, Operator Befehl: !user remove, reload, flush";
+        private String helptext = "Führt Operationen an meiner Benutzerdatenbank aus, Operator Befehl: !user remove, reload, flush, add <name>, box <name> <box>";
         private Boolean op_needed = true;
         private Boolean parameter_needed = true;
         private Boolean accept_every_param = false;
@@ -53,6 +53,20 @@ namespace freetzbot.commands
                 if (message == "flush")
                 {
                     freetzbot.Program.TheUsers.Flush();
+                }
+                if (message.Contains("add"))
+                {
+                    String[] split = message.Split(' ');
+                    freetzbot.Program.TheUsers.Add(split[1]);
+                }
+                if (message.Contains("box"))
+                {
+                    String[] split = message.Split(' ');
+                    freetzbot.Program.TheUsers[split[1]].AddBox(split[2]);
+                }
+                if (message.Contains("cleanup"))
+                {
+                    freetzbot.Program.TheUsers.CleanUp();
                 }
                 if (message.Contains("remove"))
                 {

@@ -11,7 +11,7 @@ namespace freetzbot.commands
 {
     class webinterface : command
     {
-        private String[] name = { "webinterface" };
+        private String[] name = { "webinterface", "web" };
         private String helptext = "Information über mein Webinterface";
         private Boolean op_needed = false;
         private Boolean parameter_needed = false;
@@ -80,7 +80,7 @@ namespace freetzbot.commands
         {
             if (listener.IsListening && listener_thread.IsAlive)
             {
-                connection.sendmsg("Webinterface läuft und ist unter http://teneon.de:6666 zu erreichen", receiver);
+                connection.sendmsg("Webinterface läuft und ist unter http://teneon.de:8080 zu erreichen", receiver);
             }
             else
             {
@@ -96,6 +96,7 @@ namespace freetzbot.commands
                 {
                     listener = new HttpListener();
                     listener.Prefixes.Add("http://+:6666/");
+                    listener.Prefixes.Add("http://+:8080/");
                     listener.Start();
                     while (true)
                     {
