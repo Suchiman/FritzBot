@@ -114,10 +114,25 @@ namespace freetzbot
 
         public void Flush()
         {
-            XmlTextWriter UDB = new XmlTextWriter("users.db", Encoding.GetEncoding("iso-8859-1"));
-            XmlSerializer serializer = new XmlSerializer(TheUsers.GetType());
-            serializer.Serialize(UDB, TheUsers);
-            UDB.Close();
+            Boolean failed = false;
+            do
+            {
+                try
+                {
+                    XmlTextWriter UDB = new XmlTextWriter("users.db", Encoding.GetEncoding("iso-8859-1"));
+                    UDB.Formatting = Formatting.Indented;
+                    XmlSerializer serializer = new XmlSerializer(TheUsers.GetType());
+                    serializer.Serialize(UDB, TheUsers);
+                    UDB.Flush();
+                    UDB.Close();
+                    failed = false;
+                }
+                catch
+                {
+                    failed = true;
+                    Thread.Sleep(50);
+                }
+            } while (failed);
         }
 
         public void Reload()
@@ -391,6 +406,7 @@ namespace freetzbot
             ConvertSeenDB(TheUsers);
             ConvertJokeDB(TheUsers);
             ConvertAliasDB(TheUsers);
+            TheUsers.Flush();
         }
 
         public static void ConvertSeenDB(UserCollection TheUsers)

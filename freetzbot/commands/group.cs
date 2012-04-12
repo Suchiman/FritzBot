@@ -51,6 +51,7 @@ namespace freetzbot.commands
                 if (toolbox.op_check(sender))
                 {
                     freetzbot.Program.TheUsers.GroupUser(split[0], split[1]);
+                    connection.sendmsg("Okay", receiver);
                     return;
                 }
                 for (int i = 0; i < 2; i++)

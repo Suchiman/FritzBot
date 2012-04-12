@@ -34,12 +34,12 @@ namespace freetzbot.webpages
             }
             else
             {
-                theresponse.page += "<div style=\"position: absolute;top: 40%;left: 40%;\">Bitte einloggen!<br>";
-                theresponse.page += "<form action=\"login\" method=\"POST\">";
-                theresponse.page += "<input type=\"text\" name=\"name\"><br>";
-                theresponse.page += "<input type=\"password\" name=\"pw\"><br>";
-                theresponse.page += "<input type=\"submit\" value=\"Login\">";
-                theresponse.page += "</form></div>";
+                theresponse.page += "<div style=\"position: absolute;top: 35%;left: 35%;border:1px;border-style:dotted;padding:10px\">Bitte einloggen!<br>";
+                theresponse.page += "<form action=\"login\" method=\"POST\"><table>";
+                theresponse.page += "<tr><td>IRC-Nick:</td><td><input type=\"text\" name=\"name\"></td></tr>";
+                theresponse.page += "<tr><td>Passwort:</td><td><input type=\"password\" name=\"pw\"></td></tr>";
+                theresponse.page += "<tr><td><input type=\"submit\" value=\"Login\"></td></tr>";
+                theresponse.page += "</table></form></div>";
             }
             theresponse.page += "</body></html>";
             theresponse.status_code = 200;

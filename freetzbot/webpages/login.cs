@@ -27,8 +27,8 @@ namespace freetzbot.webpages
                     {
                         freetzbot.Program.TheUsers[name].authcookiedate = DateTime.Now;
                         String hash = toolbox.crypt(name + freetzbot.Program.TheUsers[name].authcookiedate.ToString() + request.useradress.ToString());
-                        theresponse.cookies.Add(new System.Net.Cookie("username", name));
-                        theresponse.cookies.Add(new System.Net.Cookie("logindata", hash));
+                        theresponse.cookies["username"] = name;
+                        theresponse.cookies["logindata"] = hash;
                         theresponse.page += "Du bist nun eingeloggt " + name;
                     }
                     else

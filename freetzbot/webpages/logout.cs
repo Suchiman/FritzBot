@@ -23,12 +23,8 @@ namespace freetzbot.webpages
             if (freetzbot.Program.TheUsers.Exists(name))
             {
                 freetzbot.Program.TheUsers[name].authcookiedate = DateTime.MinValue;
-                Cookie username = new Cookie("username", "");
-                username.Expires = DateTime.Now.AddDays(-1d);
-                Cookie logindata = new Cookie("logindata", "");
-                logindata.Expires = DateTime.Now.AddDays(-1d);
-                theresponse.cookies.Add(username);
-                theresponse.cookies.Add(logindata);
+                theresponse.cookies["username"] = "";
+                theresponse.cookies["logindata"] = "";
                 theresponse.page += "Du bist jetzt ausgeloggt";
             }
             else
