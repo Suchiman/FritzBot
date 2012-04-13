@@ -154,7 +154,7 @@ namespace freetzbot
                     output[i] += " " + splitted[0];
                     splitted.RemoveAt(0);
                 }
-                output[i].Remove(0, 1);
+                output[i] = output[i].Remove(0, 1);
             }
             return output.ToArray();
         }
@@ -301,10 +301,18 @@ namespace freetzbot
                     String[] nachricht = splitmessage[3].Split(new String[] { ":" }, 2, StringSplitOptions.None);
                     if (nachricht.Length > 1)
                     {
+                        if (nachricht[1].Contains("\u0001ACTION"))
+                        {
+                            nachricht[1] = nachricht[1].Replace("\u0001ACTION", "***" + nick).Replace("\u0001", "***");
+                        }
                         Received(this, splitmessage[2], nick, nachricht[1]);
                     }
                     else
                     {
+                        if (nachricht[0].Contains("\u0001ACTION"))
+                        {
+                            nachricht[0] = nachricht[0].Replace("\u0001ACTION", "***" + nick).Replace("\u0001", "***");
+                        }
                         Received(this, splitmessage[2], nick, nachricht[0]);
                     }
                 }

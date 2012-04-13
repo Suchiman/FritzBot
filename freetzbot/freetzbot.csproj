@@ -93,6 +93,7 @@
     <Compile Include="commands\seen.cs" />
     <Compile Include="commands\settings.cs" />
     <Compile Include="commands\shorturl.cs" />
+    <Compile Include="commands\title.cs" />
     <Compile Include="commands\trunk.cs" />
     <Compile Include="commands\unignore.cs" />
     <Compile Include="commands\unloadmodule.cs" />
