@@ -206,29 +206,37 @@ namespace freetzbot
 
         private void empfangsthread()
         {
-            try
+            int ErrorCount = 0;
+            while (true)
             {
-                StreamReader stream = new StreamReader(connection.GetStream(), Encoding.GetEncoding("iso-8859-1")); 
-                while (true)
+                try
                 {
-                    if (cancelthread)
+                    StreamReader stream = new StreamReader(connection.GetStream(), Encoding.GetEncoding("iso-8859-1"));
+                    while (true)
+                    {
+                        if (cancelthread)
+                        {
+                            return;
+                        }
+                        String Daten = stream.ReadLine();
+                        if (Daten == null)
+                        {
+                            throw new Exception("connection lost");
+                        }
+                        Thread thread = new Thread(delegate() { process_respond(Daten); });
+                        thread.Name = "Process " + hostname;
+                        thread.Start();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    log("Exception im empfangsthread aufgefangen: " + ex.Message);
+                    ErrorCount++;
+                    if (ErrorCount > 3)
                     {
                         return;
                     }
-                    String Daten = stream.ReadLine();
-                    if (Daten == null)
-                    {
-                        throw new Exception("connection lost");
-                    }
-                    Thread thread = new Thread(delegate() { process_respond(Daten); });
-                    thread.Name = "Process " + hostname;
-                    thread.Start();
                 }
-            }
-            catch (Exception ex)
-            {
-                log("Exception im empfangsthread aufgefangen: " + ex.Message);
-                return;
             }
         }
 

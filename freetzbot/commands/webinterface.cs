@@ -90,10 +90,15 @@ namespace freetzbot.commands
 
         private void httplistener()
         {
+            int ErrorCount = 0;
             while (true)
             {
                 try
                 {
+                    if (listener != null)
+                    {
+                        listener.Close();
+                    }
                     listener = new HttpListener();
                     listener.Prefixes.Add("http://+:6666/");
                     listener.Prefixes.Add("http://+:8080/");
@@ -190,9 +195,15 @@ namespace freetzbot.commands
                         catch { }
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    toolbox.logging("Exception in \"public webinterface()\"");
+                    toolbox.logging("Exception im Webinterface Arbeiter Thread " + ex.Message);
+                    Thread.Sleep(1000);
+                    ErrorCount++;
+                    if (ErrorCount > 3)
+                    {
+                        return;
+                    }
                 }
             }
         }

@@ -59,9 +59,10 @@ namespace freetzbot.commands
                 }
                 connection.sendmsg("Modul wurde nicht gefunden", receiver);
             }
-            catch
+            catch (Exception ex)
             {
                 connection.sendmsg("Das hat eine Exception ausgelöst", receiver);
+                toolbox.logging("Unloadmodule Exception " + ex.Message);
             }
         }
     }
