@@ -68,6 +68,7 @@
     <Compile Include="commands\boxinfo.cs" />
     <Compile Include="commands\boxlist.cs" />
     <Compile Include="commands\boxremove.cs" />
+    <Compile Include="commands\calc.cs" />
     <Compile Include="commands\connect.cs" />
     <Compile Include="commands\db_command.cs" />
     <Compile Include="commands\frag.cs" />
