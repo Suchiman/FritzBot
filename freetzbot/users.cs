@@ -119,6 +119,7 @@ namespace freetzbot
             {
                 try
                 {
+                    TheUsers.Sort();
                     XmlTextWriter UDB = new XmlTextWriter("users.db", Encoding.GetEncoding("iso-8859-1"));
                     UDB.Formatting = Formatting.Indented;
                     XmlSerializer serializer = new XmlSerializer(TheUsers.GetType());
@@ -221,6 +222,7 @@ namespace freetzbot
                     newUsers.Add(oneuser);
                 }
             }
+            newUsers.Sort();
             TheUsers.Clear();
             TheUsers = null;
             TheUsers = newUsers;
@@ -228,59 +230,65 @@ namespace freetzbot
 
         public void GroupUser(String user1, String user2)
         {
-            int u1 = 0, u2 = 0;
+            User Fusioned = new User();
+            int u1 = -1, u2 = -1;
             for (int i = 0; i < TheUsers.Count; i++)
             {
                 for (int x = 0; x < TheUsers[i].names.Count; x++)
                 {
-                    if (TheUsers[i].names[x] == user1)
+                    if (TheUsers[i].names[x] == user1 && u2 == -1)
+                    {
+                        Fusioned = TheUsers[i];
+                        u2 = i;
+                        break;
+                    }
+                    if (TheUsers[i].names[x] == user2 && u1 == -1)
                     {
                         u1 = i;
-                    }
-                    if (TheUsers[i].names[x] == user2)
-                    {
-                        u2 = i;
+                        break;
                     }
                 }
             }
-            if (u1 == 0 || u2 == 0)
+            if (u1 == -1 || u2 == -1)
             {
                 throw new Exception("User not found");
             }
-            foreach (String oldname in TheUsers[u2].names)
+            foreach (String oldname in TheUsers[u1].names)
             {
-                TheUsers[u1].AddName(oldname);
+                Fusioned.AddName(oldname);
             }
-            foreach (String oldbox in TheUsers[u2].boxes)
+            foreach (String oldbox in TheUsers[u1].boxes)
             {
-                TheUsers[u1].AddBox(oldbox);
+                Fusioned.AddBox(oldbox);
             }
-            foreach (String oldjoke in TheUsers[u2].jokes)
+            foreach (String oldjoke in TheUsers[u1].jokes)
             {
-                TheUsers[u1].AddJoke(oldjoke);
+                Fusioned.AddJoke(oldjoke);
             }
-            if (TheUsers[u2].last_seen > TheUsers[u1].last_seen)
+            if (TheUsers[u1].last_seen > Fusioned.last_seen)
             {
-                TheUsers[u1].last_seen = TheUsers[u2].last_seen;
+                Fusioned.last_seen = TheUsers[u1].last_seen;
             }
-            if (TheUsers[u2].last_messaged > TheUsers[u1].last_messaged)
+            if (TheUsers[u1].last_messaged > Fusioned.last_messaged)
             {
-                TheUsers[u1].last_messaged = TheUsers[u2].last_messaged;
-                TheUsers[u1].last_message = TheUsers[u2].last_message;
+                Fusioned.last_messaged = TheUsers[u1].last_messaged;
+                Fusioned.last_message = TheUsers[u1].last_message;
             }
-            if (TheUsers[u2].ignored)
+            if (TheUsers[u1].ignored)
             {
-                TheUsers[u1].ignored = true;
+                Fusioned.ignored = true;
             }
-            if (TheUsers[u2].asked)
+            if (TheUsers[u1].asked)
             {
-                TheUsers[u1].asked = true;
+                Fusioned.asked = true;
             }
-            if (TheUsers[u2].is_op)
+            if (TheUsers[u1].is_op)
             {
-                TheUsers[u1].is_op = true;
+                Fusioned.is_op = true;
             }
+            TheUsers.RemoveAt(u1);
             TheUsers.RemoveAt(u2);
+            TheUsers.Add(Fusioned);
             Flush();
         }
 
@@ -313,7 +321,7 @@ namespace freetzbot
         }
     }
 
-    public class User
+    public class User : IComparable
     {
         public List<String> names;
         public List<String> boxes;
@@ -409,6 +417,16 @@ namespace freetzbot
                 return true;
             }
             return false;
+        }
+
+        public int CompareTo(object obj)
+        {
+            if (obj is User)
+            {
+                User CompareUser = (User)obj;
+                return names[0].CompareTo(CompareUser.names[0]);
+            }
+            throw new ArgumentException("object is not an User");
         }
     }
 

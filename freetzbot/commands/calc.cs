@@ -44,22 +44,29 @@ namespace freetzbot.commands
 
         public void run(irc connection, String sender, String receiver, String message)
         {
-            message = message.Replace(" ", ""); //10+5-8*3/2
-            if (message.Contains("("))// 100*(100+(50-25)*3)/2      100*(50-25)+(50-25)
+            try
             {
-                while (message.Contains("("))
+                message = message.Replace(" ", ""); //10+5-8*3/2
+                if (message.Contains("("))// 100*(100+(50-25)*-3)/2      100*(50-25)+(50-25)
                 {
-                    int start = message.LastIndexOf('(');
-                    int end = message.IndexOf(')') + 1;
-                    String first = message.Remove(start);
-                    String second = message.Remove(0, start + 1).Remove(end - start - 2);
-                    second = CalcPartial(second);
-                    String last = message.Remove(0, end);
-                    message = first + second + last;
+                    while (message.Contains("("))
+                    {
+                        int start = message.LastIndexOf('(');
+                        int end = message.Remove(0, start).IndexOf(')') + 1 + start;
+                        String first = message.Remove(start);
+                        String second = message.Remove(0, start + 1).Remove(end - start - 2);
+                        second = CalcPartial(second);
+                        String last = message.Remove(0, end);
+                        message = first + second + last;
+                    }
                 }
+                String result = CalcPartial(message);
+                connection.sendmsg("Ergebnis: " + result, receiver);
             }
-            String result = CalcPartial(message);
-            connection.sendmsg("Ergebnis: " + result, receiver);
+            catch
+            {
+                connection.sendmsg("Schade, das hat leider eine Exception bei der Verarbeitung ausgelöst...", receiver);
+            }
         }
 
         private String CalcPartial(String to_calc)
@@ -69,11 +76,17 @@ namespace freetzbot.commands
             List<Char> opers = new List<Char>();
 
             //Operatoren ermitteln und zur Liste hinzufügen
+            int i = 0; //Ein Zeichen direkt hinter einem Operator ignorieren z.b. 10*-1
             foreach (Char onechar in messageArray)
             {
-                if (onechar == '+' || onechar == '-' || onechar == '*' || onechar == '/' || onechar == '%')
+                if ((onechar == '+' || onechar == '-' || onechar == '*' || onechar == '/' || onechar == '%') && i == 0)
                 {
                     opers.Add(onechar);
+                    i = 2;
+                }
+                if (i > 0)
+                {
+                    i--;
                 }
             }
 
@@ -113,11 +126,11 @@ namespace freetzbot.commands
 
         private String CalcString(String number1, String number2, Char op)
         {
-            Int64 num1 = 0;
-            Int64 num2 = 0;
+            Double num1 = 0;
+            Double num2 = 0;
             String result = "";
-            Int64.TryParse(number1, out num1);
-            Int64.TryParse(number2, out num2);
+            Double.TryParse(number1, out num1);
+            Double.TryParse(number2, out num2);
             switch (op)
             {
                 case '+':

@@ -116,8 +116,11 @@ namespace freetzbot
                     return;
                 case "NICK":
                     toolbox.logging(nick + " heißt jetzt " + message);
-                    TheUsers[nick].AddName(message);
-                    TheUsers[nick].authenticated = false;
+                    if (!TheUsers.Exists(nick))
+                    {
+                        TheUsers[nick].AddName(message);
+                        TheUsers[nick].authenticated = false;
+                    }
                     return;
                 case "KICK":
                     toolbox.logging(nick + " hat mich aus dem Raum " + message + " geworfen");
