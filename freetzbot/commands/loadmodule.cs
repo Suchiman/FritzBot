@@ -1,62 +1,37 @@
 ﻿using System;
 using System.Reflection;
 
-namespace freetzbot.commands
+namespace FritzBot.commands
 {
-    class loadmodule : command
+    class loadmodule : ICommand
     {
-        private String[] name = { "modprobe", "loadmodule" };
-        private String helptext = "Aktiviert einen meiner Befehle";
-        private Boolean op_needed = true;
-        private Boolean parameter_needed = true;
-        private Boolean accept_every_param = false;
+        public String[] Name { get { return new String[] { "modprobe", "insmod", "loadmodule" }; } }
+        public String HelpText { get { return "Aktiviert einen meiner Befehle"; } }
+        public Boolean OpNeeded { get { return true; } }
+        public Boolean ParameterNeeded { get { return true; } }
+        public Boolean AcceptEveryParam { get { return false; } }
 
-        public String[] get_name()
-        {
-            return name;
-        }
-
-        public String get_helptext()
-        {
-            return helptext;
-        }
-
-        public Boolean get_op_needed()
-        {
-            return op_needed;
-        }
-
-        public Boolean get_parameter_needed()
-        {
-            return parameter_needed;
-        }
-
-        public Boolean get_accept_every_param()
-        {
-            return accept_every_param;
-        }
-
-        public void destruct()
+        public void Destruct()
         {
 
         }
 
-        public void run(irc connection, String sender, String receiver, String message)
+        public void Run(Irc connection, String sender, String receiver, String message)
         {
             try
             {
-                Type t = Assembly.GetExecutingAssembly().GetType("freetzbot.commands." + message);
+                Type t = Assembly.GetExecutingAssembly().GetType("FritzBot.commands." + message);
                 if (t == null)
                 {
-                    connection.sendmsg("Modul wurde nicht gefunden", receiver);
+                    connection.Sendmsg("Modul wurde nicht gefunden", receiver);
                     return;
                 }
-                freetzbot.Program.commands.Add((command)Activator.CreateInstance(t));
-                connection.sendmsg("Modul erfolgreich geladen", receiver);
+                FritzBot.Program.Commands.Add((ICommand)Activator.CreateInstance(t));
+                connection.Sendmsg("Modul erfolgreich geladen", receiver);
             }
             catch
             {
-                connection.sendmsg("Das hat eine Exception ausgelöst", receiver);
+                connection.Sendmsg("Das hat eine Exception ausgelöst", receiver);
             }
         }
     }

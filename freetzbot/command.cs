@@ -1,15 +1,15 @@
 ﻿using System;
 
-namespace freetzbot
+namespace FritzBot
 {
-    public interface command
+    interface ICommand
     {
-        String[] get_name();
-        String get_helptext();
-        Boolean get_op_needed();
-        Boolean get_parameter_needed();
-        Boolean get_accept_every_param();
-        void run(irc connection, String sender, String receiver, String message);
-        void destruct();
+        String[] Name { get; }
+        String HelpText { get; }
+        Boolean OpNeeded { get; }
+        Boolean ParameterNeeded { get; }
+        Boolean AcceptEveryParam { get; }
+        void Run(Irc connection, String sender, String receiver, String message);
+        void Destruct();
     }
 }

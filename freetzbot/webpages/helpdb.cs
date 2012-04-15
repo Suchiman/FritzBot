@@ -2,34 +2,31 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace freetzbot.webpages
+namespace FritzBot.webpages
 {
-    class helpdb : pageinterface
+    class helpdb : IWebInterface
     {
-        public string get_url()
-        {
-            return "/helpdb";
-        }
+        public String Url { get { return "/helpdb"; } }
 
-        public html_response gen_page(html_request request)
+        public html_response GenPage(html_request request)
         {
             html_response theresponse = new html_response();
-            String logincheck = login.check_login(request);
+            String logincheck = login.CheckLogin(request);
             theresponse.page += "<!DOCTYPE html><html><body>";
-            theresponse.page += index.gen_menu();
+            theresponse.page += index.GenMenu();
             theresponse.page += "<table border=2px>";
             theresponse.page += "<tr><td><b>Befehl</b></td><td><b>Beschreibung</b></td></tr>";
-            foreach (command thecommand in freetzbot.Program.commands)
+            foreach (ICommand thecommand in FritzBot.Program.Commands)
             {
-                if (!(thecommand.get_op_needed() && !toolbox.op_check(logincheck)))
+                if (!(thecommand.OpNeeded && !toolbox.OpCheck(logincheck)))
                 {
                     String names = "";
-                    foreach (String name in thecommand.get_name())
+                    foreach (String name in thecommand.Name)
                     {
                         names += ", " + name;
                     }
                     names = names.Remove(0, 2);
-                    theresponse.page += "<tr><td>" + names + "</td><td>" + thecommand.get_helptext() + "</td></tr>";
+                    theresponse.page += "<tr><td>" + names + "</td><td>" + thecommand.HelpText + "</td></tr>";
                 }
             }
             theresponse.page += "</table>";

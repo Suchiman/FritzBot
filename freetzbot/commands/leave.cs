@@ -1,49 +1,24 @@
 ﻿using System;
 using System.Threading;
 
-namespace freetzbot.commands
+namespace FritzBot.commands
 {
-    class leave : command
+    class leave : ICommand
     {
-        private String[] name = { "leave" };
-        private String helptext = "Zum angegebenen Server werde ich die Verbindung trennen, Operator Befehl: !leave test.de";
-        private Boolean op_needed = true;
-        private Boolean parameter_needed = true;
-        private Boolean accept_every_param = false;
+        public String[] Name { get { return new String[] { "leave" }; } }
+        public String HelpText { get { return "Zum angegebenen Server werde ich die Verbindung trennen, Operator Befehl: !leave test.de"; } }
+        public Boolean OpNeeded { get { return true; } }
+        public Boolean ParameterNeeded { get { return true; } }
+        public Boolean AcceptEveryParam { get { return false; } }
 
-        public String[] get_name()
-        {
-            return name;
-        }
-
-        public String get_helptext()
-        {
-            return helptext;
-        }
-
-        public Boolean get_op_needed()
-        {
-            return op_needed;
-        }
-
-        public Boolean get_parameter_needed()
-        {
-            return parameter_needed;
-        }
-
-        public Boolean get_accept_every_param()
-        {
-            return accept_every_param;
-        }
-
-        public void destruct()
+        public void Destruct()
         {
 
         }
 
         static private Mutex leave_safe = new Mutex();
 
-        public void run(irc connection, String sender, String receiver, String message)
+        public void Run(Irc connection, String sender, String receiver, String message)
         {
             leave_safe.WaitOne();
             String[] config_servers_array = toolbox.getDatabaseByName("servers.cfg").GetAll();
@@ -55,13 +30,13 @@ namespace freetzbot.commands
                     break;
                 }
             }
-            for (int i = 0; i < freetzbot.Program.irc_connections.Count; i++)
+            for (int i = 0; i < FritzBot.Program.irc_connections.Count; i++)
             {
-                if (freetzbot.Program.irc_connections[i].hostname == message)
+                if (FritzBot.Program.irc_connections[i].HostName == message)
                 {
-                    freetzbot.Program.irc_connections[i].disconnect();
-                    freetzbot.Program.irc_connections[i] = null;
-                    freetzbot.Program.irc_connections.RemoveAt(i);
+                    FritzBot.Program.irc_connections[i].Disconnect();
+                    FritzBot.Program.irc_connections[i] = null;
+                    FritzBot.Program.irc_connections.RemoveAt(i);
                     break;
                 }
             }

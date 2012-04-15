@@ -1,56 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace freetzbot.commands
+namespace FritzBot.commands
 {
-    class hilfe : command
+    class hilfe : ICommand
     {
-        private String[] name = { "hilfe", "help", "faq", "info", "man", "lsmod" };
-        private String helptext = "Die Hilfe!";
-        private Boolean op_needed = false;
-        private Boolean parameter_needed = false;
-        private Boolean accept_every_param = true;
+        public String[] Name { get { return new String[] { "hilfe", "help", "faq", "info", "man", "lsmod" }; } }
+        public String HelpText { get { return "Die Hilfe!"; } }
+        public Boolean OpNeeded { get { return false; } }
+        public Boolean ParameterNeeded { get { return false; } }
+        public Boolean AcceptEveryParam { get { return true; } }
 
-        public String[] get_name()
-        {
-            return name;
-        }
-
-        public String get_helptext()
-        {
-            return helptext;
-        }
-
-        public Boolean get_op_needed()
-        {
-            return op_needed;
-        }
-
-        public Boolean get_parameter_needed()
-        {
-            return parameter_needed;
-        }
-
-        public Boolean get_accept_every_param()
-        {
-            return accept_every_param;
-        }
-
-        public void destruct()
+        public void Destruct()
         {
 
         }
 
-        public void run(irc connection, String sender, String receiver, String message)
+        public void Run(Irc connection, String sender, String receiver, String message)
         {
-            if (message == "")
+            if (String.IsNullOrEmpty(message))
             {
                 List<String> befehle = new List<String>();
-                foreach (command thecommand in freetzbot.Program.commands)
+                foreach (ICommand thecommand in FritzBot.Program.Commands)
                 {
-                    if (thecommand.get_op_needed() && toolbox.op_check(sender) || !thecommand.get_op_needed())
+                    if (thecommand.OpNeeded && toolbox.OpCheck(sender) || !thecommand.OpNeeded)
                     {
-                        befehle.Add(thecommand.get_name()[0]);
+                        befehle.Add(thecommand.Name[0]);
                     }
                 }
                 befehle.Sort();
@@ -60,23 +35,23 @@ namespace freetzbot.commands
                     output += ", " + data;
                 }
                 output = output.Remove(0, 2);
-                connection.sendmsg("Derzeit verfügbare Befehle: " + output, receiver);
-                connection.sendmsg("Hilfe zu jedem Befehl mit \"!help befehl\". Um die anderen nicht zu belästigen kannst du mich auch per PM (query) anfragen", receiver);
+                connection.Sendmsg("Derzeit verfügbare Befehle: " + output, receiver);
+                connection.Sendmsg("Hilfe zu jedem Befehl mit \"!help befehl\". Um die anderen nicht zu belästigen kannst du mich auch per PM (query) anfragen", receiver);
             }
             else
             {
-                foreach (command thecommand in freetzbot.Program.commands)
+                foreach (ICommand thecommand in FritzBot.Program.Commands)
                 {
-                    foreach (String name in thecommand.get_name())
+                    foreach (String CommandName in thecommand.Name)
                     {
-                        if (message == name)
+                        if (message == CommandName)
                         {
-                            connection.sendmsg(thecommand.get_helptext(), receiver);
+                            connection.Sendmsg(thecommand.HelpText, receiver);
                             return;
                         }
                     }
                 }
-                connection.sendmsg("Ich konnte keinen Befehl finden der so heißt", receiver);
+                connection.Sendmsg("Ich konnte keinen Befehl finden der so heißt", receiver);
             }
         }
     }

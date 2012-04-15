@@ -4,7 +4,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 
-namespace freetzbot
+namespace FritzBot
 {
     class settings
     {
@@ -15,11 +15,11 @@ namespace freetzbot
         public settings(String file)
         {
             settingsfile = file;
-            read_settings();
+            ReadSettings();
             threadsafe = new Mutex();
         }
 
-        private void read_settings()
+        private void ReadSettings()
         {
             if (!File.Exists(settingsfile))
             {
@@ -28,47 +28,49 @@ namespace freetzbot
             settingslist = new List<String>(File.ReadAllLines(settingsfile, Encoding.GetEncoding("iso-8859-1")));
         }
 
-        public String get(String option)
+        public String this[String option]
         {
-            threadsafe.WaitOne();
-            foreach (String data in settingslist)
+            get
             {
-                String[] splitted = data.Split(new String[] { "=" }, 2, StringSplitOptions.None);
-                if (splitted[0] == option)
+                threadsafe.WaitOne();
+                foreach (String data in settingslist)
                 {
-                    threadsafe.ReleaseMutex();
-                    return splitted[1];
+                    String[] splitted = data.Split(new String[] { "=" }, 2, StringSplitOptions.None);
+                    if (splitted[0] == option)
+                    {
+                        threadsafe.ReleaseMutex();
+                        return splitted[1];
+                    }
                 }
+                threadsafe.ReleaseMutex();
+                return "";
             }
-            threadsafe.ReleaseMutex();
-            return "";
-        }
-
-        public void set(String option, String to_set)
-        {
-            threadsafe.WaitOne();
-            Boolean exist = false;
-            for (int i = 0; settingslist.Count > i; i++)
+            set
             {
-                if (settingslist[i].Contains(option + "="))
+                threadsafe.WaitOne();
+                Boolean exist = false;
+                for (int i = 0; settingslist.Count > i; i++)
                 {
-                    settingslist[i] = option + "=" + to_set;
-                    exist = true;
+                    if (settingslist[i].Contains(option + "="))
+                    {
+                        settingslist[i] = option + "=" + value;
+                        exist = true;
+                    }
                 }
-            }
-            if (exist == false)
-            {
-                settingslist.Add(option + "=" + to_set);
-            }
-            for (int i = 0; i < settingslist.Count; i++)
-            {
-                if (settingslist[i] == "")
+                if (exist == false)
                 {
-                    settingslist.RemoveAt(i);
+                    settingslist.Add(option + "=" + value);
                 }
+                for (int i = 0; i < settingslist.Count; i++)
+                {
+                    if (String.IsNullOrEmpty(settingslist[i]))
+                    {
+                        settingslist.RemoveAt(i);
+                    }
+                }
+                File.WriteAllLines(settingsfile, settingslist.ToArray(), Encoding.GetEncoding("iso-8859-1"));
+                threadsafe.ReleaseMutex();
             }
-            File.WriteAllLines(settingsfile, settingslist.ToArray(), Encoding.GetEncoding("iso-8859-1"));
-            threadsafe.ReleaseMutex();
         }
     }
 }

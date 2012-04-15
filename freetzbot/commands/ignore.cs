@@ -1,51 +1,26 @@
 ﻿using System;
 
-namespace freetzbot.commands
+namespace FritzBot.commands
 {
-    class ignore : command
+    class ignore : ICommand
     {
-        private String[] name = { "ignore" };
-        private String helptext = "Schließt die angegebene Person von mir aus";
-        private Boolean op_needed = false;
-        private Boolean parameter_needed = true;
-        private Boolean accept_every_param = false;
+        public String[] Name { get { return new String[] { "ignore" }; } }
+        public String HelpText { get { return "Schließt die angegebene Person von mir aus"; } }
+        public Boolean OpNeeded { get { return false; } }
+        public Boolean ParameterNeeded { get { return true; } }
+        public Boolean AcceptEveryParam { get { return false; } }
 
-        public String[] get_name()
-        {
-            return name;
-        }
-
-        public String get_helptext()
-        {
-            return helptext;
-        }
-
-        public Boolean get_op_needed()
-        {
-            return op_needed;
-        }
-
-        public Boolean get_parameter_needed()
-        {
-            return parameter_needed;
-        }
-
-        public Boolean get_accept_every_param()
-        {
-            return accept_every_param;
-        }
-
-        public void destruct()
+        public void Destruct()
         {
 
         }
 
-        public void run(irc connection, String sender, String receiver, String message)
+        public void Run(Irc connection, String sender, String receiver, String message)
         {
-            if (sender == message || toolbox.op_check(sender))
+            if (sender == message || toolbox.OpCheck(sender))
             {
-                freetzbot.Program.TheUsers[message].ignored = true;
-                connection.sendmsg("Ich werde " + message + " ab sofort keine beachtung mehr schenken", receiver);
+                FritzBot.Program.TheUsers[message].ignored = true;
+                connection.Sendmsg("Ich werde " + message + " ab sofort keine beachtung mehr schenken", receiver);
             }
         }
     }

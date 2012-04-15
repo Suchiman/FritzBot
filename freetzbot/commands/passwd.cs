@@ -3,93 +3,68 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 
-namespace freetzbot.commands
+namespace FritzBot.commands
 {
-    class passwd : command
+    class passwd : ICommand
     {
-        private String[] name = { "passwd" };
-        private String helptext = "Ändert dein Passwort. Denk dran dass du das im Query machen solltest. Nach der Eingabe von !passwd wirst du nach weiteren Details gefragt";
-        private Boolean op_needed = false;
-        private Boolean parameter_needed = false;
-        private Boolean accept_every_param = false;
+        public String[] Name { get { return new String[] { "passwd" }; } }
+        public String HelpText { get { return "Ändert dein Passwort. Denk dran dass du das im Query machen solltest. Nach der Eingabe von !passwd wirst du nach weiteren Details gefragt"; } }
+        public Boolean OpNeeded { get { return false; } }
+        public Boolean ParameterNeeded { get { return false; } }
+        public Boolean AcceptEveryParam { get { return false; } }
 
-        public String[] get_name()
-        {
-            return name;
-        }
-
-        public String get_helptext()
-        {
-            return helptext;
-        }
-
-        public Boolean get_op_needed()
-        {
-            return op_needed;
-        }
-
-        public Boolean get_parameter_needed()
-        {
-            return parameter_needed;
-        }
-
-        public Boolean get_accept_every_param()
-        {
-            return accept_every_param;
-        }
-
-        public void destruct()
+        public void Destruct()
         {
 
         }
 
-        public void run(irc connection, String sender, String receiver, String message)
+        public void Run(Irc connection, String sender, String receiver, String message)
         {
             if (sender != receiver)
             {
-                connection.sendmsg("Zu deiner eigenen Sicherheit solltest du das lieber mit mir im Query bereden", sender);
+                connection.Sendmsg("Zu deiner eigenen Sicherheit solltest du das lieber mit mir im Query bereden", sender);
                 return;
             }
             else
             {
-                if (freetzbot.Program.TheUsers[sender].password != "")
+                if (!String.IsNullOrEmpty(FritzBot.Program.TheUsers[sender].password))
                 {
-                    connection.sendmsg("Bitte gib zuerst dein altes Passwort ein:", sender);
-                    freetzbot.Program.await_response = true;
-                    freetzbot.Program.awaited_nick = sender;
-                    while (freetzbot.Program.await_response)
+                    connection.Sendmsg("Bitte gib zuerst dein altes Passwort ein:", sender);
+                    FritzBot.Program.await_response = true;
+                    FritzBot.Program.awaited_nick = sender;
+                    while (FritzBot.Program.await_response)
                     {
                         Thread.Sleep(50);
                     }
-                    if (freetzbot.Program.TheUsers[sender].CheckPassword(freetzbot.Program.awaited_response))
+                    if (FritzBot.Program.TheUsers[sender].CheckPassword(FritzBot.Program.awaited_response))
                     {
-                        connection.sendmsg("Passwort korrekt, gib nun dein neues Passwort ein:", sender);
+                        connection.Sendmsg("Passwort korrekt, gib nun dein neues Passwort ein:", sender);
                     }
                     else
                     {
-                        connection.sendmsg("Passwort inkorrekt, abbruch!", sender);
+                        connection.Sendmsg("Passwort inkorrekt, abbruch!", sender);
                         return;
                     }
-                    freetzbot.Program.await_response = true;
-                    freetzbot.Program.awaited_nick = sender;
-                    while (freetzbot.Program.await_response)
+                    FritzBot.Program.await_response = true;
+                    FritzBot.Program.awaited_nick = sender;
+                    while (FritzBot.Program.await_response)
                     {
                         Thread.Sleep(50);
                     }
-                    freetzbot.Program.TheUsers[sender].SetPassword(freetzbot.Program.awaited_response);
-                    connection.sendmsg("Passwort wurde geändert!", sender);
+                    FritzBot.Program.TheUsers[sender].SetPassword(FritzBot.Program.awaited_response);
+                    connection.Sendmsg("Passwort wurde geändert!", sender);
                 }
                 else
                 {
-                    connection.sendmsg("Okay bitte gib nun dein Passwort ein", sender);
-                    freetzbot.Program.await_response = true;
-                    freetzbot.Program.awaited_nick = sender;
-                    while (freetzbot.Program.await_response)
+                    connection.Sendmsg("Okay bitte gib nun dein Passwort ein", sender);
+                    FritzBot.Program.await_response = true;
+                    FritzBot.Program.awaited_nick = sender;
+                    while (FritzBot.Program.await_response)
                     {
                         Thread.Sleep(50);
                     }
-                    freetzbot.Program.TheUsers[sender].SetPassword(freetzbot.Program.awaited_response);
-                    connection.sendmsg("Passwort wurde festgelegt!", sender);
+                    FritzBot.Program.TheUsers[sender].SetPassword(FritzBot.Program.awaited_response);
+                    connection.Sendmsg("Passwort wurde festgelegt!", sender);
                 }
             }
         }

@@ -1,92 +1,67 @@
 ﻿using System;
 using System.Threading;
 
-namespace freetzbot.commands
+namespace FritzBot.commands
 {
-    class seen : command
+    class seen : ICommand
     {
-        private String[] name = { "seen", "said" };
-        private String helptext = "Gibt aus wann der Nutzer zuletzt gesehen wurde und wann er was zuletzt sagte.";
-        private Boolean op_needed = false;
-        private Boolean parameter_needed = true;
-        private Boolean accept_every_param = false;
+        public String[] Name { get { return new String[] { "seen", "said" }; } }
+        public String HelpText { get { return "Gibt aus wann der Nutzer zuletzt gesehen wurde und wann er was zuletzt sagte."; } }
+        public Boolean OpNeeded { get { return false; } }
+        public Boolean ParameterNeeded { get { return true; } }
+        public Boolean AcceptEveryParam { get { return false; } }
 
-        public String[] get_name()
-        {
-            return name;
-        }
-
-        public String get_helptext()
-        {
-            return helptext;
-        }
-
-        public Boolean get_op_needed()
-        {
-            return op_needed;
-        }
-
-        public Boolean get_parameter_needed()
-        {
-            return parameter_needed;
-        }
-
-        public Boolean get_accept_every_param()
-        {
-            return accept_every_param;
-        }
-
-        public void destruct()
+        public void Destruct()
         {
 
         }
 
-        public void run(irc connection, String sender, String receiver, String message)
+        public void Run(Irc connection, String sender, String receiver, String message)
         {
-            if (message.ToLower() == connection.nickname.ToLower())
+            if (message.ToLower() == connection.Nickname.ToLower())
             {
-                connection.sendmsg("Ich bin gerade hier und was ich schreibe siehst du ja auch :-)", receiver);
+                connection.Sendmsg("Ich bin gerade hier und was ich schreibe siehst du ja auch :-)", receiver);
                 return;
             }
-            if (freetzbot.Program.TheUsers.Exists(message))
+            if (FritzBot.Program.TheUsers.Exists(message))
             {
                 String output = "";
 
-                freetzbot.Program.await_response = true;
-                connection.sendraw("NAMES");
-                while (freetzbot.Program.await_response)
+                FritzBot.Program.await_response = true;
+                connection.Sendraw("NAMES");
+                while (FritzBot.Program.await_response)
                 {
                     Thread.Sleep(50);
                 }
-                String response = freetzbot.Program.awaited_response;
+                String response = FritzBot.Program.awaited_response;
                 if (response.Contains(message))
                 {
-                    freetzbot.Program.TheUsers[message].last_seen = DateTime.MinValue;
+                    FritzBot.Program.TheUsers[message].last_seen = DateTime.MinValue;
                 }
-                if (freetzbot.Program.TheUsers[message].last_seen != DateTime.MinValue)
+                if (FritzBot.Program.TheUsers[message].last_seen != DateTime.MinValue)
                 {
-                    output = "Den/Die habe ich hier zuletzt am " + freetzbot.Program.TheUsers[message].last_seen.ToString("dd.MM.yyyy ") + "um" + freetzbot.Program.TheUsers[message].last_seen.ToString(" HH:mm:ss ") + "Uhr gesehen.";
+                    output = "Den/Die habe ich hier zuletzt am " + FritzBot.Program.TheUsers[message].last_seen.ToString("dd.MM.yyyy ") + "um" + FritzBot.Program.TheUsers[message].last_seen.ToString(" HH:mm:ss ") + "Uhr gesehen.";
                 }
-                if (freetzbot.Program.TheUsers[message].last_messaged != DateTime.MinValue)
+                if (FritzBot.Program.TheUsers[message].last_messaged != DateTime.MinValue)
                 {
-                    if (output != "")
+                    if (!String.IsNullOrEmpty(output))
                     {
                         output += " ";
                     }
-                    output += "Am " + freetzbot.Program.TheUsers[message].last_messaged.ToString("dd.MM.yyyy ") + "um" + freetzbot.Program.TheUsers[message].last_messaged.ToString(" HH:mm:ss ") + "Uhr sagte er/sie zuletzt: \"" + freetzbot.Program.TheUsers[message].last_message + "\"";
+                    output += "Am " + FritzBot.Program.TheUsers[message].last_messaged.ToString("dd.MM.yyyy ") + "um" + FritzBot.Program.TheUsers[message].last_messaged.ToString(" HH:mm:ss ") + "Uhr sagte er/sie zuletzt: \"" + FritzBot.Program.TheUsers[message].last_message + "\"";
                 }
-                if (output != "")
+                if (!String.IsNullOrEmpty(output))
                 {
-                    connection.sendmsg(output, receiver);
+                    connection.Sendmsg(output, receiver);
                 }
                 else
                 {
-                    connection.sendmsg("Scheinbar sind meine Datensätze unvollständig, tut mir leid", receiver);
+                    connection.Sendmsg("Scheinbar sind meine Datensätze unvollständig, tut mir leid", receiver);
                 }
             }
             else
             {
-                connection.sendmsg("Diesen Benutzer habe ich noch nie gesehen", receiver);
+                connection.Sendmsg("Diesen Benutzer habe ich noch nie gesehen", receiver);
             }
         }
     }

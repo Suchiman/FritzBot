@@ -7,42 +7,17 @@ using System.Security.Cryptography;
 using System.Reflection;
 using System.Collections.Generic;
 
-namespace freetzbot.commands
+namespace FritzBot.commands
 {
-    class webinterface : command
+    class webinterface : ICommand
     {
-        private String[] name = { "webinterface", "web" };
-        private String helptext = "Information über mein Webinterface";
-        private Boolean op_needed = false;
-        private Boolean parameter_needed = false;
-        private Boolean accept_every_param = false;
+        public String[] Name { get { return new String[] { "webinterface", "web" }; } }
+        public String HelpText { get { return "Information über mein Webinterface"; } }
+        public Boolean OpNeeded { get { return false; } }
+        public Boolean ParameterNeeded { get { return false; } }
+        public Boolean AcceptEveryParam { get { return false; } }
 
-        public String[] get_name()
-        {
-            return name;
-        }
-
-        public String get_helptext()
-        {
-            return helptext;
-        }
-
-        public Boolean get_op_needed()
-        {
-            return op_needed;
-        }
-
-        public Boolean get_parameter_needed()
-        {
-            return parameter_needed;
-        }
-
-        public Boolean get_accept_every_param()
-        {
-            return accept_every_param;
-        }
-
-        public void destruct()
+        public void Destruct()
         {
             listener_thread.Abort();
             listener.Abort();
@@ -50,19 +25,18 @@ namespace freetzbot.commands
 
         private HttpListener listener;
         private Thread listener_thread;
-        private List<pageinterface> pages;
+        private List<IWebInterface> pages;
 
         public webinterface()
         {
             try
             {
-                pages = new List<pageinterface>();
-                List<Type> typelist = new List<Type>();
+                pages = new List<IWebInterface>();
                 foreach (Type t in Assembly.GetExecutingAssembly().GetTypes())
                 {
-                    if (t.Namespace == "freetzbot.webpages")
+                    if (t.Namespace == "FritzBot.webpages")
                     {
-                        pages.Add((pageinterface)Activator.CreateInstance(t));
+                        pages.Add((IWebInterface)Activator.CreateInstance(t));
                     }
                 }
                 listener_thread = new Thread(new ThreadStart(this.httplistener));
@@ -72,19 +46,19 @@ namespace freetzbot.commands
             }
             catch
             {
-                toolbox.logging("Exception in \"public webinterface()\"");
+                toolbox.Logging("Exception in \"public webinterface()\"");
             }
         }
 
-        public void run(irc connection, String sender, String receiver, String message)
+        public void Run(Irc connection, String sender, String receiver, String message)
         {
             if (listener.IsListening && listener_thread.IsAlive)
             {
-                connection.sendmsg("Webinterface läuft und ist unter http://teneon.de:8080 zu erreichen", receiver);
+                connection.Sendmsg("Webinterface läuft und ist unter http://teneon.de:8080 zu erreichen", receiver);
             }
             else
             {
-                connection.sendmsg("Scheinbar läuft mein Webinterface nicht mehr :(", receiver);
+                connection.Sendmsg("Scheinbar läuft mein Webinterface nicht mehr :(", receiver);
             }
         }
 
@@ -108,12 +82,11 @@ namespace freetzbot.commands
                         HttpListenerContext context = listener.GetContext();
                         HttpListenerRequest request = context.Request;
                         HttpListenerResponse response = context.Response;
-                        response.Headers.Add(HttpResponseHeader.Server, "FreetzBot");
+                        response.Headers.Add(HttpResponseHeader.Server, "FritzBot");
                         String url = request.RawUrl;
                         html_response theresponse = new html_response();
                         html_request therequest = new html_request();
                         therequest.useradress = request.RemoteEndPoint.Address;
-                        therequest.host = request.Url.Scheme + "://" + request.Url.Host + ":" + request.Url.Port;
                         therequest.cookies = request.Cookies;
                         if (request.HasEntityBody)
                         {
@@ -156,14 +129,14 @@ namespace freetzbot.commands
                                 therequest.getdata.Add(split[0], split[1]);
                             }
                         }
-                        foreach (pageinterface thepage in pages)
+                        foreach (IWebInterface thepage in pages)
                         {
-                            if (thepage.get_url() == url)
+                            if (thepage.Url == url)
                             {
-                                theresponse = thepage.gen_page(therequest);
+                                theresponse = thepage.GenPage(therequest);
                             }
                         }
-                        if (theresponse.refer == "")
+                        if (String.IsNullOrEmpty(theresponse.refer))
                         {
                             response.Headers.Add(HttpResponseHeader.ContentType, theresponse.content_type);
                             response.StatusCode = theresponse.status_code;
@@ -197,7 +170,7 @@ namespace freetzbot.commands
                 }
                 catch (Exception ex)
                 {
-                    toolbox.logging("Exception im Webinterface Arbeiter Thread " + ex.Message);
+                    toolbox.Logging("Exception im Webinterface Arbeiter Thread " + ex.Message);
                     Thread.Sleep(1000);
                     ErrorCount++;
                     if (ErrorCount > 3)

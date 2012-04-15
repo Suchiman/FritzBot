@@ -1,15 +1,12 @@
 ﻿using System;
 
-namespace freetzbot.webpages
+namespace FritzBot.webpages
 {
-    class index : pageinterface
+    class index : IWebInterface
     {
-        public String get_url()
-        {
-            return "/";
-        }
+        public String Url { get { return "/"; } }
 
-        public static String gen_menu()
+        public static String GenMenu()
         {
             String menu = "";
             menu += "<div><table cellspacing=10px><tr>";
@@ -22,13 +19,13 @@ namespace freetzbot.webpages
             return menu;
         }
 
-        public html_response gen_page(html_request request)
+        public html_response GenPage(html_request request)
         {
             html_response theresponse = new html_response();
             theresponse.page += "<!DOCTYPE html><html><body>";
-            theresponse.page += gen_menu();
-            String logincheck = login.check_login(request);
-            if (logincheck != "")
+            theresponse.page += GenMenu();
+            String logincheck = login.CheckLogin(request);
+            if (!String.IsNullOrEmpty(logincheck))
             {
                 theresponse.page += "Willkommen " + logincheck;
             }

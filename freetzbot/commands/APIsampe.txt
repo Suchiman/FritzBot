@@ -1,66 +1,41 @@
-﻿Alle Befehle müssen im namensraum freetzbot.commands liegen und das interface command implementieren, dazu siehe die schablone
-Im name Array kann der befehlsname festgelegt werden die dem Kommando zugeordnet werden !example !beispiel
-Im helptext wird ein hilfetext hinterlegt der durch !help example abgerufen werden kann
-op_needed gibt an ob es sich um einen Administrativen Befehl handelt der nur bestimmten Nutzern zugänglich ist
-parameter_needed gibt an ob ein Parameter erforderlich ist oder nicht,
+﻿Alle Befehle müssen im namensraum FritzBot.commands liegen und das Interface ICommand implementieren, dazu siehe die schablone
+Im Name Array kann der befehlsname festgelegt werden die dem Kommando zugeordnet werden !example !beispiel
+Im HelpText wird ein Hilfetext hinterlegt der durch !help example abgerufen werden kann
+OpNeeded gibt an ob es sich um einen Administrativen Befehl handelt der nur bestimmten Nutzern zugänglich ist
+ParameterNeeded gibt an ob ein Parameter erforderlich ist oder nicht,
 wird ein parameter angegeben obwohl keiner erforderlich ist oder es wid kein parameter angegeben obwohl ein parameter erforderlich ist, wird der Hilfetext angezeigt.
-accept_every_param setzt vorherige Logik außer Kraft und akzeptiert mehrere oder keinen Parameter
-Im Klassen konstruktor können Threads gestartet werden oder initial Werte festgelegt werden
-Die run methode wird ausgeführt wenn jemand den befehl aufruft: !example z.b.
-	Das Objekt irc connection representiert die Verbindung von dem das Kommando aufgerufen wurde, enthält unter anderem die Methode "sendmsg"
+AcceptEveryParam setzt vorherige Logik außer Kraft und akzeptiert mehrere oder keinen Parameter
+Im Klassen Konstruktor können Threads gestartet werden oder initial Werte festgelegt werden
+Die Run Methode wird ausgeführt wenn jemand den Befehl aufruft: !example z.b.
+	Das Objekt Irc connection representiert die Verbindung von dem das Kommando aufgerufen wurde, enthält unter anderem die Methode "Sendmsg"
 	String sender enthält den namen des Benutzers der den Befehl ausgeführt hat
-	String receiver enthält den ursprung der Nachricht, entweder den channel namen oder den Namen des Benutzers wenn der Befehl in einem query gesendet wurde
+	String receiver enthält den ursprung der Nachricht, entweder den Channel Namen oder den Namen des Benutzers wenn der Befehl in einem Query gesendet wurde
 	String message enthält Parameter die hinter dem Befehl geschrieben wurden, im falle von "!example test" enthält message "test"
-Die destruct methode wird ausgeführt wenn der Befehl entladen wird oder deaktiviert. Wenn Threads gestartet wurden sollten diese dort beendet werden.
+Die Destruct methode wird ausgeführt wenn der Befehl entladen wird oder deaktiviert. Wenn Threads gestartet wurden sollten diese dort beendet werden.
 
-namespace freetzbot.commands
+namespace FritzBot.commands
 {
-    class example : command
+    class example : ICommand
     {
-        private String[] name = { "example", "beispiel" };
-        private String helptext = "example description";
-        private Boolean op_needed = false;
-        private Boolean parameter_needed = false;
-        private Boolean accept_every_param = true;
-
-        public String[] get_name()
-        {
-            return name;
-        }
-
-        public String get_helptext()
-        {
-            return helptext;
-        }
-
-        public Boolean get_op_needed()
-        {
-            return op_needed;
-        }
-
-        public Boolean get_parameter_needed()
-        {
-            return parameter_needed;
-        }
-
-        public Boolean get_accept_every_param()
-        {
-            return accept_every_param;
-        }
-
-        public void destruct()
-        {
-
-        }
+        public String[] Name { get { return new String[] { "example", "beispiel" }; } }
+        public String HelpText { get { return "example description"; } }
+        public Boolean OpNeeded { get { return false; } }
+        public Boolean ParameterNeeded { get { return false; } }
+        public Boolean AcceptEveryParam { get { return true; } }
 
 		public example()
 		{
 
 		}
 
-        public void run(irc connection, String sender, String receiver, String message)
+        public void Destruct()
         {
 
+        }
+
+        public void Run(Irc connection, String sender, String receiver, String message)
+        {
+            connection.Sendmsg("Hallo Welt", receiver);
         }
     }
 }

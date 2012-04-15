@@ -1,49 +1,24 @@
 ﻿using System;
 
-namespace freetzbot.commands
+namespace FritzBot.commands
 {
-    class userlist : command
+    class userlist : ICommand
     {
-        private String[] name = { "userlist" };
-        private String helptext = "Das gibt eine Liste jener Benutzer aus, die mindestens eine Box bei mir registriert haben.";
-        private Boolean op_needed = false;
-        private Boolean parameter_needed = false;
-        private Boolean accept_every_param = false;
+        public String[] Name { get { return new String[] { "userlist" }; } }
+        public String HelpText { get { return "Das gibt eine Liste jener Benutzer aus, die mindestens eine Box bei mir registriert haben."; } }
+        public Boolean OpNeeded { get { return false; } }
+        public Boolean ParameterNeeded { get { return false; } }
+        public Boolean AcceptEveryParam { get { return false; } }
 
-        public String[] get_name()
-        {
-            return name;
-        }
-
-        public String get_helptext()
-        {
-            return helptext;
-        }
-
-        public Boolean get_op_needed()
-        {
-            return op_needed;
-        }
-
-        public Boolean get_parameter_needed()
-        {
-            return parameter_needed;
-        }
-
-        public Boolean get_accept_every_param()
-        {
-            return accept_every_param;
-        }
-
-        public void destruct()
+        public void Destruct()
         {
 
         }
 
-        public void run(irc connection, String sender, String receiver, String message)
+        public void Run(Irc connection, String sender, String receiver, String message)
         {
             String output = "";
-            foreach (User oneuser in freetzbot.Program.TheUsers)
+            foreach (User oneuser in FritzBot.Program.TheUsers)
             {
                 if (oneuser.boxes.Count > 0)
                 {
@@ -51,13 +26,13 @@ namespace freetzbot.commands
                 }
             }
             output = output.Remove(0, 2);
-            if (output != "")
+            if (!String.IsNullOrEmpty(output))
             {
-                connection.sendmsg("Diese Benutzer haben bei mir mindestens eine Box registriert: " + output, receiver);
+                connection.Sendmsg("Diese Benutzer haben bei mir mindestens eine Box registriert: " + output, receiver);
             }
             else
             {
-                connection.sendmsg("Ich fürchte, mir ist ein Fehler unterlaufen. Ich kann keine registrierten Benutzer feststellen.", receiver);
+                connection.Sendmsg("Ich fürchte, mir ist ein Fehler unterlaufen. Ich kann keine registrierten Benutzer feststellen.", receiver);
             }
         }
     }

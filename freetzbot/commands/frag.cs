@@ -1,66 +1,41 @@
 ﻿using System;
 
-namespace freetzbot.commands
+namespace FritzBot.commands
 {
-    class frag : command
+    class frag : ICommand
     {
-        private String[] name = { "frag" };
-        private String helptext = "Dann werde ich den genannten Benutzer nach seiner Box fragen, z.b. !frag Anonymous";
-        private Boolean op_needed = false;
-        private Boolean parameter_needed = true;
-        private Boolean accept_every_param = false;
+        public String[] Name { get { return new String[] { "frag" }; } }
+        public String HelpText { get { return "Dann werde ich den genannten Benutzer nach seiner Box fragen, z.b. !frag Anonymous"; } }
+        public Boolean OpNeeded { get { return false; } }
+        public Boolean ParameterNeeded { get { return true; } }
+        public Boolean AcceptEveryParam { get { return false; } }
 
-        public String[] get_name()
-        {
-            return name;
-        }
-
-        public String get_helptext()
-        {
-            return helptext;
-        }
-
-        public Boolean get_op_needed()
-        {
-            return op_needed;
-        }
-
-        public Boolean get_parameter_needed()
-        {
-            return parameter_needed;
-        }
-
-        public Boolean get_accept_every_param()
-        {
-            return accept_every_param;
-        }
-
-        public void destruct()
+        public void Destruct()
         {
 
         }
 
-        public void run(irc connection, String sender, String receiver, String message)
+        public void Run(Irc connection, String sender, String receiver, String message)
         {
-            boxfrage(connection, message, message, message, false);
+            boxfrage(connection, message, message, false);
         }
 
-        public static void boxfrage(irc connection, String sender, String receiver, String message, Boolean check_db = true)
+        public static void boxfrage(Irc connection, String sender, String receiver, Boolean check_db = true)
         {
             try
             {
                 if (check_db)
                 {
-                    if (freetzbot.Program.configuration.get("boxfrage") == "false" || freetzbot.Program.TheUsers[sender].asked) return;
+                    if (FritzBot.Program.configuration["boxfrage"] == "false" || FritzBot.Program.TheUsers[sender].asked) return;
                     System.Threading.Thread.Sleep(10000);
                 }
-                connection.sendmsg("Hallo " + sender + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast :).", receiver);
-                connection.sendmsg("Pro !box bitte nur eine Box nennen (nur die Boxversion) z.b. !box 7270v1 oder !box 7170. Um die anderen im Channel nicht zu stören, sende es mir doch bitte per query/private Nachricht (z.b. /msg FritzBot !box 7270) und achte darauf, dass du den Nicknamen trägst dem die Box zugeordnet werden soll", receiver);
-                freetzbot.Program.TheUsers[sender].asked = true;
+                connection.Sendmsg("Hallo " + sender + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast :).", receiver);
+                connection.Sendmsg("Pro !box bitte nur eine Box nennen (nur die Boxversion) z.b. !box 7270v1 oder !box 7170. Um die anderen im Channel nicht zu stören, sende es mir doch bitte per query/private Nachricht (z.b. /msg FritzBot !box 7270) und achte darauf, dass du den Nicknamen trägst dem die Box zugeordnet werden soll", receiver);
+                FritzBot.Program.TheUsers[sender].asked = true;
             }
             catch (Exception ex)
             {
-                toolbox.logging("Da ist etwas beim erfragen der Box schiefgelaufen:" + ex.Message);
+                toolbox.Logging("Da ist etwas beim erfragen der Box schiefgelaufen:" + ex.Message);
             }
         }
     }

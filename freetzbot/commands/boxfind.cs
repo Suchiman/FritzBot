@@ -1,49 +1,24 @@
 ﻿using System;
 
-namespace freetzbot.commands
+namespace FritzBot.commands
 {
-    class boxfind : command
+    class boxfind : ICommand
     {
-        private String[] name = { "boxfind" };
-        private String helptext = "Findet die Nutzer der angegebenen Box: Beispiel: \"!boxfind 7270\".";
-        private Boolean op_needed = false;
-        private Boolean parameter_needed = true;
-        private Boolean accept_every_param = false;
+        public String[] Name { get { return new String[] { "boxfind" }; } }
+        public String HelpText { get { return "Findet die Nutzer der angegebenen Box: Beispiel: \"!boxfind 7270\"."; } }
+        public Boolean OpNeeded { get { return false; } }
+        public Boolean ParameterNeeded { get { return true; } }
+        public Boolean AcceptEveryParam { get { return false; } }
 
-        public String[] get_name()
-        {
-            return name;
-        }
-
-        public String get_helptext()
-        {
-            return helptext;
-        }
-
-        public Boolean get_op_needed()
-        {
-            return op_needed;
-        }
-
-        public Boolean get_parameter_needed()
-        {
-            return parameter_needed;
-        }
-
-        public Boolean get_accept_every_param()
-        {
-            return accept_every_param;
-        }
-
-        public void destruct()
+        public void Destruct()
         {
 
         }
 
-        public void run(irc connection, String sender, String receiver, String message)
+        public void Run(Irc connection, String sender, String receiver, String message)
         {
             String besitzer = "";
-            foreach (User oneuser in freetzbot.Program.TheUsers)
+            foreach (User oneuser in FritzBot.Program.TheUsers)
             {
                 foreach (String box in oneuser.boxes)
                 {
@@ -55,13 +30,13 @@ namespace freetzbot.commands
                 }
             }
             besitzer = besitzer.Remove(0, 2);
-            if (besitzer != "")
+            if (!String.IsNullOrEmpty(besitzer))
             {
-                connection.sendmsg("Folgende Benutzer scheinen diese Box zu besitzen: " + besitzer, receiver);
+                connection.Sendmsg("Folgende Benutzer scheinen diese Box zu besitzen: " + besitzer, receiver);
             }
             else
             {
-                connection.sendmsg("Diese Box scheint niemand zu besitzen!", receiver);
+                connection.Sendmsg("Diese Box scheint niemand zu besitzen!", receiver);
             }
         }
     }

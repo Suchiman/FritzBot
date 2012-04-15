@@ -1,84 +1,59 @@
 ﻿using System;
 
-namespace freetzbot.commands
+namespace FritzBot.commands
 {
-    class boxinfo : command
+    class boxinfo : ICommand
     {
-        private String[] name = { "boxinfo" };
-        private String helptext = "Zeigt die Box/en des angegebenen Benutzers an.";
-        private Boolean op_needed = false;
-        private Boolean parameter_needed = false;
-        private Boolean accept_every_param = true;
+        public String[] Name { get { return new String[] { "boxinfo" }; } }
+        public String HelpText { get { return "Zeigt die Box/en des angegebenen Benutzers an."; } }
+        public Boolean OpNeeded { get { return false; } }
+        public Boolean ParameterNeeded { get { return true; } }
+        public Boolean AcceptEveryParam { get { return false; } }
 
-        public String[] get_name()
-        {
-            return name;
-        }
-
-        public String get_helptext()
-        {
-            return helptext;
-        }
-
-        public Boolean get_op_needed()
-        {
-            return op_needed;
-        }
-
-        public Boolean get_parameter_needed()
-        {
-            return parameter_needed;
-        }
-
-        public Boolean get_accept_every_param()
-        {
-            return accept_every_param;
-        }
-
-        public void destruct()
+        public void Destruct()
         {
 
         }
 
-        public void run(irc connection, String sender, String receiver, String message)
+        public void Run(Irc connection, String sender, String receiver, String message)
         {
             String output = "";
-            if (message == "")
+            if (String.IsNullOrEmpty(message))
             {
                 message = sender;
             }
-            if (freetzbot.Program.TheUsers.Exists(message))
+            if (FritzBot.Program.TheUsers.Exists(message))
             {
-                foreach (String box in freetzbot.Program.TheUsers[message].boxes)
+                foreach (String box in FritzBot.Program.TheUsers[message].boxes)
                 {
                     output += ", " + box;
                 }
             }
             else
             {
-                connection.sendmsg("Den habe ich hier noch nie gesehen, sry", receiver);
+                connection.Sendmsg("Den habe ich hier noch nie gesehen, sry", receiver);
                 return;
             }
-            if (output == "")
+            if (String.IsNullOrEmpty(output))
             {
                 if (message == sender)
                 {
-                    connection.sendmsg("Du hast bei mir noch keine Box registriert.", receiver);
+                    connection.Sendmsg("Du hast bei mir noch keine Box registriert.", receiver);
                 }
                 else
                 {
-                    connection.sendmsg("Über den habe ich keine Informationen.", receiver);
+                    connection.Sendmsg("Über den habe ich keine Informationen.", receiver);
                 }
                 return;
             }
             output = output.Remove(0, 2);
             if (message == sender)
             {
-                connection.sendmsg("Du hast bei mir die Box/en " + output + " registriert.", receiver);
+                connection.Sendmsg("Du hast bei mir die Box/en " + output + " registriert.", receiver);
             }
             else
             {
-                connection.sendmsg(message + " sagte mir er/sie hätte die Box/en " + output, receiver);
+                connection.Sendmsg(message + " sagte mir er/sie hätte die Box/en " + output, receiver);
             }
         }
     }

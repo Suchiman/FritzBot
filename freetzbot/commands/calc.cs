@@ -2,47 +2,22 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace freetzbot.commands
+namespace FritzBot.commands
 {
-    class calc : command
+    class calc : ICommand
     {
-        private String[] name = { "calc" };
-        private String helptext = "Ich kann sogar Rechnen :-) !calc 42*13+1 !calc 42*(42-(24+24)+1*3)/2";
-        private Boolean op_needed = false;
-        private Boolean parameter_needed = true;
-        private Boolean accept_every_param = false;
+        public String[] Name { get { return new String[] { "calc" }; } }
+        public String HelpText { get { return "Ich kann sogar Rechnen :-) !calc 42*13+1 !calc 42*(42-(24+24)+1*3)/2"; } }
+        public Boolean OpNeeded { get { return false; } }
+        public Boolean ParameterNeeded { get { return true; } }
+        public Boolean AcceptEveryParam { get { return false; } }
 
-        public String[] get_name()
-        {
-            return name;
-        }
-
-        public String get_helptext()
-        {
-            return helptext;
-        }
-
-        public Boolean get_op_needed()
-        {
-            return op_needed;
-        }
-
-        public Boolean get_parameter_needed()
-        {
-            return parameter_needed;
-        }
-
-        public Boolean get_accept_every_param()
-        {
-            return accept_every_param;
-        }
-
-        public void destruct()
+        public void Destruct()
         {
 
         }
 
-        public void run(irc connection, String sender, String receiver, String message)
+        public void Run(Irc connection, String sender, String receiver, String message)
         {
             try
             {
@@ -61,15 +36,15 @@ namespace freetzbot.commands
                     }
                 }
                 String result = CalcPartial(message);
-                connection.sendmsg("Ergebnis: " + result, receiver);
+                connection.Sendmsg("Ergebnis: " + result, receiver);
             }
             catch
             {
-                connection.sendmsg("Schade, das hat leider eine Exception bei der Verarbeitung ausgelöst...", receiver);
+                connection.Sendmsg("Schade, das hat leider eine Exception bei der Verarbeitung ausgelöst...", receiver);
             }
         }
 
-        private String CalcPartial(String to_calc)
+        private static String CalcPartial(String to_calc)
         {
             Char[] messageArray = to_calc.ToCharArray();
             List<String> numbers = new List<String>();
@@ -101,7 +76,7 @@ namespace freetzbot.commands
             return CalcOperators(opers, numbers);
         }
 
-        private String CalcOperators(List<Char> opers, List<String> numbers)
+        private static String CalcOperators(List<Char> opers, List<String> numbers)
         {
             //Priorisierte operatoren ( * / ) zuerst berechnen
             for (int i = 0; i < opers.Count; i++)
@@ -124,13 +99,19 @@ namespace freetzbot.commands
             return numbers[0];
         }
 
-        private String CalcString(String number1, String number2, Char op)
+        private static String CalcString(String number1, String number2, Char op)
         {
-            Double num1 = 0;
-            Double num2 = 0;
+            Double num1;
+            Double num2;
             String result = "";
-            Double.TryParse(number1, out num1);
-            Double.TryParse(number2, out num2);
+            if (!Double.TryParse(number1, out num1))
+            {
+                num1 = 0;
+            }
+            if (!Double.TryParse(number2, out num2))
+            {
+                num2 = 0;
+            }
             switch (op)
             {
                 case '+':
@@ -149,7 +130,7 @@ namespace freetzbot.commands
                     result = (num1 * num2 / 100).ToString();
                     break;
                 default:
-                    throw new Exception("Unknown Operator");
+                    throw new ArgumentException("Unknown Operator");
             }
             return result;
         }

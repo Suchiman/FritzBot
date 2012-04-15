@@ -1,28 +1,25 @@
 ﻿using System;
 using System.Net;
 
-namespace freetzbot.webpages
+namespace FritzBot.webpages
 {
-    class logout : pageinterface
+    class logout : IWebInterface
     {
-        public String get_url()
-        {
-            return "/logout";
-        }
+        public String Url { get { return "/logout"; } }
 
-        public html_response gen_page(html_request request)
+        public html_response GenPage(html_request request)
         {
             html_response theresponse = new html_response();
             theresponse.page += "<!DOCTYPE html><html><body>";
-            theresponse.page += index.gen_menu();
+            theresponse.page += index.GenMenu();
             String name = "";
             if (request.cookies["username"] != null)
             {
                 name = request.cookies["username"].Value;
             }
-            if (freetzbot.Program.TheUsers.Exists(name))
+            if (FritzBot.Program.TheUsers.Exists(name))
             {
-                freetzbot.Program.TheUsers[name].authcookiedate = DateTime.MinValue;
+                FritzBot.Program.TheUsers[name].authcookiedate = DateTime.MinValue;
                 theresponse.cookies["username"] = "";
                 theresponse.cookies["logindata"] = "";
                 theresponse.page += "Du bist jetzt ausgeloggt";

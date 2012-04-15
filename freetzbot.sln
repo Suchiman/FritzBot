@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "freetzbot", "freetzbot\freetzbot.csproj", "{7E722C28-92D0-4221-B303-54E58F2ED8F8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FritzBot", "freetzbot\FritzBot.csproj", "{7E722C28-92D0-4221-B303-54E58F2ED8F8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

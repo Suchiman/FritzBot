@@ -2,40 +2,15 @@
 using System.Collections.Generic;
 using System.Threading;
 
-namespace freetzbot.commands
+namespace FritzBot.commands
 {
-    class news : command
+    class news : ICommand
     {
-        private String[] name = { "news" };
-        private String helptext = "Eine meiner hintergrund Funktionen. Sie checkt die AVM Firmware News Webseite und gibt beim Fund neuer Nachrichten eine entsprechende Meldung aus";
-        private Boolean op_needed = false;
-        private Boolean parameter_needed = false;
-        private Boolean accept_every_param = false;
-
-        public String[] get_name()
-        {
-            return name;
-        }
-
-        public String get_helptext()
-        {
-            return helptext;
-        }
-
-        public Boolean get_op_needed()
-        {
-            return op_needed;
-        }
-
-        public Boolean get_parameter_needed()
-        {
-            return parameter_needed;
-        }
-
-        public Boolean get_accept_every_param()
-        {
-            return accept_every_param;
-        }
+        public String[] Name { get { return new String[] { "news" }; } }
+        public String HelpText { get { return "Eine meiner hintergrund Funktionen. Sie checkt die AVM Firmware News Webseite und gibt beim Fund neuer Nachrichten eine entsprechende Meldung aus"; } }
+        public Boolean OpNeeded { get { return false; } }
+        public Boolean ParameterNeeded { get { return false; } }
+        public Boolean AcceptEveryParam { get { return false; } }
 
         public news()
         {
@@ -45,22 +20,22 @@ namespace freetzbot.commands
             newsthread.Start();
         }
 
-        public void destruct()
+        public void Destruct()
         {
             newsthread.Abort();
         }
 
         Thread newsthread;
 
-        public void run(irc connection, String sender, String receiver, String message)
+        public void Run(Irc connection, String sender, String receiver, String message)
         {
             if (newsthread.IsAlive)
             {
-                connection.sendmsg("Module geladen und am Laufen", receiver);
+                connection.Sendmsg("Module geladen und am Laufen", receiver);
             }
             else
             {
-                connection.sendmsg("Es scheint eine Fehlfunktion zu geben, die Funktion ist zum erliegen gekommen", receiver);
+                connection.Sendmsg("Es scheint eine Fehlfunktion zu geben, die Funktion ist zum erliegen gekommen", receiver);
             }
         }
 
@@ -87,8 +62,22 @@ namespace freetzbot.commands
             {
                 try
                 {
-                    String[] news_de = news_parse(baseurl + "?lang=de");
-                    String[] news_en = news_parse(baseurl + "?lang=en");
+                    String[] news_de = null;
+                    String[] news_en = null;
+                    do
+                    {
+                        try
+                        {
+                            news_de = news_parse(baseurl + "?lang=de");
+                            news_en = news_parse(baseurl + "?lang=en");
+                            failed = false;
+                        }
+                        catch
+                        {
+                            failed = true;
+                            Thread.Sleep(500);
+                        }
+                    } while (failed);
                     if (news_de_old[0] != news_de[0])
                     {
                         List<String> differs = new List<String>();
@@ -107,7 +96,7 @@ namespace freetzbot.commands
                         }
                         output = output.Remove(30, 1);
                         output = output.Insert(30, "-");
-                        toolbox.announce(output);
+                        toolbox.Announce(output);
                         news_de_old = news_de;
                     }
                     if (news_en_old[0] != news_en[0])
@@ -128,7 +117,7 @@ namespace freetzbot.commands
                         }
                         output = output.Remove(30, 1);
                         output = output.Insert(30, "-");
-                        toolbox.announce(output);
+                        toolbox.Announce(output);
                         news_en_old = news_en;
                     }
                 }
@@ -137,7 +126,7 @@ namespace freetzbot.commands
 
                 }
                 int sleep;
-                if (!int.TryParse(freetzbot.Program.configuration.get("news_check_intervall"), out sleep))
+                if (!int.TryParse(FritzBot.Program.configuration["news_check_intervall"], out sleep))
                 {
                     sleep = 300000;
                 }
@@ -147,10 +136,10 @@ namespace freetzbot.commands
 
         private static String[] news_parse(String url)
         {
-            String news = toolbox.get_web(url);
-            if (news == "" || news == null)
+            String news = toolbox.GetWeb(url);
+            if (String.IsNullOrEmpty(news))
             {
-                throw new Exception("Konnte die Webseite nicht lesen");
+                throw new InvalidOperationException("Konnte die Webseite nicht lesen");
             }
             String[] newssplit = news.Split(new String[] { "<span class=\"uberschriftblau\">" }, 21, StringSplitOptions.None);
             List<String> news_new = new List<String>();
@@ -165,11 +154,11 @@ namespace freetzbot.commands
                 splitted[1] = splitted[1].Remove(0, 35);
                 splitted[1] = splitted[1].Replace("&nbsp;", " ");
                 splitted[2] = splitted[2].Split(new String[] { "\"><u>Weitere" }, 2, StringSplitOptions.None)[0].Split(new String[] { "href=\"" }, 2, StringSplitOptions.None)[1];
-                news_new.Add(splitted[0] + ":" + splitted[1] + " - " + toolbox.short_url(splitted[2]));
+                news_new.Add(splitted[0] + ":" + splitted[1] + " - " + toolbox.ShortUrl(splitted[2]));
             }
-            if (news_new.Count < 20 || news_new[0] == "")
+            if (news_new.Count < 20 || String.IsNullOrEmpty(news_new[0]))
             {
-                throw new Exception("Verarbeitungsfehler");
+                throw new InvalidOperationException("Verarbeitungsfehler");
             }
             return news_new.ToArray();
         }

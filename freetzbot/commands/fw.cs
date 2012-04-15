@@ -2,47 +2,22 @@
 using System.IO;
 using System.Net;
 
-namespace freetzbot.commands
+namespace FritzBot.commands
 {
-    class fw : command
+    class fw : ICommand
     {
-        private String[] name = { "fw" };
-        private String helptext = "Sucht auf dem AVM FTP nach der Version des angegbenen Modells, z.b. \"!fw 7390\", \"!fw 7270_v1\", \"!fw 7390 source\", \"!fw 7390 recovery\" \"!fw 7390 all\"";
-        private Boolean op_needed = false;
-        private Boolean parameter_needed = true;
-        private Boolean accept_every_param = false;
+        public String[] Name { get { return new String[] { "fw" }; } }
+        public String HelpText { get { return "Sucht auf dem AVM FTP nach der Version des angegbenen Modells, z.b. \"!fw 7390\", \"!fw 7270_v1\", \"!fw 7390 source\", \"!fw 7390 recovery\" \"!fw 7390 all\""; } }
+        public Boolean OpNeeded { get { return false; } }
+        public Boolean ParameterNeeded { get { return true; } }
+        public Boolean AcceptEveryParam { get { return false; } }
 
-        public String[] get_name()
-        {
-            return name;
-        }
-
-        public String get_helptext()
-        {
-            return helptext;
-        }
-
-        public Boolean get_op_needed()
-        {
-            return op_needed;
-        }
-
-        public Boolean get_parameter_needed()
-        {
-            return parameter_needed;
-        }
-
-        public Boolean get_accept_every_param()
-        {
-            return accept_every_param;
-        }
-
-        public void destruct()
+        public void Destruct()
         {
 
         }
 
-        public void run(irc connection, String sender, String receiver, String message)
+        public void Run(Irc connection, String sender, String receiver, String message)
         {
             Boolean recovery = false;
             Boolean source = false;
@@ -54,7 +29,7 @@ namespace freetzbot.commands
                 {
                     case "add":
                         toolbox.getDatabaseByName("fwdb.db").Add(splitted[1]);
-                        connection.sendmsg("Der FW Alias wurde hinzugefügt", receiver);
+                        connection.Sendmsg("Der FW Alias wurde hinzugefügt", receiver);
                         return;
                     case "all":
                         firmware = true;
@@ -106,7 +81,7 @@ namespace freetzbot.commands
             }
             if (ftp == "ftp://ftp.avm.de/fritz.box/")
             {
-                connection.sendmsg("Ich habe zu deiner Angabe leider nichts gefunden", receiver);
+                connection.Sendmsg("Ich habe zu deiner Angabe leider nichts gefunden", receiver);
                 return;
             }
             output = ftp;
@@ -136,7 +111,7 @@ namespace freetzbot.commands
                     {
                         final += file_splitted[file_splitted.Length - 5] + "." + file_splitted[file_splitted.Length - 4] + "." + file_splitted[file_splitted.Length - 3];
                     }
-                    if (recoveries != "")
+                    if (!String.IsNullOrEmpty(recoveries))
                     {
                         recoveries += ", " + final;
                     }
@@ -148,7 +123,7 @@ namespace freetzbot.commands
                 if (slashsplit[1].Contains(".image"))
                 {
                     final += file_splitted[file_splitted.Length - 4] + "." + file_splitted[file_splitted.Length - 3] + "." + file_splitted[file_splitted.Length - 2];
-                    if (firmwares != "")
+                    if (!String.IsNullOrEmpty(firmwares))
                     {
                         firmwares += ", " + final;
                     }
@@ -161,7 +136,7 @@ namespace freetzbot.commands
                 {
                     String[] dotsplit = slashsplit[1].Split('.');
                     final = dotsplit[dotsplit.Length - 4] + "." + dotsplit[dotsplit.Length - 3];
-                    if (sources != "")
+                    if (!String.IsNullOrEmpty(sources))
                     {
                         sources += ", " + final;
                     }
@@ -171,25 +146,25 @@ namespace freetzbot.commands
                     }
                 }
             }
-            if (firmwares == "")
+            if (String.IsNullOrEmpty(firmwares))
             {
-                connection.sendmsg("Ich habe zu deiner Angabe leider nichts gefunden", receiver);
+                connection.Sendmsg("Ich habe zu deiner Angabe leider nichts gefunden", receiver);
             }
             else
             {
-                if (firmware && firmwares != "")
+                if (firmware && !String.IsNullOrEmpty(firmwares))
                 {
                     output += " - Firmwares: " + firmwares;
                 }
-                if (recovery && recoveries != "")
+                if (recovery && !String.IsNullOrEmpty(recoveries))
                 {
                     output += " - Recoveries: " + recoveries;
                 }
-                if (source && sources != "")
+                if (source && !String.IsNullOrEmpty(sources))
                 {
                     output += " - Sources: " + sources;
                 }
-                connection.sendmsg(output, receiver);
+                connection.Sendmsg(output, receiver);
             }
         }
 
@@ -205,7 +180,7 @@ namespace freetzbot.commands
                     String pfad = daten.Split(new String[] { " " }, 9, StringSplitOptions.RemoveEmptyEntries)[8];
                     found += ftp_recursiv(ftp + pfad + "/") + ";";
                 }
-                if (daten.ToCharArray()[0] == '-' && (daten.Contains(".image") || daten.Contains(".recover-image.exe") || daten.Contains(".tar.gz")))
+                else if (daten.ToCharArray()[0] == '-' && (daten.Contains(".image") || daten.Contains(".recover-image.exe") || daten.Contains(".tar.gz")))
                 {
                     String file = daten.Split(new String[] { " " }, StringSplitOptions.RemoveEmptyEntries)[8];
                     String[] ftp_splitted = ftp.Split(new String[] { "/" }, StringSplitOptions.RemoveEmptyEntries);

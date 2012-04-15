@@ -5,35 +5,35 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 
-namespace freetzbot
+namespace FritzBot
 {
-    public class irc
+    class Irc
     {
-        public delegate void ReceivedEventHandler(irc connection, String source, String nick, String message);
+        public delegate void ReceivedEventHandler(Irc connection, String source, String nick, String message);
         public event ReceivedEventHandler Received;
-        public String quit_message;
+        public String QuitMessage;
 
         private Thread empfangs_thread;
-        private Thread watchthread;
-        private Boolean cancelthread;
-        public string hostname;
-        private int port;
-        public String nickname;
-        private TcpClient connection;
-        private DateTime connecttime;
+        private Thread Watchthread;
+        private Boolean CancelThread;
+        public string HostName;
+        private int Port;
+        public String Nickname;
+        private TcpClient Connection;
+        private DateTime ConnectTime;
         public Boolean AutoReconnect;
         public int AutoReconnectIntervall;
         public List<string> rooms = new List<string>();
 
-        public irc(String server, int server_port, String nick)
+        public Irc(String server, int serverport, String nick)
         {
-            hostname = server;
-            port = server_port;
-            nickname = nick;
-            cancelthread = false;
-            quit_message = "";
+            HostName = server;
+            Port = serverport;
+            Nickname = nick;
+            CancelThread = false;
+            QuitMessage = "";
             empfangs_thread = new Thread(delegate() { empfangsthread(); });
-            watchthread = new Thread(delegate() { reconnect(); });
+            Watchthread = new Thread(delegate() { reconnect(); });
             AutoReconnect = false;
             AutoReconnectIntervall = 5000;
         }
@@ -45,11 +45,11 @@ namespace freetzbot
             {
                 try
                 {
-                    if (!empfangs_thread.IsAlive || !connection.Client.Connected)
+                    if (!empfangs_thread.IsAlive || !Connection.Client.Connected)
                     {
                         log("Verbindung abgerissen, versuche Verbindung wiederherzustellen");
                         log("Versuch " + count);
-                        while (!connect())
+                        while (!Connect())
                         {
                             Thread.Sleep(AutoReconnectIntervall);
                             count++;
@@ -67,7 +67,7 @@ namespace freetzbot
             }
         }
 
-        public Boolean connect()
+        public Boolean Connect()
         {
             try
             {
@@ -75,20 +75,20 @@ namespace freetzbot
                 {
                     empfangs_thread.Abort();
                 }
-                connection = new TcpClient(hostname, port);
+                Connection = new TcpClient(HostName, Port);
                 empfangs_thread = new Thread(delegate() { empfangsthread(); });
-                empfangs_thread.Name = "EmpfangsThread" + hostname;
+                empfangs_thread.Name = "EmpfangsThread" + HostName;
                 empfangs_thread.Start();
-                sendraw("NICK " + nickname);
-                sendraw("USER " + nickname + " 8 * :" + nickname);
-                log("Verbindung mit Server " + hostname + " hergestellt");
-                connecttime = DateTime.Now;
+                Sendraw("NICK " + Nickname);
+                Sendraw("USER " + Nickname + " 8 * :" + Nickname);
+                log("Verbindung mit Server " + HostName + " hergestellt");
+                ConnectTime = DateTime.Now;
                 rejoin();
-                if (AutoReconnect && !watchthread.IsAlive)
+                if (AutoReconnect && !Watchthread.IsAlive)
                 {
-                    watchthread = new Thread(delegate() { reconnect(); });
-                    watchthread.Name = "WatchThread " + hostname;
-                    watchthread.Start();
+                    Watchthread = new Thread(delegate() { reconnect(); });
+                    Watchthread.Name = "WatchThread " + HostName;
+                    Watchthread.Start();
                 }
                 return true;
             }
@@ -99,27 +99,27 @@ namespace freetzbot
             }
         }
 
-        public void disconnect()
+        public void Disconnect()
         {
-            watchthread.Abort();
+            Watchthread.Abort();
             String output = "QUIT";
-            if (quit_message != "")
+            if (!String.IsNullOrEmpty(QuitMessage))
             {
-                output += " :" + quit_message;
+                output += " :" + QuitMessage;
             }
-            sendraw(output);
-            cancelthread = true;
-            log("Server " + hostname + " verlassen");
+            Sendraw(output);
+            CancelThread = true;
+            log("Server " + HostName + " verlassen");
         }
 
-        public void join(String channel)
+        public void JoinChannel(String channel)
         {
             if (channel.ToCharArray()[0] != '#')
             {
                 log("Diesem channel kann ich nicht joinen");
                 return;
             }
-            sendraw("JOIN " + channel);
+            Sendraw("JOIN " + channel);
             if (!rooms.Contains(channel)) rooms.Add(channel);
             log("Betrete Raum " + channel);
         }
@@ -128,21 +128,21 @@ namespace freetzbot
         {
             foreach (String room in rooms)
             {
-                join(room);
+                JoinChannel(room);
             }
         }
 
-        public void leave(String channel)
+        public void Leave(String channel)
         {
             if (rooms.Contains(channel))
             {
-                sendraw("PART " + channel);
+                Sendraw("PART " + channel);
                 rooms.Remove(channel);
                 log("Verlasse Raum " + channel);
             }
         }
 
-        private String[] splitlength(String text, int length)
+        private static String[] splitlength(String text, int length)
         {
             List<String> output = new List<String>();
             List<String> splitted = new List<String>(text.Split(' '));
@@ -164,37 +164,37 @@ namespace freetzbot
             Received(this, "LOG", "", to_log);
         }
 
-        public Boolean running()
+        public Boolean Running()
         {
-            return watchthread.IsAlive;
+            return Watchthread.IsAlive;
         }
 
-        public TimeSpan uptime()
+        public TimeSpan Uptime()
         {
-            return DateTime.Now.Subtract(connecttime);
+            return DateTime.Now.Subtract(ConnectTime);
         }
 
-        public void sendaction(String message, String receiver)
+        public void Sendaction(String message, String receiver)
         {
-            sendmsg("\u0001ACTION " + message + "\u0001", receiver);
+            Sendmsg("\u0001ACTION " + message + "\u0001", receiver);
         }
 
-        public void sendmsg(String message, String receiver)
+        public void Sendmsg(String message, String receiver)
         {
             String output = "PRIVMSG " + receiver + " :";
             String[] tosend = splitlength(message, 500 - (output.Length));
             foreach (String send in tosend)
             {
-                sendraw(output + send);
+                Sendraw(output + send);
                 log("An " + receiver + ": " + send);
             }
         }
 
-        public void sendraw(String message)
+        public void Sendraw(String message)
         {
             try
             {
-                StreamWriter stream = new StreamWriter(connection.GetStream(), Encoding.GetEncoding("iso-8859-1"));
+                StreamWriter stream = new StreamWriter(Connection.GetStream(), Encoding.GetEncoding("iso-8859-1"));
                 stream.AutoFlush = true;
                 stream.Write(message + "\r\n");
             }
@@ -211,20 +211,20 @@ namespace freetzbot
             {
                 try
                 {
-                    StreamReader stream = new StreamReader(connection.GetStream(), Encoding.GetEncoding("iso-8859-1"));
+                    StreamReader stream = new StreamReader(Connection.GetStream(), Encoding.GetEncoding("iso-8859-1"));
                     while (true)
                     {
-                        if (cancelthread)
+                        if (CancelThread)
                         {
                             return;
                         }
                         String Daten = stream.ReadLine();
                         if (Daten == null)
                         {
-                            throw new Exception("connection lost");
+                            throw new InvalidOperationException("connection lost");
                         }
                         Thread thread = new Thread(delegate() { process_respond(Daten); });
-                        thread.Name = "Process " + hostname;
+                        thread.Name = "Process " + HostName;
                         thread.Start();
                     }
                 }
@@ -258,7 +258,7 @@ namespace freetzbot
                 {
                     if (splitmessage[0] == "PING")
                     {
-                        sendraw("PONG " + splitmessage[1]);
+                        Sendraw("PONG " + splitmessage[1]);
                         return; //Es ist ja sonst nichts weiter zu tuen
                     }
                     if (splitmessage[0] == "ERROR")

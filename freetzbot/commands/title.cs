@@ -2,51 +2,26 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace freetzbot.commands
+namespace FritzBot.commands
 {
-    class title : command
+    class title : ICommand
     {
-        private String[] name = { "title" };
-        private String helptext = "Gibt den Titel der Seite wieder";
-        private Boolean op_needed = false;
-        private Boolean parameter_needed = true;
-        private Boolean accept_every_param = false;
+        public String[] Name { get { return new String[] { "title" }; } }
+        public String HelpText { get { return "Gibt den Titel der Seite wieder"; } }
+        public Boolean OpNeeded { get { return false; } }
+        public Boolean ParameterNeeded { get { return true; } }
+        public Boolean AcceptEveryParam { get { return false; } }
 
-        public String[] get_name()
-        {
-            return name;
-        }
-
-        public String get_helptext()
-        {
-            return helptext;
-        }
-
-        public Boolean get_op_needed()
-        {
-            return op_needed;
-        }
-
-        public Boolean get_parameter_needed()
-        {
-            return parameter_needed;
-        }
-
-        public Boolean get_accept_every_param()
-        {
-            return accept_every_param;
-        }
-
-        public void destruct()
+        public void Destruct()
         {
 
         }
 
-        public void run(irc connection, String sender, String receiver, String message)
+        public void Run(Irc connection, String sender, String receiver, String message)
         {
             try
             {
-                String webpage = toolbox.get_web(message);
+                String webpage = toolbox.GetWeb(message);
                 String title = webpage.Split(new String[] { "<title>" }, 8, StringSplitOptions.None)[1].Split(new String[] { "</title>" }, 2, StringSplitOptions.None)[0];
                 while (title.IndexOf('\n') != -1)
                 {
@@ -64,11 +39,11 @@ namespace freetzbot.commands
                 {
                     title = title.Remove(title.ToCharArray().Length - 1, 1);
                 }
-                connection.sendmsg(title, receiver);
+                connection.Sendmsg(title, receiver);
             }
             catch
             {
-                connection.sendmsg("Entweder hat die Webseite keine Überschrift oder die URL ist nicht gültig", receiver);
+                connection.Sendmsg("Entweder hat die Webseite keine Überschrift oder die URL ist nicht gültig", receiver);
             }
         }
     }

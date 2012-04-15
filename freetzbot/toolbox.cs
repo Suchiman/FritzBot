@@ -4,22 +4,23 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Threading;
+using System.Web;
 
-namespace freetzbot
+namespace FritzBot
 {
-    class toolbox
+    static class toolbox
     {
-        private static Thread loggingthread = new Thread(new ThreadStart(log_thread));
-        private static List<string> logging_list = new List<string>();
-        private static Mutex logging_safe = new Mutex();
+        private static Thread LoggingThread = new Thread(new ThreadStart(LogThread));
+        private static List<string> LoggingList = new List<string>();
+        private static Mutex LoggingSafe = new Mutex();
 
-        private static void log_thread()
+        private static void LogThread()
         {
             while (true)
             {
                 try
                 {
-                    while (!(logging_list.Count > 0))
+                    while (!(LoggingList.Count > 0))
                     {
                         Thread.Sleep(500);
                     }
@@ -38,9 +39,9 @@ namespace freetzbot
                             }
                         }
                     }
-                    File.AppendAllText("log.txt", logging_list[0] + "\r\n", Encoding.GetEncoding("iso-8859-1"));
-                    Console.WriteLine(logging_list[0]);
-                    logging_list.RemoveAt(0);
+                    File.AppendAllText("log.txt", LoggingList[0] + "\r\n", Encoding.GetEncoding("iso-8859-1"));
+                    Console.WriteLine(LoggingList[0]);
+                    LoggingList.RemoveAt(0);
                 }
                 catch (Exception ex)
                 {
@@ -50,148 +51,160 @@ namespace freetzbot
             }
         }
 
-        public static void logging(String to_log)
+        public static void Logging(String toLog)
         {
-            logging_safe.WaitOne();
+            LoggingSafe.WaitOne();
             try
             {
-                if (!loggingthread.IsAlive)
+                if (!LoggingThread.IsAlive)
                 {
-                    loggingthread = new Thread(new ThreadStart(log_thread));
-                    loggingthread.Name = "LoggingThread";
-                    loggingthread.IsBackground = true;
-                    loggingthread.Start();
+                    LoggingThread = new Thread(new ThreadStart(LogThread));
+                    LoggingThread.Name = "LoggingThread";
+                    LoggingThread.IsBackground = true;
+                    LoggingThread.Start();
                 }
-                logging_list.Add(DateTime.Now.ToString("dd.MM HH:mm:ss ") + to_log);
+                LoggingList.Add(DateTime.Now.ToString("dd.MM HH:mm:ss ") + toLog);
             }
             catch (Exception ex)
             {
-                logging("Exception beim logging aufgetreten: " + ex.Message);
+                Logging("Exception beim logging aufgetreten: " + ex.Message);
             }
-            logging_safe.ReleaseMutex();
+            LoggingSafe.ReleaseMutex();
         }
 
-        public static String crypt(String to_crypt)
+        public static String Crypt(String toCrypt)
         {
-            byte[] tocode = Encoding.UTF8.GetBytes(to_crypt.ToCharArray());
-            System.Security.Cryptography.SHA512 crypt = new System.Security.Cryptography.SHA512Managed();
-            byte[] hash = crypt.ComputeHash(tocode);
-            crypt.Clear();
+            byte[] hash = null;
+            byte[] tocode = Encoding.UTF8.GetBytes(toCrypt.ToCharArray());
+            using (System.Security.Cryptography.SHA512 theCrypter = new System.Security.Cryptography.SHA512Managed())
+            {
+                hash = theCrypter.ComputeHash(tocode);
+                theCrypter.Clear();
+            }
             return BitConverter.ToString(hash).Replace("-", "");
         }
 
-        public static void instantiate_connection(String server, int port, String nick, String quit_message, String initial_channel)
+        public static void InstantiateConnection(String server, int Port, String Nick, String Quit_Message, String InitialChannel)
         {
-            irc connection = new irc(server, port, nick);
-            connection.quit_message = quit_message;
-            connection.Received += new irc.ReceivedEventHandler(freetzbot.Program.process_incomming);
+            Irc connection = new Irc(server, Port, Nick);
+            connection.QuitMessage = Quit_Message;
+            connection.Received += new Irc.ReceivedEventHandler(FritzBot.Program.process_incomming);
             connection.AutoReconnect = true;
-            connection.connect();
+            connection.Connect();
             Thread.Sleep(1000);
-            if (initial_channel.Contains(":"))
+            if (InitialChannel.Contains(":"))
             {
-                String[] channels = initial_channel.Split(':');
+                String[] channels = InitialChannel.Split(':');
                 foreach (String channel in channels)
                 {
-                    connection.join(channel);
+                    connection.JoinChannel(channel);
                 }
             }
             else
             {
-                connection.join(initial_channel);
+                connection.JoinChannel(InitialChannel);
             }
-            freetzbot.Program.irc_connections.Add(connection);
+            FritzBot.Program.irc_connections.Add(connection);
         }
 
-        public static String get_web(String url)
+        public static String GetWeb(String Url, Dictionary<String, String> POSTParams = null)
         {
-            StringBuilder sb = new StringBuilder();
-            Stream resStream = null;
-            String tempString = null;
-            Byte[] buf = new Byte[8192];
-            int count = 0;
+            String POSTData = "";
+            if (POSTParams != null)
+            {
+                foreach (String key in POSTParams.Keys)
+                {
+                    POSTData += HttpUtility.UrlEncode(key) + "=" + HttpUtility.UrlEncode(POSTParams[key]) + "&";
+                }
+            }
+            HttpWebResponse response = null;
+            HttpWebRequest request = null;
             try
             {
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+                request = (HttpWebRequest)WebRequest.Create(Url);
                 request.Timeout = 10000;
-                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-                resStream = response.GetResponseStream();
+                if (POSTParams != null)
+                {
+                    request.Method = "POST";
+                    request.ContentType = "application/x-www-form-urlencoded";
+                    byte[] data = Encoding.UTF8.GetBytes(POSTData);
+                    request.ContentLength = data.Length;
+                    Stream requestStream = request.GetRequestStream();
+                    requestStream.Write(data, 0, data.Length);
+                    requestStream.Close();
+                }
+                response = (HttpWebResponse)request.GetResponse();
             }
             catch (Exception ex)
             {
-                logging("Exception beim Webseiten Aufruf aufgetreten: " + ex.Message);
+                Logging("Exception beim Webseiten Aufruf aufgetreten: " + ex.Message);
                 return "";
             }
-            do
-            {
-                count = resStream.Read(buf, 0, buf.Length);
-                if (count != 0)
-                {
-                    tempString = Encoding.ASCII.GetString(buf, 0, count);
-                    sb.Append(tempString);
-                }
-            }
-            while (count > 0);
-            return sb.ToString();
+            StreamReader resStream = new StreamReader(response.GetResponseStream(), Encoding.Default);
+            String thepage = resStream.ReadToEnd();
+            resStream.Close();
+            response.Close();
+
+            return thepage;
         }
 
-        public static String short_url(String url)
+        public static String ShortUrl(String Url)
         {
             try
             {
-                return get_web("http://tinyurl.com/api-create.php?url=" + url);
+                return GetWeb("http://tinyurl.com/api-create.php?url=" + Url);
             }
             catch
             {
-                return url;
+                return Url;
             }
         }
 
-        public static db getDatabaseByName(String name)
+        public static db getDatabaseByName(String Name)
         {
-            foreach (db database in freetzbot.Program.databases)
+            foreach (db database in FritzBot.Program.databases)
             {
-                if (database.datenbank_name == name)
+                if (database.datenbank_name == Name)
                 {
                     return database;
                 }
             }
-            db datenbank = new db(name);
-            freetzbot.Program.databases.Add(datenbank);
+            db datenbank = new db(Name);
+            FritzBot.Program.databases.Add(datenbank);
             return datenbank;
         }
 
-        public static command getCommandByName(String name)
+        public static ICommand getCommandByName(String Name)
         {
-            foreach (command thecommand in freetzbot.Program.commands)
+            foreach (ICommand theCommand in FritzBot.Program.Commands)
             {
-                foreach (String thename in thecommand.get_name())
+                foreach (String theName in theCommand.Name)
                 {
-                    if (thename == name)
+                    if (theName == Name)
                     {
-                        return thecommand;
+                        return theCommand;
                     }
                 }
             }
-            throw new Exception("Command not found");
+            throw new ArgumentException("Command not found");
         }
 
-        public static void announce(String message)
+        public static void Announce(String message)
         {
-            foreach (irc connection in freetzbot.Program.irc_connections)
+            foreach (Irc connection in FritzBot.Program.irc_connections)
             {
                 foreach (String room in connection.rooms)
                 {
-                    connection.sendmsg(message, room);
+                    connection.Sendmsg(message, room);
                 }
             }
         }
 
-        public static Boolean running_check()
+        public static Boolean RunningCheck()
         {
-            for (int i = 0; i < freetzbot.Program.irc_connections.Count; i++)
+            for (int i = 0; i < FritzBot.Program.irc_connections.Count; i++)
             {
-                if (freetzbot.Program.irc_connections[i].running())
+                if (FritzBot.Program.irc_connections[i].Running())
                 {
                     return true;
                 }
@@ -199,18 +212,18 @@ namespace freetzbot
             return false;
         }
 
-        public static Boolean op_check(String nickname)
+        public static Boolean OpCheck(String Nickname)
         {
-            if (freetzbot.Program.TheUsers[nickname].is_op && freetzbot.Program.TheUsers[nickname].authenticated)
+            if (FritzBot.Program.TheUsers[Nickname].is_op && FritzBot.Program.TheUsers[Nickname].authenticated)
             {
                 return true;
             }
             return false;
         }
 
-        public static Boolean ignore_check(String nickname)
+        public static Boolean IgnoreCheck(String Nickname)
         {
-            return freetzbot.Program.TheUsers[nickname].ignored;
+            return FritzBot.Program.TheUsers[Nickname].ignored;
         }
     }
 }

@@ -2,26 +2,23 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace freetzbot.webpages
+namespace FritzBot.webpages
 {
-    class boxdb : pageinterface
+    class boxdb : IWebInterface
     {
-        public String get_url()
-        {
-            return "/boxdb";
-        }
+        public String Url { get { return "/boxdb"; } }
 
-        public html_response gen_page(html_request request)
+        public html_response GenPage(html_request request)
         {
             html_response theresponse = new html_response();
-            String logincheck = login.check_login(request);
+            String LoginCheck = login.CheckLogin(request);
             theresponse.page += "<!DOCTYPE html><html><body>";
-            theresponse.page += index.gen_menu();
-            if (logincheck != "")
+            theresponse.page += index.GenMenu();
+            if (!String.IsNullOrEmpty(LoginCheck))
             {
                 theresponse.page += "<table border=2px>";
                 theresponse.page += "<tr><td><b>Besitzer</b></td><td><b>Boxen</b></td></tr>";
-                foreach (User theuser in freetzbot.Program.TheUsers)
+                foreach (User theuser in FritzBot.Program.TheUsers)
                 {
                     if (!(theuser.boxes.Count > 0))
                     {

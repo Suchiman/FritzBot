@@ -2,23 +2,20 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace freetzbot.webpages
+namespace FritzBot.webpages
 {
-    class aliasdb : pageinterface
+    class aliasdb : IWebInterface
     {
-        public String get_url()
-        {
-            return "/aliasdb";
-        }
+        public String Url { get { return "/aliasdb"; } }
 
-        public html_response gen_page(html_request request)
+        public html_response GenPage(html_request request)
         {
             html_response theresponse = new html_response();
             theresponse.page += "<!DOCTYPE html><html><body>";
-            theresponse.page += index.gen_menu();
+            theresponse.page += index.GenMenu();
             theresponse.page += "<table border=2px>";
             theresponse.page += "<tr><td><b>Alias</b></td><td><b>Beschreibung</b></td></tr>";
-            alias_db thealiases = freetzbot.Program.TheUsers.AllAliases();
+            AliasDB thealiases = FritzBot.Program.TheUsers.AllAliases();
             for (int i = 0; i < thealiases.alias.Count; i++)
             {
                 theresponse.page += "<tr><td>" + thealiases.alias[i] + "</td><td>" + thealiases.description[i] + "</td></tr>";

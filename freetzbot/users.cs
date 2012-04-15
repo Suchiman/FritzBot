@@ -7,9 +7,9 @@ using System.Threading;
 using System.Xml;
 using System.Text;
 
-namespace freetzbot
+namespace FritzBot
 {
-    public class UserCollection : IEnumerable
+    class UserCollection : IEnumerable
     {
         private List<User> TheUsers;
         private Thread AutoFlushThread;
@@ -85,7 +85,7 @@ namespace freetzbot
             while (true)
             {
                 int converttime;
-                if (int.TryParse(freetzbot.Program.configuration.get("UserAutoFlushIntervall"), out converttime))
+                if (int.TryParse(FritzBot.Program.configuration["UserAutoFlushIntervall"], out converttime))
                 {
                     if (converttime != 0)
                     {
@@ -117,21 +117,26 @@ namespace freetzbot
             Boolean failed = false;
             do
             {
+                XmlTextWriter UDB = null;
+                XmlSerializer serializer = null;
                 try
                 {
                     TheUsers.Sort();
-                    XmlTextWriter UDB = new XmlTextWriter("users.db", Encoding.GetEncoding("iso-8859-1"));
+                    UDB = new XmlTextWriter("users.db", Encoding.GetEncoding("iso-8859-1"));
                     UDB.Formatting = Formatting.Indented;
-                    XmlSerializer serializer = new XmlSerializer(TheUsers.GetType());
+                    serializer = new XmlSerializer(TheUsers.GetType());
                     serializer.Serialize(UDB, TheUsers);
                     UDB.Flush();
-                    UDB.Close();
                     failed = false;
                 }
                 catch
                 {
                     failed = true;
                     Thread.Sleep(50);
+                }
+                finally
+                {
+                    UDB.Close();
                 }
             } while (failed);
         }
@@ -143,14 +148,22 @@ namespace freetzbot
                 FileInfo FI = new FileInfo("users.db");
                 if (FI.Length > 0)
                 {
-                    StreamReader UDB = new StreamReader("users.db", Encoding.GetEncoding("iso-8859-1"));
-                    XmlSerializer serializer = new XmlSerializer(TheUsers.GetType());
-                    TheUsers = (List<User>)serializer.Deserialize(UDB);
-                    UDB.Close();
-                    foreach (User oneuser in TheUsers)
+                    StreamReader UDB = null;
+                    XmlSerializer serializer = null;
+                    try
                     {
-                        oneuser.authenticated = false;
-                        oneuser.authcookiedate = DateTime.MinValue;
+                        UDB = new StreamReader("users.db", Encoding.GetEncoding("iso-8859-1"));
+                        serializer = new XmlSerializer(TheUsers.GetType());
+                        TheUsers = (List<User>)serializer.Deserialize(UDB);
+                        foreach (User oneuser in TheUsers)
+                        {
+                            oneuser.authenticated = false;
+                            oneuser.authcookiedate = DateTime.MinValue;
+                        }
+                    }
+                    finally
+                    {
+                        UDB.Close();
                     }
                 }
             }
@@ -251,7 +264,7 @@ namespace freetzbot
             }
             if (u1 == -1 || u2 == -1)
             {
-                throw new Exception("User not found");
+                throw new ArgumentException("User not found");
             }
             foreach (String oldname in TheUsers[u1].names)
             {
@@ -302,9 +315,9 @@ namespace freetzbot
             return TheJokes;
         }
 
-        public alias_db AllAliases()
+        public AliasDB AllAliases()
         {
-            alias_db TheAliases = new alias_db();
+            AliasDB TheAliases = new AliasDB();
             foreach (User TheUser in TheUsers)
             {
                 for (int i = 0; i < TheUser.alias.alias.Count; i++)
@@ -326,7 +339,7 @@ namespace freetzbot
         public List<String> names;
         public List<String> boxes;
         public List<String> jokes;
-        public alias_db alias;
+        public AliasDB alias;
         public String password;
         public DateTime last_seen;
         public DateTime last_messaged;
@@ -342,7 +355,7 @@ namespace freetzbot
             names = new List<String>();
             boxes = new List<String>();
             jokes = new List<String>();
-            alias = new alias_db();
+            alias = new AliasDB();
             password = "";
             last_seen = new DateTime();
             last_messaged = new DateTime();
@@ -367,12 +380,12 @@ namespace freetzbot
 
         public void SetPassword(String pw)
         {
-            password = toolbox.crypt(pw);
+            password = toolbox.Crypt(pw);
         }
 
         public Boolean CheckPassword(String pw)
         {
-            if (password == toolbox.crypt(pw))
+            if (password == toolbox.Crypt(pw))
             {
                 return true;
             }
@@ -409,11 +422,11 @@ namespace freetzbot
             return false;
         }
 
-        public Boolean AddAlias(String alias, String description)
+        public Boolean AddAlias(String theAlias, String description)
         {
-            if (freetzbot.Program.TheUsers.AllAliases()[alias] == "")
+            if (String.IsNullOrEmpty(FritzBot.Program.TheUsers.AllAliases()[theAlias]))
             {
-                this.alias[alias] = description;
+                alias[theAlias] = description;
                 return true;
             }
             return false;
@@ -421,16 +434,12 @@ namespace freetzbot
 
         public int CompareTo(object obj)
         {
-            if (obj is User)
-            {
-                User CompareUser = (User)obj;
-                return names[0].CompareTo(CompareUser.names[0]);
-            }
-            throw new ArgumentException("object is not an User");
+            User CompareUser = (User)obj;
+            return names[0].CompareTo(CompareUser.names[0]);
         }
     }
 
-    public class ConvertOld
+    static class ConvertOld
     {
         public static void StartConvert(UserCollection TheUsers)
         {
@@ -442,34 +451,40 @@ namespace freetzbot
             TheUsers.Flush();
         }
 
-        public static void ConvertSeenDB(UserCollection TheUsers)
+        public static void ConvertSeenDB(UserCollection theUsers)
         {
             db seendb = toolbox.getDatabaseByName("seen.db");
             foreach (String data in seendb.GetAll())
             {
                 String[] daten = data.Split(';');//User;Joined;Messaged;Message
-                DateTime.TryParse(daten[1], out TheUsers[daten[0]].last_seen);
-                DateTime.TryParse(daten[2], out TheUsers[daten[0]].last_messaged);
+                if (!DateTime.TryParse(daten[1], out theUsers[daten[0]].last_seen))
+                {
+                    theUsers[daten[0]].last_seen = DateTime.MinValue;
+                }
+                if (!DateTime.TryParse(daten[2], out theUsers[daten[0]].last_messaged))
+                {
+                    theUsers[daten[0]].last_messaged = DateTime.MinValue;
+                }
                 if (daten[3].Contains("ACTION "))
                 {
                     daten[3] = daten[3].Remove(0, 1);
                     daten[3] = daten[3].Remove(daten[3].Length - 1);
                 }
-                TheUsers[daten[0]].last_message = daten[3];
+                theUsers[daten[0]].last_message = daten[3];
             }
         }
 
-        public static void ConvertBoxDB(UserCollection TheUsers)
+        public static void ConvertBoxDB(UserCollection theUsers)
         {
             db boxdb = toolbox.getDatabaseByName("box.db");
             foreach (String line in boxdb.GetAll())
             {
                 String[] split = line.Split(':');
-                TheUsers[split[0]].AddBox(split[1]);
+                theUsers[split[0]].AddBox(split[1]);
             }
         }
 
-        public static void ConvertUserDB(UserCollection TheUsers)
+        public static void ConvertUserDB(UserCollection theUsers)
         {
             db userdb = toolbox.getDatabaseByName("user.db");
             foreach (String name in userdb.GetAll())
@@ -477,26 +492,26 @@ namespace freetzbot
                 User newUser = new User();
                 newUser.AddName(name);
                 newUser.asked = true;
-                TheUsers.Add(newUser);
+                theUsers.Add(newUser);
             }
         }
 
-        public static void ConvertJokeDB(UserCollection TheUsers)
+        public static void ConvertJokeDB(UserCollection theUsers)
         {
             db witzdb = toolbox.getDatabaseByName("witze.db");
             foreach (String joke in witzdb.GetAll())
             {
-                TheUsers["FritzBot"].AddJoke(joke);
+                theUsers["FritzBot"].AddJoke(joke);
             }
         }
 
-        public static void ConvertAliasDB(UserCollection TheUsers)
+        public static void ConvertAliasDB(UserCollection theUsers)
         {
             db aliasdb = toolbox.getDatabaseByName("alias.db");
             foreach (String alias in aliasdb.GetAll())
             {
                 String[] split = alias.Split('=');
-                TheUsers["FritzBot"].alias[split[0]] = split[1];
+                theUsers["FritzBot"].alias[split[0]] = split[1];
             }
         }
     }

@@ -2,44 +2,19 @@
 using System.Collections.Generic;
 using System.Threading;
 
-namespace freetzbot.commands
+namespace FritzBot.commands
 {
-    class labor : command
+    class labor : ICommand
     {
-        private String[] name = { "labor" };
-        private String helptext = "Ich schaue mal auf das aktuelle Datum der Labor Firmwares, Parameter: '7270', '7390', 'fhem', '7390at', 'android', 'ios'.";
-        private Boolean op_needed = false;
-        private Boolean parameter_needed = false;
-        private Boolean accept_every_param = true;
-
-        public String[] get_name()
-        {
-            return name;
-        }
-
-        public String get_helptext()
-        {
-            return helptext;
-        }
-
-        public Boolean get_op_needed()
-        {
-            return op_needed;
-        }
-
-        public Boolean get_parameter_needed()
-        {
-            return parameter_needed;
-        }
-
-        public Boolean get_accept_every_param()
-        {
-            return accept_every_param;
-        }
+        public String[] Name { get { return new String[] { "labor" }; } }
+        public String HelpText { get { return "Ich schaue mal auf das aktuelle Datum der Labor Firmwares, Parameter: '7270', '7390', 'fhem', '7390at', 'android', 'ios'."; } }
+        public Boolean OpNeeded { get { return false; } }
+        public Boolean ParameterNeeded { get { return false; } }
+        public Boolean AcceptEveryParam { get { return true; } }
 
         public labor()
         {
-            labor_daten = new labordaten[7];
+            labor_daten = new Labordaten[7];
             boxdata = new Dictionary<String, int>();
             boxdatareverse = new Dictionary<int, String>();
             boxdata.Add("ios", 1);
@@ -62,22 +37,22 @@ namespace freetzbot.commands
             laborthread.Start();
         }
 
-        public void destruct()
+        public void Destruct()
         {
             laborthread.Abort();
         }
 
-        private labordaten[] labor_daten;
+        private Labordaten[] labor_daten;
         private Dictionary<String, int> boxdata;
         private Dictionary<int, String> boxdatareverse;
         Thread laborthread;
 
         private void update_labor_cache()
         {
-            String webseite = toolbox.get_web("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
-            if (webseite == "")
+            String webseite = toolbox.GetWeb("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
+            if (String.IsNullOrEmpty(webseite))
             {
-                throw new Exception("Verbindungsfehler");
+                throw new InvalidOperationException("Verbindungsfehler");
             }
             for (int i = 1; i < 8; i++)
             {
@@ -93,18 +68,18 @@ namespace freetzbot.commands
                     changelog_url_element = changelog_url_element.Split(new String[] { "<a href=" }, 2, StringSplitOptions.None)[1].Split(new String[] { "\"" }, 3, StringSplitOptions.None)[1];
                     labor_daten[i - 1].url = "http://www.avm.de/de/Service/Service-Portale/Labor/" + changelog_url_element;
                     String url = labor_daten[i - 1].url.Remove(labor_daten[i - 1].url.LastIndexOf('/')) + "/labor_feedback_versionen.php";
-                    String feedback = toolbox.get_web(url);
-                    if (feedback == "")
+                    String feedback = toolbox.GetWeb(url);
+                    if (String.IsNullOrEmpty(feedback))
                     {
-                        throw new Exception("Verbindungsfehler");
+                        throw new InvalidOperationException("Verbindungsfehler");
                     }
-                    labor_daten[i - 1].url = toolbox.short_url(labor_daten[i - 1].url);
+                    labor_daten[i - 1].url = toolbox.ShortUrl(labor_daten[i - 1].url);
                     labor_daten[i - 1].version = feedback.Split(new String[] { "</strong>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "Version " }, 2, StringSplitOptions.None)[1];
                 }
             }
         }
 
-        public void run(irc connection, String sender, String receiver, String message)
+        public void Run(Irc connection, String sender, String receiver, String message)
         {
             String changeset = "";
             int modell = 0;
@@ -114,42 +89,42 @@ namespace freetzbot.commands
             }
             catch (Exception ex)
             {
-                connection.sendmsg("Es war mir nicht möglich den Labor Cache zu erneuern. Grund: " + ex.Message + ". Verwende Cache", receiver);
+                connection.Sendmsg("Es war mir nicht möglich den Labor Cache zu erneuern. Grund: " + ex.Message + ". Verwende Cache", receiver);
             }
             if (boxdata.ContainsKey(message.ToLower()))
             {
                 modell = boxdata[message.ToLower()];
                 if (labor_daten[modell - 1].daten == "Released")
                 {
-                    connection.sendmsg("Aktuell ist keine Laborversion verfügbar da die Features in eine neue Release Firmware eingeflossen sind", receiver);
+                    connection.Sendmsg("Aktuell ist keine Laborversion verfügbar da die Features in eine neue Release Firmware eingeflossen sind", receiver);
                 }
                 else
                 {
                     changeset += "Die neueste " + message + " labor Version ist am " + labor_daten[modell - 1].daten + " erschienen mit der Versionsnummer: " + labor_daten[modell - 1].version + ". Laborseite: " + labor_daten[modell - 1].url;
                 }
             }
-            else if (message.ToLower() == "")
+            else if (String.IsNullOrEmpty(message.ToLower()))
             {
-                changeset = "Aktuelle Labor Daten: iOS: " + labor_daten[0].daten + ", Android: " + labor_daten[1].daten + ", 7390: " + labor_daten[2].daten + ", FHEM: " + labor_daten[3].daten + ", 7390at: " + labor_daten[4].daten + ", 7320: " + labor_daten[5].daten + ", 7270: " + labor_daten[6].daten + " - Zum Labor: " + toolbox.short_url("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
+                changeset = "Aktuelle Labor Daten: iOS: " + labor_daten[0].daten + ", Android: " + labor_daten[1].daten + ", 7390: " + labor_daten[2].daten + ", FHEM: " + labor_daten[3].daten + ", 7390at: " + labor_daten[4].daten + ", 7320: " + labor_daten[5].daten + ", 7270: " + labor_daten[6].daten + " - Zum Labor: " + toolbox.ShortUrl("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
             }
             else
             {
                 changeset += "Für die " + message + " steht derzeit keine Labor Version zur Verfügung. ";
             }
-            connection.sendmsg(changeset, receiver);
+            connection.Sendmsg(changeset, receiver);
         }
 
         private void labor_check()
         {
-            labordaten[] labor_old = labor_daten;
+            Labordaten[] labor_old = labor_daten;
             String output = "";
             while (true)
             {
-                if (freetzbot.Program.configuration.get("labor_check") == "false")
+                if (FritzBot.Program.configuration["labor_check"] == "false")
                 {
                     Thread.Sleep(30000);
                 }
-                while (freetzbot.Program.configuration.get("labor_check") == "true")
+                while (FritzBot.Program.configuration["labor_check"] == "true")
                 {
                     do
                     {
@@ -167,7 +142,7 @@ namespace freetzbot.commands
                     String labors = "";
                     for (int i = 1; i < 8; i++)
                     {
-                        if (labor_daten[i - 1].daten != labor_old[i - 1].daten)
+                        if (labor_daten[i - 1] != labor_old[i - 1])
                         {
                             if (labor_daten[i - 1].daten == "Released")
                             {
@@ -179,13 +154,13 @@ namespace freetzbot.commands
                             }
                         }
                     }
-                    if (released != "")
+                    if (!String.IsNullOrEmpty(released))
                     {
                         output = "Labor Version wurde als neue Firmware released! -" + released.Remove(0, 1);
                     }
-                    if (labors != "")
+                    if (!String.IsNullOrEmpty(labors))
                     {
-                        if (output != "")
+                        if (!String.IsNullOrEmpty(output))
                         {
                             output += ", Neue Labor Versionen gesichtet! -" + labors.Remove(0, 1);
                         }
@@ -194,14 +169,14 @@ namespace freetzbot.commands
                             output += "Neue Labor Versionen gesichtet! -" + labors.Remove(0, 1);
                         }
                     }
-                    if (output != "")
+                    if (!String.IsNullOrEmpty(output))
                     {
-                        output += " - Zum Labor: " + toolbox.short_url("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
-                        toolbox.announce(output);
+                        output += " - Zum Labor: " + toolbox.ShortUrl("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
+                        toolbox.Announce(output);
                     }
                     output = "";
                     int labor_check_intervall;
-                    if (!int.TryParse(freetzbot.Program.configuration.get("labor_check_intervall"), out labor_check_intervall))
+                    if (!int.TryParse(FritzBot.Program.configuration["labor_check_intervall"], out labor_check_intervall))
                     {
                         labor_check_intervall = 300000;
                     }
@@ -211,12 +186,43 @@ namespace freetzbot.commands
         }
     }
 }
-namespace freetzbot
+namespace FritzBot
 {
-    public struct labordaten
+    struct Labordaten : IEquatable<Labordaten>
     {
         public String daten;
         public String version;
         public String url;
+        
+        public override int GetHashCode()
+        {
+            return daten.GetHashCode() ^ version.GetHashCode();
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (!(obj is Labordaten))
+                return false;
+
+            return Equals((Labordaten)obj);
+        }  
+
+        public bool Equals(Labordaten other)
+        {
+            if (daten != other.daten)
+                return false;
+
+            return version == other.version;    
+        }
+
+        public static bool operator ==(Labordaten labordaten1, Labordaten labordaten2)
+        {
+            return labordaten1.Equals(labordaten2);
+        }
+
+        public static bool operator !=(Labordaten labordaten1, Labordaten labordaten2)
+        {
+            return !labordaten1.Equals(labordaten2);
+        }    
     }
 }

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 
-namespace freetzbot
+namespace FritzBot
 {
     class html_response
     {
@@ -18,7 +18,6 @@ namespace freetzbot
         public Dictionary<String, String> getdata = new Dictionary<String, String>();
         public CookieCollection cookies = new CookieCollection();
         public IPAddress useradress = IPAddress.Loopback;
-        public String host = "";
     }
     class OwnCookieCollection
     {

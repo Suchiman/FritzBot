@@ -2,82 +2,57 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace freetzbot.commands
+namespace FritzBot.commands
 {
-    class user : command
+    class user : ICommand
     {
-        private String[] name = { "user" };
-        private String helptext = "Führt Operationen an meiner Benutzerdatenbank aus, Operator Befehl: !user remove, reload, flush, add <name>, box <name> <box>";
-        private Boolean op_needed = true;
-        private Boolean parameter_needed = true;
-        private Boolean accept_every_param = false;
+        public String[] Name { get { return new String[] { "user" }; } }
+        public String HelpText { get { return "Führt Operationen an meiner Benutzerdatenbank aus, Operator Befehl: !user remove, reload, flush, add <name>, box <name> <box>"; } }
+        public Boolean OpNeeded { get { return true; } }
+        public Boolean ParameterNeeded { get { return true; } }
+        public Boolean AcceptEveryParam { get { return false; } }
 
-        public String[] get_name()
-        {
-            return name;
-        }
-
-        public String get_helptext()
-        {
-            return helptext;
-        }
-
-        public Boolean get_op_needed()
-        {
-            return op_needed;
-        }
-
-        public Boolean get_parameter_needed()
-        {
-            return parameter_needed;
-        }
-
-        public Boolean get_accept_every_param()
-        {
-            return accept_every_param;
-        }
-
-        public void destruct()
+        public void Destruct()
         {
 
         }
 
-        public void run(irc connection, String sender, String receiver, String message)
+        public void Run(Irc connection, String sender, String receiver, String message)
         {
             try
             {
                 if (message == "reload")
                 {
-                    freetzbot.Program.TheUsers.Reload();
+                    FritzBot.Program.TheUsers.Reload();
                 }
                 if (message == "flush")
                 {
-                    freetzbot.Program.TheUsers.Flush();
+                    FritzBot.Program.TheUsers.Flush();
                 }
                 if (message.Contains("add"))
                 {
                     String[] split = message.Split(' ');
-                    freetzbot.Program.TheUsers.Add(split[1]);
+                    FritzBot.Program.TheUsers.Add(split[1]);
                 }
                 if (message.Contains("box"))
                 {
                     String[] split = message.Split(' ');
-                    freetzbot.Program.TheUsers[split[1]].AddBox(split[2]);
+                    FritzBot.Program.TheUsers[split[1]].AddBox(split[2]);
                 }
                 if (message.Contains("cleanup"))
                 {
-                    freetzbot.Program.TheUsers.CleanUp();
+                    FritzBot.Program.TheUsers.CleanUp();
                 }
                 if (message.Contains("remove"))
                 {
-                    freetzbot.Program.TheUsers.Remove(message.Split(' ')[1]);
+                    FritzBot.Program.TheUsers.Remove(message.Split(' ')[1]);
                 }
-                connection.sendmsg("Okay", receiver);
+                connection.Sendmsg("Okay", receiver);
             }
             catch (Exception ex)
             {
-                toolbox.logging("Bei einer Datenbank Operation ist eine Exception aufgetreten: " + ex.Message);
-                connection.sendmsg("Wups, das hat eine Exception verursacht", receiver);
+                toolbox.Logging("Bei einer Datenbank Operation ist eine Exception aufgetreten: " + ex.Message);
+                connection.Sendmsg("Wups, das hat eine Exception verursacht", receiver);
             }
         }
     }

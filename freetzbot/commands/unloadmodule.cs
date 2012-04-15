@@ -2,67 +2,42 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace freetzbot.commands
+namespace FritzBot.commands
 {
-    class unloadmodule : command
+    class unloadmodule : ICommand
     {
-        private String[] name = { "rmmod", "unloadmodule" };
-        private String helptext = "Deaktiviert einen meiner Befehle";
-        private Boolean op_needed = true;
-        private Boolean parameter_needed = true;
-        private Boolean accept_every_param = false;
+        public String[] Name { get { return new String[] { "rmmod", "unloadmodule" }; } }
+        public String HelpText { get { return "Deaktiviert einen meiner Befehle"; } }
+        public Boolean OpNeeded { get { return true; } }
+        public Boolean ParameterNeeded { get { return true; } }
+        public Boolean AcceptEveryParam { get { return false; } }
 
-        public String[] get_name()
-        {
-            return name;
-        }
-
-        public String get_helptext()
-        {
-            return helptext;
-        }
-
-        public Boolean get_op_needed()
-        {
-            return op_needed;
-        }
-
-        public Boolean get_parameter_needed()
-        {
-            return parameter_needed;
-        }
-
-        public Boolean get_accept_every_param()
-        {
-            return accept_every_param;
-        }
-
-        public void destruct()
+        public void Destruct()
         {
 
         }
 
-        public void run(irc connection, String sender, String receiver, String message)
+        public void Run(Irc connection, String sender, String receiver, String message)
         {
             try
             {
-                for (int i = 0; i < freetzbot.Program.commands.Count; i++)
+                for (int i = 0; i < FritzBot.Program.Commands.Count; i++)
                 {
-                    if (freetzbot.Program.commands[i].get_name()[0] == message)
+                    if (FritzBot.Program.Commands[i].Name[0] == message)
                     {
-                        freetzbot.Program.commands[i].destruct();
-                        freetzbot.Program.commands[i] = null;
-                        freetzbot.Program.commands.RemoveAt(i);
-                        connection.sendmsg("Modul erfolgreich entladen", receiver);
+                        FritzBot.Program.Commands[i].Destruct();
+                        FritzBot.Program.Commands[i] = null;
+                        FritzBot.Program.Commands.RemoveAt(i);
+                        connection.Sendmsg("Modul erfolgreich entladen", receiver);
                         return;
                     }
                 }
-                connection.sendmsg("Modul wurde nicht gefunden", receiver);
+                connection.Sendmsg("Modul wurde nicht gefunden", receiver);
             }
             catch (Exception ex)
             {
-                connection.sendmsg("Das hat eine Exception ausgelöst", receiver);
-                toolbox.logging("Unloadmodule Exception " + ex.Message);
+                connection.Sendmsg("Das hat eine Exception ausgelöst", receiver);
+                toolbox.Logging("Unloadmodule Exception " + ex.Message);
             }
         }
     }

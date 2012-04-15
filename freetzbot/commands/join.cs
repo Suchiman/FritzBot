@@ -1,49 +1,24 @@
 ﻿using System;
 
-namespace freetzbot.commands
+namespace FritzBot.commands
 {
-    class join : command
+    class join : ICommand
     {
-        private String[] name = { "join" };
-        private String helptext = "Daraufhin werde ich den angegebenen Channel betreten, Operator Befehl: z.b. !join #testchannel";
-        private Boolean op_needed = true;
-        private Boolean parameter_needed = true;
-        private Boolean accept_every_param = false;
+        public String[] Name { get { return new String[] { "join" }; } }
+        public String HelpText { get { return "Daraufhin werde ich den angegebenen Channel betreten, Operator Befehl: z.b. !join #testchannel"; } }
+        public Boolean OpNeeded { get { return true; } }
+        public Boolean ParameterNeeded { get { return true; } }
+        public Boolean AcceptEveryParam { get { return false; } }
 
-        public String[] get_name()
-        {
-            return name;
-        }
-
-        public String get_helptext()
-        {
-            return helptext;
-        }
-
-        public Boolean get_op_needed()
-        {
-            return op_needed;
-        }
-
-        public Boolean get_parameter_needed()
-        {
-            return parameter_needed;
-        }
-
-        public Boolean get_accept_every_param()
-        {
-            return accept_every_param;
-        }
-
-        public void destruct()
+        public void Destruct()
         {
 
         }
 
-        public void run(irc connection, String sender, String receiver, String message)
+        public void Run(Irc connection, String sender, String receiver, String message)
         {
-            connection.sendaction("rennt los zum channel " + message, receiver);
-            connection.join(message);
+            connection.Sendaction("rennt los zum channel " + message, receiver);
+            connection.JoinChannel(message);
         }
     }
 }

@@ -4,7 +4,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 
-namespace freetzbot
+namespace FritzBot
 {
     /// <summary>
     /// Eine Datenbank Klasse um Dateien zu speichern und auszulesen
@@ -165,12 +165,14 @@ namespace freetzbot
             return datenbank.ToArray();
         }
         /// <summary>
-        /// Gibt einen Integer mit der Anzahl der Zeilen der DB zurück
+        /// Die Tatsächliche Größe der Datenbank
         /// </summary>
-        /// <returns>Gibt einen Integer mit der Anzahl der Zeilen der DB zurück</returns>
-        public int Size()
+        public int Count
         {
-            return datenbank.Count;
+            get
+            {
+                return datenbank.Count;
+            }
         }
         /// <summary>
         /// Lädt die Datenbank aus der Datei neu in den Buffer
@@ -193,7 +195,7 @@ namespace freetzbot
         {
             for (int i = 0; i < datenbank.Count; i++)
             {
-                if (datenbank[i] == "")
+                if (String.IsNullOrEmpty(datenbank[i]))
                 {
                     datenbank.RemoveAt(i);
                 }
