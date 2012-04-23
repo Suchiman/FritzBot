@@ -170,7 +170,7 @@ namespace FritzBot
                 {
                     process_command(connection, nick, source, message.Remove(0, 1));
                 }
-                else if (source != nick)
+                else if (source == nick)
                 {
                     connection.Sendmsg("Hallo, kann ich dir helfen ? Probiers doch mal mit !hilfe", nick);
                 }

@@ -6,7 +6,7 @@ namespace FritzBot.commands
 {
     class remember : ICommand
     {
-        public String[] Name { get { return new String[] { "remember" }; } }
+        public String[] Name { get { return new String[] { "remind" }; } }
         public String HelpText { get { return "Hinterlasse einem Benutzer eine Nachricht. Sobald er wiederkommt oder etwas schreibt werde ich sie ihm Zustellen. !remember <Benutzer> <Nachricht>"; } }
         public Boolean OpNeeded { get { return false; } }
         public Boolean ParameterNeeded { get { return false; } }
