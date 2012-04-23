@@ -1,4 +1,5 @@
 ﻿using System;
+using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -17,7 +18,7 @@ namespace FritzBot.commands
 
         public void Run(Irc connection, String sender, String receiver, String message)
         {
-            if (FritzBot.Program.TheUsers[sender].AddBox(message))
+            if (Program.TheUsers[sender].AddBox(message))
             {
                 connection.Sendmsg("Okay danke, ich werde mir deine \"" + message + "\" notieren.", receiver);
                 connection.Sendmsg("Neue Box wurde registriert: User: " + sender + ", Box: " + message, "hippie2000");

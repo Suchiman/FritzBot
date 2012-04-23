@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -19,9 +18,9 @@ namespace FritzBot.commands
 
         public void Run(Irc connection, String sender, String receiver, String message)
         {
-            if (FritzBot.Program.TheUsers.Exists(message))
+            if (Program.TheUsers.Exists(message))
             {
-                FritzBot.Program.TheUsers[message].is_op = true;
+                Program.TheUsers[message].isOp = true;
                 connection.Sendmsg("Okay", receiver);
             }
             else

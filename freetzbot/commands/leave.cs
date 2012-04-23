@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -30,13 +31,13 @@ namespace FritzBot.commands
                     break;
                 }
             }
-            for (int i = 0; i < FritzBot.Program.irc_connections.Count; i++)
+            for (int i = 0; i < Program.irc_connections.Count; i++)
             {
-                if (FritzBot.Program.irc_connections[i].HostName == message)
+                if (Program.irc_connections[i].HostName == message)
                 {
-                    FritzBot.Program.irc_connections[i].Disconnect();
-                    FritzBot.Program.irc_connections[i] = null;
-                    FritzBot.Program.irc_connections.RemoveAt(i);
+                    Program.irc_connections[i].Disconnect();
+                    Program.irc_connections[i] = null;
+                    Program.irc_connections.RemoveAt(i);
                     break;
                 }
             }

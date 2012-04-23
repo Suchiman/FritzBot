@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading;
+using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -21,26 +20,21 @@ namespace FritzBot.commands
         public void Run(Irc connection, String sender, String receiver, String message)
         {
             String[] split = message.Split(' ');
-            if (FritzBot.Program.TheUsers.Exists(split[0]) && FritzBot.Program.TheUsers.Exists(split[1]))
+            if (Program.TheUsers.Exists(split[0]) && Program.TheUsers.Exists(split[1]))
             {
-                if (toolbox.OpCheck(sender))
+                if (toolbox.IsOp(sender))
                 {
-                    FritzBot.Program.TheUsers.GroupUser(split[0], split[1]);
+                    Program.TheUsers.GroupUser(split[0], split[1]);
                     connection.Sendmsg("Okay", receiver);
                     return;
                 }
                 for (int i = 0; i < 2; i++)
                 {
-                    if (!String.IsNullOrEmpty(FritzBot.Program.TheUsers[split[i]].password))
+                    if (!String.IsNullOrEmpty(Program.TheUsers[split[i]].password))
                     {
                         connection.Sendmsg("Benutzer " + split[i] + " erfordert ein Passwort!", sender);
-                        FritzBot.Program.await_response = true;
-                        FritzBot.Program.awaited_nick = sender;
-                        while (FritzBot.Program.await_response)
-                        {
-                            Thread.Sleep(50);
-                        }
-                        if (FritzBot.Program.TheUsers[split[i]].CheckPassword(FritzBot.Program.awaited_response))
+                        String Answer = toolbox.AwaitAnswer(sender);
+                        if (Program.TheUsers[split[i]].CheckPassword(Answer))
                         {
                             connection.Sendmsg("Korrekt", sender);
                         }
@@ -51,7 +45,7 @@ namespace FritzBot.commands
                         }
                     }
                 }
-                FritzBot.Program.TheUsers.GroupUser(split[0], split[1]);
+                Program.TheUsers.GroupUser(split[0], split[1]);
                 connection.Sendmsg("Okay", receiver);
             }
             else

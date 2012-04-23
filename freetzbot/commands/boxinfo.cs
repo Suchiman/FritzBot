@@ -1,4 +1,5 @@
 ﻿using System;
+using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -22,9 +23,9 @@ namespace FritzBot.commands
             {
                 message = sender;
             }
-            if (FritzBot.Program.TheUsers.Exists(message))
+            if (Program.TheUsers.Exists(message))
             {
-                foreach (String box in FritzBot.Program.TheUsers[message].boxes)
+                foreach (String box in Program.TheUsers[message].boxes)
                 {
                     output += ", " + box;
                 }

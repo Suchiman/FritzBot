@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading;
+using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -27,16 +26,11 @@ namespace FritzBot.commands
             }
             else
             {
-                if (!String.IsNullOrEmpty(FritzBot.Program.TheUsers[sender].password))
+                if (!String.IsNullOrEmpty(Program.TheUsers[sender].password))
                 {
                     connection.Sendmsg("Bitte gib zuerst dein altes Passwort ein:", sender);
-                    FritzBot.Program.await_response = true;
-                    FritzBot.Program.awaited_nick = sender;
-                    while (FritzBot.Program.await_response)
-                    {
-                        Thread.Sleep(50);
-                    }
-                    if (FritzBot.Program.TheUsers[sender].CheckPassword(FritzBot.Program.awaited_response))
+                    String Password = toolbox.AwaitAnswer(sender);
+                    if (Program.TheUsers[sender].CheckPassword(Password))
                     {
                         connection.Sendmsg("Passwort korrekt, gib nun dein neues Passwort ein:", sender);
                     }
@@ -45,25 +39,15 @@ namespace FritzBot.commands
                         connection.Sendmsg("Passwort inkorrekt, abbruch!", sender);
                         return;
                     }
-                    FritzBot.Program.await_response = true;
-                    FritzBot.Program.awaited_nick = sender;
-                    while (FritzBot.Program.await_response)
-                    {
-                        Thread.Sleep(50);
-                    }
-                    FritzBot.Program.TheUsers[sender].SetPassword(FritzBot.Program.awaited_response);
+                    Password = toolbox.AwaitAnswer(sender);
+                    Program.TheUsers[sender].SetPassword(Password);
                     connection.Sendmsg("Passwort wurde geändert!", sender);
                 }
                 else
                 {
                     connection.Sendmsg("Okay bitte gib nun dein Passwort ein", sender);
-                    FritzBot.Program.await_response = true;
-                    FritzBot.Program.awaited_nick = sender;
-                    while (FritzBot.Program.await_response)
-                    {
-                        Thread.Sleep(50);
-                    }
-                    FritzBot.Program.TheUsers[sender].SetPassword(FritzBot.Program.awaited_response);
+                    String Password = toolbox.AwaitAnswer(sender);
+                    Program.TheUsers[sender].SetPassword(Password);
                     connection.Sendmsg("Passwort wurde festgelegt!", sender);
                 }
             }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -27,27 +28,27 @@ namespace FritzBot.commands
             switch (parameter[0].ToLower())
             {
                 case "add":
-                    if (String.IsNullOrEmpty(FritzBot.Program.TheUsers.AllAliases()[parameter[1]]))
+                    if (String.IsNullOrEmpty(Program.TheUsers.AllAliases()[parameter[1]]))
                     {
-                        FritzBot.Program.TheUsers[sender].alias[parameter[1]] = String.Join(" ", parameter, 2, parameter.Length - 2);
+                        Program.TheUsers[sender].alias[parameter[1]] = String.Join(" ", parameter, 2, parameter.Length - 2);
                         connection.Sendmsg("Der Alias wurde erfolgreich hinzugefügt", receiver);
                         return true;
                     }
                     connection.Sendmsg("Diesen Alias gibt es bereits", receiver);
                     return false;
                 case "edit":
-                    FritzBot.Program.TheUsers[sender].alias[parameter[1]] = String.Join(" ", parameter, 2, parameter.Length - 2);
+                    Program.TheUsers[sender].alias[parameter[1]] = String.Join(" ", parameter, 2, parameter.Length - 2);
                     connection.Sendmsg("Der Alias wurde erfolgreich bearbeitet", receiver);
                     return true;
                 case "remove":
-                    if (!String.IsNullOrEmpty(FritzBot.Program.TheUsers[sender].alias[parameter[1]]))
+                    if (!String.IsNullOrEmpty(Program.TheUsers[sender].alias[parameter[1]]))
                     {
-                        FritzBot.Program.TheUsers[sender].alias[parameter[1]] = "";
+                        Program.TheUsers[sender].alias[parameter[1]] = "";
                         connection.Sendmsg("Alias wurde gelöscht", receiver);
                     }
-                    else if (toolbox.OpCheck(sender))
+                    else if (toolbox.IsOp(sender))
                     {
-                        foreach (User oneuser in FritzBot.Program.TheUsers)
+                        foreach (User oneuser in Program.TheUsers)
                         {
                             if (!String.IsNullOrEmpty(oneuser.alias[parameter[1]]))
                             {
@@ -64,7 +65,7 @@ namespace FritzBot.commands
                     }
                     return true;
                 default:
-                    String thealias = FritzBot.Program.TheUsers.AllAliases()[parameter[0]];
+                    String thealias = Program.TheUsers.AllAliases()[parameter[0]];
                     if (!String.IsNullOrEmpty(thealias))
                     {
                         for (int i = 0; thealias.Contains("$") && parameter.Length > 1; i++)

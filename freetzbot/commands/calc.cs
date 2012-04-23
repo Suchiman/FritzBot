@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -38,8 +38,13 @@ namespace FritzBot.commands
                 String result = CalcPartial(message);
                 connection.Sendmsg("Ergebnis: " + result, receiver);
             }
-            catch
+            catch (Exception ex)
             {
+                if (ex.Message == "Not an Number")
+                {
+                    connection.Sendmsg("Halt mal, was versuchst du hier? Das ist keine gültige Zahl", receiver);
+                    return;
+                }
                 connection.Sendmsg("Schade, das hat leider eine Exception bei der Verarbeitung ausgelöst...", receiver);
             }
         }
@@ -104,13 +109,9 @@ namespace FritzBot.commands
             Double num1;
             Double num2;
             String result = "";
-            if (!Double.TryParse(number1, out num1))
+            if (!Double.TryParse(number1, out num1) || !Double.TryParse(number2, out num2))
             {
-                num1 = 0;
-            }
-            if (!Double.TryParse(number2, out num2))
-            {
-                num2 = 0;
+                throw new ArgumentException("Not an Number");
             }
             switch (op)
             {
@@ -127,7 +128,7 @@ namespace FritzBot.commands
                     result = (num1 / num2).ToString();
                     break;
                 case '%':
-                    result = (num1 * num2 / 100).ToString();
+                    result = (num1 % num2).ToString();
                     break;
                 default:
                     throw new ArgumentException("Unknown Operator");

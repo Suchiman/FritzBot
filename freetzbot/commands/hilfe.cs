@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -21,9 +22,9 @@ namespace FritzBot.commands
             if (String.IsNullOrEmpty(message))
             {
                 List<String> befehle = new List<String>();
-                foreach (ICommand thecommand in FritzBot.Program.Commands)
+                foreach (ICommand thecommand in Program.commands)
                 {
-                    if (thecommand.OpNeeded && toolbox.OpCheck(sender) || !thecommand.OpNeeded)
+                    if (thecommand.OpNeeded && toolbox.IsOp(sender) || !thecommand.OpNeeded)
                     {
                         befehle.Add(thecommand.Name[0]);
                     }
@@ -40,7 +41,7 @@ namespace FritzBot.commands
             }
             else
             {
-                foreach (ICommand thecommand in FritzBot.Program.Commands)
+                foreach (ICommand thecommand in Program.commands)
                 {
                     foreach (String CommandName in thecommand.Name)
                     {

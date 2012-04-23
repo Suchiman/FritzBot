@@ -1,4 +1,5 @@
 ﻿using System;
+using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -23,7 +24,7 @@ namespace FritzBot.commands
                 case "set":
                     try
                     {
-                        FritzBot.Program.configuration[split[1]] = split[2];
+                        Program.configuration[split[1]] = split[2];
                     }
                     catch
                     {
@@ -35,7 +36,7 @@ namespace FritzBot.commands
                 case "get":
                     try
                     {
-                        connection.Sendmsg(FritzBot.Program.configuration[split[1]], receiver);
+                        connection.Sendmsg(Program.configuration[split[1]], receiver);
                     }
                     catch
                     {

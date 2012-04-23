@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Net;
-using System.Threading;
-using System.IO;
-using System.Text;
-using System.Security.Cryptography;
-using System.Reflection;
 using System.Collections.Generic;
+using System.IO;
+using System.Net;
+using System.Reflection;
+using System.Text;
+using System.Threading;
+using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -34,7 +34,7 @@ namespace FritzBot.commands
                 pages = new List<IWebInterface>();
                 foreach (Type t in Assembly.GetExecutingAssembly().GetTypes())
                 {
-                    if (t.Namespace == "FritzBot.webpages")
+                    if (t.Namespace == "webpages")
                     {
                         pages.Add((IWebInterface)Activator.CreateInstance(t));
                     }

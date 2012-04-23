@@ -11,7 +11,7 @@ namespace FritzBot
     static class toolbox
     {
         private static Thread LoggingThread = new Thread(new ThreadStart(LogThread));
-        private static List<string> LoggingList = new List<string>();
+        private static Queue<String> LoggingList = new Queue<String>();
         private static Mutex LoggingSafe = new Mutex();
 
         private static void LogThread()
@@ -39,9 +39,8 @@ namespace FritzBot
                             }
                         }
                     }
-                    File.AppendAllText("log.txt", LoggingList[0] + "\r\n", Encoding.GetEncoding("iso-8859-1"));
-                    Console.WriteLine(LoggingList[0]);
-                    LoggingList.RemoveAt(0);
+                    File.AppendAllText("log.txt", LoggingList.Peek() + "\r\n", Encoding.GetEncoding("iso-8859-1"));
+                    Console.WriteLine(LoggingList.Dequeue());
                 }
                 catch (Exception ex)
                 {
@@ -63,7 +62,7 @@ namespace FritzBot
                     LoggingThread.IsBackground = true;
                     LoggingThread.Start();
                 }
-                LoggingList.Add(DateTime.Now.ToString("dd.MM HH:mm:ss ") + toLog);
+                LoggingList.Enqueue(DateTime.Now.ToString("dd.MM HH:mm:ss ") + toLog);
             }
             catch (Exception ex)
             {
@@ -88,7 +87,7 @@ namespace FritzBot
         {
             Irc connection = new Irc(server, Port, Nick);
             connection.QuitMessage = Quit_Message;
-            connection.Received += new Irc.ReceivedEventHandler(FritzBot.Program.process_incomming);
+            connection.Received += new Irc.ReceivedEventHandler(Program.process_incomming);
             connection.AutoReconnect = true;
             connection.Connect();
             Thread.Sleep(1000);
@@ -104,7 +103,7 @@ namespace FritzBot
             {
                 connection.JoinChannel(InitialChannel);
             }
-            FritzBot.Program.irc_connections.Add(connection);
+            Program.irc_connections.Add(connection);
         }
 
         public static String GetWeb(String Url, Dictionary<String, String> POSTParams = null)
@@ -140,7 +139,12 @@ namespace FritzBot
                 Logging("Exception beim Webseiten Aufruf aufgetreten: " + ex.Message);
                 return "";
             }
-            StreamReader resStream = new StreamReader(response.GetResponseStream(), Encoding.Default);
+            String theEncoding = "UTF-8";
+            if (!String.IsNullOrEmpty(response.ContentEncoding))
+            {
+                theEncoding = response.ContentEncoding;
+            }
+            StreamReader resStream = new StreamReader(response.GetResponseStream(), Encoding.GetEncoding(theEncoding, EncoderFallback.ReplacementFallback, DecoderFallback.ReplacementFallback));
             String thepage = resStream.ReadToEnd();
             resStream.Close();
             response.Close();
@@ -162,7 +166,7 @@ namespace FritzBot
 
         public static db getDatabaseByName(String Name)
         {
-            foreach (db database in FritzBot.Program.databases)
+            foreach (db database in Program.databases)
             {
                 if (database.datenbank_name == Name)
                 {
@@ -170,13 +174,13 @@ namespace FritzBot
                 }
             }
             db datenbank = new db(Name);
-            FritzBot.Program.databases.Add(datenbank);
+            Program.databases.Add(datenbank);
             return datenbank;
         }
 
         public static ICommand getCommandByName(String Name)
         {
-            foreach (ICommand theCommand in FritzBot.Program.Commands)
+            foreach (ICommand theCommand in Program.commands)
             {
                 foreach (String theName in theCommand.Name)
                 {
@@ -191,7 +195,7 @@ namespace FritzBot
 
         public static void Announce(String message)
         {
-            foreach (Irc connection in FritzBot.Program.irc_connections)
+            foreach (Irc connection in Program.irc_connections)
             {
                 foreach (String room in connection.rooms)
                 {
@@ -200,11 +204,28 @@ namespace FritzBot
             }
         }
 
-        public static Boolean RunningCheck()
+        public static String AwaitAnswer(String nick)
         {
-            for (int i = 0; i < FritzBot.Program.irc_connections.Count; i++)
+            Program.await_response = true;
+            Program.awaited_nick = nick;
+            int i = 0;
+            while (String.IsNullOrEmpty(Program.awaited_response) && i < 300)
             {
-                if (FritzBot.Program.irc_connections[i].Running())
+                Thread.Sleep(100);
+                i++;
+            }
+            Program.await_response = false;
+            Program.awaited_nick = "";
+            String response = Program.awaited_response;
+            Program.awaited_response = "";
+            return response;
+        }
+
+        public static Boolean IsRunning()
+        {
+            for (int i = 0; i < Program.irc_connections.Count; i++)
+            {
+                if (Program.irc_connections[i].Running())
                 {
                     return true;
                 }
@@ -212,18 +233,18 @@ namespace FritzBot
             return false;
         }
 
-        public static Boolean OpCheck(String Nickname)
+        public static Boolean IsOp(String Nickname)
         {
-            if (FritzBot.Program.TheUsers[Nickname].is_op && FritzBot.Program.TheUsers[Nickname].authenticated)
+            if (Program.TheUsers[Nickname].isOp && Program.TheUsers[Nickname].authenticated)
             {
                 return true;
             }
             return false;
         }
 
-        public static Boolean IgnoreCheck(String Nickname)
+        public static Boolean IsIgnored(String Nickname)
         {
-            return FritzBot.Program.TheUsers[Nickname].ignored;
+            return Program.TheUsers[Nickname].ignored;
         }
     }
 }

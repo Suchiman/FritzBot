@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -21,13 +20,13 @@ namespace FritzBot.commands
         {
             try
             {
-                for (int i = 0; i < FritzBot.Program.Commands.Count; i++)
+                for (int i = 0; i < Program.commands.Count; i++)
                 {
-                    if (FritzBot.Program.Commands[i].Name[0] == message)
+                    if (Program.commands[i].Name[0] == message)
                     {
-                        FritzBot.Program.Commands[i].Destruct();
-                        FritzBot.Program.Commands[i] = null;
-                        FritzBot.Program.Commands.RemoveAt(i);
+                        Program.commands[i].Destruct();
+                        Program.commands[i] = null;
+                        Program.commands.RemoveAt(i);
                         connection.Sendmsg("Modul erfolgreich entladen", receiver);
                         return;
                     }

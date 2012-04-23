@@ -1,4 +1,5 @@
 ﻿using System;
+using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -23,7 +24,7 @@ namespace FritzBot.commands
                 String[] split = message.Split(' ');
                 if (split[1] == "reload")
                 {
-                    foreach (db database in FritzBot.Program.databases)
+                    foreach (db database in Program.databases)
                     {
                         if (database.datenbank_name == split[0] || split[0] == "all")
                         {
@@ -34,7 +35,7 @@ namespace FritzBot.commands
                 }
                 else if (split[1] == "flush")
                 {
-                    foreach (db database in FritzBot.Program.databases)
+                    foreach (db database in Program.databases)
                     {
                         if (database.datenbank_name == split[0] || split[0] == "all")
                         {

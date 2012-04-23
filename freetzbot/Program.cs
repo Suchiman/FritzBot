@@ -14,10 +14,23 @@ namespace FritzBot
         public static String awaited_nick = "";
 
         public static UserCollection TheUsers;
-        
+
+        public delegate void JoinEventHandler(Irc connection, String nick, String Room);
+        public delegate void PartEventHandler(Irc connection, String nick, String Room);
+        public delegate void QuitEventHandler(Irc connection, String nick);
+        public delegate void NickEventHandler(Irc connection, String Oldnick, String Newnick);
+        public delegate void KickEventHandler(Irc connection, String nick, String Room);
+        public delegate void MessageEventHandler(Irc connection, String sender, String receiver, String message);
+        public static event JoinEventHandler UserJoined;
+        public static event PartEventHandler UserPart;
+        public static event QuitEventHandler UserQuit;
+        public static event NickEventHandler UserNickChanged;
+        public static event KickEventHandler BotKicked;
+        public static event MessageEventHandler UserMessaged;
+
         public static List<db> databases = new List<db>();
         public static settings configuration = new settings("config.cfg");
-        public static List<ICommand> Commands = new List<ICommand>();
+        public static List<ICommand> commands = new List<ICommand>();
         public static List<Irc> irc_connections = new List<Irc>();
 
         private static Thread antifloodingthread;
@@ -30,7 +43,7 @@ namespace FritzBot
             Boolean answered = false;
 
             #region Antiflooding checks
-            if (!toolbox.OpCheck(sender))
+            if (!toolbox.IsOp(sender))
             {
                 int floodingcount;
                 if (!int.TryParse(configuration["floodingcount"], out floodingcount))
@@ -57,7 +70,7 @@ namespace FritzBot
             try
             {
                 ICommand theCommand = toolbox.getCommandByName(parameter[0].ToLower());
-                if (!(theCommand.OpNeeded && !toolbox.OpCheck(sender)))
+                if (!(theCommand.OpNeeded && !toolbox.IsOp(sender)))
                 {
                     if ((theCommand.ParameterNeeded && !(parameter.Length > 1) || !theCommand.ParameterNeeded && parameter.Length > 1) && !theCommand.AcceptEveryParam)
                     {
@@ -74,7 +87,13 @@ namespace FritzBot
                     answered = true;
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                if (ex.Message != "Command not found")
+                {
+                    toolbox.Logging("Eine Exception ist beim Ausführen eines Befehles abgefangen worden: " + ex.Message);
+                }
+            }
 
             if (!answered)
             {
@@ -87,89 +106,75 @@ namespace FritzBot
 
         public static void process_incomming(Irc connection, String source, String nick, String message)
         {
+            while (message.ToCharArray()[0] == ' ')
+            {
+                message = message.Remove(0, 1);
+            }
+            while (message.ToCharArray()[message.Length - 1] == ' ')
+            {
+                message = message.Remove(message.Length - 1);
+            }
             switch (source)
             {
                 case "LOG":
                     toolbox.Logging(message);
                     return;
                 case "JOIN":
-                    if (!(nick == connection.Nickname))
+                    toolbox.Logging(nick + " hat den Raum " + message + " betreten");
+                    if (toolbox.IsIgnored(nick)) return;
+                    if (nick != connection.Nickname)
                     {
-                        toolbox.Logging(nick + " hat den Raum " + message + " betreten");
-                        if (toolbox.IgnoreCheck(nick)) return;
-                        FritzBot.commands.frag.boxfrage(connection, nick, nick);
-                        TheUsers[nick].last_seen = DateTime.MinValue;
+                        UserJoined(connection, nick, message);
                     }
                     return;
                 case "QUIT":
                     toolbox.Logging(nick + " hat den Server verlassen");
-                    TheUsers[nick].SetSeen();
-                    TheUsers[nick].authenticated = false;
+                    if (toolbox.IsIgnored(nick)) return;
+                    UserQuit(connection, nick);
                     return;
                 case "PART":
                     toolbox.Logging(nick + " hat den Raum " + message + " verlassen");
-                    TheUsers[nick].SetSeen();
-                    TheUsers[nick].authenticated = false;
+                    if (toolbox.IsIgnored(nick)) return;
+                    UserPart(connection, nick, message);
                     return;
                 case "NICK":
                     toolbox.Logging(nick + " heißt jetzt " + message);
-                    if (!TheUsers.Exists(nick))
-                    {
-                        TheUsers[nick].AddName(message);
-                        TheUsers[nick].authenticated = false;
-                    }
+                    if (toolbox.IsIgnored(nick)) return;
+                    UserNickChanged(connection, nick, message);
                     return;
                 case "KICK":
                     toolbox.Logging(nick + " hat mich aus dem Raum " + message + " geworfen");
+                    BotKicked(connection, nick, message);
                     connection.Leave(message);
                     return;
                 default:
                     break;
             }
-            if (message.Contains("#96*6*") && !toolbox.IgnoreCheck(nick))
-            {
-                if (DateTime.Now.Hour > 5 && DateTime.Now.Hour < 16)
-                {
-                    connection.Sendmsg("Kein Bier vor 4", source);
-                }
-                else
-                {
-                    connection.Sendmsg("Bier holen", source);
-                }
-            }
             if (source.ToCharArray()[0] == '#')
             {
                 toolbox.Logging(source + " " + nick + ": " + message);
-                if (toolbox.IgnoreCheck(nick)) return;
-                if (!nick.Contains(".") && nick != connection.Nickname)
-                {
-                    TheUsers[nick].SetMessage(message);
-                }
             }
             else
             {
                 toolbox.Logging("Von " + nick + ": " + message);
-                if (toolbox.IgnoreCheck(nick)) return;
-                if (message.ToCharArray()[0] != '!' && !nick.Contains(".") && nick != connection.Nickname && !await_response)
+                source = nick;
+            }
+            if (!toolbox.IsIgnored(nick) && !nick.Contains(".") && nick != connection.Nickname)
+            {
+                if (await_response && (String.IsNullOrEmpty(awaited_nick) || awaited_nick == nick))
+                {
+                    awaited_response = message;
+                    return;
+                }
+                else if (message.ToCharArray()[0] == '!')
+                {
+                    process_command(connection, nick, source, message.Remove(0, 1));
+                }
+                else if (source != nick)
                 {
                     connection.Sendmsg("Hallo, kann ich dir helfen ? Probiers doch mal mit !hilfe", nick);
                 }
-                if (!nick.Contains(".") && nick != connection.Nickname)
-                {
-                    TheUsers[nick].SetMessage(message);
-                }
-                if (await_response && (String.IsNullOrEmpty(awaited_nick) || awaited_nick == nick))
-                {
-                    await_response = false;
-                    awaited_nick = "";
-                    awaited_response = message;
-                }
-                source = nick;
-            }
-            if (message.ToCharArray()[0] == '!')
-            {
-                if (toolbox.IgnoreCheck(nick)) return;
-                process_command(connection, nick, source, message.Remove(0, 1));
+                UserMessaged(connection, nick, source, message);
             }
         }
 
@@ -244,6 +249,12 @@ namespace FritzBot
 
         private static void init()
         {
+            UserJoined = delegate { };
+            UserMessaged = delegate { };
+            UserNickChanged = delegate { };
+            UserPart = delegate { };
+            UserQuit = delegate { };
+            BotKicked = delegate { };
             TheUsers = new UserCollection();
             String[] config = toolbox.getDatabaseByName("servers.cfg").GetAll();
             try
@@ -277,7 +288,7 @@ namespace FritzBot
             {
                 if (t.Namespace == "FritzBot.commands")
                 {
-                    Commands.Add((ICommand)Activator.CreateInstance(t));
+                    commands.Add((ICommand)Activator.CreateInstance(t));
                 }
             }
         }
@@ -285,7 +296,7 @@ namespace FritzBot
         private static void Main()
         {
             init();
-            while (toolbox.RunningCheck())
+            while (toolbox.IsRunning())
             {
                 Thread.Sleep(2000);
             }

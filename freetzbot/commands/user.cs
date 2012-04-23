@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -23,29 +22,29 @@ namespace FritzBot.commands
             {
                 if (message == "reload")
                 {
-                    FritzBot.Program.TheUsers.Reload();
+                    Program.TheUsers.Reload();
                 }
                 if (message == "flush")
                 {
-                    FritzBot.Program.TheUsers.Flush();
+                    Program.TheUsers.Flush();
                 }
                 if (message.Contains("add"))
                 {
                     String[] split = message.Split(' ');
-                    FritzBot.Program.TheUsers.Add(split[1]);
+                    Program.TheUsers.Add(split[1]);
                 }
                 if (message.Contains("box"))
                 {
                     String[] split = message.Split(' ');
-                    FritzBot.Program.TheUsers[split[1]].AddBox(split[2]);
+                    Program.TheUsers[split[1]].AddBox(split[2]);
                 }
                 if (message.Contains("cleanup"))
                 {
-                    FritzBot.Program.TheUsers.CleanUp();
+                    Program.TheUsers.CleanUp();
                 }
                 if (message.Contains("remove"))
                 {
-                    FritzBot.Program.TheUsers.Remove(message.Split(' ')[1]);
+                    Program.TheUsers.Remove(message.Split(' ')[1]);
                 }
                 connection.Sendmsg("Okay", receiver);
             }

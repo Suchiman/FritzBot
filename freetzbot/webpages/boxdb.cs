@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using FritzBot;
 
-namespace FritzBot.webpages
+namespace webpages
 {
     class boxdb : IWebInterface
     {
@@ -18,7 +17,7 @@ namespace FritzBot.webpages
             {
                 theresponse.page += "<table border=2px>";
                 theresponse.page += "<tr><td><b>Besitzer</b></td><td><b>Boxen</b></td></tr>";
-                foreach (User theuser in FritzBot.Program.TheUsers)
+                foreach (User theuser in Program.TheUsers)
                 {
                     if (!(theuser.boxes.Count > 0))
                     {

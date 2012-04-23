@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using FritzBot;
 
-namespace FritzBot.webpages
+namespace webpages
 {
     class helpdb : IWebInterface
     {
@@ -16,9 +15,9 @@ namespace FritzBot.webpages
             theresponse.page += index.GenMenu();
             theresponse.page += "<table border=2px>";
             theresponse.page += "<tr><td><b>Befehl</b></td><td><b>Beschreibung</b></td></tr>";
-            foreach (ICommand thecommand in FritzBot.Program.Commands)
+            foreach (ICommand thecommand in Program.commands)
             {
-                if (!(thecommand.OpNeeded && !toolbox.OpCheck(logincheck)))
+                if (!(thecommand.OpNeeded && !toolbox.IsOp(logincheck)))
                 {
                     String names = "";
                     foreach (String name in thecommand.Name)

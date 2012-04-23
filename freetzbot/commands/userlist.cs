@@ -1,4 +1,5 @@
 ﻿using System;
+using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -18,7 +19,7 @@ namespace FritzBot.commands
         public void Run(Irc connection, String sender, String receiver, String message)
         {
             String output = "";
-            foreach (User oneuser in FritzBot.Program.TheUsers)
+            foreach (User oneuser in Program.TheUsers)
             {
                 if (oneuser.boxes.Count > 0)
                 {

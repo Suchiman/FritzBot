@@ -1,4 +1,5 @@
 ﻿using System;
+using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -17,8 +18,8 @@ namespace FritzBot.commands
 
         public void Run(Irc connection, String sender, String receiver, String message)
         {
-            FritzBot.Program.restart = true;
-            FritzBot.Program.Trennen();
+            Program.restart = true;
+            Program.Trennen();
         }
         
     }

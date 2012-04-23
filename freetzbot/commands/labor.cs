@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -54,12 +55,14 @@ namespace FritzBot.commands
             {
                 throw new InvalidOperationException("Verbindungsfehler");
             }
+            String[] datumsection = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None);
             for (int i = 1; i < 8; i++)
             {
-                labor_daten[i - 1].daten = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None)[i].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0];
-                String changelog_url_element = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None)[i];
-                changelog_url_element = changelog_url_element.Split(new String[] { "<div class=\"boxBottom\">" }, 2, StringSplitOptions.None)[0];
-                if (changelog_url_element.Contains("<p>Die neuen Leistungsmerkmale aus diesem Labor"))
+                labor_daten[i - 1].daten = datumsection[i].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0];
+                String changelog_url_element = datumsection[i].Split(new String[] { "<div class=\"boxBottom\">" }, 2, StringSplitOptions.None)[0];//.Replace("\r\n\t\t\t\r\n\t\t\t\t", "");
+                String titel = datumsection[i].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[1].Split(new String[] { "<img style=" }, 2, StringSplitOptions.None)[0].Replace("\r\n\t \t\t", "");
+                titel = titel.Remove(titel.IndexOf("\r\n"));
+                if (changelog_url_element.Contains("<p>Die neuen Leistungsmerkmale aus diesem Labor") || titel == "Reguläres Update verfügbar")
                 {
                     labor_daten[i - 1].daten = "Released";
                 }
@@ -116,21 +119,26 @@ namespace FritzBot.commands
 
         private void labor_check()
         {
-            Labordaten[] labor_old = labor_daten;
+            Labordaten[] labor_old = null;
             String output = "";
             while (true)
             {
-                if (FritzBot.Program.configuration["labor_check"] == "false")
+                if (Program.configuration["labor_check"] == "false")
                 {
                     Thread.Sleep(30000);
                 }
-                while (FritzBot.Program.configuration["labor_check"] == "true")
+                while (Program.configuration["labor_check"] == "true")
                 {
                     do
                     {
                         try
                         {
                             update_labor_cache();
+                            if (labor_old == null)
+                            {
+                                labor_old = new Labordaten[7];
+                                labor_daten.CopyTo(labor_old, 0);
+                            }
                             break;
                         }
                         catch
@@ -140,17 +148,17 @@ namespace FritzBot.commands
                     } while (true);
                     String released = "";
                     String labors = "";
-                    for (int i = 1; i < 8; i++)
+                    for (int i = 0; i < 7; i++)
                     {
-                        if (labor_daten[i - 1] != labor_old[i - 1])
+                        if (labor_daten[i] != labor_old[i])
                         {
-                            if (labor_daten[i - 1].daten == "Released")
+                            if (labor_daten[i].daten == "Released")
                             {
-                                released += ", " + boxdatareverse[i];
+                                released += ", " + boxdatareverse[i + 1];
                             }
                             else
                             {
-                                labors += ", " + boxdatareverse[i];
+                                labors += ", " + boxdatareverse[i + 1];
                             }
                         }
                     }
@@ -172,11 +180,12 @@ namespace FritzBot.commands
                     if (!String.IsNullOrEmpty(output))
                     {
                         output += " - Zum Labor: " + toolbox.ShortUrl("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
+                        labor_daten.CopyTo(labor_old, 0);
                         toolbox.Announce(output);
                     }
                     output = "";
                     int labor_check_intervall;
-                    if (!int.TryParse(FritzBot.Program.configuration["labor_check_intervall"], out labor_check_intervall))
+                    if (!int.TryParse(Program.configuration["labor_check_intervall"], out labor_check_intervall))
                     {
                         labor_check_intervall = 300000;
                     }

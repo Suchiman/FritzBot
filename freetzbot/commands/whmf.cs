@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Text;
+using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -27,7 +28,7 @@ namespace FritzBot.commands
             else
             {
                 output += System.Web.HttpUtility.UrlEncode(Encoding.GetEncoding("iso-8859-1").GetBytes(message));
-                if (FritzBot.Program.configuration["whmf_url_resolve"] == "true")
+                if (Program.configuration["whmf_url_resolve"] == "true")
                 {
                     HttpWebRequest request = (HttpWebRequest)WebRequest.Create(output);
                     request.Timeout = 10000;

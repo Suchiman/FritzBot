@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reflection;
+using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -26,7 +27,7 @@ namespace FritzBot.commands
                     connection.Sendmsg("Modul wurde nicht gefunden", receiver);
                     return;
                 }
-                FritzBot.Program.Commands.Add((ICommand)Activator.CreateInstance(t));
+                Program.commands.Add((ICommand)Activator.CreateInstance(t));
                 connection.Sendmsg("Modul erfolgreich geladen", receiver);
             }
             catch

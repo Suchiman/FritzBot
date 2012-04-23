@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -126,7 +127,7 @@ namespace FritzBot.commands
 
                 }
                 int sleep;
-                if (!int.TryParse(FritzBot.Program.configuration["news_check_intervall"], out sleep))
+                if (!int.TryParse(Program.configuration["news_check_intervall"], out sleep))
                 {
                     sleep = 300000;
                 }

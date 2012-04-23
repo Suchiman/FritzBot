@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using FritzBot;
 
-namespace FritzBot.webpages
+namespace webpages
 {
     class robots : IWebInterface
     {

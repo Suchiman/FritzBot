@@ -1,4 +1,5 @@
 ﻿using System;
+using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -12,7 +13,18 @@ namespace FritzBot.commands
 
         public void Destruct()
         {
+            Program.UserJoined -= new Program.JoinEventHandler(joined);
+        }
 
+        public frag()
+        {
+            Program.UserJoined += new Program.JoinEventHandler(joined);
+        }
+
+        private void joined(Irc connection, String nick, String Room)
+        {
+            if (toolbox.IsIgnored(nick)) return;
+            boxfrage(connection, nick, nick);
         }
 
         public void Run(Irc connection, String sender, String receiver, String message)
@@ -20,18 +32,18 @@ namespace FritzBot.commands
             boxfrage(connection, message, message, false);
         }
 
-        public static void boxfrage(Irc connection, String sender, String receiver, Boolean check_db = true)
+        public void boxfrage(Irc connection, String sender, String receiver, Boolean check_db = true)
         {
             try
             {
                 if (check_db)
                 {
-                    if (FritzBot.Program.configuration["boxfrage"] == "false" || FritzBot.Program.TheUsers[sender].asked) return;
+                    if (Program.configuration["boxfrage"] == "false" || Program.TheUsers[sender].asked) return;
                     System.Threading.Thread.Sleep(10000);
                 }
                 connection.Sendmsg("Hallo " + sender + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast :).", receiver);
                 connection.Sendmsg("Pro !box bitte nur eine Box nennen (nur die Boxversion) z.b. !box 7270v1 oder !box 7170. Um die anderen im Channel nicht zu stören, sende es mir doch bitte per query/private Nachricht (z.b. /msg FritzBot !box 7270) und achte darauf, dass du den Nicknamen trägst dem die Box zugeordnet werden soll", receiver);
-                FritzBot.Program.TheUsers[sender].asked = true;
+                Program.TheUsers[sender].asked = true;
             }
             catch (Exception ex)
             {

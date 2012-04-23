@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Net;
+using FritzBot;
 
-namespace FritzBot.webpages
+namespace webpages
 {
     class login : IWebInterface
     {
@@ -18,12 +16,12 @@ namespace FritzBot.webpages
                 String passwort = request.postdata["pw"];
                 theresponse.page += "<!DOCTYPE html><html><body>";
                 theresponse.page += index.GenMenu();
-                if (FritzBot.Program.TheUsers.Exists(name))
+                if (Program.TheUsers.Exists(name))
                 {
-                    if (FritzBot.Program.TheUsers[name].CheckPassword(passwort))
+                    if (Program.TheUsers[name].CheckPassword(passwort))
                     {
-                        FritzBot.Program.TheUsers[name].authcookiedate = DateTime.Now;
-                        String hash = toolbox.Crypt(name + FritzBot.Program.TheUsers[name].authcookiedate.ToString() + request.useradress.ToString());
+                        Program.TheUsers[name].authcookiedate = DateTime.Now;
+                        String hash = toolbox.Crypt(name + Program.TheUsers[name].authcookiedate.ToString() + request.useradress.ToString());
                         theresponse.cookies["username"] = name;
                         theresponse.cookies["logindata"] = hash;
                         theresponse.page += "Du bist nun eingeloggt " + name;
@@ -52,9 +50,9 @@ namespace FritzBot.webpages
                 name = request.cookies["username"].Value;
                 hash = request.cookies["logindata"].Value;
             }
-            if (FritzBot.Program.TheUsers.Exists(name))
+            if (Program.TheUsers.Exists(name))
             {
-                String calchash = toolbox.Crypt(name + FritzBot.Program.TheUsers[name].authcookiedate.ToString() + request.useradress.ToString());
+                String calchash = toolbox.Crypt(name + Program.TheUsers[name].authcookiedate.ToString() + request.useradress.ToString());
                 if (calchash == hash)
                 {
                     return name;

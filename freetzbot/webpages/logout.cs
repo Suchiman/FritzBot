@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Net;
+using FritzBot;
 
-namespace FritzBot.webpages
+namespace webpages
 {
     class logout : IWebInterface
     {
@@ -17,9 +17,9 @@ namespace FritzBot.webpages
             {
                 name = request.cookies["username"].Value;
             }
-            if (FritzBot.Program.TheUsers.Exists(name))
+            if (Program.TheUsers.Exists(name))
             {
-                FritzBot.Program.TheUsers[name].authcookiedate = DateTime.MinValue;
+                Program.TheUsers[name].authcookiedate = DateTime.MinValue;
                 theresponse.cookies["username"] = "";
                 theresponse.cookies["logindata"] = "";
                 theresponse.page += "Du bist jetzt ausgeloggt";

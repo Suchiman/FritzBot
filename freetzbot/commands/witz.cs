@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -16,7 +17,7 @@ namespace FritzBot.commands
 
         }
 
-        static private List<int> witz_randoms = new List<int>();
+        static private Queue<int> witz_randoms = new Queue<int>(10);
 
         public void Run(Irc connection, String sender, String receiver, String message)
         {
@@ -25,13 +26,13 @@ namespace FritzBot.commands
                 String[] witz = message.Split(new String[] { " " }, 2, StringSplitOptions.None);
                 if (witz[0] == "add")
                 {
-                    FritzBot.Program.TheUsers[sender].AddJoke(witz[1]);
+                    Program.TheUsers[sender].AddJoke(witz[1]);
                     connection.Sendmsg("Ist notiert " + sender, receiver);
                 }
                 else
                 {
                     String[] splitted = message.Split(' ');
-                    List<String> alle_witze = FritzBot.Program.TheUsers.AllJokes();
+                    List<String> alle_witze = Program.TheUsers.AllJokes();
                     List<String> such_witze = alle_witze;
                     for (int i = 0; i < alle_witze.Count; i++)
                     {
@@ -59,15 +60,15 @@ namespace FritzBot.commands
                 Random rand = new Random();
                 if (witz_randoms.Count >= 10)
                 {
-                    witz_randoms.RemoveAt(0);
+                    witz_randoms.Dequeue();
                 }
-                List<String> jokes = FritzBot.Program.TheUsers.AllJokes();
+                List<String> jokes = Program.TheUsers.AllJokes();
                 int random = rand.Next(jokes.Count - 1);
                 for (int i = 0; !(!witz_randoms.Contains(random) && i < 10); i++)
                 {
                     random = rand.Next(jokes.Count - 1);
                 }
-                witz_randoms.Add(random);
+                witz_randoms.Enqueue(random);
                 if (jokes.Count > 0)
                 {
                     connection.Sendmsg(jokes[random], receiver);

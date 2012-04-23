@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using FritzBot;
 
-namespace FritzBot.webpages
+namespace webpages
 {
     class aliasdb : IWebInterface
     {
@@ -15,7 +14,7 @@ namespace FritzBot.webpages
             theresponse.page += index.GenMenu();
             theresponse.page += "<table border=2px>";
             theresponse.page += "<tr><td><b>Alias</b></td><td><b>Beschreibung</b></td></tr>";
-            AliasDB thealiases = FritzBot.Program.TheUsers.AllAliases();
+            AliasDB thealiases = Program.TheUsers.AllAliases();
             for (int i = 0; i < thealiases.alias.Count; i++)
             {
                 theresponse.page += "<tr><td>" + thealiases.alias[i] + "</td><td>" + thealiases.description[i] + "</td></tr>";

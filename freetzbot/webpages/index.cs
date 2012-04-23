@@ -1,6 +1,7 @@
 ﻿using System;
+using FritzBot;
 
-namespace FritzBot.webpages
+namespace webpages
 {
     class index : IWebInterface
     {

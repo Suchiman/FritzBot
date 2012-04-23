@@ -6,6 +6,7 @@ using System.Xml.Serialization;
 using System.Threading;
 using System.Xml;
 using System.Text;
+using System.Data;
 
 namespace FritzBot
 {
@@ -13,7 +14,7 @@ namespace FritzBot
     {
         private List<User> TheUsers;
         private Thread AutoFlushThread;
-
+        
         public User this[String name]
         {
             get
@@ -22,7 +23,7 @@ namespace FritzBot
                 {
                     foreach (String onename in theuser.names)
                     {
-                        if (onename == name)
+                        if (onename.ToLower() == name.ToLower())
                         {
                             return theuser;
                         }
@@ -85,7 +86,7 @@ namespace FritzBot
             while (true)
             {
                 int converttime;
-                if (int.TryParse(FritzBot.Program.configuration["UserAutoFlushIntervall"], out converttime))
+                if (int.TryParse(Program.configuration["UserAutoFlushIntervall"], out converttime))
                 {
                     if (converttime != 0)
                     {
@@ -103,7 +104,7 @@ namespace FritzBot
             {
                 foreach (String onename in theuser.names)
                 {
-                    if (onename == name)
+                    if (onename.ToLower() == name.ToLower())
                     {
                         return true;
                     }
@@ -295,9 +296,9 @@ namespace FritzBot
             {
                 Fusioned.asked = true;
             }
-            if (TheUsers[u1].is_op)
+            if (TheUsers[u1].isOp)
             {
-                Fusioned.is_op = true;
+                Fusioned.isOp = true;
             }
             TheUsers.RemoveAt(u1);
             TheUsers.RemoveAt(u2);
@@ -348,7 +349,12 @@ namespace FritzBot
         public Boolean authenticated;
         public Boolean ignored;
         public Boolean asked;
-        public Boolean is_op;
+        public Boolean isOp;
+        public List<String> RememberNick;
+        public List<String> RememberMessage;
+        public List<DateTime> RememberTime;
+        //public List<DateTime> RememberInTime;
+        public List<Boolean> Remembered;
 
         public User()
         {
@@ -364,7 +370,12 @@ namespace FritzBot
             authenticated = false;
             ignored = false;
             asked = false;
-            is_op = false;
+            isOp = false;
+            RememberNick = new List<String>();
+            RememberMessage = new List<String>();
+            RememberTime = new List<DateTime>();
+            //RememberInTime = new List<DateTime>();
+            Remembered = new List<Boolean>();
         }
 
         public void SetMessage(String message)
@@ -424,7 +435,7 @@ namespace FritzBot
 
         public Boolean AddAlias(String theAlias, String description)
         {
-            if (String.IsNullOrEmpty(FritzBot.Program.TheUsers.AllAliases()[theAlias]))
+            if (String.IsNullOrEmpty(Program.TheUsers.AllAliases()[theAlias]))
             {
                 alias[theAlias] = description;
                 return true;
@@ -436,6 +447,68 @@ namespace FritzBot
         {
             User CompareUser = (User)obj;
             return names[0].CompareTo(CompareUser.names[0]);
+        }
+
+        public void AddRemember(String nick, String toRemember)
+        {
+            AddRemember(nick, toRemember, DateTime.MinValue);
+        }
+
+        public void AddRemember(String nick, String toRemember, DateTime RememberIn)
+        {
+            RememberNick.Add(nick);
+            RememberMessage.Add(toRemember);
+            RememberTime.Add(DateTime.Now);
+            //RememberInTime.Add(RememberIn);
+            Remembered.Add(false);
+        }
+
+        public List<String[]> GetUnreadRemembers()
+        {
+            List<String[]> UnreadRemembers = new List<String[]>();
+            while (Remembered.Count > 0)
+            {
+                int i = 0;
+                if (!Remembered[i])
+                {
+                    String[] TheRemember = new String[4];
+                    TheRemember[0] = RememberNick[i];
+                    TheRemember[1] = RememberMessage[i];
+                    TheRemember[2] = RememberTime[i].ToString("dd.MM.yyyyTHH:mm:ss");
+                    //TheRemember[3] = RememberInTime[i].ToString("dd.MM.yyyyTHH:mm:ss");
+                    RememberNick.RemoveAt(i);
+                    RememberMessage.RemoveAt(i);
+                    RememberTime.RemoveAt(i);
+                    Remembered.RemoveAt(i);
+                    //RememberInTime.RemoveAt(i);
+                    UnreadRemembers.Add(TheRemember);
+                }
+                else
+                {
+                    i++;
+                }
+            }
+            return UnreadRemembers;
+        }
+
+        public List<String[]> GetAllRemembers()
+        {
+            List<String[]> Remembers = new List<String[]>();
+            while (RememberMessage.Count > 0)
+            {
+                String[] TheRemember = new String[4];
+                TheRemember[0] = RememberNick[0];
+                TheRemember[1] = RememberMessage[0];
+                TheRemember[2] = RememberTime[0].ToString("dd.MM.yyyyTHH:mm:ss");
+                //TheRemember[3] = RememberInTime[0].ToString("dd.MM.yyyyTHH:mm:ss");
+                RememberNick.RemoveAt(0);
+                RememberMessage.RemoveAt(0);
+                RememberTime.RemoveAt(0);
+                Remembered.RemoveAt(0);
+                //RememberInTime.RemoveAt(0);
+                Remembers.Add(TheRemember);
+            }
+            return Remembers;
         }
     }
 

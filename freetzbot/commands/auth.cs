@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -24,9 +23,9 @@ namespace FritzBot.commands
                 connection.Sendmsg("Ohje das solltest du besser im Query tuen", receiver);
                 return;
             }
-            if (FritzBot.Program.TheUsers[sender].CheckPassword(message))
+            if (Program.TheUsers[sender].CheckPassword(message))
             {
-                FritzBot.Program.TheUsers[sender].authenticated = true;
+                Program.TheUsers[sender].authenticated = true;
                 connection.Sendmsg("Du bist jetzt authentifiziert", sender);
             }
             else

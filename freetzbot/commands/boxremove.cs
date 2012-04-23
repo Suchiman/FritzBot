@@ -1,4 +1,5 @@
 ﻿using System;
+using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -17,11 +18,11 @@ namespace FritzBot.commands
 
         public void Run(Irc connection, String sender, String receiver, String message)
         {
-            for (int i = 0; i < FritzBot.Program.TheUsers[sender].boxes.Count; i++)
+            for (int i = 0; i < Program.TheUsers[sender].boxes.Count; i++)
             {
-                if (FritzBot.Program.TheUsers[sender].boxes[i] == message)
+                if (Program.TheUsers[sender].boxes[i] == message)
                 {
-                    FritzBot.Program.TheUsers[sender].boxes.RemoveAt(i);
+                    Program.TheUsers[sender].boxes.RemoveAt(i);
                     connection.Sendmsg("Erledigt!", receiver);
                     return;
                 }
