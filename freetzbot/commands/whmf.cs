@@ -20,10 +20,10 @@ namespace FritzBot.commands
 
         public void Run(Irc connection, String sender, String receiver, String message)
         {
-            String output = "http://wehavemorefun.de/fritzbox/index.php/Special:Search?search=";
+            String output = "http://wehavemorefun.de/fbwiki/index.php?search=";
             if (String.IsNullOrEmpty(message))
             {
-                output = "http://www.wehavemorefun.de/fritzbox/index.php";
+                output = "http://wehavemorefun.de/fbwiki";
             }
             else
             {

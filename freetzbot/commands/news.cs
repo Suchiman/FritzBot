@@ -43,88 +43,29 @@ namespace FritzBot.commands
         private void news_thread()
         {
             String baseurl = "http://webgw.avm.de/download/UpdateNews.jsp";
-            Boolean failed = false;
-            String[] news_de_old = new String[0];
-            String[] news_en_old = new String[0];
-            do
-            {
-                try
-                {
-                    news_de_old = news_parse(baseurl + "?lang=de");
-                    news_en_old = news_parse(baseurl + "?lang=en");
-                    failed = false;
-                }
-                catch
-                {
-                    failed = true;
-                }
-            } while (failed);
+            String NewsDeOld = null;
+            String NewsEnOld = null;
             while (true)
             {
-                try
+                if (String.IsNullOrEmpty(NewsDeOld) || String.IsNullOrEmpty(NewsEnOld))
                 {
-                    String[] news_de = null;
-                    String[] news_en = null;
-                    do
-                    {
-                        try
-                        {
-                            news_de = news_parse(baseurl + "?lang=de");
-                            news_en = news_parse(baseurl + "?lang=en");
-                            failed = false;
-                        }
-                        catch
-                        {
-                            failed = true;
-                            Thread.Sleep(500);
-                        }
-                    } while (failed);
-                    if (news_de_old[0] != news_de[0])
-                    {
-                        List<String> differs = new List<String>();
-                        for (int i = 0; i < news_de.Length; i++)
-                        {
-                            if (news_de_old[0] == news_de[i])
-                            {
-                                break;
-                            }
-                            differs.Add(news_de[i]);
-                        }
-                        String output = "Neue Deutsche News gesichtet! ";
-                        foreach (String thenews in differs)
-                        {
-                            output += ", " + thenews;
-                        }
-                        output = output.Remove(30, 1);
-                        output = output.Insert(30, "-");
-                        toolbox.Announce(output);
-                        news_de_old = news_de;
-                    }
-                    if (news_en_old[0] != news_en[0])
-                    {
-                        List<String> differs = new List<String>();
-                        for (int i = 0; i < news_en.Length; i++)
-                        {
-                            if (news_en_old[0] == news_en[i])
-                            {
-                                break;
-                            }
-                            differs.Add(news_en[i]);
-                        }
-                        String output = "Neue englische News gesichtet! ";
-                        foreach (String thenews in differs)
-                        {
-                            output += ", " + thenews;
-                        }
-                        output = output.Remove(30, 1);
-                        output = output.Insert(30, "-");
-                        toolbox.Announce(output);
-                        news_en_old = news_en;
-                    }
+                    NewsDeOld = toolbox.GetWeb(baseurl + "?lang=de");
+                    NewsEnOld = toolbox.GetWeb(baseurl + "?lang=en");
                 }
-                catch
+                else
                 {
-
+                    String NewsDe = toolbox.GetWeb(baseurl + "?lang=de");
+                    String NewsEn = toolbox.GetWeb(baseurl + "?lang=en");
+                    if (NewsDe != NewsDeOld)
+                    {
+                        toolbox.Announce("Neue Deutsche News: " + toolbox.ShortUrl(baseurl + "?lang=de"));
+                        NewsDeOld = NewsDe;
+                    }
+                    if (NewsEn != NewsEnOld)
+                    {
+                        toolbox.Announce("Neue Englische News: " + toolbox.ShortUrl(baseurl + "?lang=en"));
+                        NewsEnOld = NewsEn;
+                    }
                 }
                 int sleep;
                 if (!int.TryParse(Program.configuration["news_check_intervall"], out sleep))
@@ -133,35 +74,6 @@ namespace FritzBot.commands
                 }
                 Thread.Sleep(sleep);
             }
-        }
-
-        private static String[] news_parse(String url)
-        {
-            String news = toolbox.GetWeb(url);
-            if (String.IsNullOrEmpty(news))
-            {
-                throw new InvalidOperationException("Konnte die Webseite nicht lesen");
-            }
-            String[] newssplit = news.Split(new String[] { "<span class=\"uberschriftblau\">" }, 21, StringSplitOptions.None);
-            List<String> news_new = new List<String>();
-            for (int i = 1; i < newssplit.Length; i++)
-            {
-                String[] splitted = newssplit[i].Split(new String[] { "</span>" }, 3, StringSplitOptions.None);
-                int nbsp = splitted[0].IndexOf("&nbsp;");
-                if(nbsp != -1)
-                {
-                    splitted[0] = splitted[0].Remove(nbsp);
-                }
-                splitted[1] = splitted[1].Remove(0, 35);
-                splitted[1] = splitted[1].Replace("&nbsp;", " ");
-                splitted[2] = splitted[2].Split(new String[] { "\"><u>Weitere" }, 2, StringSplitOptions.None)[0].Split(new String[] { "href=\"" }, 2, StringSplitOptions.None)[1];
-                news_new.Add(splitted[0] + ":" + splitted[1] + " - " + toolbox.ShortUrl(splitted[2]));
-            }
-            if (news_new.Count < 20 || String.IsNullOrEmpty(news_new[0]))
-            {
-                throw new InvalidOperationException("Verarbeitungsfehler");
-            }
-            return news_new.ToArray();
         }
     }
 }

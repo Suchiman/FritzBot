@@ -106,14 +106,7 @@ namespace FritzBot
 
         public static void process_incomming(Irc connection, String source, String nick, String message)
         {
-            while (message.ToCharArray()[0] == ' ')
-            {
-                message = message.Remove(0, 1);
-            }
-            while (message.ToCharArray()[message.Length - 1] == ' ')
-            {
-                message = message.Remove(message.Length - 1);
-            }
+            message = message.Trim();
             switch (source)
             {
                 case "LOG":
