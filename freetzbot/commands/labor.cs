@@ -15,23 +15,27 @@ namespace FritzBot.commands
 
         public labor()
         {
-            labor_daten = new Labordaten[7];
-            boxdata = new Dictionary<String, int>();
-            boxdatareverse = new Dictionary<int, String>();
-            boxdata.Add("ios", 1);
-            boxdata.Add("android", 2);
-            boxdata.Add("7390", 3);
-            boxdata.Add("fhem", 4);
-            boxdata.Add("7390at", 5);
-            boxdata.Add("7320", 6);
-            boxdata.Add("7270", 7);
-            boxdatareverse.Add(1, "iOS App");
-            boxdatareverse.Add(2, "Android App");
-            boxdatareverse.Add(3, "7390");
-            boxdatareverse.Add(4, "7390 FHEM");
-            boxdatareverse.Add(5, "7390 AT-CH");
-            boxdatareverse.Add(6, "7320");
-            boxdatareverse.Add(7, "7270");
+            boxdata = new Dictionary<String, int>()
+            {
+                {"ios", 1},
+                {"android", 2},
+                {"7390", 3},
+                {"fhem", 4},
+                //{"7390at", 5},
+                //{"7320", 6},
+                {"7270", 5}
+            };
+            boxdatareverse = new Dictionary<int, String>()
+            {
+                {1, "iOS App"},
+                {2, "Android App"},
+                {3, "7390"},
+                {4, "7390 FHEM"},
+                //{5, "7390 AT-CH"},
+                //{6, "7320"},
+                {5, "7270"}
+            };
+            labor_daten = new Labordaten[boxdata.Count];
             laborthread = new Thread(new ThreadStart(this.labor_check));
             laborthread.Name = "LaborThread";
             laborthread.IsBackground = true;
@@ -56,7 +60,7 @@ namespace FritzBot.commands
                 throw new InvalidOperationException("Verbindungsfehler");
             }
             String[] datumsection = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None);
-            for (int i = 1; i < 8; i++)
+            for (int i = 1; i <= boxdata.Count; i++)
             {
                 labor_daten[i - 1].daten = datumsection[i].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0];
                 String changelog_url_element = datumsection[i].Split(new String[] { "<div class=\"boxBottom\">" }, 2, StringSplitOptions.None)[0];//.Replace("\r\n\t\t\t\r\n\t\t\t\t", "");
@@ -108,7 +112,11 @@ namespace FritzBot.commands
             }
             else if (String.IsNullOrEmpty(message.ToLower()))
             {
-                changeset = "Aktuelle Labor Daten: iOS: " + labor_daten[0].daten + ", Android: " + labor_daten[1].daten + ", 7390: " + labor_daten[2].daten + ", FHEM: " + labor_daten[3].daten + ", 7390at: " + labor_daten[4].daten + ", 7320: " + labor_daten[5].daten + ", 7270: " + labor_daten[6].daten + " - Zum Labor: " + toolbox.ShortUrl("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
+                for (int i = 0; i < boxdatareverse.Count; i++)
+                {
+                    changeset += ", " + boxdatareverse[i + 1] + ": " + labor_daten[i].daten;
+                }
+                changeset = "Aktuelle Labor Daten: " + changeset.Remove(0, 2) + " - Zum Labor: " + toolbox.ShortUrl("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
             }
             else
             {
@@ -136,7 +144,7 @@ namespace FritzBot.commands
                             update_labor_cache();
                             if (labor_old == null)
                             {
-                                labor_old = new Labordaten[7];
+                                labor_old = new Labordaten[boxdata.Count];
                                 labor_daten.CopyTo(labor_old, 0);
                             }
                             break;
@@ -148,7 +156,7 @@ namespace FritzBot.commands
                     } while (true);
                     String released = "";
                     String labors = "";
-                    for (int i = 0; i < 7; i++)
+                    for (int i = 0; i < boxdata.Count; i++)
                     {
                         if (labor_daten[i] != labor_old[i])
                         {

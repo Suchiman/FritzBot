@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using FritzBot;
 
 namespace FritzBot.commands
 {
     class witz : ICommand
     {
-        public String[] Name { get { return new String[] { "witz" }; } }
+        public String[] Name { get { return new String[] { "witz", "joke" }; } }
         public String HelpText { get { return "Ich werde dann einen Witz erzählen, mit \"!witz add witztext\" kannst du einen neuen Witz hinzufügen. Mit !witz stichwort kannst du einen speziellen Witz suchen"; } }
         public Boolean OpNeeded { get { return false; } }
         public Boolean ParameterNeeded { get { return false; } }
@@ -17,10 +16,16 @@ namespace FritzBot.commands
 
         }
 
-        static private Queue<int> witz_randoms = new Queue<int>(10);
+        public witz()
+        {
+            WitzRandoms = new Queue<int>(10);
+        }
+
+        private Queue<int> WitzRandoms;
 
         public void Run(Irc connection, String sender, String receiver, String message)
         {
+            String Joke = "";
             if (!String.IsNullOrEmpty(message))
             {
                 String[] witz = message.Split(new String[] { " " }, 2, StringSplitOptions.None);
@@ -31,53 +36,61 @@ namespace FritzBot.commands
                 }
                 else
                 {
-                    String[] splitted = message.Split(' ');
-                    List<String> alle_witze = Program.TheUsers.AllJokes();
-                    List<String> such_witze = alle_witze;
-                    for (int i = 0; i < alle_witze.Count; i++)
-                    {
-                        foreach (String data in splitted)
-                        {
-                            if (!alle_witze[i].ToLower().Contains(data.ToLower()))
-                            {
-                                such_witze.Remove(alle_witze[i]);
-                            }
-                        }
-                    }
-                    if (such_witze.Count > 0)
-                    {
-                        Random rand = new Random();
-                        connection.Sendmsg(such_witze[rand.Next(such_witze.Count)], receiver);
-                    }
-                    else
+                    Joke = GetRandom(GetSpecialJokes(new List<String>(message.Split(' '))));
+                    if (String.IsNullOrEmpty(Joke))
                     {
                         connection.Sendmsg("Tut mir leid ich kenne leider keinen Witz der alle deine Stichwörter beinhaltet", receiver);
+                        return;
                     }
                 }
             }
             else
             {
-                Random rand = new Random();
-                if (witz_randoms.Count >= 10)
-                {
-                    witz_randoms.Dequeue();
-                }
-                List<String> jokes = Program.TheUsers.AllJokes();
-                int random = rand.Next(jokes.Count - 1);
-                for (int i = 0; !(!witz_randoms.Contains(random) && i < 10); i++)
-                {
-                    random = rand.Next(jokes.Count - 1);
-                }
-                witz_randoms.Enqueue(random);
-                if (jokes.Count > 0)
-                {
-                    connection.Sendmsg(jokes[random], receiver);
-                }
-                else
+                Joke = GetRandom(Program.TheUsers.AllJokes());
+                if (String.IsNullOrEmpty(Joke))
                 {
                     connection.Sendmsg("Mir fällt gerade kein Fritz!Witz ein", receiver);
+                    return;
                 }
             }
+            connection.Sendmsg(Joke, receiver);
+        }
+
+        private List<String> GetSpecialJokes(List<String> Filter)
+        {
+            List<String> result = Program.TheUsers.AllJokes();
+            for (int i = 0; i < result.Count; i++)
+            {
+                for (int x = 0; x < Filter.Count; x++)
+                {
+                    if (!result[i].ToLower().Contains(Filter[x].ToLower()))
+                    {
+                        result.RemoveAt(i);
+                        i--;
+                    }
+                }
+            }
+            return result;
+        }
+
+        private String GetRandom(List<String> Jokes)
+        {
+            if (!(Jokes.Count > 0))
+            {
+                return "";
+            }
+            Random rand = new Random();
+            if (WitzRandoms.Count >= 10)
+            {
+                WitzRandoms.Dequeue();
+            }
+            int random = rand.Next(Jokes.Count - 1);
+            for (int i = 0; WitzRandoms.Contains(random) && i < 10; i++)
+            {
+                random = rand.Next(Jokes.Count - 1);
+            }
+            WitzRandoms.Enqueue(random);
+            return Jokes[random];
         }
     }
 }

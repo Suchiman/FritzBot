@@ -19,6 +19,10 @@ namespace FritzBot
         {
             get
             {
+                if (name.Contains("#") || name.Contains("."))
+                {
+                    return new User();
+                }
                 foreach (User theuser in TheUsers)
                 {
                     foreach (String onename in theuser.names)
@@ -70,6 +74,7 @@ namespace FritzBot
             {
                 Reload();
             }
+            //Maintain();
             AutoFlushThread = new Thread(new ThreadStart(this.AutoFlush));
             AutoFlushThread.IsBackground = true;
             AutoFlushThread.Start();
@@ -224,6 +229,45 @@ namespace FritzBot
                     }
                 }
             }
+        }
+
+        public void Maintain()
+        {
+            List<User> newUsers = new List<User>(TheUsers);
+            List<String> allNames = new List<String>();
+            List<String> doubleNames = new List<String>();
+            int UserCount = newUsers.Count;
+            for (int i = 0; i < UserCount; i++)
+            {
+                int NamesCount = newUsers[i].names.Count;
+                for (int x = 0; x < NamesCount; x++)
+                {
+                    if (newUsers[i].names[x].Contains(".") || newUsers[i].names[x].Contains("#") || String.IsNullOrEmpty(newUsers[i].names[x]))
+                    {
+                        newUsers[i].names.RemoveAt(x);
+                        x--;
+                        NamesCount--;
+                    }
+                    else if (allNames.Contains(newUsers[i].names[x]))
+                    {
+                        doubleNames.Add(newUsers[i].names[x]);
+                    }
+                    else
+                    {
+                        allNames.Add(newUsers[i].names[x]);
+                    }
+                }
+                if (newUsers[i].names.Count == 0)
+                {
+                    newUsers.RemoveAt(i);
+                    i--;
+                    UserCount--;
+                }
+            }
+            newUsers.Sort();
+            TheUsers.Clear();
+            TheUsers = null;
+            TheUsers = newUsers;
         }
 
         public void CleanUp()

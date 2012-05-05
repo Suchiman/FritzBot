@@ -242,13 +242,13 @@ namespace FritzBot
 
         private static void init()
         {
+            TheUsers = new UserCollection();
             UserJoined = delegate { };
             UserMessaged = delegate { };
             UserNickChanged = delegate { };
             UserPart = delegate { };
             UserQuit = delegate { };
             BotKicked = delegate { };
-            TheUsers = new UserCollection();
             String[] config = toolbox.getDatabaseByName("servers.cfg").GetAll();
             try
             {

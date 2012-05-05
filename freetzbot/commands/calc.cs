@@ -59,7 +59,7 @@ namespace FritzBot.commands
             int i = 0; //Ein Zeichen direkt hinter einem Operator ignorieren z.b. 10*-1
             foreach (Char onechar in messageArray)
             {
-                if ((onechar == '+' || onechar == '-' || onechar == '*' || onechar == '/' || onechar == '%') && i == 0)
+                if ((onechar == '+' || onechar == '-' || onechar == '*' || onechar == '/' || onechar == '%' || onechar == '^') && i == 0)
                 {
                     opers.Add(onechar);
                     i = 2;
@@ -83,23 +83,18 @@ namespace FritzBot.commands
 
         private static String CalcOperators(List<Char> opers, List<String> numbers)
         {
-            //Priorisierte operatoren ( * / ) zuerst berechnen
-            for (int i = 0; i < opers.Count; i++)
+            for (int Durchgang = 0; Durchgang < 3; Durchgang++)
             {
-                if (opers[i] == '*' || opers[i] == '/')
+                for (int i = 0; i < opers.Count; i++)
                 {
-                    numbers[i + 1] = CalcString(numbers[i], numbers[i + 1], opers[i]);
-                    opers.RemoveAt(i);
-                    numbers.RemoveAt(i);
-                    i--;
+                    if ((Durchgang == 0 && opers[i] == '^') || (Durchgang == 1 && (opers[i] == '*' || opers[i] == '/')) || (Durchgang == 2))//Zuerst Potenzieren, Punkt vor Strich und schließlich den Rest
+                    {
+                        numbers[i + 1] = CalcString(numbers[i], numbers[i + 1], opers[i]);
+                        opers.RemoveAt(i);
+                        numbers.RemoveAt(i);
+                        i--;
+                    }
                 }
-            }
-
-            //Alles andere Berechnen
-            foreach (Char onechar in opers)
-            {
-                numbers[1] = CalcString(numbers[0], numbers[1], onechar);
-                numbers.RemoveAt(0);
             }
             return numbers[0];
         }
@@ -129,6 +124,9 @@ namespace FritzBot.commands
                     break;
                 case '%':
                     result = (num1 % num2).ToString();
+                    break;
+                case '^':
+                    result = Math.Pow(num1, num2).ToString();
                     break;
                 default:
                     throw new ArgumentException("Unknown Operator");

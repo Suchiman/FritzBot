@@ -235,7 +235,7 @@ namespace FritzBot
 
         public static Boolean IsOp(String Nickname)
         {
-            if (Program.TheUsers[Nickname].isOp && Program.TheUsers[Nickname].authenticated)
+            if (Program.TheUsers[Nickname].isOp && (Program.TheUsers[Nickname].authenticated || String.IsNullOrEmpty(Program.TheUsers[Nickname].password)))
             {
                 return true;
             }
