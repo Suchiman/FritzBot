@@ -73,18 +73,6 @@ namespace FritzBot.commands
             if (Program.TheUsers.Exists(message))
             {
                 String output = "";
-
-                Program.await_response = true;
-                connection.Sendraw("NAMES");
-                while (Program.await_response)
-                {
-                    Thread.Sleep(50);
-                }
-                String response = Program.awaited_response;
-                if (response.Contains(message))
-                {
-                    Program.TheUsers[message].last_seen = DateTime.MinValue;
-                }
                 if (Program.TheUsers[message].last_seen != DateTime.MinValue)
                 {
                     output = "Den/Die habe ich hier zuletzt am " + Program.TheUsers[message].last_seen.ToString("dd.MM.yyyy ") + "um" + Program.TheUsers[message].last_seen.ToString(" HH:mm:ss ") + "Uhr gesehen.";

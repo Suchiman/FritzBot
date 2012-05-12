@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using FritzBot;
+using System.Text;
 
 namespace FritzBot.commands
 {
@@ -68,15 +69,33 @@ namespace FritzBot.commands
                     String thealias = Program.TheUsers.AllAliases()[parameter[0]];
                     if (!String.IsNullOrEmpty(thealias))
                     {
-                        for (int i = 0; thealias.Contains("$") && parameter.Length > 1; i++)
+                        for (int i = 0; thealias.Contains("$"); i++)
                         {
                             while (true)
                             {
                                 int index = thealias.IndexOf("$" + (i + 1));
                                 if (index == -1) break;
                                 thealias = thealias.Remove(index, 2);
-                                thealias = thealias.Insert(index, parameter[i + 1]);
+                                if (parameter.Length - 1 > i)
+                                {
+                                    thealias = thealias.Insert(index, parameter[i + 1]);
+                                }
+                                else
+                                {
+                                    thealias = thealias.Insert(index, "");
+                                }
                             }
+                        }
+                        while (thealias.Contains("encode("))
+                        {
+                            int start = thealias.LastIndexOf("encode(");
+                            int end = thealias.Remove(0, start).IndexOf(')') + 1 + start;
+
+                            String second = thealias.Substring(start + 7, end - (start + 8));
+                            second = System.Web.HttpUtility.UrlEncode(Encoding.GetEncoding("iso-8859-1").GetBytes(second));
+                            second = second.Replace("%23", "#").Replace("%3a", ":").Replace("%2f", "/");
+
+                            thealias = thealias.Substring(0, start) + second + thealias.Substring(end);
                         }
                         connection.Sendmsg(thealias, receiver);
                         return true;

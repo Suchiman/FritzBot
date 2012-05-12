@@ -74,7 +74,6 @@ namespace FritzBot
             {
                 Reload();
             }
-            //Maintain();
             AutoFlushThread = new Thread(new ThreadStart(this.AutoFlush));
             AutoFlushThread.IsBackground = true;
             AutoFlushThread.Start();

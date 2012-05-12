@@ -46,6 +46,10 @@ namespace FritzBot.commands
                 {
                     Program.TheUsers.Remove(message.Split(' ')[1]);
                 }
+                if (message.Contains("maintain"))
+                {
+                    Program.TheUsers.Maintain();
+                }
                 connection.Sendmsg("Okay", receiver);
             }
             catch (Exception ex)

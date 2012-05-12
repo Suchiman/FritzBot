@@ -28,10 +28,10 @@ namespace FritzBot.commands
                     {
                         int start = message.LastIndexOf('(');
                         int end = message.Remove(0, start).IndexOf(')') + 1 + start;
-                        String first = message.Remove(start);
-                        String second = message.Remove(0, start + 1).Remove(end - start - 2);
+                        String first = message.Substring(0, start);
+                        String second = message.Substring(start + 1, end - start - 2);
                         second = CalcPartial(second);
-                        String last = message.Remove(0, end);
+                        String last = message.Substring(end);
                         message = first + second + last;
                     }
                 }
