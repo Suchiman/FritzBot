@@ -7,9 +7,9 @@ namespace webpages
     {
         public String Url { get { return "/robots.txt"; } }
 
-        public html_response GenPage(html_request request)
+        public HtmlResponse GenPage(HtmlRequest request)
         {
-            html_response response = new html_response();
+            HtmlResponse response = new HtmlResponse();
             response.page += "User-agent: *\n";
             response.page += "Disallow: /\n";
             response.status_code = 200;

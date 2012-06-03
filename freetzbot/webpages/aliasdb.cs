@@ -7,11 +7,11 @@ namespace webpages
     {
         public String Url { get { return "/aliasdb"; } }
 
-        public html_response GenPage(html_request request)
+        public HtmlResponse GenPage(HtmlRequest request)
         {
-            html_response theresponse = new html_response();
+            HtmlResponse theresponse = new HtmlResponse();
             theresponse.page += "<!DOCTYPE html><html><body>";
-            theresponse.page += index.GenMenu();
+            theresponse.page += index.GenMenu(request);
             theresponse.page += "<table border=2px>";
             theresponse.page += "<tr><td><b>Alias</b></td><td><b>Beschreibung</b></td></tr>";
             AliasDB thealiases = Program.TheUsers.AllAliases();

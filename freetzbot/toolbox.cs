@@ -71,6 +71,11 @@ namespace FritzBot
             LoggingSafe.ReleaseMutex();
         }
 
+        /// <summary>
+        /// Hasht einen String mit dem SHA512 Algorithmus
+        /// </summary>
+        /// <param name="toCrypt">Der zu hashende String</param>
+        /// <returns>Den Hashwert des Strings</returns>
         public static String Crypt(String toCrypt)
         {
             byte[] hash = null;
@@ -83,29 +88,26 @@ namespace FritzBot
             return BitConverter.ToString(hash).Replace("-", "");
         }
 
-        public static void InstantiateConnection(String server, int Port, String Nick, String Quit_Message, String InitialChannel)
+        /// <summary>
+        /// Baut unter Verwendung der angegebenen Daten eine neue Verbindung auf
+        /// </summary>
+        /// <param name="server">Der Hostname des Servers</param>
+        /// <param name="Port">Der Port des Servers, standardmäßig 6667</param>
+        /// <param name="Nick">Der Nickname des Bots</param>
+        /// <param name="Quit_Message">Die Nachricht beim Verlassen</param>
+        /// <param name="Channels">Eine Liste von Channelnamen die der Bot betreten soll</param>
+        public static void InstantiateConnection(String server, int Port, String Nick, String Quit_Message, String Channel)
         {
-            Irc connection = new Irc(server, Port, Nick);
-            connection.QuitMessage = Quit_Message;
-            connection.Received += new Irc.ReceivedEventHandler(Program.process_incomming);
-            connection.AutoReconnect = true;
-            connection.Connect();
-            Thread.Sleep(1000);
-            if (InitialChannel.Contains(":"))
-            {
-                String[] channels = InitialChannel.Split(':');
-                foreach (String channel in channels)
-                {
-                    connection.JoinChannel(channel);
-                }
-            }
-            else
-            {
-                connection.JoinChannel(InitialChannel);
-            }
-            Program.irc_connections.Add(connection);
+            List<String> channels = new List<String>() { { Channel } };
+            Program.TheServers.NewConnection(server, Port, Nick, Quit_Message, channels);
         }
 
+        /// <summary>
+        /// Sendet eine HTTP Anfrage um die gewünschte Webseite in form eines Strings zu erhalten
+        /// </summary>
+        /// <param name="Url">Die http WebAdresse</param>
+        /// <param name="POSTParams">Optionale POST Parameter</param>
+        /// <returns>Die Webseite als String</returns>
         public static String GetWeb(String Url, Dictionary<String, String> POSTParams = null)
         {
             String POSTData = "";
@@ -152,6 +154,11 @@ namespace FritzBot
             return thepage;
         }
 
+        /// <summary>
+        /// Kürzt eine URL bei TinyURL
+        /// </summary>
+        /// <param name="Url">Die zu kürzende URL</param>
+        /// <returns>Die gekürzte URL</returns>
         public static String ShortUrl(String Url)
         {
             try
@@ -164,23 +171,24 @@ namespace FritzBot
             }
         }
 
-        public static db getDatabaseByName(String Name)
+        /// <summary>
+        /// Codiert den String entsprechend den Anforderungen einer URL
+        /// </summary>
+        /// <param name="url">Der zu Codierende String</param>
+        /// <returns>Einen URL Encodierten String</returns>
+        public static String UrlEncode(String url)
         {
-            foreach (db database in Program.databases)
-            {
-                if (database.datenbank_name == Name)
-                {
-                    return database;
-                }
-            }
-            db datenbank = new db(Name);
-            Program.databases.Add(datenbank);
-            return datenbank;
+            return System.Web.HttpUtility.UrlEncode(url, Encoding.UTF8);
         }
 
+        /// <summary>
+        /// Sucht nach der Instanz des Kommandos, wirft eine ArgumentException wenn das Kommando nicht gefunden wird
+        /// </summary>
+        /// <param name="Name">Der name des Kommandos</param>
+        /// <returns>Das gefundene Kommando Objekt</returns>
         public static ICommand getCommandByName(String Name)
         {
-            foreach (ICommand theCommand in Program.commands)
+            foreach (ICommand theCommand in Program.Commands)
             {
                 foreach (String theName in theCommand.Name)
                 {
@@ -193,51 +201,14 @@ namespace FritzBot
             throw new ArgumentException("Command not found");
         }
 
-        public static void Announce(String message)
+        public static Boolean IsOp(String Nickname)
         {
-            foreach (Irc connection in Program.irc_connections)
+            if (Program.TheUsers.Exists(Nickname))
             {
-                foreach (String room in connection.rooms)
-                {
-                    connection.Sendmsg(message, room);
-                }
-            }
-        }
-
-        public static String AwaitAnswer(String nick)
-        {
-            Program.await_response = true;
-            Program.awaited_nick = nick;
-            int i = 0;
-            while (String.IsNullOrEmpty(Program.awaited_response) && i < 300)
-            {
-                Thread.Sleep(100);
-                i++;
-            }
-            Program.await_response = false;
-            Program.awaited_nick = "";
-            String response = Program.awaited_response;
-            Program.awaited_response = "";
-            return response;
-        }
-
-        public static Boolean IsRunning()
-        {
-            for (int i = 0; i < Program.irc_connections.Count; i++)
-            {
-                if (Program.irc_connections[i].Running())
+                if (Program.TheUsers[Nickname].isOp && (Program.TheUsers[Nickname].authenticated || String.IsNullOrEmpty(Program.TheUsers[Nickname].password)))
                 {
                     return true;
                 }
-            }
-            return false;
-        }
-
-        public static Boolean IsOp(String Nickname)
-        {
-            if (Program.TheUsers[Nickname].isOp && (Program.TheUsers[Nickname].authenticated || String.IsNullOrEmpty(Program.TheUsers[Nickname].password)))
-            {
-                return true;
             }
             return false;
         }

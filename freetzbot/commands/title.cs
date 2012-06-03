@@ -1,5 +1,4 @@
 ﻿using System;
-using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -16,11 +15,11 @@ namespace FritzBot.commands
 
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
             try
             {
-                String webpage = toolbox.GetWeb(message);
+                String webpage = toolbox.GetWeb(theMessage.CommandArgs[0]);
                 String title = webpage.Split(new String[] { "<title>" }, 8, StringSplitOptions.None)[1].Split(new String[] { "</title>" }, 2, StringSplitOptions.None)[0];
                 while (title.IndexOf('\n') != -1)
                 {
@@ -38,11 +37,11 @@ namespace FritzBot.commands
                 {
                     title = title.Remove(title.ToCharArray().Length - 1, 1);
                 }
-                connection.Sendmsg(title, receiver);
+                theMessage.Answer(title);
             }
             catch
             {
-                connection.Sendmsg("Entweder hat die Webseite keine Überschrift oder die URL ist nicht gültig", receiver);
+                theMessage.Answer("Entweder hat die Webseite keine Überschrift oder die URL ist nicht gültig");
             }
         }
     }

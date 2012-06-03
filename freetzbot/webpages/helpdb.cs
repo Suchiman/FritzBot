@@ -7,15 +7,15 @@ namespace webpages
     {
         public String Url { get { return "/helpdb"; } }
 
-        public html_response GenPage(html_request request)
+        public HtmlResponse GenPage(HtmlRequest request)
         {
-            html_response theresponse = new html_response();
+            HtmlResponse theresponse = new HtmlResponse();
             String logincheck = login.CheckLogin(request);
             theresponse.page += "<!DOCTYPE html><html><body>";
-            theresponse.page += index.GenMenu();
+            theresponse.page += index.GenMenu(request);
             theresponse.page += "<table border=2px>";
             theresponse.page += "<tr><td><b>Befehl</b></td><td><b>Beschreibung</b></td></tr>";
-            foreach (ICommand thecommand in Program.commands)
+            foreach (ICommand thecommand in Program.Commands)
             {
                 if (!(thecommand.OpNeeded && !toolbox.IsOp(logincheck)))
                 {

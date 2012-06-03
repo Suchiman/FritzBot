@@ -1,60 +1,60 @@
 ﻿using System;
-using FritzBot;
 
 namespace FritzBot.commands
 {
     class boxinfo : ICommand
     {
-        public String[] Name { get { return new String[] { "boxinfo" }; } }
+        public String[] Name { get { return new String[] { "boxinfo", "box" }; } }
         public String HelpText { get { return "Zeigt die Box/en des angegebenen Benutzers an."; } }
         public Boolean OpNeeded { get { return false; } }
-        public Boolean ParameterNeeded { get { return true; } }
-        public Boolean AcceptEveryParam { get { return false; } }
+        public Boolean ParameterNeeded { get { return false; } }
+        public Boolean AcceptEveryParam { get { return true; } }
 
         public void Destruct()
         {
 
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
             String output = "";
-            if (String.IsNullOrEmpty(message))
+            String UserToUse = theMessage.CommandLine;
+            if (!theMessage.hasArgs)
             {
-                message = sender;
+                UserToUse = theMessage.Nick;
             }
-            if (Program.TheUsers.Exists(message))
+            if (theMessage.theUsers.Exists(UserToUse))
             {
-                foreach (String box in Program.TheUsers[message].boxes)
+                foreach (String box in theMessage.theUsers[UserToUse].boxes)
                 {
                     output += ", " + box;
                 }
             }
             else
             {
-                connection.Sendmsg("Den habe ich hier noch nie gesehen, sry", receiver);
+                theMessage.Answer("Der Benutzer ist mir nicht bekannt");
                 return;
             }
             if (String.IsNullOrEmpty(output))
             {
-                if (message == sender)
+                if (!theMessage.hasArgs)
                 {
-                    connection.Sendmsg("Du hast bei mir noch keine Box registriert.", receiver);
+                    theMessage.Answer("Für dich existieren keine Einträge");
                 }
                 else
                 {
-                    connection.Sendmsg("Über den habe ich keine Informationen.", receiver);
+                    theMessage.Answer("Meine Datenbank enthält keinen Eintrag über diesen Benutzer");
                 }
                 return;
             }
             output = output.Remove(0, 2);
-            if (message == sender)
+            if (!theMessage.hasArgs)
             {
-                connection.Sendmsg("Du hast bei mir die Box/en " + output + " registriert.", receiver);
+                theMessage.Answer("Entsprechend der Datenbank wurden die folgenden Boxen registriert: " + output);
             }
             else
             {
-                connection.Sendmsg(message + " sagte mir er/sie hätte die Box/en " + output, receiver);
+                theMessage.Answer(UserToUse + " besitzt laut Datenbank " + output);
             }
         }
     }

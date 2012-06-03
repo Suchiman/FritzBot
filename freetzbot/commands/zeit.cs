@@ -1,5 +1,4 @@
 ﻿using System;
-using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -16,15 +15,15 @@ namespace FritzBot.commands
 
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
             try
             {
-                connection.Sendmsg("Laut meiner Uhr ist es gerade " + DateTime.Now.ToString("HH:mm:ss") + ".", receiver);
+                theMessage.Answer("Laut meiner Uhr ist es gerade " + DateTime.Now.ToString("HH:mm:ss") + " am " + DateTime.Now.ToShortDateString());
             }
             catch
             {
-                connection.Sendmsg("Scheinbar ist meine Uhr kaputt, statt der Zeit habe ich nur eine Exception bekommen :(", receiver);
+                theMessage.Answer("Scheinbar ist meine Uhr kaputt, statt der Zeit habe ich nur eine Exception bekommen :(");
             }
         }
     }

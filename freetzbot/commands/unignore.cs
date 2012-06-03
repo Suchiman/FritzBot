@@ -1,5 +1,4 @@
 ﻿using System;
-using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -16,9 +15,9 @@ namespace FritzBot.commands
 
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
-            Program.TheUsers[message].ignored = false;
+            theMessage.theUsers[theMessage.CommandArgs[0]].ignored = false;
         }
     }
 }

@@ -5,7 +5,6 @@ using System.Net;
 using System.Reflection;
 using System.Text;
 using System.Threading;
-using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -50,15 +49,15 @@ namespace FritzBot.commands
             }
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
             if (listener.IsListening && listener_thread.IsAlive)
             {
-                connection.Sendmsg("Webinterface läuft und ist unter http://teneon.de:8080 zu erreichen", receiver);
+                theMessage.Answer("Webinterface läuft und ist unter http://teneon.de:8080 zu erreichen");
             }
             else
             {
-                connection.Sendmsg("Scheinbar läuft mein Webinterface nicht mehr :(", receiver);
+                theMessage.Answer("Scheinbar läuft mein Webinterface nicht mehr :(");
             }
         }
 
@@ -84,8 +83,8 @@ namespace FritzBot.commands
                         HttpListenerResponse response = context.Response;
                         response.Headers.Add(HttpResponseHeader.Server, "FritzBot");
                         String url = request.RawUrl;
-                        html_response theresponse = new html_response();
-                        html_request therequest = new html_request();
+                        HtmlResponse theresponse = new HtmlResponse();
+                        HtmlRequest therequest = new HtmlRequest();
                         therequest.useradress = request.RemoteEndPoint.Address;
                         therequest.cookies = request.Cookies;
                         if (request.HasEntityBody)

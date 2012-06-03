@@ -1,5 +1,4 @@
 ﻿using System;
-using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -16,26 +15,28 @@ namespace FritzBot.commands
 
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
             try
             {
-                for (int i = 0; i < Program.commands.Count; i++)
+                for (int i = 0; i < Program.Commands.Count; i++)
                 {
-                    if (Program.commands[i].Name[0] == message)
+                    if (Program.Commands[i].Name[0] == theMessage.CommandArgs[0])
                     {
-                        Program.commands[i].Destruct();
-                        Program.commands[i] = null;
-                        Program.commands.RemoveAt(i);
-                        connection.Sendmsg("Modul erfolgreich entladen", receiver);
+                        Program.Commands[i].Destruct();
+                        Program.Commands[i] = null;
+                        Program.Commands.RemoveAt(i);
+                        Properties.Settings.Default.IgnoredModules.Add(theMessage.CommandArgs[0]);
+                        Properties.Settings.Default.Save();
+                        theMessage.Answer("Modul erfolgreich entladen");
                         return;
                     }
                 }
-                connection.Sendmsg("Modul wurde nicht gefunden", receiver);
+                theMessage.Answer("Modul wurde nicht gefunden");
             }
             catch (Exception ex)
             {
-                connection.Sendmsg("Das hat eine Exception ausgelöst", receiver);
+                theMessage.Answer("Das hat eine Exception ausgelöst");
                 toolbox.Logging("Unloadmodule Exception " + ex.Message);
             }
         }

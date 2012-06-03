@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Threading;
-using FritzBot;
+using System.Collections.Generic;
 
 namespace FritzBot.commands
 {
@@ -12,43 +11,73 @@ namespace FritzBot.commands
         public Boolean ParameterNeeded { get { return false; } }
         public Boolean AcceptEveryParam { get { return false; } }
 
-        public void Destruct()
-        {
+        private List<String> CheckUserInProgress = new List<String>();
 
+        private void CheckOldPW(ircMessage theMessage)
+        {
+            if (!(theMessage.isPrivate && CheckUserInProgress.Contains(theMessage.Nick)))
+            {
+                return;
+            }
+            theMessage.Hidden = true;
+            if (theMessage.getUser.CheckPassword(theMessage.Message))
+            {
+                theMessage.SendPrivateMessage("Passwort korrekt, gib nun dein neues Passwort ein:");
+                SetUserInProgress.Add(theMessage.Nick);
+                CheckUserInProgress.Remove(theMessage.Nick);
+            }
+            else
+            {
+                theMessage.SendPrivateMessage("Passwort inkorrekt, abbruch!");
+                CheckUserInProgress.Remove(theMessage.Nick);
+            }
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        private List<String> SetUserInProgress = new List<String>();
+
+        void SetNewPW(ircMessage theMessage)
         {
-            if (sender != receiver)
+            if (!(theMessage.isPrivate && SetUserInProgress.Contains(theMessage.Nick)))
             {
-                connection.Sendmsg("Zu deiner eigenen Sicherheit solltest du das lieber mit mir im Query bereden", sender);
+                return;
+            }
+            theMessage.Hidden = true;
+            theMessage.getUser.SetPassword(theMessage.Message);
+            theMessage.SendPrivateMessage("Passwort wurde geändert!");
+            SetUserInProgress.Remove(theMessage.Nick);
+        }
+
+        public void Destruct()
+        {
+            Program.UserMessaged -= new Program.MessageEventHandler(SetNewPW);
+            Program.UserMessaged -= new Program.MessageEventHandler(CheckOldPW);
+        }
+
+        public passwd()
+        {
+            Program.UserMessaged += new Program.MessageEventHandler(SetNewPW);//Vorsicht: Reihenfolge wichtig
+            Program.UserMessaged += new Program.MessageEventHandler(CheckOldPW);
+        }
+
+        public void Run(ircMessage theMessage)
+        {
+            theMessage.Hidden = true;
+            if (!theMessage.isPrivate)
+            {
+                theMessage.SendPrivateMessage("Zu deiner eigenen Sicherheit solltest du das lieber mit mir im Query bereden");
                 return;
             }
             else
             {
-                if (!String.IsNullOrEmpty(Program.TheUsers[sender].password))
+                if (!String.IsNullOrEmpty(theMessage.getUser.password))
                 {
-                    connection.Sendmsg("Bitte gib zuerst dein altes Passwort ein:", sender);
-                    String Password = toolbox.AwaitAnswer(sender);
-                    if (Program.TheUsers[sender].CheckPassword(Password))
-                    {
-                        connection.Sendmsg("Passwort korrekt, gib nun dein neues Passwort ein:", sender);
-                    }
-                    else
-                    {
-                        connection.Sendmsg("Passwort inkorrekt, abbruch!", sender);
-                        return;
-                    }
-                    Password = toolbox.AwaitAnswer(sender);
-                    Program.TheUsers[sender].SetPassword(Password);
-                    connection.Sendmsg("Passwort wurde geändert!", sender);
+                    theMessage.SendPrivateMessage("Bitte gib zuerst dein altes Passwort ein:");
+                    CheckUserInProgress.Add(theMessage.Nick);
                 }
                 else
                 {
-                    connection.Sendmsg("Okay bitte gib nun dein Passwort ein", sender);
-                    String Password = toolbox.AwaitAnswer(sender);
-                    Program.TheUsers[sender].SetPassword(Password);
-                    connection.Sendmsg("Passwort wurde festgelegt!", sender);
+                    theMessage.SendPrivateMessage("Okay bitte gib nun dein Passwort ein");
+                    SetUserInProgress.Add(theMessage.Nick);
                 }
             }
         }

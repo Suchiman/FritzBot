@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Text;
-using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -17,9 +15,9 @@ namespace FritzBot.commands
 
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
-            connection.Sendmsg("http://lmgtfy.com/?q=" + System.Web.HttpUtility.UrlEncode(Encoding.GetEncoding("iso-8859-1").GetBytes(message)), receiver);
+            theMessage.Answer("http://lmgtfy.com/?q=" + toolbox.UrlEncode(theMessage.CommandLine));
         }
     }
 }

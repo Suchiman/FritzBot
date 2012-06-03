@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Text;
-using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -17,19 +15,19 @@ namespace FritzBot.commands
 
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
             String output = "http://freetz.org/search?q=";
-            if (String.IsNullOrEmpty(message))
+            if (!theMessage.hasArgs)
             {
                 output = "http://freetz.org/wiki";
             }
             else
             {
-                output += System.Web.HttpUtility.UrlEncode(Encoding.GetEncoding("iso-8859-1").GetBytes(message)) + "&wiki=on";
+                output += toolbox.UrlEncode(theMessage.CommandLine) + "&wiki=on";
             }
             output = output.Replace("%23", "#");
-            connection.Sendmsg(output, receiver);
+            theMessage.Answer(output);
         }
     }
 }

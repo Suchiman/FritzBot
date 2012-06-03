@@ -1,5 +1,4 @@
 ﻿using System;
-using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -27,9 +26,9 @@ namespace FritzBot.commands
             boxfrage(connection, nick, nick);
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
-            boxfrage(connection, message, message, false);
+            boxfrage(theMessage.Connection, theMessage.CommandLine, theMessage.CommandLine, false);
         }
 
         public void boxfrage(Irc connection, String sender, String receiver, Boolean check_db = true)
@@ -38,7 +37,7 @@ namespace FritzBot.commands
             {
                 if (check_db)
                 {
-                    if (Program.configuration["boxfrage"] == "false" || Program.TheUsers[sender].asked) return;
+                    if (!Properties.Settings.Default.BoxFrage || Program.TheUsers[sender].asked) return;
                     System.Threading.Thread.Sleep(10000);
                 }
                 connection.Sendmsg("Hallo " + sender + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast :).", receiver);

@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
-using FritzBot;
 
 namespace FritzBot.commands
 {
-    class remember : ICommand
+    class remind : ICommand
     {
         public String[] Name { get { return new String[] { "remind" }; } }
         public String HelpText { get { return "Hinterlasse einem Benutzer eine Nachricht. Sobald er wiederkommt oder etwas schreibt werde ich sie ihm Zustellen. !remember <Benutzer> <Nachricht>"; } }
@@ -18,7 +17,7 @@ namespace FritzBot.commands
             Program.UserMessaged -= new Program.MessageEventHandler(SendMessaged);
         }
 
-        public remember()
+        public remind()
         {
             Program.UserJoined += new Program.JoinEventHandler(SendJoin);
             Program.UserMessaged += new Program.MessageEventHandler(SendMessaged);
@@ -33,24 +32,28 @@ namespace FritzBot.commands
             }
         }
 
-        public void SendMessaged(Irc connection, String sender, String receiver, String message)
+        public void SendMessaged(ircMessage theMessage)
         {
-            SendJoin(connection, sender, receiver);
+            SendJoin(theMessage.Connection, theMessage.Nick, theMessage.Source);
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
-            String[] split = message.Split(new String[] { " " }, 2, StringSplitOptions.None);
-            if (split.Length > 1)
+            if (theMessage.CommandArgs.Count > 1)
             {
-                if (Program.TheUsers.Exists(split[0]))
+                if (theMessage.theUsers.Exists(theMessage.CommandArgs[0]))
                 {
-                    Program.TheUsers[split[0]].AddRemember(sender, split[1]);
+                    theMessage.theUsers[theMessage.CommandArgs[0]].AddRemember(theMessage.Nick, theMessage.CommandLine.Substring(theMessage.CommandLine.IndexOf(' ')));
+                    theMessage.Answer("Okay ich werde es sobald wie möglich zustellen");
+                }
+                else
+                {
+                    theMessage.Answer("Den Benutzer habe ich aber noch nie gesehen");
                 }
             }
             else
             {
-                connection.Sendmsg("Die Eingabe war nicht korrekt: !remember <Benutzer> <Nachricht>", receiver);
+                theMessage.Answer("Die Eingabe war nicht korrekt: !remember <Benutzer> <Nachricht>");
             }
         }
     }

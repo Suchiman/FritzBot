@@ -7,11 +7,8 @@ wird ein parameter angegeben obwohl keiner erforderlich ist oder es wid kein par
 AcceptEveryParam setzt vorherige Logik außer Kraft und akzeptiert mehrere oder keinen Parameter
 Im Klassen Konstruktor können Threads gestartet werden oder initial Werte festgelegt werden
 Die Run Methode wird ausgeführt wenn jemand den Befehl aufruft: !example z.b.
-	Das Objekt Irc connection representiert die Verbindung von dem das Kommando aufgerufen wurde, enthält unter anderem die Methode "Sendmsg"
-	String sender enthält den namen des Benutzers der den Befehl ausgeführt hat
-	String receiver enthält den ursprung der Nachricht, entweder den Channel Namen oder den Namen des Benutzers wenn der Befehl in einem Query gesendet wurde
-	String message enthält Parameter die hinter dem Befehl geschrieben wurden, im falle von "!example test" enthält message "test"
-Die Destruct methode wird ausgeführt wenn der Befehl entladen wird oder deaktiviert. Wenn Threads gestartet wurden sollten diese dort beendet werden.
+	der Parameter vom Typ ircMessage bietet viele Hilfreiche Methoden wie z.b. Answer um dem Benutzer zu antworten. Die Befehle sind alle via IntelliSense dokumentiert
+Die Destruct Methode wird ausgeführt, wenn der Befehl entladen oder deaktiviert wird. Wenn Threads gestartet wurden sollten diese dort beendet werden.
 
 namespace FritzBot.commands
 {
@@ -33,9 +30,9 @@ namespace FritzBot.commands
 
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
-            connection.Sendmsg("Hallo Welt", receiver);
+            theMessage.Answer("Hallo Welt");
         }
     }
 }

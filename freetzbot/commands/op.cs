@@ -1,5 +1,4 @@
 ﻿using System;
-using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -16,16 +15,16 @@ namespace FritzBot.commands
 
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
-            if (Program.TheUsers.Exists(message))
+            if (theMessage.theUsers.Exists(theMessage.CommandLine))
             {
-                Program.TheUsers[message].isOp = true;
-                connection.Sendmsg("Okay", receiver);
+                theMessage.theUsers[theMessage.CommandLine].isOp = true;
+                theMessage.Answer("Okay");
             }
             else
             {
-                connection.Sendmsg("Den Benutzer kenne ich nicht", receiver);
+                theMessage.Answer("Den Benutzer kenne ich nicht");
             }
         }
     }

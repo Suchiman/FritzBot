@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Text;
-using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -17,18 +15,18 @@ namespace FritzBot.commands
 
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
             String output = "https://www.google.de/search?q=";
-            if (String.IsNullOrEmpty(message))
+            if (String.IsNullOrEmpty(theMessage.CommandLine))
             {
                 output = "http://www.google.de/";
             }
             else
             {
-                output += System.Web.HttpUtility.UrlEncode(Encoding.GetEncoding("iso-8859-1").GetBytes("\"" + message + "\""));
+                output += toolbox.UrlEncode("\"" + theMessage.CommandLine + "\"");
             }
-            connection.Sendmsg(output, receiver);
+            theMessage.Answer(output);
         }
     }
 }

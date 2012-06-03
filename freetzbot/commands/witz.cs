@@ -23,23 +23,22 @@ namespace FritzBot.commands
 
         private Queue<int> WitzRandoms;
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
             String Joke = "";
-            if (!String.IsNullOrEmpty(message))
+            if (theMessage.hasArgs)
             {
-                String[] witz = message.Split(new String[] { " " }, 2, StringSplitOptions.None);
-                if (witz[0] == "add")
+                if (theMessage.CommandArgs[0].ToLower() == "add")
                 {
-                    Program.TheUsers[sender].AddJoke(witz[1]);
-                    connection.Sendmsg("Ist notiert " + sender, receiver);
+                    theMessage.getUser.AddJoke(theMessage.CommandLine.Substring(theMessage.CommandLine.IndexOf(' ')));
+                    theMessage.Answer("Ist notiert " + theMessage.Nick);
                 }
                 else
                 {
-                    Joke = GetRandom(GetSpecialJokes(new List<String>(message.Split(' '))));
+                    Joke = GetRandom(GetSpecialJokes(theMessage.CommandArgs));
                     if (String.IsNullOrEmpty(Joke))
                     {
-                        connection.Sendmsg("Tut mir leid ich kenne leider keinen Witz der alle deine Stichwörter beinhaltet", receiver);
+                        theMessage.Answer("Tut mir leid ich kenne leider keinen Witz der alle deine Stichwörter beinhaltet");
                         return;
                     }
                 }
@@ -49,11 +48,11 @@ namespace FritzBot.commands
                 Joke = GetRandom(Program.TheUsers.AllJokes());
                 if (String.IsNullOrEmpty(Joke))
                 {
-                    connection.Sendmsg("Mir fällt gerade kein Fritz!Witz ein", receiver);
+                    theMessage.Answer("Mir fällt gerade kein Fritz!Witz ein");
                     return;
                 }
             }
-            connection.Sendmsg(Joke, receiver);
+            theMessage.Answer(Joke);
         }
 
         private List<String> GetSpecialJokes(List<String> Filter)

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
-using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -35,11 +34,12 @@ namespace FritzBot.commands
                 //{6, "7320"},
                 {5, "7270"}
             };
-            labor_daten = new Labordaten[boxdata.Count];
+            LaborDaten = new Labordaten[boxdata.Count];
             laborthread = new Thread(new ThreadStart(this.labor_check));
             laborthread.Name = "LaborThread";
             laborthread.IsBackground = true;
             laborthread.Start();
+            LaborDatenUpdate = DateTime.MinValue;
         }
 
         public void Destruct()
@@ -47,7 +47,8 @@ namespace FritzBot.commands
             laborthread.Abort();
         }
 
-        private Labordaten[] labor_daten;
+        private Labordaten[] LaborDaten;
+        private DateTime LaborDatenUpdate;
         private Dictionary<String, int> boxdata;
         private Dictionary<int, String> boxdatareverse;
         Thread laborthread;
@@ -62,31 +63,32 @@ namespace FritzBot.commands
             String[] datumsection = webseite.Split(new String[] { "<span style=\"font-size:10px;float:right; margin-right:20px;\">" }, 8, StringSplitOptions.None);
             for (int i = 1; i <= boxdata.Count; i++)
             {
-                labor_daten[i - 1].daten = datumsection[i].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0];
-                String changelog_url_element = datumsection[i].Split(new String[] { "<div class=\"boxBottom\">" }, 2, StringSplitOptions.None)[0];//.Replace("\r\n\t\t\t\r\n\t\t\t\t", "");
+                LaborDaten[i - 1].daten = datumsection[i].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "\n" }, 3, StringSplitOptions.None)[1].Split(new String[] { "\t \t\t\t " }, 3, StringSplitOptions.None)[1].Split(new String[] { "\r" }, 3, StringSplitOptions.None)[0];
+                String changelog_url_element = datumsection[i].Split(new String[] { "<div class=\"boxBottom\">" }, 2, StringSplitOptions.None)[0];
                 String titel = datumsection[i].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[1].Split(new String[] { "<img style=" }, 2, StringSplitOptions.None)[0].Replace("\r\n\t \t\t", "");
                 titel = titel.Remove(titel.IndexOf("\r\n"));
                 if (changelog_url_element.Contains("<p>Die neuen Leistungsmerkmale aus diesem Labor") || titel == "Reguläres Update verfügbar")
                 {
-                    labor_daten[i - 1].daten = "Released";
+                    LaborDaten[i - 1].daten = "Released";
                 }
                 else
                 {
                     changelog_url_element = changelog_url_element.Split(new String[] { "<a href=" }, 2, StringSplitOptions.None)[1].Split(new String[] { "\"" }, 3, StringSplitOptions.None)[1];
-                    labor_daten[i - 1].url = "http://www.avm.de/de/Service/Service-Portale/Labor/" + changelog_url_element;
-                    String url = labor_daten[i - 1].url.Remove(labor_daten[i - 1].url.LastIndexOf('/')) + "/labor_feedback_versionen.php";
+                    LaborDaten[i - 1].url = "http://www.avm.de/de/Service/Service-Portale/Labor/" + changelog_url_element;
+                    String url = LaborDaten[i - 1].url.Remove(LaborDaten[i - 1].url.LastIndexOf('/')) + "/labor_feedback_versionen.php";
                     String feedback = toolbox.GetWeb(url);
                     if (String.IsNullOrEmpty(feedback))
                     {
                         throw new InvalidOperationException("Verbindungsfehler");
                     }
-                    labor_daten[i - 1].url = toolbox.ShortUrl(labor_daten[i - 1].url);
-                    labor_daten[i - 1].version = feedback.Split(new String[] { "</strong>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "Version " }, 2, StringSplitOptions.None)[1];
+                    LaborDaten[i - 1].url = toolbox.ShortUrl(LaborDaten[i - 1].url);
+                    LaborDaten[i - 1].version = feedback.Split(new String[] { "</strong>" }, 2, StringSplitOptions.None)[0].Split(new String[] { "Version " }, 2, StringSplitOptions.None)[1];
                 }
             }
+            LaborDatenUpdate = DateTime.Now;
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
             String changeset = "";
             int modell = 0;
@@ -96,33 +98,38 @@ namespace FritzBot.commands
             }
             catch (Exception ex)
             {
-                connection.Sendmsg("Es war mir nicht möglich den Labor Cache zu erneuern. Grund: " + ex.Message + ". Verwende Cache", receiver);
-            }
-            if (boxdata.ContainsKey(message.ToLower()))
-            {
-                modell = boxdata[message.ToLower()];
-                if (labor_daten[modell - 1].daten == "Released")
+                if (LaborDatenUpdate == DateTime.MinValue)
                 {
-                    connection.Sendmsg("Aktuell ist keine Laborversion verfügbar da die Features in eine neue Release Firmware eingeflossen sind", receiver);
+                    theMessage.Answer("Ich konnte leider keine Daten von der Laborwebseite abrufen und mein Cache ist leer");
+                    return;
+                }
+                theMessage.Answer("Es war mir nicht möglich den Labor Cache zu erneuern. Grund: " + ex.Message + ". Verwende Cache vom " + LaborDatenUpdate.ToString());
+            }
+            if (boxdata.ContainsKey(theMessage.CommandLine.ToLower()))
+            {
+                modell = boxdata[theMessage.CommandLine.ToLower()];
+                if (LaborDaten[modell - 1].daten == "Released")
+                {
+                    theMessage.Answer("Aktuell ist keine Laborversion verfügbar da die Features in eine neue Release Firmware eingeflossen sind");
                 }
                 else
                 {
-                    changeset += "Die neueste " + message + " labor Version ist am " + labor_daten[modell - 1].daten + " erschienen mit der Versionsnummer: " + labor_daten[modell - 1].version + ". Laborseite: " + labor_daten[modell - 1].url;
+                    changeset += "Die neueste " + theMessage.CommandLine + " labor Version ist am " + LaborDaten[modell - 1].daten + " erschienen mit der Versionsnummer: " + LaborDaten[modell - 1].version + ". Laborseite: " + LaborDaten[modell - 1].url;
                 }
             }
-            else if (String.IsNullOrEmpty(message.ToLower()))
+            else if (String.IsNullOrEmpty(theMessage.CommandLine.ToLower()))
             {
                 for (int i = 0; i < boxdatareverse.Count; i++)
                 {
-                    changeset += ", " + boxdatareverse[i + 1] + ": " + labor_daten[i].daten;
+                    changeset += ", " + boxdatareverse[i + 1] + ": " + LaborDaten[i].daten;
                 }
                 changeset = "Aktuelle Labor Daten: " + changeset.Remove(0, 2) + " - Zum Labor: " + toolbox.ShortUrl("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
             }
             else
             {
-                changeset += "Für die " + message + " steht derzeit keine Labor Version zur Verfügung. ";
+                changeset += "Für die " + theMessage.CommandLine + " steht derzeit keine Labor Version zur Verfügung. ";
             }
-            connection.Sendmsg(changeset, receiver);
+            theMessage.Answer(changeset);
         }
 
         private void labor_check()
@@ -131,11 +138,7 @@ namespace FritzBot.commands
             String output = "";
             while (true)
             {
-                if (Program.configuration["labor_check"] == "false")
-                {
-                    Thread.Sleep(30000);
-                }
-                while (Program.configuration["labor_check"] == "true")
+                if (Properties.Settings.Default.LaborCheck)
                 {
                     do
                     {
@@ -145,7 +148,7 @@ namespace FritzBot.commands
                             if (labor_old == null)
                             {
                                 labor_old = new Labordaten[boxdata.Count];
-                                labor_daten.CopyTo(labor_old, 0);
+                                LaborDaten.CopyTo(labor_old, 0);
                             }
                             break;
                         }
@@ -158,9 +161,9 @@ namespace FritzBot.commands
                     String labors = "";
                     for (int i = 0; i < boxdata.Count; i++)
                     {
-                        if (labor_daten[i] != labor_old[i])
+                        if (LaborDaten[i] != labor_old[i])
                         {
-                            if (labor_daten[i].daten == "Released")
+                            if (LaborDaten[i].daten == "Released")
                             {
                                 released += ", " + boxdatareverse[i + 1];
                             }
@@ -188,16 +191,15 @@ namespace FritzBot.commands
                     if (!String.IsNullOrEmpty(output))
                     {
                         output += " - Zum Labor: " + toolbox.ShortUrl("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
-                        labor_daten.CopyTo(labor_old, 0);
-                        toolbox.Announce(output);
+                        LaborDaten.CopyTo(labor_old, 0);
+                        Program.TheServers.AnnounceGlobal(output);
                     }
                     output = "";
-                    int labor_check_intervall;
-                    if (!int.TryParse(Program.configuration["labor_check_intervall"], out labor_check_intervall))
-                    {
-                        labor_check_intervall = 300000;
-                    }
-                    Thread.Sleep(labor_check_intervall);
+                    Thread.Sleep(Properties.Settings.Default.LaborCheckIntervall);
+                }
+                else
+                {
+                    Thread.Sleep(30000);
                 }
             }
         }

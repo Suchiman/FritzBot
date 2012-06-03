@@ -7,40 +7,33 @@ namespace webpages
     {
         public String Url { get { return "/"; } }
 
-        public static String GenMenu()
+        public static String GenMenu(HtmlRequest request)
         {
             String menu = "";
             menu += "<div><table cellspacing=10px><tr>";
-            menu += "<td><a href=\"/\">Startseite</a></td>";
             menu += "<td><a href=\"boxdb\">BoxDB</a></td>";
             menu += "<td><a href=\"aliasdb\">Aliase</a></td>";
             menu += "<td><a href=\"/helpdb\">Hilfe</a></td>";
-            menu += "<td><a href=\"/logout\">Logout</a></td>";
+            if (Program.TheUsers[login.CheckLogin(request)].isOp)
+            {
+                menu += "<td><a href=\"/settings\">Einstellungen</a></td>";
+            }
+            if (String.IsNullOrEmpty(login.CheckLogin(request)))
+            {
+                menu += "<td><a href=\"/login\">Login</a></td>";
+            }
+            else
+            {
+                menu += "<td><a href=\"/logout\">Logout</a></td>";
+            }
             menu += "</div></table></tr>";
             return menu;
         }
 
-        public html_response GenPage(html_request request)
+        public HtmlResponse GenPage(HtmlRequest request)
         {
-            html_response theresponse = new html_response();
-            theresponse.page += "<!DOCTYPE html><html><body>";
-            theresponse.page += GenMenu();
-            String logincheck = login.CheckLogin(request);
-            if (!String.IsNullOrEmpty(logincheck))
-            {
-                theresponse.page += "Willkommen " + logincheck;
-            }
-            else
-            {
-                theresponse.page += "<div style=\"position: absolute;top: 35%;left: 35%;border:1px;border-style:dotted;padding:10px\">Bitte einloggen!<br>";
-                theresponse.page += "<form action=\"login\" method=\"POST\"><table>";
-                theresponse.page += "<tr><td>IRC-Nick:</td><td><input type=\"text\" name=\"name\"></td></tr>";
-                theresponse.page += "<tr><td>Passwort:</td><td><input type=\"password\" name=\"pw\"></td></tr>";
-                theresponse.page += "<tr><td><input type=\"submit\" value=\"Login\"></td></tr>";
-                theresponse.page += "</table></form></div>";
-            }
-            theresponse.page += "</body></html>";
-            theresponse.status_code = 200;
+            HtmlResponse theresponse = new HtmlResponse();
+            theresponse.refer = "helpdb";
             return theresponse;
         }
     }

@@ -1,5 +1,4 @@
 ﻿using System;
-using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -16,7 +15,7 @@ namespace FritzBot.commands
 
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
             String boxen = "";
             foreach (User oneuser in Program.TheUsers)
@@ -30,7 +29,7 @@ namespace FritzBot.commands
                 }
             }
             boxen = boxen.Remove(0, 2);
-            connection.Sendmsg("Folgende Boxen wurden bei mir registriert: " + boxen, receiver);
+            theMessage.Answer("Folgende Boxen wurden bei mir registriert: " + boxen);
         }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using System;
-using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -16,46 +15,44 @@ namespace FritzBot.commands
 
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
             try
             {
-                if (message == "reload")
+                if (theMessage.CommandArgs[0] == "reload")
                 {
                     Program.TheUsers.Reload();
                 }
-                if (message == "flush")
+                if (theMessage.CommandArgs[0] == "flush")
                 {
                     Program.TheUsers.Flush();
                 }
-                if (message.Contains("add"))
+                if (theMessage.CommandArgs[0] == "add")
                 {
-                    String[] split = message.Split(' ');
-                    Program.TheUsers.Add(split[1]);
+                    theMessage.theUsers.Add(theMessage.CommandArgs[1]);
                 }
-                if (message.Contains("box"))
+                if (theMessage.CommandArgs[0] == "box")
                 {
-                    String[] split = message.Split(' ');
-                    Program.TheUsers[split[1]].AddBox(split[2]);
+                    theMessage.theUsers[theMessage.CommandArgs[1]].AddBox(theMessage.CommandArgs[2]);
                 }
-                if (message.Contains("cleanup"))
+                if (theMessage.CommandArgs[0] == "cleanup")
                 {
-                    Program.TheUsers.CleanUp();
+                    theMessage.theUsers.CleanUp();
                 }
-                if (message.Contains("remove"))
+                if (theMessage.CommandArgs[0] == "remove")
                 {
-                    Program.TheUsers.Remove(message.Split(' ')[1]);
+                    theMessage.theUsers.Remove(theMessage.CommandArgs[1]);
                 }
-                if (message.Contains("maintain"))
+                if (theMessage.CommandArgs[0] == "maintain")
                 {
-                    Program.TheUsers.Maintain();
+                    theMessage.theUsers.Maintain();
                 }
-                connection.Sendmsg("Okay", receiver);
+                theMessage.Answer("Okay");
             }
             catch (Exception ex)
             {
                 toolbox.Logging("Bei einer Datenbank Operation ist eine Exception aufgetreten: " + ex.Message);
-                connection.Sendmsg("Wups, das hat eine Exception verursacht", receiver);
+                theMessage.Answer("Wups, das hat eine Exception verursacht");
             }
         }
     }

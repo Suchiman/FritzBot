@@ -12,6 +12,7 @@
     <AssemblyName>FritzBot</AssemblyName>
     <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -24,7 +25,6 @@
     <MapFileExtensions>true</MapFileExtensions>
     <ApplicationRevision>0</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
@@ -110,7 +110,6 @@
     <Compile Include="commands\boxremove.cs" />
     <Compile Include="commands\calc.cs" />
     <Compile Include="commands\connect.cs" />
-    <Compile Include="commands\db_command.cs" />
     <Compile Include="commands\frag.cs" />
     <Compile Include="commands\freetz.cs" />
     <Compile Include="commands\fw.cs" />
@@ -130,10 +129,9 @@
     <Compile Include="commands\passwd.cs" />
     <Compile Include="commands\ping.cs" />
     <Compile Include="commands\quit.cs" />
-    <Compile Include="commands\remember.cs" />
+    <Compile Include="commands\remind.cs" />
     <Compile Include="commands\restart.cs" />
     <Compile Include="commands\seen.cs" />
-    <Compile Include="commands\settings.cs" />
     <Compile Include="commands\shorturl.cs" />
     <Compile Include="commands\title.cs" />
     <Compile Include="commands\trunk.cs" />
@@ -145,11 +143,17 @@
     <Compile Include="commands\webinterface.cs" />
     <Compile Include="commands\witz.cs" />
     <Compile Include="commands\zeit.cs" />
-    <Compile Include="db.cs" />
     <Compile Include="irc.cs" />
+    <Compile Include="ircMessage.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="settings.cs" />
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+    <Compile Include="servers.cs" />
+    <Compile Include="Settings.cs" />
     <Compile Include="toolbox.cs" />
     <Compile Include="commands\whmf.cs" />
     <Compile Include="users.cs" />
@@ -157,6 +161,7 @@
     <Compile Include="webpages\boxdb.cs" />
     <Compile Include="webpages\helpdb.cs" />
     <Compile Include="webpages\index.cs" />
+    <Compile Include="webpages\settings.cs" />
     <Compile Include="webpages\login.cs" />
     <Compile Include="webpages\logout.cs" />
     <Compile Include="webpages\pageinterface.cs" />
@@ -183,6 +188,13 @@
       <ProductName>Windows Installer 3.1</ProductName>
       <Install>true</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

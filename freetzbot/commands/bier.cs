@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace FritzBot.commands
 {
@@ -22,17 +20,17 @@ namespace FritzBot.commands
             Program.UserMessaged += new Program.MessageEventHandler(Run);
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
-            if (message.Contains("#96*6*") && !toolbox.IsIgnored(sender))
+            if (theMessage.CommandLine.Contains("#96*6*") && !theMessage.isIgnored)
             {
                 if (DateTime.Now.Hour > 5 && DateTime.Now.Hour < 16)
                 {
-                    connection.Sendmsg("Kein Bier vor 4", receiver);
+                    theMessage.Answer("Kein Bier vor 4");
                 }
                 else
                 {
-                    connection.Sendmsg("Bier holen", receiver);
+                    theMessage.Answer("Bier holen");
                 }
             }
         }

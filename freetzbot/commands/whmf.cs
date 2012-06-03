@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Net;
-using System.Text;
-using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -18,17 +16,17 @@ namespace FritzBot.commands
 
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
             String output = "http://wehavemorefun.de/fbwiki/index.php?search=";
-            if (String.IsNullOrEmpty(message))
+            if (!theMessage.hasArgs)
             {
                 output = "http://wehavemorefun.de/fbwiki";
             }
             else
             {
-                output += System.Web.HttpUtility.UrlEncode(Encoding.GetEncoding("iso-8859-1").GetBytes(message));
-                if (Program.configuration["whmf_url_resolve"] == "true")
+                output += toolbox.UrlEncode(theMessage.CommandLine);
+                if (Properties.Settings.Default.WhmfUrlResolve)
                 {
                     HttpWebRequest request = (HttpWebRequest)WebRequest.Create(output);
                     request.Timeout = 10000;
@@ -37,7 +35,7 @@ namespace FritzBot.commands
                 }
             }
             output = output.Replace("%23", "#");
-            connection.Sendmsg(output, receiver);
+            theMessage.Answer(output);
         }
     }
 }

@@ -7,142 +7,193 @@ using System.Threading;
 
 namespace FritzBot
 {
-    class Irc
+    public class Irc
     {
         public delegate void ReceivedEventHandler(Irc connection, String source, String nick, String message);
         public event ReceivedEventHandler Received;
-        public String QuitMessage;
+        public String _quitmessage;
 
-        private Thread empfangs_thread;
-        private Thread Watchthread;
-        private Boolean CancelThread;
-        public string HostName;
-        private int Port;
-        public String Nickname;
-        private TcpClient Connection;
-        private DateTime ConnectTime;
-        public Boolean AutoReconnect;
+        private Thread _empfangsthread;
+        private Thread _watchthread;
+        public string _server;
+        private int _port;
+        private String _nick;
+        private TcpClient _connection;
+        private DateTime _connecttime;
+        public Boolean _autoreconnect;
+        public Boolean Ready { get; private set; }
         public int AutoReconnectIntervall;
-        public List<string> rooms = new List<string>();
 
-        public Irc(String server, int serverport, String nick)
+        public Irc(String server, int port, String nick)
         {
-            HostName = server;
-            Port = serverport;
-            Nickname = nick;
-            CancelThread = false;
-            QuitMessage = "";
-            empfangs_thread = new Thread(delegate() { empfangsthread(); });
-            Watchthread = new Thread(delegate() { reconnect(); });
-            AutoReconnect = false;
+            _server = server;
+            _port = port;
+            _nick = nick;
+            _quitmessage = "";
+            _empfangsthread = null;
+            _watchthread = null;
+            _connection = null;
+            _connecttime = DateTime.MinValue;
+            _autoreconnect = false;
+            Ready = false;
             AutoReconnectIntervall = 5000;
         }
 
-        private void reconnect()
+        public void Connect()
         {
-            int count = 1;
+            DeinitReceiver();
+            _connection = null;
+            InitConnection();
+            do
+            {
+                Thread.Sleep(100);
+            } while (!Ready);
+            Log("Verbindung mit Server " + _server + " hergestellt");
+            _connecttime = DateTime.Now;
+            InitAutoReconnect();
+        }
+
+        private void InitConnection()
+        {
+            _empfangsthread = new Thread(new ThreadStart(ConnectionHandler));
+            _empfangsthread.Name = "EmpfangsThread " + _server;
+            _empfangsthread.Start();
+        }
+
+        private void DeinitReceiver()
+        {
+            if (_empfangsthread != null)
+            {
+                if (_empfangsthread.IsAlive)
+                {
+                    _empfangsthread.Abort();
+                }
+                _empfangsthread = null;
+            }
+        }
+
+        private void InitAutoReconnect()
+        {
+            if (_watchthread == null)
+            {
+                _watchthread = new Thread(new ThreadStart(WatchThread));
+                _watchthread.Name = "WatchThread " + _server;
+                _watchthread.Start();
+            }
+        }
+
+        private void DeinitAutoReconnect()
+        {
+            if (_watchthread != null)
+            {
+                if (_watchthread.IsAlive)
+                {
+                    _watchthread.Abort();
+                }
+                _watchthread = null;
+            }
+        }
+
+        private Boolean Authenticate()
+        {
+            SetNick(_nick);
+            return Sendraw("USER " + _nick + " 8 * :" + _nick);
+        }
+
+        private void WatchThread()
+        {
             while (true)
             {
-                try
+                if (_empfangsthread != null)
                 {
-                    if (!empfangs_thread.IsAlive || !Connection.Client.Connected)
+                    if (!_empfangsthread.IsAlive)
                     {
-                        log("Verbindung abgerissen, versuche Verbindung wiederherzustellen");
-                        log("Versuch " + count);
-                        while (!Connect())
-                        {
-                            Thread.Sleep(AutoReconnectIntervall);
-                            count++;
-                            log("Versuch " + count);
-                        }
-                        log("Verbindung nach dem " + count + " versuch erfolgreich wiederhergestellt");
-                        count = 1;
+                        Log("Connection lost, trying reconnect");
+                        Connect();
                     }
-                }
-                catch (Exception ex)
-                {
-                    log("Exception beim AutoReconnect aufgetreten: " + ex.Message);
                 }
                 Thread.Sleep(AutoReconnectIntervall);
             }
         }
 
-        public Boolean Connect()
-        {
-            try
-            {
-                if (empfangs_thread.IsAlive)
-                {
-                    empfangs_thread.Abort();
-                }
-                Connection = new TcpClient(HostName, Port);
-                empfangs_thread = new Thread(delegate() { empfangsthread(); });
-                empfangs_thread.Name = "EmpfangsThread" + HostName;
-                empfangs_thread.Start();
-                Sendraw("NICK " + Nickname);
-                Sendraw("USER " + Nickname + " 8 * :" + Nickname);
-                log("Verbindung mit Server " + HostName + " hergestellt");
-                ConnectTime = DateTime.Now;
-                rejoin();
-                if (AutoReconnect && !Watchthread.IsAlive)
-                {
-                    Watchthread = new Thread(delegate() { reconnect(); });
-                    Watchthread.Name = "WatchThread " + HostName;
-                    Watchthread.Start();
-                }
-                return true;
-            }
-            catch (Exception ex)
-            {
-                log("Exception beim Herstellen der Verbindung: " + ex);
-                return false;
-            }
-        }
-
         public void Disconnect()
         {
-            Watchthread.Abort();
-            String output = "QUIT";
-            if (!String.IsNullOrEmpty(QuitMessage))
+            DeinitAutoReconnect();
+            DeinitReceiver();
+            if (_connection != null)
             {
-                output += " :" + QuitMessage;
+                if (_connection.Connected)
+                {
+                    Sendraw("QUIT" + _quitmessage);
+                }
+                _connection = null;
             }
-            Sendraw(output);
-            CancelThread = true;
-            log("Server " + HostName + " verlassen");
+            Log("Server " + _server + " verlassen");
         }
 
         public void JoinChannel(String channel)
         {
-            if (channel.ToCharArray()[0] != '#')
-            {
-                log("Diesem channel kann ich nicht joinen");
-                return;
-            }
             Sendraw("JOIN " + channel);
-            if (!rooms.Contains(channel)) rooms.Add(channel);
-            log("Betrete Raum " + channel);
+            Log("Betrete Raum " + channel);
         }
 
-        private void rejoin()
+        public String Nickname
         {
-            foreach (String room in rooms)
+            get
             {
-                JoinChannel(room);
+                return _nick;
             }
+            set
+            {
+                SetNick(value);
+                _nick = value;
+            }
+        }
+
+        public String QuitMessage
+        {
+            get
+            {
+                if (_quitmessage != "")
+                {
+                    return _quitmessage.Substring(2);
+                }
+                else
+                {
+                    return "";
+                }
+            }
+            set
+            {
+                if (value != "")
+                {
+                    _quitmessage = " :" + value;
+                }
+                else
+                {
+                    _quitmessage = "";
+                }
+            }
+        }
+
+        private void SetNick(String Nick)
+        {
+            Sendraw("NICK " + Nick);
         }
 
         public void Leave(String channel)
         {
-            if (rooms.Contains(channel))
+            if (Sendraw("PART " + channel))
             {
-                Sendraw("PART " + channel);
-                rooms.Remove(channel);
-                log("Verlasse Raum " + channel);
+                Log("Verlasse Raum " + channel);
+            }
+            else
+            {
+                Log("Fehler, konnte den Raum nicht verlassen");
             }
         }
 
-        private static String[] splitlength(String text, int length)
+        private String[] SplitLength(String text, int length)
         {
             List<String> output = new List<String>();
             List<String> splitted = new List<String>(text.Split(' '));
@@ -159,84 +210,104 @@ namespace FritzBot
             return output.ToArray();
         }
 
-        private void log(String to_log)
+        private void Log(String to_log)
         {
             Received(this, "LOG", "", to_log);
         }
 
-        public Boolean Running()
+        public Boolean Running
         {
-            return Watchthread.IsAlive;
+            get
+            {
+                if (_watchthread != null)
+                {
+                    return _watchthread.IsAlive;
+                }
+                return false;
+            }
         }
 
-        public TimeSpan Uptime()
+        public TimeSpan Uptime
         {
-            return DateTime.Now.Subtract(ConnectTime);
+            get
+            {
+                return DateTime.Now.Subtract(_connecttime);
+            }
         }
 
-        public void Sendaction(String message, String receiver)
+        public Boolean Sendaction(String message, String receiver)
         {
-            Sendmsg("\u0001ACTION " + message + "\u0001", receiver);
+            return Sendmsg("\u0001ACTION " + message + "\u0001", receiver);
         }
 
-        public void Sendmsg(String message, String receiver)
+        public Boolean Sendmsg(String message, String receiver)
         {
+            while (!Ready)
+            {
+                Thread.Sleep(100);
+            }
             String output = "PRIVMSG " + receiver + " :";
-            String[] tosend = splitlength(message, 500 - (output.Length));
+            String[] tosend = SplitLength(message, 500 - (output.Length));
             foreach (String send in tosend)
             {
-                Sendraw(output + send);
-                log("An " + receiver + ": " + send);
+                if (!Sendraw(output + send))
+                {
+                    return false;
+                }
+                Log("An " + receiver + ": " + send);
             }
+            return true;
         }
 
-        public void Sendraw(String message)
+        public Boolean Sendraw(String message)
         {
-            try
+            if (_connection != null)
             {
-                StreamWriter stream = new StreamWriter(Connection.GetStream(), Encoding.GetEncoding("iso-8859-1"));
-                stream.AutoFlush = true;
-                stream.Write(message + "\r\n");
+                if (_connection.Connected)
+                {
+                    try
+                    {
+                        StreamWriter stream = new StreamWriter(_connection.GetStream(), Encoding.GetEncoding("iso-8859-1"));
+                        stream.AutoFlush = true;
+                        stream.Write(message + "\r\n");
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        Log("Sendraw failed: " + ex.Message);
+                    }
+                }
             }
-            catch (Exception ex)
-            {
-                log("Exception beim Senden: " + ex);
-            }
+            return false;
         }
 
-        private void empfangsthread()
+        private void ConnectionHandler()
         {
-            int ErrorCount = 0;
+            do
+            {
+                _connection = new TcpClient(_server, _port);
+            } while (!Authenticate());
+            StreamReader stream = new StreamReader(_connection.GetStream(), Encoding.GetEncoding("iso-8859-1"));
             while (true)
             {
+                String Daten = "";
                 try
                 {
-                    StreamReader stream = new StreamReader(Connection.GetStream(), Encoding.GetEncoding("iso-8859-1"));
-                    while (true)
-                    {
-                        if (CancelThread)
-                        {
-                            return;
-                        }
-                        String Daten = stream.ReadLine();
-                        if (Daten == null)
-                        {
-                            throw new InvalidOperationException("connection lost");
-                        }
-                        Thread thread = new Thread(delegate() { process_respond(Daten); });
-                        thread.Name = "Process " + HostName;
-                        thread.Start();
-                    }
+                    Daten = stream.ReadLine();
                 }
                 catch (Exception ex)
                 {
-                    log("Exception im empfangsthread aufgefangen: " + ex.Message);
-                    ErrorCount++;
-                    if (ErrorCount > 3)
-                    {
-                        return;
-                    }
+                    Log("Receiving Data failed: " + ex.Message);
+                    return;
                 }
+                if (String.IsNullOrEmpty(Daten))
+                {
+                    Log("connection lost");
+                    return;
+                }
+                Thread thread = new Thread(delegate() { process_respond(Daten); });
+                thread.Name = "Process " + _server;
+                thread.Start();
             }
         }
 
@@ -306,6 +377,10 @@ namespace FritzBot
                 //Verarbeitung einer Nachricht, eine Nachricht sollte 3 gesplittete Elemente im Array haben
                 if (splitmessage.Length > 3)
                 {
+                    if (splitmessage[1] == "376")
+                    {
+                        Ready = true;
+                    }
                     String[] nachricht = splitmessage[3].Split(new String[] { ":" }, 2, StringSplitOptions.None);
                     if (nachricht.Length > 1)
                     {
@@ -327,7 +402,7 @@ namespace FritzBot
             }
             catch (Exception ex)
             {
-                log("Exception bei der Verarbeitung aufgefangen: " + ex.Message);
+                Log("Exception bei der Verarbeitung aufgefangen: " + ex.Message);
             }
         }
     }

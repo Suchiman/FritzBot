@@ -7,104 +7,89 @@ namespace FritzBot
 {
     class Program
     {
-        public static Boolean restart = false;
-
-        public static Boolean await_response = false;
-        public static String awaited_response = "";
-        public static String awaited_nick = "";
-
-        public static UserCollection TheUsers;
-
+        #region Events
         public delegate void JoinEventHandler(Irc connection, String nick, String Room);
         public delegate void PartEventHandler(Irc connection, String nick, String Room);
         public delegate void QuitEventHandler(Irc connection, String nick);
         public delegate void NickEventHandler(Irc connection, String Oldnick, String Newnick);
         public delegate void KickEventHandler(Irc connection, String nick, String Room);
-        public delegate void MessageEventHandler(Irc connection, String sender, String receiver, String message);
+        public delegate void MessageEventHandler(ircMessage theMessage);
         public static event JoinEventHandler UserJoined;
         public static event PartEventHandler UserPart;
         public static event QuitEventHandler UserQuit;
         public static event NickEventHandler UserNickChanged;
         public static event KickEventHandler BotKicked;
-        public static event MessageEventHandler UserMessaged;
+        public static event MessageEventHandler UserMessaged; 
+        #endregion
 
-        public static List<db> databases = new List<db>();
-        public static settings configuration = new settings("config.cfg");
-        public static List<ICommand> commands = new List<ICommand>();
-        public static List<Irc> irc_connections = new List<Irc>();
+        public static Boolean restart;
+        public static UserCollection TheUsers;
+        public static ServerCollection TheServers;
+        public static List<ICommand> Commands;
 
-        private static Thread antifloodingthread;
-        private static int antifloodingcount;
-        private static Boolean floodingnotificated;
+        private static Thread AntiFloodingThread;
+        private static int AntiFloodingCount;
+        private static Boolean FloodingNotificated;
 
-        private static void process_command(Irc connection, String sender, String receiver, String message)
+        private static void HandleCommand(ircMessage theMessage)
         {
-            String[] parameter = message.Split(new String[] { " " }, 2, StringSplitOptions.None);
-            Boolean answered = false;
-
             #region Antiflooding checks
-            if (!toolbox.IsOp(sender))
+            if (!toolbox.IsOp(theMessage.Nick))
             {
-                int floodingcount;
-                if (!int.TryParse(configuration["floodingcount"], out floodingcount))
+                if (AntiFloodingCount >= Properties.Settings.Default.FloodingCount)
                 {
-                    floodingcount = 5;//Default wert
-                }
-                if (antifloodingcount >= floodingcount)
-                {
-                    if (floodingnotificated == false)
+                    if (FloodingNotificated == false)
                     {
-                        floodingnotificated = true;
-                        connection.Sendmsg("Flooding Protection aktiviert", receiver);
+                        FloodingNotificated = true;
+                        theMessage.Answer("Flooding Protection aktiviert");
                     }
                     return;
                 }
                 else
                 {
-                    antifloodingcount++;
+                    AntiFloodingCount++;
                 }
-                if (configuration["klappe"] == "true") receiver = sender;
             }
             #endregion
 
             try
             {
-                ICommand theCommand = toolbox.getCommandByName(parameter[0].ToLower());
-                if (!(theCommand.OpNeeded && !toolbox.IsOp(sender)))
+                ICommand theCommand = toolbox.getCommandByName(theMessage.CommandName);
+                if (!(theCommand.OpNeeded && !toolbox.IsOp(theMessage.Nick)))
                 {
-                    if ((theCommand.ParameterNeeded && !(parameter.Length > 1) || !theCommand.ParameterNeeded && parameter.Length > 1) && !theCommand.AcceptEveryParam)
+                    if ((theCommand.ParameterNeeded && !theMessage.hasArgs || !theCommand.ParameterNeeded && theMessage.hasArgs) && !theCommand.AcceptEveryParam)
                     {
-                        connection.Sendmsg(theCommand.HelpText, receiver);
-                    }
-                    else if (parameter.Length > 1)
-                    {
-                        theCommand.Run(connection, sender, receiver, parameter[1]);
+                        theMessage.Answer(theCommand.HelpText);
                     }
                     else
                     {
-                        theCommand.Run(connection, sender, receiver, "");
+                        theCommand.Run(theMessage);
                     }
-                    answered = true;
                 }
             }
             catch (Exception ex)
             {
-                if (ex.Message != "Command not found")
+                if (ex.Message == "Command not found")
+                {
+                    String theAlias = FritzBot.commands.alias.GetAlias(theMessage);
+                    if (!String.IsNullOrEmpty(theAlias))
+                    {
+                        theMessage.Answer(theAlias);
+                    }
+                }
+                else
                 {
                     toolbox.Logging("Eine Exception ist beim Ausführen eines Befehles abgefangen worden: " + ex.Message);
                 }
             }
 
-            if (!answered)
+            if (!theMessage.Answered)
             {
-                if (!FritzBot.commands.alias.AliasCommand(connection, sender, receiver, message, true) && !receiver.Contains("#") && receiver != connection.Nickname)
-                {
-                    connection.Sendmsg("Hallo, kann ich dir helfen ? Probiers doch mal mit !hilfe", receiver);
-                }
+                theMessage.Answer("Hallo, kann ich dir helfen ? Probiers doch mal mit !hilfe");
             }
         }
 
-        public static void process_incomming(Irc connection, String source, String nick, String message)
+        public static void HandleIncomming(Irc connection, String source, String nick, String message)
         {
             message = message.Trim();
             switch (source)
@@ -143,105 +128,97 @@ namespace FritzBot
                 default:
                     break;
             }
-            if (source.ToCharArray()[0] == '#')
+            if (source.ToCharArray()[0] != '#' || Properties.Settings.Default.Silence)
             {
-                toolbox.Logging(source + " " + nick + ": " + message);
-            }
-            else
-            {
-                toolbox.Logging("Von " + nick + ": " + message);
                 source = nick;
             }
-            if (!toolbox.IsIgnored(nick) && !nick.Contains(".") && nick != connection.Nickname)
+            ircMessage theMessage = new ircMessage(nick, source, message, TheUsers, connection);
+            if (!theMessage.isIgnored)
             {
-                if (await_response && (String.IsNullOrEmpty(awaited_nick) || awaited_nick == nick))
+                UserMessaged(theMessage);
+                if (theMessage.isCommand && !theMessage.Handled)
                 {
-                    awaited_response = message;
-                    return;
+                    HandleCommand(theMessage);
                 }
-                else if (message.ToCharArray()[0] == '!')
-                {
-                    process_command(connection, nick, source, message.Remove(0, 1));
-                }
-                else if (source == nick)
+                if (theMessage.isPrivate && !theMessage.Answered)
                 {
                     connection.Sendmsg("Hallo, kann ich dir helfen ? Probiers doch mal mit !hilfe", nick);
                 }
-                UserMessaged(connection, nick, source, message);
             }
-        }
-
-        private static void antiflooding()
-        {
-            while (true)
+            if (!theMessage.Hidden)
             {
-                int time;
-                if (!int.TryParse(configuration["floodingcount_reduction"], out time))
+                if (theMessage.isPrivate)
                 {
-                    time = 5000;//Standard Wert wenn die Konvertierung fehlschlägt
+                    toolbox.Logging("Von " + nick + ": " + message);
                 }
-                Thread.Sleep(time);
-                if (antifloodingcount > 0)
+                else
                 {
-                    antifloodingcount--;
-                }
-                if (antifloodingcount == 0)
-                {
-                    floodingnotificated = false;
+                    toolbox.Logging(source + " " + nick + ": " + message);
                 }
             }
         }
 
-        private static void consoleread()
+        private static void AntiFlooding()
         {
             while (true)
             {
-                String console_input = Console.ReadLine();
-                String[] console_splitted = console_input.Split(new String[] { " " }, 2, StringSplitOptions.None);
-                switch (console_splitted[0])
+                Thread.Sleep(Properties.Settings.Default.FloodingCountReduction);
+                if (AntiFloodingCount > 0)
+                {
+                    AntiFloodingCount--;
+                }
+                if (AntiFloodingCount == 0)
+                {
+                    FloodingNotificated = false;
+                }
+            }
+        }
+
+        private static void HandleConsoleInput()
+        {
+            while (true)
+            {
+                String ConsoleInput = Console.ReadLine();
+                String[] ConsoleSplitted = ConsoleInput.Split(new String[] { " " }, 2, StringSplitOptions.None);
+                switch (ConsoleSplitted[0])
                 {
                     case "exit":
-                        Trennen();
+                        TheServers.DisconnectAll();
                         break;
                     case "connect":
-                        String[] parameter = console_splitted[1].Split(new String[] { "," }, 5, StringSplitOptions.None);
-                        toolbox.InstantiateConnection(parameter[0], Convert.ToInt32(parameter[1]), parameter[2], parameter[3], parameter[4]);
-                        toolbox.getDatabaseByName("servers.cfg").Add(console_splitted[1]);
+                        AskConnection();
                         break;
                     case "leave":
-                        toolbox.getCommandByName("leave").Run(irc_connections[0], "console", "console", console_splitted[1]);
+                        TheServers[ConsoleSplitted[1]] = null;
                         break;
                 }
             }
         }
 
-        public static void Trennen()
+        private static void AskConnection()
         {
-            foreach (Irc connections in irc_connections)
+            Console.Write("Hostname: ");
+            String Hostname = Console.ReadLine();
+            int port = 0;
+            do
             {
-                String raumliste = null;
-                foreach (String raum in connections.rooms)
-                {
-                    if (raumliste == null)
-                    {
-                        raumliste = raum;
-                    }
-                    else
-                    {
-                        raumliste += ":" + raum;
-                    }
-                }
-                int position = toolbox.getDatabaseByName("servers.cfg").Find(toolbox.getDatabaseByName("servers.cfg").GetContaining(connections.HostName)[0]);
-                String[] substr = toolbox.getDatabaseByName("servers.cfg").GetAt(position).Split(new String[] { "," }, 5, StringSplitOptions.None);
-                substr[4] = raumliste;
-                toolbox.getDatabaseByName("servers.cfg").Remove(toolbox.getDatabaseByName("servers.cfg").GetAt(position));
-                toolbox.getDatabaseByName("servers.cfg").Add(substr[0] + "," + substr[1] + "," + substr[2] + "," + substr[3] + "," + substr[4]);
-                connections.Disconnect();
+                Console.Write("Port: ");
             }
+            while (!int.TryParse(Console.ReadLine(), out port));
+            Console.Write("Nickname: ");
+            String nickname = Console.ReadLine();
+            Console.Write("QuitMessage: ");
+            String QuitMessage = Console.ReadLine();
+            Console.Write("InitialChannel: ");
+            String channel = Console.ReadLine();
+            toolbox.InstantiateConnection(Hostname, port, nickname, QuitMessage, channel);
         }
 
-        private static void init()
+        private static void Init()
         {
+            Properties.Settings.Default.Reload();
+            restart = false;
+            Commands = new List<ICommand>();
             TheUsers = new UserCollection();
             UserJoined = delegate { };
             UserMessaged = delegate { };
@@ -249,54 +226,61 @@ namespace FritzBot
             UserPart = delegate { };
             UserQuit = delegate { };
             BotKicked = delegate { };
-            String[] config = toolbox.getDatabaseByName("servers.cfg").GetAll();
-            try
-            {
-                foreach (String connection_server in config)
-                {
-                    if (connection_server.Length > 0)
-                    {
-                        String[] parameter = connection_server.Split(new String[] { "," }, 5, StringSplitOptions.None);
-                        toolbox.InstantiateConnection(parameter[0], Convert.ToInt32(parameter[1]), parameter[2], parameter[3], parameter[4]);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                toolbox.Logging("Exception in der Initialesierung der Server: " + ex.Message);
-            }
-
-            Thread consolenthread = new Thread(new ThreadStart(consoleread));
-            consolenthread.Name = "ConsolenThread";
-            consolenthread.IsBackground = true;
-            consolenthread.Start();
-            antifloodingcount = 0;
-            antifloodingthread = new Thread(new ThreadStart(antiflooding));
-            antifloodingthread.Name = "AntifloodingThread";
-            antifloodingthread.IsBackground = true;
-            antifloodingthread.Start();
 
             // Dynamisches hinzufügen der Funktionen
-            foreach(Type t in Assembly.GetExecutingAssembly().GetTypes())
+            foreach (Type t in Assembly.GetExecutingAssembly().GetTypes())
             {
-                if (t.Namespace == "FritzBot.commands")
+                if (t.Namespace == "FritzBot.commands" && !Properties.Settings.Default.IgnoredModules.Contains(t.Name))
                 {
-                    commands.Add((ICommand)Activator.CreateInstance(t));
+                    Commands.Add((ICommand)Activator.CreateInstance(t));
                 }
             }
+
+            TheServers = new ServerCollection(HandleIncomming);
+            if (TheServers.ConnectionCount == 0)
+            {
+                Console.WriteLine("Keine Verbindungen bekannt, starte Verbindungsassistent");
+                AskConnection();
+            }
+            TheServers.ConnectAll();
+
+            Thread ConsolenThread = new Thread(new ThreadStart(HandleConsoleInput));
+            ConsolenThread.Name = "ConsolenThread";
+            ConsolenThread.IsBackground = true;
+            ConsolenThread.Start();
+            AntiFloodingCount = 0;
+            AntiFloodingThread = new Thread(new ThreadStart(AntiFlooding));
+            AntiFloodingThread.Name = "AntifloodingThread";
+            AntiFloodingThread.IsBackground = true;
+            AntiFloodingThread.Start();
+        }
+
+        private static void Deinit()
+        {
+            Properties.Settings.Default.Save();
+            while (Commands.Count > 0)
+            {
+                Commands[0].Destruct();
+                Commands[0] = null;
+                Commands.RemoveAt(0);
+            }
+            TheServers.Flush();
+            TheUsers.Flush();
         }
 
         private static void Main()
         {
-            init();
-            while (toolbox.IsRunning())
+            Init();
+            while (TheServers.Connected)
             {
                 Thread.Sleep(2000);
             }
+            Deinit();
             if (restart == true)
             {
                 try
                 {
+                    System.Diagnostics.Process.Start("FritzBot.exe");
                     System.Diagnostics.Process.Start("/bin/sh", "/home/suchi/ircbot/start");
                 }
                 catch (Exception ex)

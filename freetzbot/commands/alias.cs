@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using FritzBot;
-using System.Text;
 
 namespace FritzBot.commands
 {
     class alias : ICommand
     {
         public String[] Name { get { return new String[] { "alias", "a" }; } }
-        public String HelpText { get { return "Legt einen Alias für einen Begriff fest, z.b. !alias oder !a, \"!a add freetz Eine Modifikation für...\", \"!a edit freetz DIE Modifikation\", \"!a remove freetz\", \"!a freetz\", Variablen wie z.b. $1 sind möglich."; } }
+        public String HelpText { get { return "Legt einen Alias für einen Begriff fest, Beispiele, \"!a add freetz Eine Modifikation für...\", \"!a edit freetz DIE Modifikation\", \"!a remove freetz\", \"!a freetz\", Variablen: $1 ... $99 für Leerzeichen getrennte Argumente und $X für alle Argumente. encode(url) für URL Konforme Zeichencodierung"; } }
         public Boolean OpNeeded { get { return false; } }
         public Boolean ParameterNeeded { get { return true; } }
         public Boolean AcceptEveryParam { get { return false; } }
@@ -18,92 +16,112 @@ namespace FritzBot.commands
 
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
-            AliasCommand(connection, sender, receiver, message);
+            AliasCommand(theMessage);
         }
 
-        public static Boolean AliasCommand(Irc connection, String sender, String receiver, String message, Boolean not_answered = false)
+        public static String GetAlias(ircMessage theMessage)
         {
-            String[] parameter = message.Split(' ');
-            switch (parameter[0].ToLower())
+            List<String> SplitString = new List<String>(theMessage.Message.Remove(0, 1).Split(' '));
+            if (SplitString[0] == "alias" || SplitString[0] == "a")
             {
-                case "add":
-                    if (String.IsNullOrEmpty(Program.TheUsers.AllAliases()[parameter[1]]))
+                SplitString.RemoveAt(0);
+            }
+            String thealias = theMessage.theUsers.AllAliases()[SplitString[0]];
+            if (!String.IsNullOrEmpty(thealias))
+            {
+                for (int i = 0; thealias.Contains("$"); i++)
+                {
+                    if (SplitString.Count > 1)
                     {
-                        Program.TheUsers[sender].alias[parameter[1]] = String.Join(" ", parameter, 2, parameter.Length - 2);
-                        connection.Sendmsg("Der Alias wurde erfolgreich hinzugefügt", receiver);
-                        return true;
-                    }
-                    connection.Sendmsg("Diesen Alias gibt es bereits", receiver);
-                    return false;
-                case "edit":
-                    Program.TheUsers[sender].alias[parameter[1]] = String.Join(" ", parameter, 2, parameter.Length - 2);
-                    connection.Sendmsg("Der Alias wurde erfolgreich bearbeitet", receiver);
-                    return true;
-                case "remove":
-                    if (!String.IsNullOrEmpty(Program.TheUsers[sender].alias[parameter[1]]))
-                    {
-                        Program.TheUsers[sender].alias[parameter[1]] = "";
-                        connection.Sendmsg("Alias wurde gelöscht", receiver);
-                    }
-                    else if (toolbox.IsOp(sender))
-                    {
-                        foreach (User oneuser in Program.TheUsers)
-                        {
-                            if (!String.IsNullOrEmpty(oneuser.alias[parameter[1]]))
-                            {
-                                oneuser.alias[parameter[1]] = "";
-                                connection.Sendmsg("Alias wurde gelöscht", receiver);
-                                return true;
-                            }
-                        }
-                        connection.Sendmsg("Alias wurde nicht gefunden", receiver);
+                        String commandline = String.Join(" ", SplitString.ToArray(), 1, SplitString.Count - 1);
+                        thealias = thealias.Replace("$x", commandline).Replace("$X", commandline);
                     }
                     else
                     {
-                        connection.Sendmsg("Du scheinst keinen solchen Alias definiert zu haben", receiver);
+                        thealias = thealias.Replace("$x", "").Replace("$X", "");
+                    }
+                    while (true)
+                    {
+                        int index = thealias.IndexOf("$" + (i + 1));
+                        if (index == -1) break;
+                        thealias = thealias.Remove(index, 2);
+                        if (SplitString.Count - 1 > i)
+                        {
+                            thealias = thealias.Insert(index, SplitString[i + 1]);
+                        }
+                        else
+                        {
+                            thealias = thealias.Insert(index, "");
+                        }
+                    }
+                }
+                while (thealias.Contains("encode("))
+                {
+                    int start = thealias.LastIndexOf("encode(");
+                    int end = thealias.Remove(0, start).IndexOf(')') + 1 + start;
+
+                    String second = thealias.Substring(start + 7, end - (start + 8));
+                    second = toolbox.UrlEncode(second);
+                    second = second.Replace("%23", "#").Replace("%3a", ":").Replace("%2f", "/").Replace("%3f", "?");
+
+                    thealias = thealias.Substring(0, start) + second + thealias.Substring(end);
+                }
+                return thealias;
+            }
+            return "";
+        }
+
+        public static Boolean AliasCommand(ircMessage theMessage)
+        {
+            switch (theMessage.CommandArgs[0].ToLower())
+            {
+                case "add":
+                    if (String.IsNullOrEmpty(Program.TheUsers.AllAliases()[theMessage.CommandArgs[1]]))
+                    {
+                        theMessage.getUser.alias[theMessage.CommandArgs[1]] = theMessage.CommandLine.Substring(theMessage.CommandLine.IndexOf(' '));
+                        theMessage.Answer("Der Alias wurde erfolgreich hinzugefügt");
+                        return true;
+                    }
+                    theMessage.Answer("Diesen Alias gibt es bereits");
+                    return false;
+                case "edit":
+                    theMessage.getUser.alias[theMessage.CommandArgs[1]] = theMessage.CommandLine.Substring(theMessage.CommandLine.IndexOf(' '));
+                    theMessage.Answer("Der Alias wurde erfolgreich bearbeitet");
+                    return true;
+                case "remove":
+                    if (!String.IsNullOrEmpty(theMessage.getUser.alias[theMessage.CommandArgs[1]]))
+                    {
+                        theMessage.getUser.alias[theMessage.CommandArgs[1]] = "";
+                        theMessage.Answer("Alias wurde gelöscht");
+                    }
+                    else if (toolbox.IsOp(theMessage.Nick))
+                    {
+                        foreach (User oneuser in Program.TheUsers)
+                        {
+                            if (!String.IsNullOrEmpty(oneuser.alias[theMessage.CommandArgs[1]]))
+                            {
+                                oneuser.alias[theMessage.CommandArgs[1]] = "";
+                                theMessage.Answer("Alias wurde gelöscht");
+                                return true;
+                            }
+                        }
+                        theMessage.Answer("Alias wurde nicht gefunden");
+                    }
+                    else
+                    {
+                        theMessage.Answer("Du scheinst keinen solchen Alias definiert zu haben");
                     }
                     return true;
                 default:
-                    String thealias = Program.TheUsers.AllAliases()[parameter[0]];
-                    if (!String.IsNullOrEmpty(thealias))
+                    String theAlias = GetAlias(theMessage);
+                    if (!String.IsNullOrEmpty(theAlias))
                     {
-                        for (int i = 0; thealias.Contains("$"); i++)
-                        {
-                            while (true)
-                            {
-                                int index = thealias.IndexOf("$" + (i + 1));
-                                if (index == -1) break;
-                                thealias = thealias.Remove(index, 2);
-                                if (parameter.Length - 1 > i)
-                                {
-                                    thealias = thealias.Insert(index, parameter[i + 1]);
-                                }
-                                else
-                                {
-                                    thealias = thealias.Insert(index, "");
-                                }
-                            }
-                        }
-                        while (thealias.Contains("encode("))
-                        {
-                            int start = thealias.LastIndexOf("encode(");
-                            int end = thealias.Remove(0, start).IndexOf(')') + 1 + start;
-
-                            String second = thealias.Substring(start + 7, end - (start + 8));
-                            second = System.Web.HttpUtility.UrlEncode(Encoding.GetEncoding("iso-8859-1").GetBytes(second));
-                            second = second.Replace("%23", "#").Replace("%3a", ":").Replace("%2f", "/");
-
-                            thealias = thealias.Substring(0, start) + second + thealias.Substring(end);
-                        }
-                        connection.Sendmsg(thealias, receiver);
+                        theMessage.Answer(theAlias);
                         return true;
                     }
-                    if (!not_answered)
-                    {
-                        connection.Sendmsg("Diesen Alias gibt es nicht.", receiver);
-                    }
+                    theMessage.Answer("Wups, diesen Alias gibt es nicht");
                     return false;
             }
         }

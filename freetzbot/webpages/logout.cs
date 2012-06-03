@@ -7,11 +7,11 @@ namespace webpages
     {
         public String Url { get { return "/logout"; } }
 
-        public html_response GenPage(html_request request)
+        public HtmlResponse GenPage(HtmlRequest request)
         {
-            html_response theresponse = new html_response();
+            HtmlResponse theresponse = new HtmlResponse();
             theresponse.page += "<!DOCTYPE html><html><body>";
-            theresponse.page += index.GenMenu();
+            theresponse.page += index.GenMenu(request);
             String name = "";
             if (request.cookies["username"] != null)
             {

@@ -1,76 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using System.Threading;
-
-namespace FritzBot
-{
-    class settings
-    {
-        private String settingsfile;
-        private Mutex threadsafe;
-        private List<String> settingslist = new List<String>();
-
-        public settings(String file)
-        {
-            settingsfile = file;
-            ReadSettings();
-            threadsafe = new Mutex();
+﻿namespace FritzBot.Properties {
+    
+    
+    // Diese Klasse ermöglicht die Behandlung bestimmter Ereignisse der Einstellungsklasse:
+    //  Das SettingChanging-Ereignis wird ausgelöst, bevor der Wert einer Einstellung geändert wird.
+    //  Das PropertyChanged-Ereignis wird ausgelöst, nachdem der Wert einer Einstellung geändert wurde.
+    //  Das SettingsLoaded-Ereignis wird ausgelöst, nachdem die Einstellungswerte geladen wurden.
+    //  Das SettingsSaving-Ereignis wird ausgelöst, bevor die Einstellungswerte gespeichert werden.
+    internal sealed partial class Settings {
+        
+        public Settings() {
+            // // Heben Sie die  Auskommentierung der unten angezeigten Zeilen auf, um Ereignishandler zum Speichern und Ändern von Einstellungen hinzuzufügen:
+            //
+            // this.SettingChanging += this.SettingChangingEventHandler;
+            //
+            // this.SettingsSaving += this.SettingsSavingEventHandler;
+            //
         }
-
-        private void ReadSettings()
-        {
-            if (!File.Exists(settingsfile))
-            {
-                File.AppendAllText(settingsfile, "");
-            }
-            settingslist = new List<String>(File.ReadAllLines(settingsfile, Encoding.GetEncoding("iso-8859-1")));
+        
+        private void SettingChangingEventHandler(object sender, System.Configuration.SettingChangingEventArgs e) {
+            // Fügen Sie hier Code zum Behandeln des SettingChangingEvent-Ereignisses hinzu.
         }
-
-        public String this[String option]
-        {
-            get
-            {
-                threadsafe.WaitOne();
-                foreach (String data in settingslist)
-                {
-                    String[] splitted = data.Split(new String[] { "=" }, 2, StringSplitOptions.None);
-                    if (splitted[0] == option)
-                    {
-                        threadsafe.ReleaseMutex();
-                        return splitted[1];
-                    }
-                }
-                threadsafe.ReleaseMutex();
-                return "";
-            }
-            set
-            {
-                threadsafe.WaitOne();
-                Boolean exist = false;
-                for (int i = 0; settingslist.Count > i; i++)
-                {
-                    if (settingslist[i].Contains(option + "="))
-                    {
-                        settingslist[i] = option + "=" + value;
-                        exist = true;
-                    }
-                }
-                if (exist == false)
-                {
-                    settingslist.Add(option + "=" + value);
-                }
-                for (int i = 0; i < settingslist.Count; i++)
-                {
-                    if (String.IsNullOrEmpty(settingslist[i]))
-                    {
-                        settingslist.RemoveAt(i);
-                    }
-                }
-                File.WriteAllLines(settingsfile, settingslist.ToArray(), Encoding.GetEncoding("iso-8859-1"));
-                threadsafe.ReleaseMutex();
-            }
+        
+        private void SettingsSavingEventHandler(object sender, System.ComponentModel.CancelEventArgs e) {
+            // Fügen Sie hier Code zum Behandeln des SettingsSaving-Ereignisses hinzu.
         }
     }
 }

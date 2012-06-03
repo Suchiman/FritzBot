@@ -1,5 +1,4 @@
 ﻿using System;
-using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -16,14 +15,14 @@ namespace FritzBot.commands
 
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
             String besitzer = "";
             foreach (User oneuser in Program.TheUsers)
             {
                 foreach (String box in oneuser.boxes)
                 {
-                    if (box.Contains(message))
+                    if (box.Contains(theMessage.CommandLine))
                     {
                         besitzer += ", " + oneuser.names[0];
                         break;
@@ -33,11 +32,11 @@ namespace FritzBot.commands
             besitzer = besitzer.Remove(0, 2);
             if (!String.IsNullOrEmpty(besitzer))
             {
-                connection.Sendmsg("Folgende Benutzer scheinen diese Box zu besitzen: " + besitzer, sender);
+                theMessage.SendPrivateMessage("Folgende Benutzer scheinen diese Box zu besitzen: " + besitzer);
             }
             else
             {
-                connection.Sendmsg("Diese Box scheint niemand zu besitzen!", sender);
+                theMessage.SendPrivateMessage("Diese Box scheint niemand zu besitzen!");
             }
         }
     }

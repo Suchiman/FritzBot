@@ -7,12 +7,12 @@ namespace webpages
     {
         public String Url { get { return "/boxdb"; } }
 
-        public html_response GenPage(html_request request)
+        public HtmlResponse GenPage(HtmlRequest request)
         {
-            html_response theresponse = new html_response();
+            HtmlResponse theresponse = new HtmlResponse();
             String LoginCheck = login.CheckLogin(request);
             theresponse.page += "<!DOCTYPE html><html><body>";
-            theresponse.page += index.GenMenu();
+            theresponse.page += index.GenMenu(request);
             if (!String.IsNullOrEmpty(LoginCheck))
             {
                 theresponse.page += "<table border=2px>";
@@ -44,7 +44,7 @@ namespace webpages
             }
             else
             {
-                theresponse.page += "Logge dich bitte zuerst ein <a href=\"/\">zum Login</a>";
+                theresponse.page += "Logge dich bitte zuerst ein <a href=\"login\">zum Login</a>";
             }
             theresponse.page += "</body></html>";
             theresponse.status_code = 200;

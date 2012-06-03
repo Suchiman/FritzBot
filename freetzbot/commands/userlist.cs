@@ -1,5 +1,4 @@
 ﻿using System;
-using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -16,10 +15,10 @@ namespace FritzBot.commands
 
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
             String output = "";
-            foreach (User oneuser in Program.TheUsers)
+            foreach (User oneuser in theMessage.theUsers)
             {
                 if (oneuser.boxes.Count > 0)
                 {
@@ -29,11 +28,11 @@ namespace FritzBot.commands
             output = output.Remove(0, 2);
             if (!String.IsNullOrEmpty(output))
             {
-                connection.Sendmsg("Diese Benutzer haben bei mir mindestens eine Box registriert: " + output, receiver);
+                theMessage.SendPrivateMessage("Diese Benutzer haben bei mir mindestens eine Box registriert: " + output);
             }
             else
             {
-                connection.Sendmsg("Ich fürchte, mir ist ein Fehler unterlaufen. Ich kann keine registrierten Benutzer feststellen.", receiver);
+                theMessage.Answer("Ich fürchte, mir ist ein Fehler unterlaufen. Ich kann keine registrierten Benutzer feststellen.");
             }
         }
     }

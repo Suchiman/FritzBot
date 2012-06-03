@@ -9,7 +9,7 @@ namespace FritzBot
         Boolean OpNeeded { get; }
         Boolean ParameterNeeded { get; }
         Boolean AcceptEveryParam { get; }
-        void Run(Irc connection, String sender, String receiver, String message);
+        void Run(ircMessage theMessage);
         void Destruct();
     }
 }

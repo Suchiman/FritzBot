@@ -1,5 +1,4 @@
 ﻿using System;
-using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -16,22 +15,23 @@ namespace FritzBot.commands
 
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
-            if (sender != receiver)
+            if (!theMessage.isPrivate)
             {
-                connection.Sendmsg("Ohje das solltest du besser im Query tuen", receiver);
+                theMessage.Answer("Ohje das solltest du besser im Query tuen");
                 return;
             }
-            if (Program.TheUsers[sender].CheckPassword(message))
+            if (theMessage.getUser.CheckPassword(theMessage.CommandLine))
             {
-                Program.TheUsers[sender].authenticated = true;
-                connection.Sendmsg("Du bist jetzt authentifiziert", sender);
+                theMessage.getUser.authenticated = true;
+                theMessage.SendPrivateMessage("Du bist jetzt authentifiziert");
             }
             else
             {
-                connection.Sendmsg("Das Passwort war falsch", sender);
+                theMessage.SendPrivateMessage("Das Passwort war falsch");
             }
+            theMessage.Hidden = true;
         }
     }
 }

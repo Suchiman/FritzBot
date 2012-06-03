@@ -1,5 +1,4 @@
 ﻿using System;
-using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -16,12 +15,12 @@ namespace FritzBot.commands
 
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
-            if (sender == message || toolbox.IsOp(sender))
+            if (theMessage.Source == theMessage.CommandLine || toolbox.IsOp(theMessage.Nick))
             {
-                Program.TheUsers[message].ignored = true;
-                connection.Sendmsg("Ich werde " + message + " ab sofort keine beachtung mehr schenken", receiver);
+                theMessage.theUsers[theMessage.Nick].ignored = true;
+                theMessage.Answer("Ich werde " + theMessage.CommandLine + " ab sofort keine beachtung mehr schenken");
             }
         }
     }

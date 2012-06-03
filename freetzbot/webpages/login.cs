@@ -7,15 +7,15 @@ namespace webpages
     {
         public String Url { get { return "/login"; } }
 
-        public html_response GenPage(html_request request)
+        public HtmlResponse GenPage(HtmlRequest request)
         {
-            html_response theresponse = new html_response();
+            HtmlResponse theresponse = new HtmlResponse();
+            Boolean LoginSuccesfull = false;
+            theresponse.page += "<!DOCTYPE html><html><body>";
             if (request.postdata.Count > 0)
             {
                 String name = request.postdata["name"];
                 String passwort = request.postdata["pw"];
-                theresponse.page += "<!DOCTYPE html><html><body>";
-                theresponse.page += index.GenMenu();
                 if (Program.TheUsers.Exists(name))
                 {
                     if (Program.TheUsers[name].CheckPassword(passwort))
@@ -24,24 +24,37 @@ namespace webpages
                         String hash = toolbox.Crypt(name + Program.TheUsers[name].authcookiedate.ToString() + request.useradress.ToString());
                         theresponse.cookies["username"] = name;
                         theresponse.cookies["logindata"] = hash;
-                        theresponse.page += "Du bist nun eingeloggt " + name;
+                        request.cookies.Add(new System.Net.Cookie("username", name));
+                        request.cookies.Add(new System.Net.Cookie("logindata", hash));
+                        LoginSuccesfull = true;
                     }
-                    else
-                    {
-                        theresponse.page += "Entweder der angegebene Benutzer konnte nicht gefunden werden oder dein Passwort ist falsch";
-                    }
+                }
+                theresponse.page += index.GenMenu(request);
+                if (LoginSuccesfull)
+                {
+                    theresponse.page += "Du bist nun eingeloggt " + name;
                 }
                 else
                 {
                     theresponse.page += "Entweder der angegebene Benutzer konnte nicht gefunden werden oder dein Passwort ist falsch";
                 }
-                theresponse.page += "</div></body></html>";
             }
+            else
+            {
+                theresponse.page += index.GenMenu(request);
+                theresponse.page += "<div style=\"position: absolute;top: 35%;left: 35%;border:1px;border-style:dotted;padding:10px\">Bitte einloggen!<br>";
+                theresponse.page += "<form action=\"login\" method=\"POST\"><table>";
+                theresponse.page += "<tr><td>IRC-Nick:</td><td><input type=\"text\" name=\"name\"></td></tr>";
+                theresponse.page += "<tr><td>Passwort:</td><td><input type=\"password\" name=\"pw\"></td></tr>";
+                theresponse.page += "<tr><td><input type=\"submit\" value=\"Login\"></td></tr>";
+                theresponse.page += "</table></form></div>";
+            }
+            theresponse.page += "</div></body></html>";
             theresponse.status_code = 200;
             return theresponse;
         }
 
-        public static String CheckLogin(html_request request)
+        public static String CheckLogin(HtmlRequest request)
         {
             String name = "";
             String hash = "";

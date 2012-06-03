@@ -1,5 +1,4 @@
 ﻿using System;
-using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -16,10 +15,10 @@ namespace FritzBot.commands
 
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
-            connection.Sendaction("verlässt den channel " + message, receiver);
-            connection.Leave(message);
+            theMessage.Connection.Sendaction("verlässt den channel " + theMessage.CommandLine, theMessage.Source);
+            theMessage.Connection.Leave(theMessage.CommandLine);
         }
     }
 }

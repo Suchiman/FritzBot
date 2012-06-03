@@ -19,37 +19,37 @@ namespace FritzBot.commands
 
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
             Boolean recovery = false;
             Boolean source = false;
             Boolean firmware = false;
-            if (message.Contains(" "))
+            String fwToFind = theMessage.CommandArgs[0];
+            if (theMessage.CommandArgs.Count > 1)
             {
-                String[] splitted = message.Split(' ');
-                switch (splitted[1].ToLower())
+                switch (theMessage.CommandArgs[1].ToLower())
                 {
                     case "add":
-                        toolbox.getDatabaseByName("fwdb.db").Add(splitted[1]);
-                        connection.Sendmsg("Der FW Alias wurde hinzugefügt", receiver);
+                        File.AppendAllText("fwdb.db", theMessage.CommandArgs[1]);
+                        theMessage.Answer("Der FW Alias wurde hinzugefügt");
                         return;
                     case "all":
                         firmware = true;
                         recovery = true;
                         source = true;
-                        message = splitted[0];
+                        fwToFind = theMessage.CommandArgs[0];
                         break;
                     case "source":
                         source = true;
-                        message = splitted[0];
+                        fwToFind = theMessage.CommandArgs[0];
                         break;
                     case "recovery":
                         recovery = true;
-                        message = splitted[0];
+                        fwToFind = theMessage.CommandArgs[0];
                         break;
                     default:
                         firmware = true;
-                        message = splitted[0];
+                        fwToFind = theMessage.CommandArgs[0];
                         break;
                 }
             }
@@ -62,17 +62,29 @@ namespace FritzBot.commands
             String output = "";
 
             //Ordner der Box bestimmen: wenn möglich Alias verwenden, ansonsten versuchen zu finden
-            String[] fws = toolbox.getDatabaseByName("fwdb.db").GetContaining(message + "=");
-            if (fws.Length > 0)
+            String fw = "";
+            if (File.Exists("fwdb.db"))
             {
-                ftp += fws[0].Split(new String[] { "=" }, 2, StringSplitOptions.None)[1] + "/";
+                String[] fws = File.ReadAllLines("fwdb.db");
+                foreach (String onefw in fws)
+                {
+                    if (onefw.Contains(fwToFind))
+                    {
+                        fw = onefw;
+                        break;
+                    }
+                }
+            }
+            if (fw != "")
+            {
+                ftp += fw.Split(new String[] { "=" }, 2, StringSplitOptions.None)[1] + "/";
             }
             else
             {
                 List<String> DirectoryNames = GetDirectoryNames(FtpDirectory(ftp));
                 foreach (String Directory in DirectoryNames)
                 {
-                    if (Directory.ToLower().Contains(message.ToLower()))
+                    if (Directory.ToLower().Contains(fwToFind.ToLower()))
                     {
                         ftp += Directory + "/";
                         break;
@@ -81,7 +93,7 @@ namespace FritzBot.commands
             }
             if (ftp == "ftp://ftp.avm.de/fritz.box/")
             {
-                connection.Sendmsg("Ich habe zu deiner Angabe leider nichts gefunden", receiver);
+                theMessage.Answer("Ich habe zu deiner Angabe leider nichts gefunden");
                 return;
             }
             output = ftp;
@@ -109,7 +121,7 @@ namespace FritzBot.commands
             }
             if (String.IsNullOrEmpty(firmwares))
             {
-                connection.Sendmsg("Ich habe zu deiner Angabe leider nichts gefunden", receiver);
+                theMessage.Answer("Ich habe zu deiner Angabe leider nichts gefunden");
             }
             else
             {
@@ -125,7 +137,7 @@ namespace FritzBot.commands
                 {
                     output += " - Sources: " + sources.Remove(0, 2);
                 }
-                connection.Sendmsg(output, receiver);
+                theMessage.Answer(output);
             }
         }
 

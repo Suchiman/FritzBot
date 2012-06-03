@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Reflection;
-using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -17,22 +16,24 @@ namespace FritzBot.commands
 
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
             try
             {
-                Type t = Assembly.GetExecutingAssembly().GetType("FritzBot.commands." + message);
+                Type t = Assembly.GetExecutingAssembly().GetType("FritzBot.commands." + theMessage.CommandLine);
                 if (t == null)
                 {
-                    connection.Sendmsg("Modul wurde nicht gefunden", receiver);
+                    theMessage.Answer("Modul wurde nicht gefunden");
                     return;
                 }
-                Program.commands.Add((ICommand)Activator.CreateInstance(t));
-                connection.Sendmsg("Modul erfolgreich geladen", receiver);
+                Program.Commands.Add((ICommand)Activator.CreateInstance(t));
+                Properties.Settings.Default.IgnoredModules.Remove(theMessage.CommandLine);
+                Properties.Settings.Default.Save();
+                theMessage.Answer("Modul erfolgreich geladen");
             }
             catch
             {
-                connection.Sendmsg("Das hat eine Exception ausgelöst", receiver);
+                theMessage.Answer("Das hat eine Exception ausgelöst");
             }
         }
     }

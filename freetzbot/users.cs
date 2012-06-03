@@ -2,11 +2,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Xml.Serialization;
+using System.Text;
 using System.Threading;
 using System.Xml;
-using System.Text;
-using System.Data;
+using System.Xml.Serialization;
 
 namespace FritzBot
 {
@@ -19,7 +18,7 @@ namespace FritzBot
         {
             get
             {
-                if (name.Contains("#") || name.Contains("."))
+                if (name.Contains("#") || name.Contains(".") || String.IsNullOrEmpty(name))
                 {
                     return new User();
                 }
@@ -66,11 +65,7 @@ namespace FritzBot
         public UserCollection()
         {
             TheUsers = new List<User>();
-            if (File.Exists("user.db") && !File.Exists("users.db"))
-            {
-                ConvertOld.StartConvert(this);
-            }
-            else
+            if (File.Exists("users.db"))
             {
                 Reload();
             }
@@ -86,18 +81,9 @@ namespace FritzBot
 
         private void AutoFlush()
         {
-            int sleeptime = 180000;
             while (true)
             {
-                int converttime;
-                if (int.TryParse(Program.configuration["UserAutoFlushIntervall"], out converttime))
-                {
-                    if (converttime != 0)
-                    {
-                        sleeptime = converttime;
-                    }
-                }
-                Thread.Sleep(sleeptime);
+                Thread.Sleep(Properties.Settings.Default.UserFlushIntervall);
                 Flush();
             }
         }
@@ -552,83 +538,6 @@ namespace FritzBot
                 Remembers.Add(TheRemember);
             }
             return Remembers;
-        }
-    }
-
-    static class ConvertOld
-    {
-        public static void StartConvert(UserCollection TheUsers)
-        {
-            ConvertUserDB(TheUsers);
-            ConvertBoxDB(TheUsers);
-            ConvertSeenDB(TheUsers);
-            ConvertJokeDB(TheUsers);
-            ConvertAliasDB(TheUsers);
-            TheUsers.Flush();
-        }
-
-        public static void ConvertSeenDB(UserCollection theUsers)
-        {
-            db seendb = toolbox.getDatabaseByName("seen.db");
-            foreach (String data in seendb.GetAll())
-            {
-                String[] daten = data.Split(';');//User;Joined;Messaged;Message
-                if (!DateTime.TryParse(daten[1], out theUsers[daten[0]].last_seen))
-                {
-                    theUsers[daten[0]].last_seen = DateTime.MinValue;
-                }
-                if (!DateTime.TryParse(daten[2], out theUsers[daten[0]].last_messaged))
-                {
-                    theUsers[daten[0]].last_messaged = DateTime.MinValue;
-                }
-                if (daten[3].Contains("ACTION "))
-                {
-                    daten[3] = daten[3].Remove(0, 1);
-                    daten[3] = daten[3].Remove(daten[3].Length - 1);
-                }
-                theUsers[daten[0]].last_message = daten[3];
-            }
-        }
-
-        public static void ConvertBoxDB(UserCollection theUsers)
-        {
-            db boxdb = toolbox.getDatabaseByName("box.db");
-            foreach (String line in boxdb.GetAll())
-            {
-                String[] split = line.Split(':');
-                theUsers[split[0]].AddBox(split[1]);
-            }
-        }
-
-        public static void ConvertUserDB(UserCollection theUsers)
-        {
-            db userdb = toolbox.getDatabaseByName("user.db");
-            foreach (String name in userdb.GetAll())
-            {
-                User newUser = new User();
-                newUser.AddName(name);
-                newUser.asked = true;
-                theUsers.Add(newUser);
-            }
-        }
-
-        public static void ConvertJokeDB(UserCollection theUsers)
-        {
-            db witzdb = toolbox.getDatabaseByName("witze.db");
-            foreach (String joke in witzdb.GetAll())
-            {
-                theUsers["FritzBot"].AddJoke(joke);
-            }
-        }
-
-        public static void ConvertAliasDB(UserCollection theUsers)
-        {
-            db aliasdb = toolbox.getDatabaseByName("alias.db");
-            foreach (String alias in aliasdb.GetAll())
-            {
-                String[] split = alias.Split('=');
-                theUsers["FritzBot"].alias[split[0]] = split[1];
-            }
         }
     }
 }

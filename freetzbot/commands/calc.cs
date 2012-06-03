@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -17,35 +16,35 @@ namespace FritzBot.commands
 
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
             try
             {
-                message = message.Replace(" ", ""); //10+5-8*3/2
-                if (message.Contains("("))// 100*(100+(50-25)*-3)/2      100*(50-25)+(50-25)
+                String output = theMessage.CommandLine.Replace(" ", ""); //10+5-8*3/2
+                if (output.Contains("("))// 100*(100+(50-25)*-3)/2      100*(50-25)+(50-25)
                 {
-                    while (message.Contains("("))
+                    while (output.Contains("("))
                     {
-                        int start = message.LastIndexOf('(');
-                        int end = message.Remove(0, start).IndexOf(')') + 1 + start;
-                        String first = message.Substring(0, start);
-                        String second = message.Substring(start + 1, end - start - 2);
+                        int start = output.LastIndexOf('(');
+                        int end = output.Remove(0, start).IndexOf(')') + 1 + start;
+                        String first = output.Substring(0, start);
+                        String second = output.Substring(start + 1, end - start - 2);
                         second = CalcPartial(second);
-                        String last = message.Substring(end);
-                        message = first + second + last;
+                        String last = output.Substring(end);
+                        output = first + second + last;
                     }
                 }
-                String result = CalcPartial(message);
-                connection.Sendmsg("Ergebnis: " + result, receiver);
+                String result = CalcPartial(output);
+                theMessage.Answer("Ergebnis: " + result);
             }
             catch (Exception ex)
             {
                 if (ex.Message == "Not an Number")
                 {
-                    connection.Sendmsg("Halt mal, was versuchst du hier? Das ist keine gültige Zahl", receiver);
+                    theMessage.Answer("Halt mal, was versuchst du hier? Das ist keine gültige Zahl");
                     return;
                 }
-                connection.Sendmsg("Schade, das hat leider eine Exception bei der Verarbeitung ausgelöst...", receiver);
+                theMessage.Answer("Schade, das hat leider eine Exception bei der Verarbeitung ausgelöst...");
             }
         }
 

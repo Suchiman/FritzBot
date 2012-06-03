@@ -1,5 +1,4 @@
 ﻿using System;
-using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -16,18 +15,18 @@ namespace FritzBot.commands
 
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
-            for (int i = 0; i < Program.TheUsers[sender].boxes.Count; i++)
+            for (int i = 0; i < theMessage.getUser.boxes.Count; i++)
             {
-                if (Program.TheUsers[sender].boxes[i] == message)
+                if (theMessage.getUser.boxes[i] == theMessage.CommandLine)
                 {
-                    Program.TheUsers[sender].boxes.RemoveAt(i);
-                    connection.Sendmsg("Erledigt!", receiver);
+                    theMessage.getUser.boxes.RemoveAt(i);
+                    theMessage.Answer("Erledigt!");
                     return;
                 }
             }
-            connection.Sendmsg("Der Suchstring wurde nicht gefunden und deshalb nicht gelöscht", receiver);
+            theMessage.Answer("Der Suchstring wurde nicht gefunden und deshalb nicht gelöscht");
         }
     }
 }

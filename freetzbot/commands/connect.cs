@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Net;
-using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -17,25 +16,30 @@ namespace FritzBot.commands
 
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
-            String[] parameter = message.Split(new String[] { "," }, 5, StringSplitOptions.None);
+            String[] parameter = theMessage.CommandLine.Split(new String[] { "," }, 5, StringSplitOptions.None);
             if (parameter.Length < 5)
             {
-                connection.Sendmsg("Zu wenig Parameter! schau mal in die Hilfe", receiver);
+                theMessage.Answer("Zu wenig Parameter! schau mal in die Hilfe");
             }
             if (parameter[2].Length > 9)
             {
-                connection.Sendmsg("Hörmal, das RFC erlaubt nur Nicknames mit 9 Zeichen", receiver);
+                theMessage.Answer("Hörmal, das RFC erlaubt nur Nicknames mit 9 Zeichen");
                 return;
             }
             try
             {
-                Convert.ToInt32(parameter[1]);
+                int port = Convert.ToInt32(parameter[1]);
+                if (!(port > 0 && port < 65536))
+                {
+                    theMessage.Answer("Gültige Ports liegen zwischen 0 und 65536");
+                    return;
+                }
             }
             catch
             {
-                connection.Sendmsg("Der PORT sollte eine gültige Ganzahl sein, Prüfe das", receiver);
+                theMessage.Answer("Der PORT sollte eine gültige Ganzahl sein, Prüfe das");
                 return;
             }
             try
@@ -46,15 +50,14 @@ namespace FritzBot.commands
                 }
                 catch
                 {
-                    connection.Sendmsg("Ich konnte die Adresse nicht auflösen, Prüfe nochmal ob deine Eingabe korrekt ist", receiver);
+                    theMessage.Answer("Ich konnte die Adresse nicht auflösen, Prüfe nochmal ob deine Eingabe korrekt ist");
                     return;
                 }
                 toolbox.InstantiateConnection(parameter[0], Convert.ToInt32(parameter[1]), parameter[2], parameter[3], parameter[4]);
-                toolbox.getDatabaseByName("servers.cfg").Add(message);
             }
             catch
             {
-                connection.Sendmsg("Das hat nicht funktioniert, sorry", receiver);
+                theMessage.Answer("Das hat nicht funktioniert, sorry");
             }
         }
     }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using FritzBot;
 
 namespace FritzBot.commands
 {
@@ -17,14 +16,14 @@ namespace FritzBot.commands
 
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
-            if (String.IsNullOrEmpty(message))
+            if (!theMessage.hasArgs)
             {
                 List<String> befehle = new List<String>();
-                foreach (ICommand thecommand in Program.commands)
+                foreach (ICommand thecommand in Program.Commands)
                 {
-                    if (thecommand.OpNeeded && toolbox.IsOp(sender) || !thecommand.OpNeeded)
+                    if (thecommand.OpNeeded && toolbox.IsOp(theMessage.Nick) || !thecommand.OpNeeded)
                     {
                         befehle.Add(thecommand.Name[0]);
                     }
@@ -36,23 +35,23 @@ namespace FritzBot.commands
                     output += ", " + data;
                 }
                 output = output.Remove(0, 2);
-                connection.Sendmsg("Derzeit verfügbare Befehle: " + output, receiver);
-                connection.Sendmsg("Hilfe zu jedem Befehl mit \"!help befehl\". Um die anderen nicht zu belästigen kannst du mich auch per PM (query) anfragen", receiver);
+                theMessage.Answer("Derzeit verfügbare Befehle: " + output);
+                theMessage.Answer("Hilfe zu jedem Befehl mit \"!help befehl\". Um die anderen nicht zu belästigen kannst du mich auch per PM (query) anfragen");
             }
             else
             {
-                foreach (ICommand thecommand in Program.commands)
+                foreach (ICommand thecommand in Program.Commands)
                 {
                     foreach (String CommandName in thecommand.Name)
                     {
-                        if (message == CommandName)
+                        if (theMessage.CommandLine.ToLower() == CommandName.ToLower())
                         {
-                            connection.Sendmsg(thecommand.HelpText, receiver);
+                            theMessage.Answer(thecommand.HelpText);
                             return;
                         }
                     }
                 }
-                connection.Sendmsg("Ich konnte keinen Befehl finden der so heißt", receiver);
+                theMessage.Answer("Ich konnte keinen Befehl finden der so heißt");
             }
         }
     }

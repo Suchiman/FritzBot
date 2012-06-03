@@ -1,12 +1,11 @@
 ﻿using System;
-using FritzBot;
 
 namespace FritzBot.commands
 {
     class box : ICommand
     {
-        public String[] Name { get { return new String[] { "box" }; } }
-        public String HelpText { get { return "Dies trägt deine Boxdaten ein, Beispiel: \"!box 7270\", bitte jede Box einzeln angeben."; } }
+        public String[] Name { get { return new String[] { "boxadd" }; } }
+        public String HelpText { get { return "Dies trägt deine Boxdaten ein, Beispiel: \"!boxadd 7270\", bitte jede Box einzeln angeben."; } }
         public Boolean OpNeeded { get { return false; } }
         public Boolean ParameterNeeded { get { return true; } }
         public Boolean AcceptEveryParam { get { return false; } }
@@ -16,16 +15,16 @@ namespace FritzBot.commands
 
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
-            if (Program.TheUsers[sender].AddBox(message))
+            if (theMessage.getUser.AddBox(theMessage.CommandLine))
             {
-                connection.Sendmsg("Okay danke, ich werde mir deine \"" + message + "\" notieren.", receiver);
-                connection.Sendmsg("Neue Box wurde registriert: User: " + sender + ", Box: " + message, "hippie2000");
+                theMessage.Answer("Okay danke, ich werde mir deine \"" + theMessage.CommandLine + "\" notieren.");
+                theMessage.Connection.Sendmsg("Neue Box wurde registriert: User: " + theMessage.Nick + ", Box: " + theMessage.CommandLine, "hippie2000");
             }
             else
             {
-                connection.Sendmsg("Wups, danke aber du hast mir deine \"" + message + "\" bereits mitgeteilt ;-).", receiver);
+                theMessage.Answer("Wups, danke aber du hast mir deine \"" + theMessage.CommandLine + "\" bereits mitgeteilt ;-).");
             }
         }
     }

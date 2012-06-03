@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Threading;
-using FritzBot;
+using System.Collections.Generic;
 
 namespace FritzBot.commands
 {
@@ -14,43 +13,103 @@ namespace FritzBot.commands
 
         public void Destruct()
         {
-
+            Program.UserMessaged -= new Program.MessageEventHandler(CheckPhase1);
+            Program.UserMessaged -= new Program.MessageEventHandler(CheckPhase2);
         }
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public group()
         {
-            String[] split = message.Split(' ');
-            if (Program.TheUsers.Exists(split[0]) && Program.TheUsers.Exists(split[1]))
+            Program.UserMessaged += new Program.MessageEventHandler(CheckPhase1);
+            Program.UserMessaged += new Program.MessageEventHandler(CheckPhase2);
+        }
+
+        private List<ircMessage> UserRequested = new List<ircMessage>();
+        private List<ircMessage> Check1Done = new List<ircMessage>();
+
+        private ircMessage GetInProgressMessage(ircMessage theRequester)
+        {
+            foreach (ircMessage oneMessage in UserRequested)
             {
-                if (toolbox.IsOp(sender))
+                if (oneMessage.Nick == theRequester.Nick)
                 {
-                    Program.TheUsers.GroupUser(split[0], split[1]);
-                    connection.Sendmsg("Okay", receiver);
-                    return;
+                    return oneMessage;
                 }
-                for (int i = 0; i < 2; i++)
+            }
+            return null;
+        }
+
+        private void CheckPhase1(ircMessage theMessage)
+        {
+            if (!(theMessage.isPrivate && GetInProgressMessage(theMessage) != null && !String.IsNullOrEmpty(Program.TheUsers[GetInProgressMessage(theMessage).CommandArgs[0]].password) && !Check1Done.Contains(GetInProgressMessage(theMessage))))
+            {
+                return;
+            }
+            if (Program.TheUsers[GetInProgressMessage(theMessage).CommandArgs[0]].CheckPassword(theMessage.Message))
+            {
+                theMessage.Answer("Korrekt");
+                Check1Done.Add(GetInProgressMessage(theMessage));
+                if (!String.IsNullOrEmpty(Program.TheUsers[GetInProgressMessage(theMessage).CommandArgs[1]].password))
                 {
-                    if (!String.IsNullOrEmpty(Program.TheUsers[split[i]].password))
-                    {
-                        connection.Sendmsg("Benutzer " + split[i] + " erfordert ein Passwort!", sender);
-                        String Answer = toolbox.AwaitAnswer(sender);
-                        if (Program.TheUsers[split[i]].CheckPassword(Answer))
-                        {
-                            connection.Sendmsg("Korrekt", sender);
-                        }
-                        else
-                        {
-                            connection.Sendmsg("Passwort falsch, abbruch!", sender);
-                            return;
-                        }
-                    }
+                    theMessage.Answer(GetInProgressMessage(theMessage).CommandArgs[1] + " erfordert ein Passwort");
                 }
-                Program.TheUsers.GroupUser(split[0], split[1]);
-                connection.Sendmsg("Okay", receiver);
+                else
+                {
+                    CheckPhase2(theMessage);
+                }
             }
             else
             {
-                connection.Sendmsg("Ich konnte mindestens einen der angegebenen Benutzer nicht finden", receiver);
+                theMessage.Answer("Passwort falsch, abbruch!");
+                UserRequested.Remove(GetInProgressMessage(theMessage));
+            }
+            theMessage.Handled = true;
+            theMessage.Hidden = true;
+        }
+
+        private void CheckPhase2(ircMessage theMessage)
+        {
+            if (!(theMessage.isPrivate && GetInProgressMessage(theMessage) != null && !theMessage.Handled))
+            {
+                return;
+            }
+            if (String.IsNullOrEmpty(Program.TheUsers[GetInProgressMessage(theMessage).CommandArgs[1]].password) || Program.TheUsers[GetInProgressMessage(theMessage).CommandArgs[1]].CheckPassword(theMessage.Message))
+            {
+                Program.TheUsers.GroupUser(GetInProgressMessage(theMessage).CommandArgs[0], GetInProgressMessage(theMessage).CommandArgs[1]);
+                theMessage.Answer("Benutzer erfolgreich verschmolzen!");
+            }
+            else
+            {
+                theMessage.Answer("Passwort falsch, abbruch!");
+            }
+            UserRequested.Remove(GetInProgressMessage(theMessage));
+            theMessage.Handled = true;
+            theMessage.Hidden = true;
+        }
+
+        public void Run(ircMessage theMessage)
+        {
+            if (theMessage.theUsers.Exists(theMessage.CommandArgs[0]) && theMessage.theUsers.Exists(theMessage.CommandArgs[1]))
+            {
+                if (toolbox.IsOp(theMessage.Nick) || (String.IsNullOrEmpty(Program.TheUsers[theMessage.CommandArgs[0]].password) && String.IsNullOrEmpty(Program.TheUsers[theMessage.CommandArgs[1]].password)))
+                {
+                    theMessage.theUsers.GroupUser(theMessage.CommandArgs[0], theMessage.CommandArgs[1]);
+                    theMessage.Answer("Okay");
+                    return;
+                }
+                if (!String.IsNullOrEmpty(Program.TheUsers[theMessage.CommandArgs[0]].password))
+                {
+                    theMessage.SendPrivateMessage("Benutzer " + theMessage.CommandArgs[0] + " erfordert ein Passwort!");
+                    UserRequested.Add(theMessage);
+                }
+                else if (!String.IsNullOrEmpty(Program.TheUsers[theMessage.CommandArgs[1]].password))
+                {
+                    theMessage.SendPrivateMessage("Benutzer " + theMessage.CommandArgs[1] + " erfordert ein Passwort!");
+                    UserRequested.Add(theMessage);
+                }
+            }
+            else
+            {
+                theMessage.Answer("Ich konnte mindestens einen der angegebenen Benutzer nicht finden");
             }
         }
     }

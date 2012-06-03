@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
-using FritzBot;
 
 namespace FritzBot.commands
 {
+    /*
     class news : ICommand
     {
         public String[] Name { get { return new String[] { "news" }; } }
@@ -28,15 +28,15 @@ namespace FritzBot.commands
 
         Thread newsthread;
 
-        public void Run(Irc connection, String sender, String receiver, String message)
+        public void Run(ircMessage theMessage)
         {
             if (newsthread.IsAlive)
             {
-                connection.Sendmsg("Module geladen und am Laufen", receiver);
+                theMessage.Answer("Module geladen und am Laufen");
             }
             else
             {
-                connection.Sendmsg("Es scheint eine Fehlfunktion zu geben, die Funktion ist zum erliegen gekommen", receiver);
+                theMessage.Answer("Es scheint eine Fehlfunktion zu geben, die Funktion ist zum erliegen gekommen");
             }
         }
 
@@ -76,4 +76,5 @@ namespace FritzBot.commands
             }
         }
     }
+    */
 }
