@@ -80,7 +80,7 @@ namespace FritzBot.commands
                 case "add":
                     if (String.IsNullOrEmpty(Program.TheUsers.AllAliases()[theMessage.CommandArgs[1]]))
                     {
-                        theMessage.getUser.alias[theMessage.CommandArgs[1]] = theMessage.CommandLine.Substring(theMessage.CommandLine.IndexOf(' '));
+                        theMessage.getUser.alias[theMessage.CommandArgs[1]] = String.Join(" ", theMessage.CommandArgs.ToArray(), 2, theMessage.CommandArgs.Count - 2);
                         theMessage.Answer("Der Alias wurde erfolgreich hinzugefügt");
                         return true;
                     }

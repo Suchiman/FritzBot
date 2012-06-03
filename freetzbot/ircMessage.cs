@@ -40,7 +40,7 @@ namespace FritzBot
             _connection = connection;
             _theuser = _theusers[_sender];
             _answered = false;
-            if ((_sender.Contains("#") || _sender.Contains(".") || _sender.Contains(_connection.Nickname) || _theuser.ignored) && !_theuser.isOp)
+            if ((_sender.Contains("#") || _sender.Contains(".") || _sender.Contains(_connection.Nickname) || _sender.ToLower().Contains("nickserv") || _theuser.ignored) && !_theuser.isOp)
             {
                 _ignored = true;
             }

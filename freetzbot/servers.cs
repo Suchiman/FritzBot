@@ -280,7 +280,7 @@ namespace FritzBot
             set
             {
                 _quit_message = value;
-                _connection._quitmessage = value;
+                _connection.QuitMessage = value;
             }
         }
 
@@ -321,9 +321,9 @@ namespace FritzBot
         public void Connect(Irc.ReceivedEventHandler theEventHandler)
         {
             _connection = new Irc(_address, _port, _nick);
-            _connection._quitmessage = _quit_message;
+            _connection.QuitMessage = _quit_message;
             _connection.Received += theEventHandler;
-            _connection._autoreconnect = true;
+            _connection.AutoReconnect = true;
             _connection.Connect();
             foreach (String channel in _channels)
             {

@@ -11,16 +11,16 @@ namespace FritzBot
     {
         public delegate void ReceivedEventHandler(Irc connection, String source, String nick, String message);
         public event ReceivedEventHandler Received;
-        public String _quitmessage;
+        private String _quitmessage;
 
         private Thread _empfangsthread;
         private Thread _watchthread;
-        public string _server;
+        private String _server;
         private int _port;
         private String _nick;
         private TcpClient _connection;
         private DateTime _connecttime;
-        public Boolean _autoreconnect;
+        public Boolean AutoReconnect { get; set; }
         public Boolean Ready { get; private set; }
         public int AutoReconnectIntervall;
 
@@ -34,7 +34,7 @@ namespace FritzBot
             _watchthread = null;
             _connection = null;
             _connecttime = DateTime.MinValue;
-            _autoreconnect = false;
+            AutoReconnect = false;
             Ready = false;
             AutoReconnectIntervall = 5000;
         }
@@ -119,15 +119,15 @@ namespace FritzBot
         public void Disconnect()
         {
             DeinitAutoReconnect();
-            DeinitReceiver();
             if (_connection != null)
             {
                 if (_connection.Connected)
                 {
                     Sendraw("QUIT" + _quitmessage);
                 }
-                _connection = null;
             }
+            DeinitReceiver();
+            _connection = null;
             Log("Server " + _server + " verlassen");
         }
 
@@ -305,13 +305,13 @@ namespace FritzBot
                     Log("connection lost");
                     return;
                 }
-                Thread thread = new Thread(delegate() { process_respond(Daten); });
+                Thread thread = new Thread(delegate() { ProcessRespond(Daten); });
                 thread.Name = "Process " + _server;
                 thread.Start();
             }
         }
 
-        private void process_respond(String message)
+        private void ProcessRespond(String message)
         {
             //Beispiel einer v6 Nachricht: ":User!~info@2001:67c:1401:2100:5ab0:35fa:fe76:feb0 PRIVMSG #eingang :hehe"
             //Beispiel einer Nachricht: ":Suchiman!~Suchiman@Robin-PC PRIVMSG #eingang :hi"
@@ -388,6 +388,10 @@ namespace FritzBot
                         {
                             nachricht[1] = nachricht[1].Replace("\u0001ACTION", "***" + nick).Replace("\u0001", "***");
                         }
+                        if (nachricht[1].Contains("&#x2;"))
+                        {
+                            nachricht[1] = nachricht[1].Replace("&#x2;", "*");
+                        }
                         Received(this, splitmessage[2], nick, nachricht[1]);
                     }
                     else
@@ -395,6 +399,10 @@ namespace FritzBot
                         if (nachricht[0].Contains("\u0001ACTION"))
                         {
                             nachricht[0] = nachricht[0].Replace("\u0001ACTION", "***" + nick).Replace("\u0001", "***");
+                        }
+                        if (nachricht[0].Contains("&#x2;"))
+                        {
+                            nachricht[0] = nachricht[0].Replace("&#x2;", "*");
                         }
                         Received(this, splitmessage[2], nick, nachricht[0]);
                     }
