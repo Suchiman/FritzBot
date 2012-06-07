@@ -220,6 +220,7 @@ namespace FritzBot
             restart = false;
             Commands = new List<ICommand>();
             TheUsers = new UserCollection();
+            toolbox.Logging(TheUsers.Count + " Benutzer geladen!");
             UserJoined = delegate { };
             UserMessaged = delegate { };
             UserNickChanged = delegate { };

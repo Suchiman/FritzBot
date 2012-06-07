@@ -113,6 +113,7 @@
     <Compile Include="commands\frag.cs" />
     <Compile Include="commands\freetz.cs" />
     <Compile Include="commands\fw.cs" />
+    <Compile Include="commands\fwnews.cs" />
     <Compile Include="commands\google.cs" />
     <Compile Include="commands\group.cs" />
     <Compile Include="commands\hilfe.cs" />

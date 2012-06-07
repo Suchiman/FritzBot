@@ -67,7 +67,7 @@ namespace FritzBot.commands
                 String changelog_url_element = datumsection[i].Split(new String[] { "<div class=\"boxBottom\">" }, 2, StringSplitOptions.None)[0];
                 String titel = datumsection[i].Split(new String[] { "</span>" }, 2, StringSplitOptions.None)[1].Split(new String[] { "<img style=" }, 2, StringSplitOptions.None)[0].Replace("\r\n\t \t\t", "");
                 titel = titel.Remove(titel.IndexOf("\r\n"));
-                if (changelog_url_element.Contains("<p>Die neuen Leistungsmerkmale aus diesem Labor") || titel == "Reguläres Update verfügbar")
+                if (titel.Contains("Offiziell") || titel.Contains("Regulär") || titel.Contains("Update") || changelog_url_element.Contains("Die neuen Leistungsmerkmale"))
                 {
                     LaborDaten[i - 1].daten = "Released";
                 }
@@ -152,9 +152,14 @@ namespace FritzBot.commands
                             }
                             break;
                         }
-                        catch
+                        catch (Exception ex)
                         {
                             Thread.Sleep(1000);
+                            if (ex is System.IndexOutOfRangeException)
+                            {
+                                Program.TheServers.AnnounceGlobal("Mir ist bei der Verarbeitung der AVM Labor Webseite ein Fehler unterlaufen der typisch dafür ist, dass AVM etwas hinzugefügt oder entfernt hat. Zum Labor: " + toolbox.ShortUrl("http://www.avm.de/de/Service/Service-Portale/Labor/index.php"));
+                                return;
+                            }
                         }
                     } while (true);
                     String released = "";

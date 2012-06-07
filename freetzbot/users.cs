@@ -358,6 +358,14 @@ namespace FritzBot
             return TheAliases;
         }
 
+        public int Count
+        {
+            get
+            {
+                return TheUsers.Count;
+            }
+        }
+
         public IEnumerator GetEnumerator()
         {
             return TheUsers.GetEnumerator();

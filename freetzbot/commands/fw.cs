@@ -81,7 +81,7 @@ namespace FritzBot.commands
             }
             else
             {
-                List<String> DirectoryNames = GetDirectoryNames(FtpDirectory(ftp));
+                List<String> DirectoryNames = GetListingNames(FtpDirectory(ftp));
                 foreach (String Directory in DirectoryNames)
                 {
                     if (Directory.ToLower().Contains(fwToFind.ToLower()))
@@ -140,8 +140,13 @@ namespace FritzBot.commands
                 theMessage.Answer(output);
             }
         }
-
-        private String ExtractVersion(String toExtract, String extension)
+        /// <summary>
+        /// Extrahiert von einem Dateinamen die Versionsnummer
+        /// </summary>
+        /// <param name="toExtract">Der Dateiname</param>
+        /// <param name="extension">Die Erweiterung (.tar.gz, .image...)</param>
+        /// <returns>Die Versionsnummer</returns>
+        public static String ExtractVersion(String toExtract, String extension)
         {
             String temp = toExtract.Replace(extension, "");
             temp = Regex.Replace(temp, "[A-Za-z-_ ]", "#");
@@ -152,8 +157,12 @@ namespace FritzBot.commands
             }
             return temp;
         }
-
-        private List<String> GetDirectoryNames(String Listing)
+        /// <summary>
+        /// Extrahiert aus der FTP Verzeichnisauflistung die Namen der Dateien und Ordner
+        /// </summary>
+        /// <param name="Listing">Die FTP Verzeichnisauflistung</param>
+        /// <returns>Eine Liste die alle Namen beinhaltet</returns>
+        public static List<String> GetListingNames(String Listing)
         {
             List<String> DirectoryNames = new List<String>();
             String[] Entries = Listing.Split(new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
@@ -163,8 +172,12 @@ namespace FritzBot.commands
             }
             return DirectoryNames;
         }
-
-        private List<String> FtpRecursiv(String ftp)
+        /// <summary>
+        /// Durchsucht die FTP Adresse Rekursiv nach Dateien mit der Dateierweiterung .image, .recover-image.exe, .tar.gz und gibt diese mit ihrem relativen Pfad zurück
+        /// </summary>
+        /// <param name="ftp">Die FTP Adresse</param>
+        /// <returns>Eine Liste mit den gefundenen Dateinamen inklusive relativen Pfad angaben</returns>
+        public static List<String> FtpRecursiv(String ftp)
         {
             String BoxdirectoryContent = FtpDirectory(ftp);
             String[] boxes = BoxdirectoryContent.Split(new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
@@ -185,8 +198,12 @@ namespace FritzBot.commands
             }
             return found;
         }
-
-        private String FtpDirectory(String ftp)
+        /// <summary>
+        /// Ruft von der angegeben FTP Adresse eine Verzeichnissauflistung ab
+        /// </summary>
+        /// <param name="ftp">Die FTP Adresse des Servers</param>
+        /// <returns>Verzeichnissauflistung (String)</returns>
+        public static String FtpDirectory(String ftp)
         {
             FtpWebRequest request = (FtpWebRequest)WebRequest.Create(ftp);
             request.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
