@@ -9,7 +9,7 @@ using System.Xml.Serialization;
 
 namespace FritzBot
 {
-    class UserCollection : IEnumerable
+    public class UserCollection : IEnumerable
     {
         private List<User> TheUsers;
         private Thread AutoFlushThread;

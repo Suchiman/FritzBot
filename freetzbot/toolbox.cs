@@ -1,14 +1,17 @@
 ﻿using System;
+using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Web;
+using Microsoft.CSharp;
 
 namespace FritzBot
 {
-    static class toolbox
+    public static class toolbox
     {
         private static Thread LoggingThread = new Thread(new ThreadStart(LogThread));
         private static Queue<String> LoggingList = new Queue<String>();
@@ -100,6 +103,37 @@ namespace FritzBot
         {
             List<String> channels = new List<String>() { { Channel } };
             Program.TheServers.NewConnection(server, Port, Nick, Quit_Message, channels);
+        }
+
+        /// <summary>
+        /// Kompiliert Quellcode im Arbeitsspeicher zu einem Assembly
+        /// </summary>
+        /// <param name="fileName">Ein Array das die Dateinamen enthält</param>
+        /// <returns>Das aus den Quellcode erstellte Assembly</returns>
+        public static Assembly LoadSource(String[] fileName)
+        {
+            CSharpCodeProvider compiler = new CSharpCodeProvider();
+
+            CompilerParameters compilerParams = new CompilerParameters();
+            compilerParams.CompilerOptions = "/target:library /optimize";
+            compilerParams.GenerateExecutable = false;
+            compilerParams.GenerateInMemory = true;
+            compilerParams.IncludeDebugInformation = false;
+            compilerParams.ReferencedAssemblies.Add("mscorlib.dll");
+            compilerParams.ReferencedAssemblies.Add("System.dll");
+            compilerParams.ReferencedAssemblies.Add("System.Data.dll");
+            compilerParams.ReferencedAssemblies.Add("System.Web.dll");
+            compilerParams.ReferencedAssemblies.Add("System.Xml.dll");
+            compilerParams.ReferencedAssemblies.Add(Assembly.GetExecutingAssembly().GetName().Name + ".exe");
+
+            CompilerResults results = compiler.CompileAssemblyFromFile(compilerParams, fileName);
+
+            if (results.Errors.Count > 0)
+            {
+                throw new Exception("Compilation failed");
+            }
+
+            return results.CompiledAssembly;
         }
 
         /// <summary>

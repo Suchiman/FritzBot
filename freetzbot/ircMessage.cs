@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace FritzBot
 {
-    class ircMessage
+    public class ircMessage
     {
         private String _sender;
         private String _source;
@@ -40,7 +40,7 @@ namespace FritzBot
             _connection = connection;
             _theuser = _theusers[_sender];
             _answered = false;
-            if ((_sender.Contains("#") || _sender.Contains(".") || _sender.Contains(_connection.Nickname) || _sender.ToLower().Contains("nickserv") || _theuser.ignored) && !_theuser.isOp)
+            if ((_sender.Contains("#") || _sender.Contains(".") || _sender.Contains(_connection.Nickname) || _sender.ToLower().Contains("nickserv") || _theuser.ignored || _message.Contains("[Global Notice]")) && !_theuser.isOp)
             {
                 _ignored = true;
             }

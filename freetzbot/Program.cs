@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using System.Threading;
 
 namespace FritzBot
 {
-    class Program
+    public class Program
     {
         #region Events
         public delegate void JoinEventHandler(Irc connection, String nick, String Room);
@@ -216,7 +217,6 @@ namespace FritzBot
 
         private static void Init()
         {
-            Properties.Settings.Default.Reload();
             restart = false;
             Commands = new List<ICommand>();
             TheUsers = new UserCollection();
@@ -229,11 +229,49 @@ namespace FritzBot
             BotKicked = delegate { };
 
             // Dynamisches hinzufügen der Funktionen
-            foreach (Type t in Assembly.GetExecutingAssembly().GetTypes())
+            List<Type> allTypes = new List<Type>();
+            List<String> allFiles = new List<String>();
+            Assembly Bot = Assembly.GetExecutingAssembly();
+            if (!Directory.Exists("plugins"))
+            {
+                Directory.CreateDirectory("plugins");
+            }
+            foreach (String file in Directory.GetFiles("plugins"))
+            {
+                if (file.Contains(".cs"))
+                {
+                    allFiles.Add(file);
+                }
+            }
+            if (allFiles.Count > 0)
+            {
+                try
+                {
+                    Assembly Compiled = toolbox.LoadSource(allFiles.ToArray());
+                    allTypes.AddRange(Compiled.GetTypes());
+                }
+                catch
+                {
+                    toolbox.Logging("Das Laden der Source Module ist fehlgeschlagen und werden deshalb nicht zur Verfügung stehen!");
+                }
+            }
+            allTypes.AddRange(Bot.GetTypes());
+            foreach (Type t in allTypes)
             {
                 if (t.Namespace == "FritzBot.commands" && !Properties.Settings.Default.IgnoredModules.Contains(t.Name))
                 {
-                    Commands.Add((ICommand)Activator.CreateInstance(t));
+                    Boolean AlreadyLoaded = false;
+                    foreach (ICommand blah in Commands)
+                    {
+                        if (blah.GetType().Name == t.Name)
+                        {
+                            AlreadyLoaded = true;
+                        }
+                    }
+                    if (!AlreadyLoaded)
+                    {
+                        Commands.Add((ICommand)Activator.CreateInstance(t));
+                    }
                 }
             }
 
@@ -281,8 +319,14 @@ namespace FritzBot
             {
                 try
                 {
-                    System.Diagnostics.Process.Start("FritzBot.exe");
-                    System.Diagnostics.Process.Start("/bin/sh", "/home/suchi/ircbot/start");
+                    if (Environment.OSVersion.Platform == PlatformID.Unix)
+                    {
+                        System.Diagnostics.Process.Start("/bin/sh", "/home/suchi/ircbot/start");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Process.Start("FritzBot.exe");
+                    }
                 }
                 catch (Exception ex)
                 {

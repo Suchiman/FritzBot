@@ -9,7 +9,7 @@ using System.Xml.Serialization;
 
 namespace FritzBot
 {
-    class ServerCollection
+    public class ServerCollection
     {
         private List<Server> _servers;
         private Irc.ReceivedEventHandler _eventhandler;

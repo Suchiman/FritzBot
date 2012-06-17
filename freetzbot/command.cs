@@ -2,7 +2,7 @@
 
 namespace FritzBot
 {
-    interface ICommand
+    public interface ICommand
     {
         /// <summary>
         /// Die Namen auf die die Funktion reagiert
