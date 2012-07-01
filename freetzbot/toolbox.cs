@@ -15,7 +15,8 @@ namespace FritzBot
     {
         private static Thread LoggingThread = new Thread(new ThreadStart(LogThread));
         private static Queue<String> LoggingList = new Queue<String>();
-        private static Mutex LoggingSafe = new Mutex();
+        private static readonly object _LogThreadLocker = new object();
+        private static readonly object _LoggingLocker = new object();
 
         private static void LogThread()
         {
@@ -23,9 +24,12 @@ namespace FritzBot
             {
                 try
                 {
-                    while (!(LoggingList.Count > 0))
+                    lock (_LogThreadLocker)
                     {
-                        Thread.Sleep(500);
+                        while (!(LoggingList.Count > 0))
+                        {
+                            Monitor.Wait(_LogThreadLocker);
+                        }
                     }
                     FileInfo loginfo = new FileInfo("log.txt");
                     if (loginfo.Exists)
@@ -55,23 +59,25 @@ namespace FritzBot
 
         public static void Logging(String toLog)
         {
-            LoggingSafe.WaitOne();
-            try
+            lock (_LogThreadLocker)
             {
-                if (!LoggingThread.IsAlive)
+                try
                 {
-                    LoggingThread = new Thread(new ThreadStart(LogThread));
-                    LoggingThread.Name = "LoggingThread";
-                    LoggingThread.IsBackground = true;
-                    LoggingThread.Start();
+                    if (!LoggingThread.IsAlive)
+                    {
+                        LoggingThread = new Thread(new ThreadStart(LogThread));
+                        LoggingThread.Name = "LoggingThread";
+                        LoggingThread.IsBackground = true;
+                        LoggingThread.Start();
+                    }
+                    LoggingList.Enqueue(DateTime.Now.ToString("dd.MM HH:mm:ss ") + toLog);
+                    Monitor.Pulse(_LogThreadLocker);
                 }
-                LoggingList.Enqueue(DateTime.Now.ToString("dd.MM HH:mm:ss ") + toLog);
+                catch (Exception ex)
+                {
+                    Logging("Exception beim logging aufgetreten: " + ex.Message);
+                }
             }
-            catch (Exception ex)
-            {
-                Logging("Exception beim logging aufgetreten: " + ex.Message);
-            }
-            LoggingSafe.ReleaseMutex();
         }
 
         /// <summary>
@@ -113,7 +119,6 @@ namespace FritzBot
         public static Assembly LoadSource(String[] fileName)
         {
             CSharpCodeProvider compiler = new CSharpCodeProvider();
-
             CompilerParameters compilerParams = new CompilerParameters();
             compilerParams.CompilerOptions = "/target:library /optimize";
             compilerParams.GenerateExecutable = false;
@@ -125,14 +130,23 @@ namespace FritzBot
             compilerParams.ReferencedAssemblies.Add("System.Web.dll");
             compilerParams.ReferencedAssemblies.Add("System.Xml.dll");
             compilerParams.ReferencedAssemblies.Add(Assembly.GetExecutingAssembly().GetName().Name + ".exe");
-
-            CompilerResults results = compiler.CompileAssemblyFromFile(compilerParams, fileName);
-
+            CompilerResults results = null;
+            try
+            {
+                results = compiler.CompileAssemblyFromFile(compilerParams, fileName);
+            }
+            catch (Exception ex)
+            {
+                Logging(ex.Message);
+            }
             if (results.Errors.Count > 0)
             {
+                foreach (CompilerError theError in results.Errors)
+                {
+                    Logging("Compilerfehler: " + theError.ErrorText);
+                }
                 throw new Exception("Compilation failed");
             }
-
             return results.CompiledAssembly;
         }
 
@@ -239,7 +253,7 @@ namespace FritzBot
         {
             if (Program.TheUsers.Exists(Nickname))
             {
-                if (Program.TheUsers[Nickname].isOp && (Program.TheUsers[Nickname].authenticated || String.IsNullOrEmpty(Program.TheUsers[Nickname].password)))
+                if (Program.TheUsers[Nickname].IsOp && (Program.TheUsers[Nickname].Authenticated || String.IsNullOrEmpty(Program.TheUsers[Nickname].password)))
                 {
                     return true;
                 }

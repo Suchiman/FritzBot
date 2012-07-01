@@ -18,7 +18,7 @@ namespace FritzBot.commands
 
         public void Run(ircMessage theMessage)
         {
-            if (!theMessage.hasArgs)
+            if (!theMessage.HasArgs)
             {
                 List<String> befehle = new List<String>();
                 foreach (ICommand thecommand in Program.Commands)

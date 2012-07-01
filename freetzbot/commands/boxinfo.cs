@@ -19,13 +19,13 @@ namespace FritzBot.commands
         {
             String output = "";
             String UserToUse = theMessage.CommandLine;
-            if (!theMessage.hasArgs)
+            if (!theMessage.HasArgs)
             {
                 UserToUse = theMessage.Nick;
             }
-            if (theMessage.theUsers.Exists(UserToUse))
+            if (theMessage.TheUsers.Exists(UserToUse))
             {
-                foreach (String box in theMessage.theUsers[UserToUse].boxes)
+                foreach (String box in theMessage.TheUsers[UserToUse].boxes)
                 {
                     output += ", " + box;
                 }
@@ -37,7 +37,7 @@ namespace FritzBot.commands
             }
             if (String.IsNullOrEmpty(output))
             {
-                if (!theMessage.hasArgs)
+                if (!theMessage.HasArgs)
                 {
                     theMessage.Answer("Für dich existieren keine Einträge");
                 }
@@ -48,7 +48,7 @@ namespace FritzBot.commands
                 return;
             }
             output = output.Remove(0, 2);
-            if (!theMessage.hasArgs)
+            if (!theMessage.HasArgs)
             {
                 theMessage.Answer("Entsprechend der Datenbank wurden die folgenden Boxen registriert: " + output);
             }

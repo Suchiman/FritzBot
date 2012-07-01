@@ -58,7 +58,7 @@ namespace FritzBot
                 ICommand theCommand = toolbox.getCommandByName(theMessage.CommandName);
                 if (!(theCommand.OpNeeded && !toolbox.IsOp(theMessage.Nick)))
                 {
-                    if ((theCommand.ParameterNeeded && !theMessage.hasArgs || !theCommand.ParameterNeeded && theMessage.hasArgs) && !theCommand.AcceptEveryParam)
+                    if ((theCommand.ParameterNeeded && !theMessage.HasArgs || !theCommand.ParameterNeeded && theMessage.HasArgs) && !theCommand.AcceptEveryParam)
                     {
                         theMessage.Answer(theCommand.HelpText);
                     }
@@ -66,6 +66,14 @@ namespace FritzBot
                     {
                         theCommand.Run(theMessage);
                     }
+                }
+                else if (theMessage.TheUser.IsOp)
+                {
+                    theMessage.Answer("Du musst dich erst authentifizieren, " + theMessage.Nick);
+                }
+                else
+                {
+                    theMessage.Answer("Du bist nicht dazu berechtigt, diesen Befehl auszuführen, " + theMessage.Nick);
                 }
             }
             catch (Exception ex)
@@ -134,21 +142,21 @@ namespace FritzBot
                 source = nick;
             }
             ircMessage theMessage = new ircMessage(nick, source, message, TheUsers, connection);
-            if (!theMessage.isIgnored)
+            if (!theMessage.IsIgnored)
             {
                 UserMessaged(theMessage);
-                if (theMessage.isCommand && !theMessage.Handled)
+                if (theMessage.IsCommand && !theMessage.Handled)
                 {
                     HandleCommand(theMessage);
                 }
-                if (theMessage.isPrivate && !theMessage.Answered)
+                if (theMessage.IsPrivate && !theMessage.Answered)
                 {
                     connection.Sendmsg("Hallo, kann ich dir helfen ? Probiers doch mal mit !hilfe", nick);
                 }
             }
             if (!theMessage.Hidden)
             {
-                if (theMessage.isPrivate)
+                if (theMessage.IsPrivate)
                 {
                     toolbox.Logging("Von " + nick + ": " + message);
                 }
@@ -232,11 +240,12 @@ namespace FritzBot
             List<Type> allTypes = new List<Type>();
             List<String> allFiles = new List<String>();
             Assembly Bot = Assembly.GetExecutingAssembly();
-            if (!Directory.Exists("plugins"))
+            String PluginDirectory = Path.Combine(Environment.CurrentDirectory, "plugins");
+            if (!Directory.Exists(PluginDirectory))
             {
-                Directory.CreateDirectory("plugins");
+                Directory.CreateDirectory(PluginDirectory);
             }
-            foreach (String file in Directory.GetFiles("plugins"))
+            foreach (String file in Directory.GetFiles(PluginDirectory))
             {
                 if (file.Contains(".cs"))
                 {
@@ -266,6 +275,7 @@ namespace FritzBot
                         if (blah.GetType().Name == t.Name)
                         {
                             AlreadyLoaded = true;
+                            break;
                         }
                     }
                     if (!AlreadyLoaded)

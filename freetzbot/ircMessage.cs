@@ -40,7 +40,7 @@ namespace FritzBot
             _connection = connection;
             _theuser = _theusers[_sender];
             _answered = false;
-            if ((_sender.Contains("#") || _sender.Contains(".") || _sender.Contains(_connection.Nickname) || _sender.ToLower().Contains("nickserv") || _theuser.ignored || _message.Contains("[Global Notice]")) && !_theuser.isOp)
+            if ((_sender.Contains("#") || _sender.Contains(".") || _sender.Contains(_connection.Nickname) || _sender.ToLower().Contains("nickserv") || _theuser.ignored || _message.Contains("[Global Notice]")) && !_theuser.IsOp)
             {
                 _ignored = true;
             }
@@ -77,19 +77,9 @@ namespace FritzBot
             _hasargs = !String.IsNullOrEmpty(_commandline);
         }
         /// <summary>
-        /// Gibt den User von dem die Nachricht stammt zurück
-        /// </summary>
-        public User getUser
-        {
-            get
-            {
-                return _theuser;
-            }
-        }
-        /// <summary>
         /// Gibt an, ob die Nachricht per QUERY gesandt wurde
         /// </summary>
-        public Boolean isPrivate
+        public Boolean IsPrivate
         {
             get
             {
@@ -99,7 +89,7 @@ namespace FritzBot
         /// <summary>
         /// Gibt an ob diese Nachricht zu ignorieren ist
         /// </summary>
-        public Boolean isIgnored
+        public Boolean IsIgnored
         {
             get
             {
@@ -109,7 +99,7 @@ namespace FritzBot
         /// <summary>
         /// Gibt an ob die Nachricht ein Befehl ist ( ! Befehlprefix )
         /// </summary>
-        public Boolean isCommand
+        public Boolean IsCommand
         {
             get
             {
@@ -119,7 +109,7 @@ namespace FritzBot
         /// <summary>
         /// Gibt an, wenn es sich um einen Befehl handelt, ob weitere Argumente mitgeschickt wurden
         /// </summary>
-        public Boolean hasArgs
+        public Boolean HasArgs
         {
             get
             {
@@ -219,9 +209,19 @@ namespace FritzBot
             }
         }
         /// <summary>
+        /// Gibt den User von dem die Nachricht stammt zurück
+        /// </summary>
+        public User TheUser
+        {
+            get
+            {
+                return _theuser;
+            }
+        }
+        /// <summary>
         /// Die Benutzerdatenbank
         /// </summary>
-        public UserCollection theUsers
+        public UserCollection TheUsers
         {
             get
             {
@@ -273,6 +273,7 @@ namespace FritzBot
         {
             get
             {
+                _answered = true;
                 return _connection;
             }
         }

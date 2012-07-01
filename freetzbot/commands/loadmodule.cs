@@ -2,6 +2,7 @@
 using System.IO;
 using System.Net;
 using System.Reflection;
+using System.Collections.Generic;
 
 namespace FritzBot.commands
 {
@@ -22,16 +23,19 @@ namespace FritzBot.commands
         {
             try
             {
-                Type t = null;
+                String PluginDirectory = Path.Combine(Environment.CurrentDirectory, "plugins");
                 String name = theMessage.CommandLine;
-                if (theMessage.CommandLine.Contains("http://"))
+                Type[] AllTypes = null;
+                List<Type> TypesToLoad = new List<Type>();
+
+                if (name.Contains("http://"))
                 {
                     name = theMessage.CommandLine.Substring(theMessage.CommandLine.LastIndexOf('/') + 1);
                     name = name.Substring(0, name.Length - 3);
                     try
                     {
                         WebClient Downloader = new WebClient();
-                        Downloader.DownloadFile(theMessage.CommandLine, "plugins\\" + name + ".cs");
+                        Downloader.DownloadFile(theMessage.CommandLine, Path.Combine(PluginDirectory, name + ".cs"));
                     }
                     catch
                     {
@@ -39,43 +43,65 @@ namespace FritzBot.commands
                         return;
                     }
                 }
-                if (File.Exists("plugins\\" + name + ".cs"))
+                if (File.Exists(Path.Combine(PluginDirectory, name + ".cs")))
                 {
                     try
                     {
-                        t = toolbox.LoadSource(new String[] { "plugins\\" + name + ".cs" }).GetType("FritzBot.commands." + name);
+                        AllTypes = toolbox.LoadSource(new String[] { Path.Combine(PluginDirectory, name + ".cs") }).GetTypes();
                     }
                     catch
                     {
                         theMessage.Answer("Das Kompilieren der Quelldatei ist leider fehlgeschlagen...");
                         return;
                     }
+                    foreach (Type oneType in AllTypes)
+                    {
+                        if ((typeof(ICommand)).IsAssignableFrom(oneType))
+                        {
+                            TypesToLoad.Add(oneType);
+                        }
+                    }
                 }
                 else
                 {
-                    t = Assembly.GetExecutingAssembly().GetType("FritzBot.commands." + name);
+                    AllTypes = Assembly.GetExecutingAssembly().GetTypes();
+                    foreach (Type oneType in AllTypes)
+                    {
+                        if ((typeof(ICommand)).IsAssignableFrom(oneType) && (((ICommand)Activator.CreateInstance(oneType)).Name[0].ToLower() == name.ToLower()))
+                        {
+                            TypesToLoad.Add(oneType);
+                        }
+                    }
                 }
-                if (t == null)
+                if (!(TypesToLoad.Count > 0))
                 {
                     theMessage.Answer("Modul wurde nicht gefunden");
                     return;
                 }
+                TryAgain:
                 try
                 {
                     foreach (ICommand theCommand in Program.Commands)
                     {
-                        if (theCommand.Name[0] == name)
+                        foreach (Type oneType in TypesToLoad)
                         {
-                            theCommand.Destruct();
-                            Program.Commands.Remove(theCommand);
+                            if (theCommand.GetType() == oneType)
+                            {
+                                theCommand.Destruct();
+                                Program.Commands.Remove(theCommand);
+                            }
                         }
                     }
                 }
-                catch { }
-                Program.Commands.Add((ICommand)Activator.CreateInstance(t));
-                Properties.Settings.Default.IgnoredModules.Remove(name);
-                Properties.Settings.Default.Save();
-                theMessage.Answer("Modul erfolgreich geladen");
+                catch { goto TryAgain; }
+                foreach (Type oneType in TypesToLoad)
+                {
+                    ICommand theModule = (ICommand)Activator.CreateInstance(oneType);
+                    Program.Commands.Add(theModule);
+                    Properties.Settings.Default.IgnoredModules.Remove(theModule.Name[0]);
+                    Properties.Settings.Default.Save();
+                }
+                theMessage.Answer("Modul(e) erfolgreich geladen");
             }
             catch
             {

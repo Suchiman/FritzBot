@@ -37,6 +37,14 @@ namespace FritzBot.commands
                 String result = CalcPartial(output);
                 theMessage.Answer("Ergebnis: " + result);
             }
+            catch (ArgumentException ex)
+            {
+                if (ex.Message == "Only Chuck Norris can Divide by Zero!")
+                {
+                    theMessage.Answer("Only Chuck Norris can Divide by Zero!");
+                    return;
+                }
+            }
             catch (Exception ex)
             {
                 if (ex.Message == "Not an Number")
@@ -88,6 +96,10 @@ namespace FritzBot.commands
                 {
                     if ((Durchgang == 0 && opers[i] == '^') || (Durchgang == 1 && (opers[i] == '*' || opers[i] == '/')) || (Durchgang == 2))//Zuerst Potenzieren, Punkt vor Strich und schließlich den Rest
                     {
+                        if (numbers[i + 1] == "0" && opers[i] == '/')
+                        {
+                            throw new ArgumentException("Only Chuck Norris can Divide by Zero!");
+                        }
                         numbers[i + 1] = CalcString(numbers[i], numbers[i + 1], opers[i]);
                         opers.RemoveAt(i);
                         numbers.RemoveAt(i);

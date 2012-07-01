@@ -28,7 +28,7 @@ namespace FritzBot.commands
             {
                 SplitString.RemoveAt(0);
             }
-            String thealias = theMessage.theUsers.AllAliases()[SplitString[0]];
+            String thealias = theMessage.TheUsers.AllAliases()[SplitString[0]];
             if (!String.IsNullOrEmpty(thealias))
             {
                 for (int i = 0; thealias.Contains("$"); i++)
@@ -80,20 +80,20 @@ namespace FritzBot.commands
                 case "add":
                     if (String.IsNullOrEmpty(Program.TheUsers.AllAliases()[theMessage.CommandArgs[1]]))
                     {
-                        theMessage.getUser.alias[theMessage.CommandArgs[1]] = String.Join(" ", theMessage.CommandArgs.ToArray(), 2, theMessage.CommandArgs.Count - 2);
+                        theMessage.TheUser.alias[theMessage.CommandArgs[1]] = String.Join(" ", theMessage.CommandArgs.ToArray(), 2, theMessage.CommandArgs.Count - 2);
                         theMessage.Answer("Der Alias wurde erfolgreich hinzugefügt");
                         return true;
                     }
                     theMessage.Answer("Diesen Alias gibt es bereits");
                     return false;
                 case "edit":
-                    theMessage.getUser.alias[theMessage.CommandArgs[1]] = theMessage.CommandLine.Substring(theMessage.CommandLine.IndexOf(' '));
+                    theMessage.TheUser.alias[theMessage.CommandArgs[1]] = theMessage.CommandLine.Substring(theMessage.CommandLine.IndexOf(' '));
                     theMessage.Answer("Der Alias wurde erfolgreich bearbeitet");
                     return true;
                 case "remove":
-                    if (!String.IsNullOrEmpty(theMessage.getUser.alias[theMessage.CommandArgs[1]]))
+                    if (!String.IsNullOrEmpty(theMessage.TheUser.alias[theMessage.CommandArgs[1]]))
                     {
-                        theMessage.getUser.alias[theMessage.CommandArgs[1]] = "";
+                        theMessage.TheUser.alias[theMessage.CommandArgs[1]] = "";
                         theMessage.Answer("Alias wurde gelöscht");
                     }
                     else if (toolbox.IsOp(theMessage.Nick))

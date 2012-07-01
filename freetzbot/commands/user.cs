@@ -29,23 +29,23 @@ namespace FritzBot.commands
                 }
                 if (theMessage.CommandArgs[0] == "add")
                 {
-                    theMessage.theUsers.Add(theMessage.CommandArgs[1]);
+                    theMessage.TheUsers.Add(theMessage.CommandArgs[1]);
                 }
                 if (theMessage.CommandArgs[0] == "box")
                 {
-                    theMessage.theUsers[theMessage.CommandArgs[1]].AddBox(theMessage.CommandArgs[2]);
+                    theMessage.TheUsers[theMessage.CommandArgs[1]].AddBox(theMessage.CommandArgs[2]);
                 }
                 if (theMessage.CommandArgs[0] == "cleanup")
                 {
-                    theMessage.theUsers.CleanUp();
+                    theMessage.TheUsers.CleanUp();
                 }
                 if (theMessage.CommandArgs[0] == "remove")
                 {
-                    theMessage.theUsers.Remove(theMessage.CommandArgs[1]);
+                    theMessage.TheUsers.Remove(theMessage.CommandArgs[1]);
                 }
                 if (theMessage.CommandArgs[0] == "maintain")
                 {
-                    theMessage.theUsers.Maintain();
+                    theMessage.TheUsers.Maintain();
                 }
                 theMessage.Answer("Okay");
             }

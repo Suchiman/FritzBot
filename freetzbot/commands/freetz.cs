@@ -18,7 +18,7 @@ namespace FritzBot.commands
         public void Run(ircMessage theMessage)
         {
             String output = "http://freetz.org/search?q=";
-            if (!theMessage.hasArgs)
+            if (!theMessage.HasArgs)
             {
                 output = "http://freetz.org/wiki";
             }

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 
 namespace FritzBot.commands
 {
@@ -26,11 +28,16 @@ namespace FritzBot.commands
         public void Run(ircMessage theMessage)
         {
             String Joke = "";
-            if (theMessage.hasArgs)
+            if (theMessage.HasArgs)
             {
+                if (theMessage.CommandArgs[0].ToLower() == "norris" || theMessage.CommandArgs[0].ToLower() == "chuck")
+                {
+                    ChuckJokes(theMessage);
+                    return;
+                }
                 if (theMessage.CommandArgs[0].ToLower() == "add")
                 {
-                    theMessage.getUser.AddJoke(theMessage.CommandLine.Substring(theMessage.CommandLine.IndexOf(' ')));
+                    theMessage.TheUser.AddJoke(theMessage.CommandLine.Substring(theMessage.CommandLine.IndexOf(' ')));
                     theMessage.Answer("Ist notiert " + theMessage.Nick);
                 }
                 else
@@ -52,6 +59,40 @@ namespace FritzBot.commands
                     return;
                 }
             }
+            theMessage.Answer(Joke);
+        }
+
+        private void ChuckJokes(ircMessage theMessage)
+        {
+            if (theMessage.CommandArgs.Count > 1)
+            {
+                if (theMessage.CommandArgs[1] == "add")
+                {
+                    try
+                    {
+                        File.AppendAllText("norris.txt", "\r\n", Encoding.GetEncoding("iso-8859-1"));
+                        File.AppendAllText("norris.txt", String.Join(" ", theMessage.CommandArgs.ToArray(), 2, theMessage.CommandArgs.Count - 2), Encoding.GetEncoding("iso-8859-1"));
+                        theMessage.Answer("Niemand verscherzt es sich mit Chuck Norris! Witz hinzugefügt ;-)");
+                    }
+                    catch
+                    {
+                        theMessage.Answer("Das hat nicht funktioniert :(");
+                    }
+                    return;
+                }
+            }
+            String[] allJokes = null;
+            try
+            {
+                allJokes = File.ReadAllLines("norris.txt", Encoding.GetEncoding("iso-8859-1"));
+            }
+            catch
+            {
+                theMessage.Answer("Scheint so als kenne ich gar keine Chuck Norris witze :-O");
+                return;
+            }
+            Random zufall = new Random();
+            String Joke = allJokes[zufall.Next(allJokes.Length - 1)];
             theMessage.Answer(Joke);
         }
 

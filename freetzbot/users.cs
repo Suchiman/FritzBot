@@ -148,7 +148,7 @@ namespace FritzBot
                         TheUsers = (List<User>)serializer.Deserialize(UDB);
                         foreach (User oneuser in TheUsers)
                         {
-                            oneuser.authenticated = false;
+                            oneuser.Authenticated = false;
                             oneuser.authcookiedate = DateTime.MinValue;
                         }
                     }
@@ -325,9 +325,9 @@ namespace FritzBot
             {
                 Fusioned.asked = true;
             }
-            if (TheUsers[u1].isOp)
+            if (TheUsers[u1].IsOp)
             {
-                Fusioned.isOp = true;
+                Fusioned.IsOp = true;
             }
             TheUsers.RemoveAt(u1);
             TheUsers.RemoveAt(u2);
@@ -383,10 +383,10 @@ namespace FritzBot
         public DateTime last_messaged;
         public String last_message;
         public DateTime authcookiedate;
-        public Boolean authenticated;
+        public Boolean Authenticated;
         public Boolean ignored;
         public Boolean asked;
-        public Boolean isOp;
+        public Boolean IsOp;
         public List<String> RememberNick;
         public List<String> RememberMessage;
         public List<DateTime> RememberTime;
@@ -404,10 +404,10 @@ namespace FritzBot
             last_messaged = new DateTime();
             last_message = "";
             authcookiedate = DateTime.MinValue;
-            authenticated = false;
+            Authenticated = false;
             ignored = false;
             asked = false;
-            isOp = false;
+            IsOp = false;
             RememberNick = new List<String>();
             RememberMessage = new List<String>();
             RememberTime = new List<DateTime>();

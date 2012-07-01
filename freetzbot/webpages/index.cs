@@ -14,7 +14,7 @@ namespace webpages
             menu += "<td><a href=\"boxdb\">BoxDB</a></td>";
             menu += "<td><a href=\"aliasdb\">Aliase</a></td>";
             menu += "<td><a href=\"/helpdb\">Hilfe</a></td>";
-            if (Program.TheUsers[login.CheckLogin(request)].isOp)
+            if (Program.TheUsers[login.CheckLogin(request)].IsOp)
             {
                 menu += "<td><a href=\"/settings\">Einstellungen</a></td>";
             }

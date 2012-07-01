@@ -17,7 +17,7 @@ namespace FritzBot.commands
 
         public void Run(ircMessage theMessage)
         {
-            theMessage.theUsers[theMessage.CommandArgs[0]].ignored = false;
+            theMessage.TheUsers[theMessage.CommandArgs[0]].ignored = false;
         }
     }
 }

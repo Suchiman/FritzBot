@@ -18,7 +18,7 @@ namespace FritzBot.commands
         public void Run(ircMessage theMessage)
         {
             String output = "";
-            foreach (User oneuser in theMessage.theUsers)
+            foreach (User oneuser in theMessage.TheUsers)
             {
                 if (oneuser.boxes.Count > 0)
                 {

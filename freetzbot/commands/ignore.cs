@@ -19,7 +19,7 @@ namespace FritzBot.commands
         {
             if (theMessage.Source == theMessage.CommandLine || toolbox.IsOp(theMessage.Nick))
             {
-                theMessage.theUsers[theMessage.Nick].ignored = true;
+                theMessage.TheUsers[theMessage.Nick].ignored = true;
                 theMessage.Answer("Ich werde " + theMessage.CommandLine + " ab sofort keine beachtung mehr schenken");
             }
         }

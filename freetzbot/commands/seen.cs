@@ -41,7 +41,7 @@ namespace FritzBot.commands
         private void quit(Irc connection, String nick)
         {
             Program.TheUsers[nick].SetSeen();
-            Program.TheUsers[nick].authenticated = false;
+            Program.TheUsers[nick].Authenticated = false;
         }
 
         private void nick(Irc connection, String Oldnick, String Newnick)
@@ -49,7 +49,7 @@ namespace FritzBot.commands
             if (!Program.TheUsers.Exists(Oldnick))
             {
                 Program.TheUsers[Oldnick].AddName(Newnick);
-                Program.TheUsers[Oldnick].authenticated = false;
+                Program.TheUsers[Oldnick].Authenticated = false;
             }
         }
 
@@ -57,7 +57,7 @@ namespace FritzBot.commands
         {
             if (!theMessage.Nick.Contains(".") && theMessage.Nick != theMessage.Connection.Nickname)
             {
-                theMessage.getUser.SetMessage(theMessage.Message);
+                theMessage.TheUser.SetMessage(theMessage.Message);
             }
         }
 
@@ -68,20 +68,20 @@ namespace FritzBot.commands
                 theMessage.Answer("Ich bin gerade hier und was ich schreibe siehst du ja auch :-)");
                 return;
             }
-            if (theMessage.theUsers.Exists(theMessage.CommandLine))
+            if (theMessage.TheUsers.Exists(theMessage.CommandLine))
             {
                 String output = "";
-                if (theMessage.theUsers[theMessage.CommandLine].last_seen != DateTime.MinValue)
+                if (theMessage.TheUsers[theMessage.CommandLine].last_seen != DateTime.MinValue)
                 {
-                    output = "Den/Die habe ich hier zuletzt am " + theMessage.theUsers[theMessage.CommandLine].last_seen.ToString("dd.MM.yyyy ") + "um" + theMessage.theUsers[theMessage.CommandLine].last_seen.ToString(" HH:mm:ss ") + "Uhr gesehen.";
+                    output = "Den/Die habe ich hier zuletzt am " + theMessage.TheUsers[theMessage.CommandLine].last_seen.ToString("dd.MM.yyyy ") + "um" + theMessage.TheUsers[theMessage.CommandLine].last_seen.ToString(" HH:mm:ss ") + "Uhr gesehen.";
                 }
-                if (theMessage.theUsers[theMessage.CommandLine].last_messaged != DateTime.MinValue)
+                if (theMessage.TheUsers[theMessage.CommandLine].last_messaged != DateTime.MinValue)
                 {
                     if (!String.IsNullOrEmpty(output))
                     {
                         output += " ";
                     }
-                    output += "Am " + theMessage.theUsers[theMessage.CommandLine].last_messaged.ToString("dd.MM.yyyy ") + "um" + theMessage.theUsers[theMessage.CommandLine].last_messaged.ToString(" HH:mm:ss ") + "Uhr sagte er/sie zuletzt: \"" + theMessage.theUsers[theMessage.CommandLine].last_message + "\"";
+                    output += "Am " + theMessage.TheUsers[theMessage.CommandLine].last_messaged.ToString("dd.MM.yyyy ") + "um" + theMessage.TheUsers[theMessage.CommandLine].last_messaged.ToString(" HH:mm:ss ") + "Uhr sagte er/sie zuletzt: \"" + theMessage.TheUsers[theMessage.CommandLine].last_message + "\"";
                 }
                 if (!String.IsNullOrEmpty(output))
                 {

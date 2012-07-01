@@ -17,9 +17,9 @@ namespace FritzBot.commands
 
         public void Run(ircMessage theMessage)
         {
-            if (theMessage.theUsers.Exists(theMessage.CommandLine))
+            if (theMessage.TheUsers.Exists(theMessage.CommandLine))
             {
-                theMessage.theUsers[theMessage.CommandLine].isOp = true;
+                theMessage.TheUsers[theMessage.CommandLine].IsOp = true;
                 theMessage.Answer("Okay");
             }
             else

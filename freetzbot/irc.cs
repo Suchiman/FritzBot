@@ -20,6 +20,7 @@ namespace FritzBot
         private String _nick;
         private TcpClient _connection;
         private DateTime _connecttime;
+        public Encoding CharEncoding { get; set; }
         public Boolean AutoReconnect { get; set; }
         public Boolean Ready { get; private set; }
         public int AutoReconnectIntervall;
@@ -34,6 +35,7 @@ namespace FritzBot
             _watchthread = null;
             _connection = null;
             _connecttime = DateTime.MinValue;
+            CharEncoding = Encoding.GetEncoding("iso-8859-1");
             AutoReconnect = false;
             Ready = false;
             AutoReconnectIntervall = 5000;
@@ -195,19 +197,18 @@ namespace FritzBot
 
         private String[] SplitLength(String text, int length)
         {
-            List<String> output = new List<String>();
-            List<String> splitted = new List<String>(text.Split(' '));
-            for (int i = 0; splitted.Count > 0; i++)
+            List<String> splitted = new List<String>();
+            while (true)
             {
-                output.Add("");
-                while (output[i].Length < length - 10 && splitted.Count > 0)
+                if (text.Length < length)
                 {
-                    output[i] += " " + splitted[0];
-                    splitted.RemoveAt(0);
+                    splitted.Add(text);
+                    return splitted.ToArray();
                 }
-                output[i] = output[i].Remove(0, 1);
+                int temp = text.Substring(0, length).LastIndexOf(' ');
+                splitted.Add(text.Substring(0, temp));
+                text = text.Remove(0, temp + 1);
             }
-            return output.ToArray();
         }
 
         private void Log(String to_log)
@@ -267,7 +268,7 @@ namespace FritzBot
                 {
                     try
                     {
-                        StreamWriter stream = new StreamWriter(_connection.GetStream(), Encoding.GetEncoding("iso-8859-1"));
+                        StreamWriter stream = new StreamWriter(_connection.GetStream(), CharEncoding);
                         stream.AutoFlush = true;
                         stream.Write(message + "\r\n");
                         return true;
@@ -287,7 +288,7 @@ namespace FritzBot
             {
                 _connection = new TcpClient(_server, _port);
             } while (!Authenticate());
-            StreamReader stream = new StreamReader(_connection.GetStream(), Encoding.GetEncoding("iso-8859-1"));
+            StreamReader stream = new StreamReader(_connection.GetStream(), CharEncoding);
             while (true)
             {
                 String Daten = "";

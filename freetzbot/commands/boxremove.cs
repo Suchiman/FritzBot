@@ -17,11 +17,11 @@ namespace FritzBot.commands
 
         public void Run(ircMessage theMessage)
         {
-            for (int i = 0; i < theMessage.getUser.boxes.Count; i++)
+            for (int i = 0; i < theMessage.TheUser.boxes.Count; i++)
             {
-                if (theMessage.getUser.boxes[i] == theMessage.CommandLine)
+                if (theMessage.TheUser.boxes[i] == theMessage.CommandLine)
                 {
-                    theMessage.getUser.boxes.RemoveAt(i);
+                    theMessage.TheUser.boxes.RemoveAt(i);
                     theMessage.Answer("Erledigt!");
                     return;
                 }

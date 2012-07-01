@@ -17,7 +17,7 @@ namespace FritzBot.commands
 
         public void Run(ircMessage theMessage)
         {
-            if (theMessage.getUser.AddBox(theMessage.CommandLine))
+            if (theMessage.TheUser.AddBox(theMessage.CommandLine))
             {
                 theMessage.Answer("Okay danke, ich werde mir deine \"" + theMessage.CommandLine + "\" notieren.");
                 theMessage.Connection.Sendmsg("Neue Box wurde registriert: User: " + theMessage.Nick + ", Box: " + theMessage.CommandLine, "hippie2000");

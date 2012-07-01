@@ -40,7 +40,7 @@ namespace FritzBot.commands
 
         private void CheckPhase1(ircMessage theMessage)
         {
-            if (!(theMessage.isPrivate && GetInProgressMessage(theMessage) != null && !String.IsNullOrEmpty(Program.TheUsers[GetInProgressMessage(theMessage).CommandArgs[0]].password) && !Check1Done.Contains(GetInProgressMessage(theMessage))))
+            if (!(theMessage.IsPrivate && GetInProgressMessage(theMessage) != null && !String.IsNullOrEmpty(Program.TheUsers[GetInProgressMessage(theMessage).CommandArgs[0]].password) && !Check1Done.Contains(GetInProgressMessage(theMessage))))
             {
                 return;
             }
@@ -68,7 +68,7 @@ namespace FritzBot.commands
 
         private void CheckPhase2(ircMessage theMessage)
         {
-            if (!(theMessage.isPrivate && GetInProgressMessage(theMessage) != null && !theMessage.Handled))
+            if (!(theMessage.IsPrivate && GetInProgressMessage(theMessage) != null && !theMessage.Handled))
             {
                 return;
             }
@@ -88,11 +88,11 @@ namespace FritzBot.commands
 
         public void Run(ircMessage theMessage)
         {
-            if (theMessage.theUsers.Exists(theMessage.CommandArgs[0]) && theMessage.theUsers.Exists(theMessage.CommandArgs[1]))
+            if (theMessage.TheUsers.Exists(theMessage.CommandArgs[0]) && theMessage.TheUsers.Exists(theMessage.CommandArgs[1]))
             {
                 if (toolbox.IsOp(theMessage.Nick) || (String.IsNullOrEmpty(Program.TheUsers[theMessage.CommandArgs[0]].password) && String.IsNullOrEmpty(Program.TheUsers[theMessage.CommandArgs[1]].password)))
                 {
-                    theMessage.theUsers.GroupUser(theMessage.CommandArgs[0], theMessage.CommandArgs[1]);
+                    theMessage.TheUsers.GroupUser(theMessage.CommandArgs[0], theMessage.CommandArgs[1]);
                     theMessage.Answer("Okay");
                     return;
                 }

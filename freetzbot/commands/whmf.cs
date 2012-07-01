@@ -19,7 +19,7 @@ namespace FritzBot.commands
         public void Run(ircMessage theMessage)
         {
             String output = "http://wehavemorefun.de/fbwiki/index.php?search=";
-            if (!theMessage.hasArgs)
+            if (!theMessage.HasArgs)
             {
                 output = "http://wehavemorefun.de/fbwiki";
             }

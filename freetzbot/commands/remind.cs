@@ -41,9 +41,9 @@ namespace FritzBot.commands
         {
             if (theMessage.CommandArgs.Count > 1)
             {
-                if (theMessage.theUsers.Exists(theMessage.CommandArgs[0]))
+                if (theMessage.TheUsers.Exists(theMessage.CommandArgs[0]))
                 {
-                    theMessage.theUsers[theMessage.CommandArgs[0]].AddRemember(theMessage.Nick, theMessage.CommandLine.Substring(theMessage.CommandLine.IndexOf(' ')));
+                    theMessage.TheUsers[theMessage.CommandArgs[0]].AddRemember(theMessage.Nick, theMessage.CommandLine.Substring(theMessage.CommandLine.IndexOf(' ')));
                     theMessage.Answer("Okay ich werde es sobald wie möglich zustellen");
                 }
                 else

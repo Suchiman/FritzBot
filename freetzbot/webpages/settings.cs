@@ -15,7 +15,7 @@ namespace webpages
             String logincheck = login.CheckLogin(request);
             if (!String.IsNullOrEmpty(logincheck))
             {
-                if (Program.TheUsers[logincheck].isOp)
+                if (Program.TheUsers[logincheck].IsOp)
                 {
                     if (request.postdata.Count > 0)
                     {

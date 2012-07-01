@@ -15,12 +15,12 @@ namespace FritzBot.commands
 
         private void CheckOldPW(ircMessage theMessage)
         {
-            if (!(theMessage.isPrivate && CheckUserInProgress.Contains(theMessage.Nick)))
+            if (!(theMessage.IsPrivate && CheckUserInProgress.Contains(theMessage.Nick)))
             {
                 return;
             }
             theMessage.Hidden = true;
-            if (theMessage.getUser.CheckPassword(theMessage.Message))
+            if (theMessage.TheUser.CheckPassword(theMessage.Message))
             {
                 theMessage.SendPrivateMessage("Passwort korrekt, gib nun dein neues Passwort ein:");
                 SetUserInProgress.Add(theMessage.Nick);
@@ -37,12 +37,12 @@ namespace FritzBot.commands
 
         void SetNewPW(ircMessage theMessage)
         {
-            if (!(theMessage.isPrivate && SetUserInProgress.Contains(theMessage.Nick)))
+            if (!(theMessage.IsPrivate && SetUserInProgress.Contains(theMessage.Nick)))
             {
                 return;
             }
             theMessage.Hidden = true;
-            theMessage.getUser.SetPassword(theMessage.Message);
+            theMessage.TheUser.SetPassword(theMessage.Message);
             theMessage.SendPrivateMessage("Passwort wurde geändert!");
             SetUserInProgress.Remove(theMessage.Nick);
         }
@@ -62,14 +62,14 @@ namespace FritzBot.commands
         public void Run(ircMessage theMessage)
         {
             theMessage.Hidden = true;
-            if (!theMessage.isPrivate)
+            if (!theMessage.IsPrivate)
             {
                 theMessage.SendPrivateMessage("Zu deiner eigenen Sicherheit solltest du das lieber mit mir im Query bereden");
                 return;
             }
             else
             {
-                if (!String.IsNullOrEmpty(theMessage.getUser.password))
+                if (!String.IsNullOrEmpty(theMessage.TheUser.password))
                 {
                     theMessage.SendPrivateMessage("Bitte gib zuerst dein altes Passwort ein:");
                     CheckUserInProgress.Add(theMessage.Nick);

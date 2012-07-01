@@ -22,7 +22,7 @@ namespace FritzBot.commands
 
         public void Run(ircMessage theMessage)
         {
-            if (theMessage.CommandLine.Contains("#96*6*") && !theMessage.isIgnored)
+            if (theMessage.Message.Contains("#96*6*") && !theMessage.IsIgnored)
             {
                 if (DateTime.Now.Hour > 5 && DateTime.Now.Hour < 16)
                 {
