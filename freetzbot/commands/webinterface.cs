@@ -18,12 +18,12 @@ namespace FritzBot.commands
 
         public void Destruct()
         {
-            listener_thread.Abort();
-            listener.Abort();
+            ListenerThread.Abort();
+            Listener.Abort();
         }
 
-        private HttpListener listener;
-        private Thread listener_thread;
+        private HttpListener Listener;
+        private Thread ListenerThread;
         private List<IWebInterface> pages;
 
         public webinterface()
@@ -33,15 +33,15 @@ namespace FritzBot.commands
                 pages = new List<IWebInterface>();
                 foreach (Type t in Assembly.GetExecutingAssembly().GetTypes())
                 {
-                    if (t.Namespace == "webpages")
+                    if (t.Name != "IWebInterface" && (typeof(IWebInterface)).IsAssignableFrom(t))
                     {
                         pages.Add((IWebInterface)Activator.CreateInstance(t));
                     }
                 }
-                listener_thread = new Thread(new ThreadStart(this.httplistener));
-                listener_thread.Name = "WebinterfaceThread";
-                listener_thread.IsBackground = true;
-                listener_thread.Start();
+                ListenerThread = new Thread(new ThreadStart(this.httplistener));
+                ListenerThread.Name = "WebinterfaceThread";
+                ListenerThread.IsBackground = true;
+                ListenerThread.Start();
             }
             catch
             {
@@ -51,7 +51,7 @@ namespace FritzBot.commands
 
         public void Run(ircMessage theMessage)
         {
-            if (listener.IsListening && listener_thread.IsAlive)
+            if (Listener.IsListening && ListenerThread.IsAlive)
             {
                 theMessage.Answer("Webinterface läuft und ist unter http://teneon.de:8080 zu erreichen");
             }
@@ -68,28 +68,28 @@ namespace FritzBot.commands
             {
                 try
                 {
-                    if (listener != null)
+                    if (Listener != null)
                     {
-                        listener.Close();
+                        Listener.Close();
                     }
-                    listener = new HttpListener();
-                    listener.Prefixes.Add("http://+:6666/");
-                    listener.Prefixes.Add("http://+:8080/");
-                    listener.Start();
+                    Listener = new HttpListener();
+                    Listener.Prefixes.Add("http://+:6666/");
+                    Listener.Prefixes.Add("http://+:8080/");
+                    Listener.Start();
                     while (true)
                     {
-                        HttpListenerContext context = listener.GetContext();
-                        HttpListenerRequest request = context.Request;
-                        HttpListenerResponse response = context.Response;
-                        response.Headers.Add(HttpResponseHeader.Server, "FritzBot");
-                        String url = request.RawUrl;
-                        HtmlResponse theresponse = new HtmlResponse();
-                        HtmlRequest therequest = new HtmlRequest();
-                        therequest.useradress = request.RemoteEndPoint.Address;
-                        therequest.cookies = request.Cookies;
-                        if (request.HasEntityBody)
+                        HttpListenerContext Context = Listener.GetContext();
+                        HttpListenerRequest Request = Context.Request;
+                        HttpListenerResponse Response = Context.Response;
+                        Response.Headers.Add(HttpResponseHeader.Server, "FritzBot");
+                        String url = Request.RawUrl;
+                        HtmlResponse TheResponse = new HtmlResponse();
+                        HtmlRequest TheRequest = new HtmlRequest();
+                        TheRequest.useradress = Request.RemoteEndPoint.Address;
+                        TheRequest.cookies = Request.Cookies;
+                        if (Request.HasEntityBody)
                         {
-                            StreamReader stream = new StreamReader(request.InputStream, request.ContentEncoding);
+                            StreamReader stream = new StreamReader(Request.InputStream, Request.ContentEncoding);
                             String streamdata = stream.ReadToEnd();
                             List<String> post = new List<String>();
                             if (streamdata.Contains("&"))
@@ -103,65 +103,97 @@ namespace FritzBot.commands
                             foreach (String data in post)
                             {
                                 String[] split = data.Split('=');
-                                split[0] = System.Web.HttpUtility.UrlDecode(split[0], request.ContentEncoding);
-                                split[1] = System.Web.HttpUtility.UrlDecode(split[1], request.ContentEncoding);
-                                therequest.postdata.Add(split[0], split[1]);
+                                String[] ToAdd = new String[2];
+                                if (split.Length > 0)
+                                {
+                                    ToAdd[0] = System.Web.HttpUtility.UrlDecode(split[0], Request.ContentEncoding);
+                                }
+                                else
+                                {
+                                    ToAdd[0] = "";
+                                }
+                                if (split.Length > 1)
+                                {
+                                    ToAdd[1] = System.Web.HttpUtility.UrlDecode(split[1], Request.ContentEncoding);
+                                }
+                                else
+                                {
+                                    ToAdd[1] = "";
+                                }
+                                TheRequest.postdata.Add(ToAdd[0], ToAdd[1]);
                             }
                             stream.Close();
                         }
                         if (url.Contains("?"))
                         {
-                            String[] urlsub = url.Split('?');
-                            url = urlsub[0];
-                            List<String> getdata = new List<String>();
-                            if (urlsub[1].Contains("&"))
+                            String[] UrlSub = url.Split('?');
+                            url = UrlSub[0];
+                            List<String> GetData = new List<String>();
+                            if (UrlSub[1].Contains("&"))
                             {
-                                getdata = new List<String>(urlsub[1].Split('&'));
+                                GetData = new List<String>(UrlSub[1].Split('&'));
                             }
                             else
                             {
-                                getdata.Add(urlsub[1]);
+                                GetData.Add(UrlSub[1]);
                             }
-                            foreach (String data in getdata)
+                            foreach (String data in GetData)
                             {
                                 String[] split = data.Split('=');
-                                therequest.getdata.Add(split[0], split[1]);
+                                String[] ToAdd = new String[2];
+                                if (split.Length > 0)
+                                {
+                                    ToAdd[0] = System.Web.HttpUtility.UrlDecode(split[0], Request.ContentEncoding);
+                                }
+                                else
+                                {
+                                    ToAdd[0] = "";
+                                }
+                                if (split.Length > 1)
+                                {
+                                    ToAdd[1] = System.Web.HttpUtility.UrlDecode(split[1], Request.ContentEncoding);
+                                }
+                                else
+                                {
+                                    ToAdd[1] = "";
+                                }
+                                TheRequest.getdata.Add(ToAdd[0], ToAdd[1]);
                             }
                         }
                         foreach (IWebInterface thepage in pages)
                         {
                             if (thepage.Url == url)
                             {
-                                theresponse = thepage.GenPage(therequest);
+                                TheResponse = thepage.GenPage(TheRequest);
                             }
                         }
-                        if (String.IsNullOrEmpty(theresponse.refer))
+                        if (String.IsNullOrEmpty(TheResponse.refer))
                         {
-                            response.Headers.Add(HttpResponseHeader.ContentType, theresponse.content_type);
-                            response.StatusCode = theresponse.status_code;
-                            if (theresponse.status_code == 404)
+                            Response.Headers.Add(HttpResponseHeader.ContentType, TheResponse.content_type);
+                            Response.StatusCode = TheResponse.status_code;
+                            if (TheResponse.status_code == 404)
                             {
-                                theresponse.page = "<!DOCTYPE html><html><body>";
-                                theresponse.page += "<center>Die angegebene Seite konnte nicht gefunden werden!</center>";
-                                theresponse.page += "</body></html>";
+                                TheResponse.page = "<!DOCTYPE html><html><body>";
+                                TheResponse.page += "<center>Die angegebene Seite konnte nicht gefunden werden!</center>";
+                                TheResponse.page += "</body></html>";
                             }
                             else
                             {
-                                List<String> myCookies = theresponse.cookies.GetHeader();
+                                List<String> myCookies = TheResponse.cookies.GetHeader();
                                 foreach (String oneheader in myCookies)
                                 {
-                                    response.Headers.Add(oneheader);
+                                    Response.Headers.Add(oneheader);
                                 }
                             }
                         }
                         else
                         {
-                            response.Redirect(theresponse.refer);
+                            Response.Redirect(TheResponse.refer);
                         }
                         try
                         {
-                            StreamWriter output = new StreamWriter(response.OutputStream, Encoding.GetEncoding("iso-8859-1"));
-                            output.Write(theresponse.page);
+                            StreamWriter output = new StreamWriter(Response.OutputStream, Encoding.GetEncoding("iso-8859-1"));
+                            output.Write(TheResponse.page);
                             output.Close();
                         }
                         catch { }

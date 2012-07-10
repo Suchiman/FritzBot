@@ -64,7 +64,14 @@ namespace FritzBot
                     }
                     else
                     {
-                        theCommand.Run(theMessage);
+                        try
+                        {
+                            theCommand.Run(theMessage);
+                        }
+                        catch (Exception ex)
+                        {
+                            toolbox.Logging("Das Modul " + theCommand.Name[0] + " hat eine nicht abgefangene Exception ausgelöst: " + ex.Message);
+                        }
                     }
                 }
                 else if (theMessage.TheUser.IsOp)
@@ -267,7 +274,7 @@ namespace FritzBot
             allTypes.AddRange(Bot.GetTypes());
             foreach (Type t in allTypes)
             {
-                if (t.Namespace == "FritzBot.commands" && !Properties.Settings.Default.IgnoredModules.Contains(t.Name))
+                if (t.Name != "ICommand" && (typeof(ICommand)).IsAssignableFrom(t) && !Properties.Settings.Default.IgnoredModules.Contains(t.Name))
                 {
                     Boolean AlreadyLoaded = false;
                     foreach (ICommand blah in Commands)

@@ -258,6 +258,15 @@ namespace FritzBot
             _connection.Sendmsg(Message, _source);
         }
         /// <summary>
+        /// Sendet dem Benutzer dort wo er den Befehl aufgerufen eine Aktion hat
+        /// </summary>
+        /// <param name="Message">Den zu Antwortenden Text</param>
+        public void AnswerAction(String Message)
+        {
+            _answered = true;
+            _connection.Sendaction(Message, _source);
+        }
+        /// <summary>
         /// Schickt dem Benutzer eine Nachricht im QUERY, unabhängig davon wo er geschrieben hat
         /// </summary>
         /// <param name="Message">Den zu Antwortenden Text</param>
@@ -267,13 +276,21 @@ namespace FritzBot
             _connection.Sendmsg(Message, _sender);
         }
         /// <summary>
+        /// Schickt dem Benutzer eine Aktion im QUERY, unabhängig davon wo er geschrieben hat
+        /// </summary>
+        /// <param name="Message">Den zu Antwortenden Text</param>
+        public void SendPrivateAction(String Message)
+        {
+            _answered = true;
+            _connection.Sendaction(Message, _sender);
+        }
+        /// <summary>
         /// Gibt die zugrunde liegende IRC Verbindung zurück
         /// </summary>
         public Irc Connection
         {
             get
             {
-                _answered = true;
                 return _connection;
             }
         }

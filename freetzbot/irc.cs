@@ -206,8 +206,12 @@ namespace FritzBot
                     return splitted.ToArray();
                 }
                 int temp = text.Substring(0, length).LastIndexOf(' ');
+                if (temp == -1)
+                {
+                    temp = length - 2;
+                }
                 splitted.Add(text.Substring(0, temp));
-                text = text.Remove(0, temp + 1);
+                text = text.Remove(0, temp).Trim();
             }
         }
 

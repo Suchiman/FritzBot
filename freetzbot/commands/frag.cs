@@ -37,11 +37,11 @@ namespace FritzBot.commands
             {
                 if (check_db)
                 {
-                    if (!Properties.Settings.Default.BoxFrage || Program.TheUsers[sender].asked) return;
+                    if (!Properties.Settings.Default.BoxFrage || Program.TheUsers[sender].asked || Program.TheUsers[sender].boxes.Count > 0) return;
                     System.Threading.Thread.Sleep(10000);
                 }
-                connection.Sendmsg("Hallo " + sender + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !box deine box, mitteilen, falls du dies nicht bereits getan hast :).", receiver);
-                connection.Sendmsg("Pro !box bitte nur eine Box nennen (nur die Boxversion) z.b. !box 7270v1 oder !box 7170. Um die anderen im Channel nicht zu stören, sende es mir doch bitte per query/private Nachricht (z.b. /msg FritzBot !box 7270) und achte darauf, dass du den Nicknamen trägst dem die Box zugeordnet werden soll", receiver);
+                connection.Sendmsg("Hallo " + sender + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !boxadd deine box, mitteilen, falls du dies nicht bereits getan hast :).", receiver);
+                connection.Sendmsg("Pro !boxadd bitte nur eine Box nennen (nur die Boxversion) z.b. !boxadd 7270v1 oder !box 7170. Um die anderen im Channel nicht zu stören, sende es mir doch bitte per query/private Nachricht (z.b. /msg FritzBot !boxadd 7270)", receiver);
                 Program.TheUsers[sender].asked = true;
             }
             catch (Exception ex)

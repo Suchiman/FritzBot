@@ -17,7 +17,7 @@ namespace FritzBot.commands
 
         public void Run(ircMessage theMessage)
         {
-            theMessage.Connection.Sendaction("verlässt den channel " + theMessage.CommandLine, theMessage.Source);
+            theMessage.AnswerAction("verlässt den channel " + theMessage.CommandLine);
             theMessage.Connection.Leave(theMessage.CommandLine);
         }
     }

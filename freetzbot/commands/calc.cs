@@ -44,14 +44,14 @@ namespace FritzBot.commands
                     theMessage.Answer("Only Chuck Norris can Divide by Zero!");
                     return;
                 }
-            }
-            catch (Exception ex)
-            {
                 if (ex.Message == "Not an Number")
                 {
                     theMessage.Answer("Halt mal, was versuchst du hier? Das ist keine gültige Zahl");
                     return;
                 }
+            }
+            catch
+            {
                 theMessage.Answer("Schade, das hat leider eine Exception bei der Verarbeitung ausgelöst...");
             }
         }

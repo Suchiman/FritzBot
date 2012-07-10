@@ -34,7 +34,11 @@ namespace FritzBot.commands
 
         public void SendMessaged(ircMessage theMessage)
         {
-            SendJoin(theMessage.Connection, theMessage.Nick, theMessage.Source);
+            List<String[]> AllUnread = theMessage.TheUser.GetAllRemembers();
+            foreach (String[] OneUnread in AllUnread)
+            {
+                theMessage.SendPrivateMessage(OneUnread[0] + " hat für dich am " + OneUnread[2].Replace("T", " um ") + " eine Nachricht hinterlassen: " + OneUnread[1]);
+            }
         }
 
         public void Run(ircMessage theMessage)

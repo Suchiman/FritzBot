@@ -18,21 +18,21 @@ namespace FritzBot.commands
             {
                 {"ios", 1},
                 {"android", 2},
-                {"7390", 3},
-                {"fhem", 4},
+                //{"7390", 3},
+                {"fhem", 3},
                 //{"7390at", 5},
                 //{"7320", 6},
-                {"7270", 5}
+                {"7270", 4}
             };
             boxdatareverse = new Dictionary<int, String>()
             {
                 {1, "iOS App"},
                 {2, "Android App"},
-                {3, "7390"},
-                {4, "7390 FHEM"},
+                //{3, "7390"},
+                {3, "7390 FHEM"},
                 //{5, "7390 AT-CH"},
                 //{6, "7320"},
-                {5, "7270"}
+                {4, "7270"}
             };
             LaborDaten = new Labordaten[boxdata.Count];
             laborthread = new Thread(new ThreadStart(this.labor_check));

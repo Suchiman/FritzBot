@@ -17,7 +17,7 @@ namespace FritzBot.commands
 
         public void Run(ircMessage theMessage)
         {
-            theMessage.Connection.Sendaction("rennt los zum channel " + theMessage.CommandLine, theMessage.Source);
+            theMessage.AnswerAction("rennt los zum channel " + theMessage.CommandLine);
             theMessage.Connection.JoinChannel(theMessage.CommandLine);
         }
     }

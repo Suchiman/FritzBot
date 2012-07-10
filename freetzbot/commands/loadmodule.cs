@@ -56,7 +56,7 @@ namespace FritzBot.commands
                     }
                     foreach (Type oneType in AllTypes)
                     {
-                        if ((typeof(ICommand)).IsAssignableFrom(oneType))
+                        if (oneType.Name != "ICommand" && (typeof(ICommand)).IsAssignableFrom(oneType))
                         {
                             TypesToLoad.Add(oneType);
                         }
@@ -67,7 +67,7 @@ namespace FritzBot.commands
                     AllTypes = Assembly.GetExecutingAssembly().GetTypes();
                     foreach (Type oneType in AllTypes)
                     {
-                        if ((typeof(ICommand)).IsAssignableFrom(oneType) && (((ICommand)Activator.CreateInstance(oneType)).Name[0].ToLower() == name.ToLower()))
+                        if (oneType.Name != "ICommand" && (typeof(ICommand)).IsAssignableFrom(oneType) && (((ICommand)Activator.CreateInstance(oneType)).Name[0].ToLower() == name.ToLower()))
                         {
                             TypesToLoad.Add(oneType);
                         }
@@ -98,7 +98,7 @@ namespace FritzBot.commands
                 {
                     ICommand theModule = (ICommand)Activator.CreateInstance(oneType);
                     Program.Commands.Add(theModule);
-                    Properties.Settings.Default.IgnoredModules.Remove(theModule.Name[0]);
+                    Properties.Settings.Default.IgnoredModules.Remove(oneType.Name);
                     Properties.Settings.Default.Save();
                 }
                 theMessage.Answer("Modul(e) erfolgreich geladen");
