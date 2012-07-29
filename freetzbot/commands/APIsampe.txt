@@ -32,7 +32,15 @@ namespace FritzBot.commands
 
         public void Run(ircMessage theMessage)
         {
-            theMessage.Answer("Hallo Welt");
+			theMessage.SendPrivateMessage("Ach hier hallo " + theMessage.Nick);
+            theMessage.SendPrivateAction("Tanzt weil er glücklich ist");
+            if (theMessage.IsPrivate)
+            {
+                theMessage.AnswerAction("Weiß ganz genau, dass du mir das im Privaten Chat geschrieben hast");
+                theMessage.Answer("Soll ich die Nachricht vor dem Logging verstecken?");
+                theMessage.Hidden = true;
+                theMessage.Answer("Du hast mir übrigens noch folgendes gesagt: " + theMessage.CommandLine);
+            }
         }
     }
 }

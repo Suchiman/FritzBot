@@ -42,7 +42,7 @@ namespace FritzBot.commands
                 }
                 else
                 {
-                    Joke = GetRandom(GetSpecialJokes(theMessage.CommandArgs));
+                    Joke = GetRandom(GetSpecialJokes(theMessage.CommandArgs, theMessage.TheUsers.AllJokes()));
                     if (String.IsNullOrEmpty(Joke))
                     {
                         theMessage.Answer("Tut mir leid ich kenne leider keinen Witz der alle deine Stichwörter beinhaltet");
@@ -81,36 +81,40 @@ namespace FritzBot.commands
                     return;
                 }
             }
-            String[] allJokes = null;
+            List<String> allJokes = null;
             try
             {
-                allJokes = File.ReadAllLines("norris.txt", Encoding.GetEncoding("iso-8859-1"));
+                allJokes = new List<String>(File.ReadAllLines("norris.txt", Encoding.GetEncoding("iso-8859-1")));
             }
             catch
             {
                 theMessage.Answer("Scheint so als kenne ich gar keine Chuck Norris witze :-O");
                 return;
             }
-            Random zufall = new Random();
-            String Joke = allJokes[zufall.Next(allJokes.Length - 1)];
+            theMessage.CommandArgs.RemoveAt(0);
+            String Joke = GetRandom(GetSpecialJokes(theMessage.CommandArgs, allJokes));
+            if (String.IsNullOrEmpty(Joke))
+            {
+                theMessage.Answer("Tut mir leid, ich kenne keinen Zutreffenden Chuck Norris Witz");
+                return;
+            }
             theMessage.Answer(Joke);
         }
 
-        private List<String> GetSpecialJokes(List<String> Filter)
+        private List<String> GetSpecialJokes(List<String> Filter, List<String> ToFilter)
         {
-            List<String> result = Program.TheUsers.AllJokes();
-            for (int i = 0; i < result.Count; i++)
+            for (int i = 0; i < ToFilter.Count; i++)
             {
                 for (int x = 0; x < Filter.Count; x++)
                 {
-                    if (!result[i].ToLower().Contains(Filter[x].ToLower()))
+                    if (!ToFilter[i].ToLower().Contains(Filter[x].ToLower()))
                     {
-                        result.RemoveAt(i);
+                        ToFilter.RemoveAt(i);
                         i--;
                     }
                 }
             }
-            return result;
+            return ToFilter;
         }
 
         private String GetRandom(List<String> Jokes)

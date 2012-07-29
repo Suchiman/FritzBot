@@ -27,12 +27,14 @@ namespace FritzBot.commands
             String fwToFind = theMessage.CommandArgs[0];
             if (theMessage.CommandArgs.Count > 1)
             {
+                if (theMessage.CommandArgs[0].ToLower() == "add")
+                {
+                    File.AppendAllText("fwdb.db", theMessage.CommandArgs[1]);
+                    theMessage.Answer("Der FW Alias wurde hinzugefügt");
+                    return;
+                }
                 switch (theMessage.CommandArgs[1].ToLower())
                 {
-                    case "add":
-                        File.AppendAllText("fwdb.db", theMessage.CommandArgs[1]);
-                        theMessage.Answer("Der FW Alias wurde hinzugefügt");
-                        return;
                     case "all":
                         firmware = true;
                         recovery = true;
@@ -70,8 +72,11 @@ namespace FritzBot.commands
                 {
                     if (onefw.Contains(fwToFind))
                     {
-                        fw = onefw;
-                        break;
+                        if (onefw.Split(new String[] { "=" }, 2, StringSplitOptions.None)[0].ToLower() == fwToFind.ToLower())
+                        {
+                            fw = onefw;
+                            break;
+                        }
                     }
                 }
             }

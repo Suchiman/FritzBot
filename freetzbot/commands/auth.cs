@@ -17,6 +17,11 @@ namespace FritzBot.commands
 
         public void Run(ircMessage theMessage)
         {
+            if (theMessage.TheUser.Authenticated)
+            {
+                theMessage.Answer("Du bist bereits authentifiziert");
+                return;
+            }
             if (!theMessage.IsPrivate)
             {
                 theMessage.Answer("Ohje das solltest du besser im Query tuen");

@@ -7,7 +7,7 @@ namespace FritzBot.commands
         public String[] Name { get { return new String[] { "about" }; } }
         public String HelpText { get { return "Ich würde dir dann kurz etwas über mich erzählen."; } }
         public Boolean OpNeeded { get { return false; } }
-        public Boolean ParameterNeeded { get { return true; } }
+        public Boolean ParameterNeeded { get { return false; } }
         public Boolean AcceptEveryParam { get { return false; } }
 
         public void Destruct()
