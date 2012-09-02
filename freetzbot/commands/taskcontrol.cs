@@ -23,10 +23,12 @@ namespace FritzBot.commands
                     if (theMessage.CommandArgs[1] == "start")
                     {
                         task.Start();
+                        theMessage.Answer("Task erfolgreich gestartet");
                     }
                     else if (theMessage.CommandArgs[1] == "stop")
                     {
                         task.Stop();
+                        theMessage.Answer("Task erfolgreich angehalten");
                     }
                     else
                     {

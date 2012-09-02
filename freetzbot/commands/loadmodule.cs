@@ -51,7 +51,7 @@ namespace FritzBot.commands
                     }
                     foreach (Type oneType in AllTypes)
                     {
-                        if (oneType.Name != "ICommand" && (typeof(ICommand)).IsAssignableFrom(oneType))
+                        if (oneType.Name != "ICommand" && (typeof(ICommand)).IsAssignableFrom(oneType) || oneType.Name != "IBackgroundTask" && (typeof(IBackgroundTask)).IsAssignableFrom(oneType))
                         {
                             TypesToLoad.Add(oneType);
                         }
@@ -76,17 +76,24 @@ namespace FritzBot.commands
                 }
                 try
                 {
-                    for (int i = 0; i < Program.Commands.Count; i++)
+                    foreach (Type oneType in TypesToLoad)
                     {
-                        foreach (Type oneType in TypesToLoad)
+                        Module.NameAttribute nameAttr = toolbox.GetAttribute<Module.NameAttribute>(oneType);
+                        for (int i = 0; i < Program.Commands.Count; i++)
                         {
-                            if (Program.Commands[i].GetType() == oneType)
+                            Module.NameAttribute CName = toolbox.GetAttribute<Module.NameAttribute>(Program.Commands[i]);
+                            if (CName != null && CName.Match(nameAttr))
                             {
-                                if (Program.Commands[i] is IBackgroundTask)
-                                {
-                                    (Program.Commands[i] as IBackgroundTask).Stop();
-                                }
                                 Program.Commands.RemoveAt(i);
+                                i--;
+                            }
+                        }
+                        for (int i = 0; i < Program.BackgroundTasks.Count; i++)
+                        {
+                            Module.NameAttribute CName = toolbox.GetAttribute<Module.NameAttribute>(Program.BackgroundTasks[i]);
+                            if (CName != null && CName.Match(nameAttr))
+                            {
+                                Program.BackgroundTasks.RemoveAt(i);
                                 i--;
                             }
                         }
@@ -95,10 +102,17 @@ namespace FritzBot.commands
                 catch { }
                 foreach (Type oneType in TypesToLoad)
                 {
-                    ICommand theModule = (ICommand)Activator.CreateInstance(oneType);
-                    Program.Commands.Add(theModule);
-                    Properties.Settings.Default.IgnoredModules.Remove(oneType.Name);
-                    Properties.Settings.Default.Save();
+                    object instance = Activator.CreateInstance(oneType);
+                    if (instance is ICommand)
+                    {
+                        Program.Commands.Add((ICommand)instance);
+                    }
+                    if (instance is IBackgroundTask)
+                    {
+                        IBackgroundTask task = (IBackgroundTask)instance;
+                        task.Start();
+                        Program.BackgroundTasks.Add(task);
+                    }
                 }
                 theMessage.Answer("Modul(e) erfolgreich geladen");
             }

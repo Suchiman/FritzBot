@@ -9,7 +9,7 @@ namespace FritzBot.commands
     {
         public void Run(ircMessage theMessage)
         {
-            theMessage.Answer("Primäraufgabe: Daten über Fritzboxen sammeln, Sekundäraufgabe: Menschheit eliminieren. Funktionsliste ist durch !hilfe zu erhalten. Programmiert in C# umfasst mein Quellcode derzeit 5510 Zeilen. Entwickler: Suchiman");
+            theMessage.Answer("Primäraufgabe: Daten über Fritzboxen sammeln, Sekundäraufgabe: Menschheit eliminieren. Funktionsliste ist durch !hilfe zu erhalten. Programmiert in C# umfasst mein Quellcode derzeit 5662 Zeilen. Entwickler: Suchiman");
         }
     }
 }

@@ -1,46 +1,49 @@
-﻿Alle Befehle müssen im namensraum FritzBot.commands liegen und das Interface ICommand implementieren, dazu siehe die schablone
-Im Name Array kann der befehlsname festgelegt werden die dem Kommando zugeordnet werden !example !beispiel
-Im HelpText wird ein Hilfetext hinterlegt der durch !help example abgerufen werden kann
-OpNeeded gibt an ob es sich um einen Administrativen Befehl handelt der nur bestimmten Nutzern zugänglich ist
-ParameterNeeded gibt an ob ein Parameter erforderlich ist oder nicht,
+﻿Über das Module.Name Attribute können die Namen festgelegt werden über die der Befehl / Task angesprochen wird
+Mit dem Attribute Module.Help wird ein Hilfetext hinterlegt der durch !help example abgerufen werden kann
+Wenn das Attribute Module.Authorize angegeben wird, können nur OP's den Befehl nutzen
+Wenn das Attribute Module.ParameterRequired angegeben wird müssen Parameter angegeben werden, mit Module.ParameterRequired(false) können Parameter verboten werden
+und ein weglassen des Attributes deaktiviert die Prüfung auf Parameter
 wird ein parameter angegeben obwohl keiner erforderlich ist oder es wid kein parameter angegeben obwohl ein parameter erforderlich ist, wird der Hilfetext angezeigt.
-AcceptEveryParam setzt vorherige Logik außer Kraft und akzeptiert mehrere oder keinen Parameter
-Im Klassen Konstruktor können Threads gestartet werden oder initial Werte festgelegt werden
 Die Run Methode wird ausgeführt wenn jemand den Befehl aufruft: !example z.b.
 	der Parameter vom Typ ircMessage bietet viele Hilfreiche Methoden wie z.b. Answer um dem Benutzer zu antworten. Die Befehle sind alle via IntelliSense dokumentiert
-Die Destruct Methode wird ausgeführt, wenn der Befehl entladen oder deaktiviert wird. Wenn Threads gestartet wurden sollten diese dort beendet werden.
 
 namespace FritzBot.commands
 {
+    [Module.Name("example", "beispiel")]
+    [Module.Help("Die Hilfe zum Befehl")]
+    //[Module.ParameterRequired] //Wird ein ParameterBenötigt ?
+    //[Module.Authorize] //Werden Operator rechte benötigt ?
     class example : ICommand
     {
-        public String[] Name { get { return new String[] { "example", "beispiel" }; } }
-        public String HelpText { get { return "example description"; } }
-        public Boolean OpNeeded { get { return false; } }
-        public Boolean ParameterNeeded { get { return false; } }
-        public Boolean AcceptEveryParam { get { return true; } }
-
-		public example()
-		{
-
-		}
-
-        public void Destruct()
-        {
-
-        }
-
         public void Run(ircMessage theMessage)
         {
-			theMessage.SendPrivateMessage("Ach hier hallo " + theMessage.Nick);
-            theMessage.SendPrivateAction("Tanzt weil er glücklich ist");
-            if (theMessage.IsPrivate)
-            {
-                theMessage.AnswerAction("Weiß ganz genau, dass du mir das im Privaten Chat geschrieben hast");
-                theMessage.Answer("Soll ich die Nachricht vor dem Logging verstecken?");
-                theMessage.Hidden = true;
-                theMessage.Answer("Du hast mir übrigens noch folgendes gesagt: " + theMessage.CommandLine);
-            }
-        }
+			theMessage.Answer("Hallo Welt");
+		}
+    }
+}
+
+Mit dem Interface IBackgroundTask können hintergrundaufgaben definiert werden die sich über Start und Stop jeweils starten oder stoppen lassen können
+namespace FritzBot.commands
+{
+    [Module.Name("example", "beispiel")]
+    class example : IBackgroundTask
+    {
+		Thread myThread;
+        public void Start()
+        {
+			myThread = new Thread(new ThreadStart(MyThread));
+			myThread.IsBackground = true;
+			myThread.Start();
+		}
+
+		public void Stop()
+		{
+			myThread.Abort();
+		}
+
+		private void MyThread()
+		{
+			// Ich tue die ganze zeit irgendetwas brauchbares hoffe ich
+		}
     }
 }

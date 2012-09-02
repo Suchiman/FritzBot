@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace FritzBot.commands
 {
@@ -13,22 +14,38 @@ namespace FritzBot.commands
             try
             {
                 String UnloadModuleName = theMessage.CommandArgs[0];
-                for (int i = 0; i < Program.Commands.Count; i++)
+                List<IBackgroundTask> tasksToUnload = new List<IBackgroundTask>();
+                List<ICommand> commandsToUnload = new List<ICommand>();
+                foreach (IBackgroundTask task in Program.BackgroundTasks)
                 {
-                    if (toolbox.GetAttribute<Module.NameAttribute>(Program.Commands[i]).IsNamed(UnloadModuleName))
+                    Module.NameAttribute name = toolbox.GetAttribute<Module.NameAttribute>(task);
+                    if (name.IsNamed(UnloadModuleName))
                     {
-                        if (Program.Commands[i] is IBackgroundTask)
-                        {
-                            (Program.Commands[i] as IBackgroundTask).Stop();
-                        }
-                        Program.Commands[i] = null;
-                        Program.Commands.RemoveAt(i);
-                        Properties.Settings.Default.IgnoredModules.Add(UnloadModuleName);
-                        Properties.Settings.Default.Save();
-                        theMessage.Answer("Modul erfolgreich entladen");
+                        tasksToUnload.Add(task);
                     }
                 }
-                if (!theMessage.Answered)
+                foreach (ICommand command in Program.Commands)
+                {
+                    Module.NameAttribute name = toolbox.GetAttribute<Module.NameAttribute>(command);
+                    if (name.IsNamed(UnloadModuleName))
+                    {
+                        commandsToUnload.Add(command);
+                    }
+                }
+                foreach (IBackgroundTask task in tasksToUnload)
+                {
+                    task.Stop();
+                    Program.BackgroundTasks.Remove(task);
+                }
+                foreach (ICommand command in commandsToUnload)
+                {
+                    Program.Commands.Remove(command);
+                }
+                if (commandsToUnload.Count > 0 || tasksToUnload.Count > 0)
+                {
+                    theMessage.Answer("Modul erfolgreich entladen");
+                }
+                else
                 {
                     theMessage.Answer("Modul wurde nicht gefunden");
                 }
@@ -36,34 +53,8 @@ namespace FritzBot.commands
             catch (Exception ex)
             {
                 theMessage.Answer("Das hat eine Exception ausgelöst");
-                toolbox.Logging("Unloadmodule Exception " + ex.Message);
+                toolbox.Logging("Unloadmodule Exception " + ex.Message + ": " + ex.StackTrace);
             }
         }
-        /*
-        public void Run(ircMessage theMessage)
-        {
-            try
-            {
-                for (int i = 0; i < Program.Commands.Count; i++)
-                {
-                    if (toolbox.GetModuleIdentification(Program.Commands[i]).IsNamed(theMessage.CommandArgs[0]))
-                    {
-                        Program.Commands[i].Destruct();
-                        Program.Commands[i] = null;
-                        Program.Commands.RemoveAt(i);
-                        Properties.Settings.Default.IgnoredModules.Add(theMessage.CommandArgs[0]);
-                        Properties.Settings.Default.Save();
-                        theMessage.Answer("Modul erfolgreich entladen");
-                        return;
-                    }
-                }
-                theMessage.Answer("Modul wurde nicht gefunden");
-            }
-            catch (Exception ex)
-            {
-                theMessage.Answer("Das hat eine Exception ausgelöst");
-                toolbox.Logging("Unloadmodule Exception " + ex.Message);
-            }
-        }*/
     }
 }
