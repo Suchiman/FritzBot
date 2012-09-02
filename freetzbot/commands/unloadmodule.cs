@@ -2,26 +2,51 @@
 
 namespace FritzBot.commands
 {
+    [Module.Name("rmmod", "unloadmodule")]
+    [Module.Help("Deaktiviert einen meiner Befehle")]
+    [Module.ParameterRequired]
+    [Module.Authorize]
     class unloadmodule : ICommand
     {
-        public String[] Name { get { return new String[] { "rmmod", "unloadmodule" }; } }
-        public String HelpText { get { return "Deaktiviert einen meiner Befehle"; } }
-        public Boolean OpNeeded { get { return true; } }
-        public Boolean ParameterNeeded { get { return true; } }
-        public Boolean AcceptEveryParam { get { return false; } }
-
-        public void Destruct()
+        public void Run(ircMessage theMessage)
         {
-
+            try
+            {
+                String UnloadModuleName = theMessage.CommandArgs[0];
+                for (int i = 0; i < Program.Commands.Count; i++)
+                {
+                    if (toolbox.GetAttribute<Module.NameAttribute>(Program.Commands[i]).IsNamed(UnloadModuleName))
+                    {
+                        if (Program.Commands[i] is IBackgroundTask)
+                        {
+                            (Program.Commands[i] as IBackgroundTask).Stop();
+                        }
+                        Program.Commands[i] = null;
+                        Program.Commands.RemoveAt(i);
+                        Properties.Settings.Default.IgnoredModules.Add(UnloadModuleName);
+                        Properties.Settings.Default.Save();
+                        theMessage.Answer("Modul erfolgreich entladen");
+                    }
+                }
+                if (!theMessage.Answered)
+                {
+                    theMessage.Answer("Modul wurde nicht gefunden");
+                }
+            }
+            catch (Exception ex)
+            {
+                theMessage.Answer("Das hat eine Exception ausgelöst");
+                toolbox.Logging("Unloadmodule Exception " + ex.Message);
+            }
         }
-
+        /*
         public void Run(ircMessage theMessage)
         {
             try
             {
                 for (int i = 0; i < Program.Commands.Count; i++)
                 {
-                    if (Program.Commands[i].Name[0] == theMessage.CommandArgs[0])
+                    if (toolbox.GetModuleIdentification(Program.Commands[i]).IsNamed(theMessage.CommandArgs[0]))
                     {
                         Program.Commands[i].Destruct();
                         Program.Commands[i] = null;
@@ -39,6 +64,6 @@ namespace FritzBot.commands
                 theMessage.Answer("Das hat eine Exception ausgelöst");
                 toolbox.Logging("Unloadmodule Exception " + ex.Message);
             }
-        }
+        }*/
     }
 }

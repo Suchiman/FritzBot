@@ -98,7 +98,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="command.cs" />
+    <Compile Include="Attribute.cs" />
+    <Compile Include="commands\taskcontrol.cs" />
+    <Compile Include="Interfaces.cs" />
     <Compile Include="commands\about.cs" />
     <Compile Include="commands\alias.cs" />
     <Compile Include="commands\auth.cs" />
@@ -129,6 +131,7 @@
     <Compile Include="commands\part.cs" />
     <Compile Include="commands\passwd.cs" />
     <Compile Include="commands\ping.cs" />
+    <Compile Include="commands\pushover.cs" />
     <Compile Include="commands\quit.cs" />
     <Compile Include="commands\remind.cs" />
     <Compile Include="commands\restart.cs" />

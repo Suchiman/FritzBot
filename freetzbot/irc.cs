@@ -7,23 +7,22 @@ using System.Threading;
 
 namespace FritzBot
 {
-    public class Irc
+    public class Irc : IDisposable
     {
         public delegate void ReceivedEventHandler(Irc connection, String source, String nick, String message);
         public event ReceivedEventHandler Received;
-        private String _quitmessage;
+        public event EventHandler ConnectionLost;
 
-        private Thread _empfangsthread;
-        private Thread _watchthread;
+        private String _quitmessage;
+        private Thread _connectionHandlerThread;
         private String _server;
         private int _port;
         private String _nick;
         private TcpClient _connection;
         private DateTime _connecttime;
+        private Boolean _disconnecting;
         public Encoding CharEncoding { get; set; }
-        public Boolean AutoReconnect { get; set; }
         public Boolean Ready { get; private set; }
-        public int AutoReconnectIntervall;
 
         public Irc(String server, int port, String nick)
         {
@@ -31,20 +30,21 @@ namespace FritzBot
             _port = port;
             _nick = nick;
             _quitmessage = "";
-            _empfangsthread = null;
-            _watchthread = null;
+            _connectionHandlerThread = null;
             _connection = null;
             _connecttime = DateTime.MinValue;
+            _disconnecting = false;
             CharEncoding = Encoding.GetEncoding("iso-8859-1");
-            AutoReconnect = false;
             Ready = false;
-            AutoReconnectIntervall = 5000;
+        }
+
+        public void Dispose()
+        {
+            Disconnect();
         }
 
         public void Connect()
         {
-            DeinitReceiver();
-            _connection = null;
             InitConnection();
             do
             {
@@ -52,47 +52,24 @@ namespace FritzBot
             } while (!Ready);
             Log("Verbindung mit Server " + _server + " hergestellt");
             _connecttime = DateTime.Now;
-            InitAutoReconnect();
         }
 
         private void InitConnection()
         {
-            _empfangsthread = new Thread(new ThreadStart(ConnectionHandler));
-            _empfangsthread.Name = "EmpfangsThread " + _server;
-            _empfangsthread.Start();
+            _connectionHandlerThread = new Thread(new ThreadStart(ConnectionHandler));
+            _connectionHandlerThread.Name = "EmpfangsThread " + _server;
+            _connectionHandlerThread.Start();
         }
 
         private void DeinitReceiver()
         {
-            if (_empfangsthread != null)
+            if (_connectionHandlerThread != null)
             {
-                if (_empfangsthread.IsAlive)
+                if (_connectionHandlerThread.IsAlive)
                 {
-                    _empfangsthread.Abort();
+                    _connectionHandlerThread.Abort();
                 }
-                _empfangsthread = null;
-            }
-        }
-
-        private void InitAutoReconnect()
-        {
-            if (_watchthread == null)
-            {
-                _watchthread = new Thread(new ThreadStart(WatchThread));
-                _watchthread.Name = "WatchThread " + _server;
-                _watchthread.Start();
-            }
-        }
-
-        private void DeinitAutoReconnect()
-        {
-            if (_watchthread != null)
-            {
-                if (_watchthread.IsAlive)
-                {
-                    _watchthread.Abort();
-                }
-                _watchthread = null;
+                _connectionHandlerThread = null;
             }
         }
 
@@ -102,25 +79,9 @@ namespace FritzBot
             return Sendraw("USER " + _nick + " 8 * :" + _nick);
         }
 
-        private void WatchThread()
-        {
-            while (true)
-            {
-                if (_empfangsthread != null)
-                {
-                    if (!_empfangsthread.IsAlive)
-                    {
-                        Log("Connection lost, trying reconnect");
-                        Connect();
-                    }
-                }
-                Thread.Sleep(AutoReconnectIntervall);
-            }
-        }
-
         public void Disconnect()
         {
-            DeinitAutoReconnect();
+            _disconnecting = true;
             if (_connection != null)
             {
                 if (_connection.Connected)
@@ -129,8 +90,8 @@ namespace FritzBot
                 }
             }
             DeinitReceiver();
+            _connection.Close();
             _connection = null;
-            Log("Server " + _server + " verlassen");
         }
 
         public void JoinChannel(String channel)
@@ -220,18 +181,6 @@ namespace FritzBot
             Received(this, "LOG", "", to_log);
         }
 
-        public Boolean Running
-        {
-            get
-            {
-                if (_watchthread != null)
-                {
-                    return _watchthread.IsAlive;
-                }
-                return false;
-            }
-        }
-
         public TimeSpan Uptime
         {
             get
@@ -292,23 +241,28 @@ namespace FritzBot
             {
                 _connection = new TcpClient(_server, _port);
             } while (!Authenticate());
+            try
+            {
+                ReceiveDataLoop();
+            }
+            finally
+            {
+                if (!_disconnecting)
+                {
+                    ConnectionLost.BeginInvoke(this, EventArgs.Empty, null, null);
+                }
+            }
+        }
+
+        private void ReceiveDataLoop()
+        {
             StreamReader stream = new StreamReader(_connection.GetStream(), CharEncoding);
             while (true)
             {
-                String Daten = "";
-                try
-                {
-                    Daten = stream.ReadLine();
-                }
-                catch (Exception ex)
-                {
-                    Log("Receiving Data failed: " + ex.Message);
-                    return;
-                }
+                String Daten = stream.ReadLine();
                 if (String.IsNullOrEmpty(Daten))
                 {
-                    Log("connection lost");
-                    return;
+                    return; //Connection Lost
                 }
                 Thread thread = new Thread(delegate() { ProcessRespond(Daten); });
                 thread.Name = "Process " + _server;

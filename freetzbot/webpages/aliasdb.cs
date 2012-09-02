@@ -1,6 +1,6 @@
 ﻿using System;
 using FritzBot;
-
+using FritzBot.commands;
 namespace webpages
 {
     class aliasdb : IWebInterface

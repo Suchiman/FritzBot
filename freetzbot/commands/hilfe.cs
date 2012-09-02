@@ -3,29 +3,23 @@ using System.Collections.Generic;
 
 namespace FritzBot.commands
 {
+    [Module.Name("hilfe", "help", "faq", "info", "man", "lsmod")]
+    [Module.Help("Die Hilfe!")]
     class hilfe : ICommand
     {
-        public String[] Name { get { return new String[] { "hilfe", "help", "faq", "info", "man", "lsmod" }; } }
-        public String HelpText { get { return "Die Hilfe!"; } }
-        public Boolean OpNeeded { get { return false; } }
-        public Boolean ParameterNeeded { get { return false; } }
-        public Boolean AcceptEveryParam { get { return true; } }
-
-        public void Destruct()
-        {
-
-        }
-
         public void Run(ircMessage theMessage)
         {
             if (!theMessage.HasArgs)
             {
                 List<String> befehle = new List<String>();
-                foreach (ICommand thecommand in Program.Commands)
+                foreach (ICommand theCommand in Program.Commands)
                 {
-                    if (thecommand.OpNeeded && toolbox.IsOp(theMessage.Nick) || !thecommand.OpNeeded)
+                    Module.AuthorizeAttribute Authorization = (Attribute.GetCustomAttribute(theCommand.GetType(), typeof(Module.AuthorizeAttribute)) as Module.AuthorizeAttribute);
+                    Module.HelpAttribute Hilfe = (Attribute.GetCustomAttribute(theCommand.GetType(), typeof(Module.HelpAttribute)) as Module.HelpAttribute);
+                    Module.NameAttribute Namen = (Attribute.GetCustomAttribute(theCommand.GetType(), typeof(Module.NameAttribute)) as Module.NameAttribute);
+                    if (Authorization == null || toolbox.IsOp(theMessage.Nick))
                     {
-                        befehle.Add(thecommand.Name[0]);
+                        befehle.Add(Namen.Names[0]);
                     }
                 }
                 befehle.Sort();
@@ -40,18 +34,15 @@ namespace FritzBot.commands
             }
             else
             {
-                foreach (ICommand thecommand in Program.Commands)
+                try
                 {
-                    foreach (String CommandName in thecommand.Name)
-                    {
-                        if (theMessage.CommandLine.ToLower() == CommandName.ToLower())
-                        {
-                            theMessage.Answer(thecommand.HelpText);
-                            return;
-                        }
-                    }
+                    Module.HelpAttribute Hilfe = (Attribute.GetCustomAttribute(toolbox.getCommandByName(theMessage.CommandArgs[0]).GetType(), typeof(Module.HelpAttribute)) as Module.HelpAttribute);
+                    theMessage.Answer(Hilfe.Help);
                 }
-                theMessage.Answer("Ich konnte keinen Befehl finden der so heißt");
+                catch
+                {
+                    theMessage.Answer("Ich konnte keinen Befehl finden der so heißt");
+                }
             }
         }
     }

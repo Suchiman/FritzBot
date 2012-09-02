@@ -3,19 +3,11 @@ using System.Collections.Generic;
 
 namespace FritzBot.commands
 {
+    [Module.Name("calc")]
+    [Module.Help("Ich kann sogar Rechnen :-) !calc 42*13+1 !calc 42*(42-(24+24)+1*3)/2")]
+    [Module.ParameterRequired]
     class calc : ICommand
     {
-        public String[] Name { get { return new String[] { "calc" }; } }
-        public String HelpText { get { return "Ich kann sogar Rechnen :-) !calc 42*13+1 !calc 42*(42-(24+24)+1*3)/2"; } }
-        public Boolean OpNeeded { get { return false; } }
-        public Boolean ParameterNeeded { get { return true; } }
-        public Boolean AcceptEveryParam { get { return false; } }
-
-        public void Destruct()
-        {
-
-        }
-
         public void Run(ircMessage theMessage)
         {
             try

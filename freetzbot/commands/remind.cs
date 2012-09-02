@@ -3,21 +3,17 @@ using System.Collections.Generic;
 
 namespace FritzBot.commands
 {
-    class remind : ICommand
+    [Module.Name("remind")]
+    [Module.Help("Hinterlasse einem Benutzer eine Nachricht. Sobald er wiederkommt oder etwas schreibt werde ich sie ihm Zustellen. !remind <Benutzer> <Nachricht>")]
+    class remind : ICommand, IBackgroundTask
     {
-        public String[] Name { get { return new String[] { "remind" }; } }
-        public String HelpText { get { return "Hinterlasse einem Benutzer eine Nachricht. Sobald er wiederkommt oder etwas schreibt werde ich sie ihm Zustellen. !remind <Benutzer> <Nachricht>"; } }
-        public Boolean OpNeeded { get { return false; } }
-        public Boolean ParameterNeeded { get { return false; } }
-        public Boolean AcceptEveryParam { get { return true; } }
-
-        public void Destruct()
+        public void Stop()
         {
             Program.UserJoined -= new Program.JoinEventHandler(SendJoin);
             Program.UserMessaged -= new Program.MessageEventHandler(SendMessaged);
         }
 
-        public remind()
+        public void Start()
         {
             Program.UserJoined += new Program.JoinEventHandler(SendJoin);
             Program.UserMessaged += new Program.MessageEventHandler(SendMessaged);
@@ -57,7 +53,7 @@ namespace FritzBot.commands
             }
             else
             {
-                theMessage.Answer("Die Eingabe war nicht korrekt: !remember <Benutzer> <Nachricht>");
+                theMessage.Answer("Die Eingabe war nicht korrekt: !remind <Benutzer> <Nachricht>");
             }
         }
     }

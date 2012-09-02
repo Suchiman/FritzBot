@@ -5,19 +5,10 @@ using System.Text;
 
 namespace FritzBot.commands
 {
+    [Module.Name("witz", "joke")]
+    [Module.Help("Ich werde dann einen Witz erzählen, mit \"!witz add witztext\" kannst du einen neuen Witz hinzufügen. Mit !witz stichwort kannst du einen speziellen Witz suchen")]
     class witz : ICommand
     {
-        public String[] Name { get { return new String[] { "witz", "joke" }; } }
-        public String HelpText { get { return "Ich werde dann einen Witz erzählen, mit \"!witz add witztext\" kannst du einen neuen Witz hinzufügen. Mit !witz stichwort kannst du einen speziellen Witz suchen"; } }
-        public Boolean OpNeeded { get { return false; } }
-        public Boolean ParameterNeeded { get { return false; } }
-        public Boolean AcceptEveryParam { get { return true; } }
-
-        public void Destruct()
-        {
-
-        }
-
         public witz()
         {
             WitzRandoms = new Queue<int>(10);

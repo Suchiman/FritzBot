@@ -6,19 +6,12 @@ using System.Collections.Generic;
 
 namespace FritzBot.commands
 {
+    [Module.Name("modprobe", "insmod", "loadmodule")]
+    [Module.Help("Aktiviert einen meiner Befehle")]
+    [Module.ParameterRequired]
+    [Module.Authorize]
     class loadmodule : ICommand
     {
-        public String[] Name { get { return new String[] { "modprobe", "insmod", "loadmodule" }; } }
-        public String HelpText { get { return "Aktiviert einen meiner Befehle"; } }
-        public Boolean OpNeeded { get { return true; } }
-        public Boolean ParameterNeeded { get { return true; } }
-        public Boolean AcceptEveryParam { get { return false; } }
-
-        public void Destruct()
-        {
-
-        }
-
         public void Run(ircMessage theMessage)
         {
             try
@@ -28,14 +21,14 @@ namespace FritzBot.commands
                 Type[] AllTypes = null;
                 List<Type> TypesToLoad = new List<Type>();
 
+                #region HTTP Downloader
                 if (name.Contains("http://"))
                 {
                     name = theMessage.CommandLine.Substring(theMessage.CommandLine.LastIndexOf('/') + 1);
-                    name = name.Substring(0, name.Length - 3);
                     try
                     {
                         WebClient Downloader = new WebClient();
-                        Downloader.DownloadFile(theMessage.CommandLine, Path.Combine(PluginDirectory, name + ".cs"));
+                        Downloader.DownloadFile(theMessage.CommandLine, Path.Combine(PluginDirectory, name));
                     }
                     catch
                     {
@@ -43,11 +36,13 @@ namespace FritzBot.commands
                         return;
                     }
                 }
-                if (File.Exists(Path.Combine(PluginDirectory, name + ".cs")))
+                #endregion
+                #region Quelldatei Laden
+                if (name.Contains(".cs"))
                 {
                     try
                     {
-                        AllTypes = toolbox.LoadSource(new String[] { Path.Combine(PluginDirectory, name + ".cs") }).GetTypes();
+                        AllTypes = toolbox.LoadSource(Path.Combine(PluginDirectory, name)).GetTypes();
                     }
                     catch
                     {
@@ -62,38 +57,42 @@ namespace FritzBot.commands
                         }
                     }
                 }
+                #endregion
                 else
                 {
                     AllTypes = Assembly.GetExecutingAssembly().GetTypes();
                     foreach (Type oneType in AllTypes)
                     {
-                        if (oneType.Name != "ICommand" && (typeof(ICommand)).IsAssignableFrom(oneType) && (((ICommand)Activator.CreateInstance(oneType)).Name[0].ToLower() == name.ToLower()))
+                        if (oneType.Name != "ICommand" && (typeof(ICommand)).IsAssignableFrom(oneType) && toolbox.GetAttribute<FritzBot.Module.NameAttribute>(oneType).IsNamed(name))
                         {
                             TypesToLoad.Add(oneType);
                         }
                     }
                 }
-                if (!(TypesToLoad.Count > 0))
+                if (TypesToLoad.Count == 0)
                 {
                     theMessage.Answer("Modul wurde nicht gefunden");
                     return;
                 }
-                TryAgain:
                 try
                 {
-                    foreach (ICommand theCommand in Program.Commands)
+                    for (int i = 0; i < Program.Commands.Count; i++)
                     {
                         foreach (Type oneType in TypesToLoad)
                         {
-                            if (theCommand.GetType() == oneType)
+                            if (Program.Commands[i].GetType() == oneType)
                             {
-                                theCommand.Destruct();
-                                Program.Commands.Remove(theCommand);
+                                if (Program.Commands[i] is IBackgroundTask)
+                                {
+                                    (Program.Commands[i] as IBackgroundTask).Stop();
+                                }
+                                Program.Commands.RemoveAt(i);
+                                i--;
                             }
                         }
                     }
                 }
-                catch { goto TryAgain; }
+                catch { }
                 foreach (Type oneType in TypesToLoad)
                 {
                     ICommand theModule = (ICommand)Activator.CreateInstance(oneType);

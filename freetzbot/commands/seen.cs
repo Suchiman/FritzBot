@@ -2,15 +2,12 @@
 
 namespace FritzBot.commands
 {
-    class seen : ICommand
+    [Module.Name("seen", "said")]
+    [Module.Help("Gibt aus wann der Nutzer zuletzt gesehen wurde und wann er was zuletzt sagte.")]
+    [Module.ParameterRequired]
+    class seen : ICommand, IBackgroundTask
     {
-        public String[] Name { get { return new String[] { "seen", "said" }; } }
-        public String HelpText { get { return "Gibt aus wann der Nutzer zuletzt gesehen wurde und wann er was zuletzt sagte."; } }
-        public Boolean OpNeeded { get { return false; } }
-        public Boolean ParameterNeeded { get { return true; } }
-        public Boolean AcceptEveryParam { get { return false; } }
-
-        public void Destruct()
+        public void Stop()
         {
             Program.UserJoined -= new Program.JoinEventHandler(joined);
             Program.UserQuit -= new Program.QuitEventHandler(quit);
@@ -19,7 +16,7 @@ namespace FritzBot.commands
             Program.UserMessaged -= new Program.MessageEventHandler(message);
         }
 
-        public seen()
+        public void Start()
         {
             Program.UserJoined += new Program.JoinEventHandler(joined);
             Program.UserQuit += new Program.QuitEventHandler(quit);

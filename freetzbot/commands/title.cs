@@ -2,19 +2,11 @@
 
 namespace FritzBot.commands
 {
+    [Module.Name("title")]
+    [Module.Help("Ruft den Titel der Webseite ab")]
+    [Module.ParameterRequired]
     class title : ICommand
     {
-        public String[] Name { get { return new String[] { "title" }; } }
-        public String HelpText { get { return "Gibt den Titel der Seite wieder"; } }
-        public Boolean OpNeeded { get { return false; } }
-        public Boolean ParameterNeeded { get { return true; } }
-        public Boolean AcceptEveryParam { get { return false; } }
-
-        public void Destruct()
-        {
-
-        }
-
         public void Run(ircMessage theMessage)
         {
             try

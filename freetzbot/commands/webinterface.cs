@@ -8,25 +8,22 @@ using System.Threading;
 
 namespace FritzBot.commands
 {
-    class webinterface : ICommand
+    [Module.Name("webinterface", "web")]
+    [Module.Help("Information über mein Webinterface")]
+    [Module.ParameterRequired(false)]
+    class webinterface : ICommand, IBackgroundTask
     {
-        public String[] Name { get { return new String[] { "webinterface", "web" }; } }
-        public String HelpText { get { return "Information über mein Webinterface"; } }
-        public Boolean OpNeeded { get { return false; } }
-        public Boolean ParameterNeeded { get { return false; } }
-        public Boolean AcceptEveryParam { get { return false; } }
+        private HttpListener Listener;
+        private Thread ListenerThread;
+        private List<IWebInterface> pages;
 
-        public void Destruct()
+        public void Stop()
         {
             ListenerThread.Abort();
             Listener.Abort();
         }
 
-        private HttpListener Listener;
-        private Thread ListenerThread;
-        private List<IWebInterface> pages;
-
-        public webinterface()
+        public void Start()
         {
             try
             {

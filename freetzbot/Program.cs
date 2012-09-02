@@ -27,6 +27,7 @@ namespace FritzBot
         public static UserCollection TheUsers;
         public static ServerCollection TheServers;
         public static List<ICommand> Commands;
+        public static List<IBackgroundTask> BackgroundTasks;
 
         private static Thread AntiFloodingThread;
         private static int AntiFloodingCount;
@@ -56,13 +57,24 @@ namespace FritzBot
             try
             {
                 ICommand theCommand = toolbox.getCommandByName(theMessage.CommandName);
-                if (!(theCommand.OpNeeded && !toolbox.IsOp(theMessage.Nick)))
+                Boolean OPNeeded = toolbox.GetAttribute<Module.AuthorizeAttribute>(theCommand) != null;
+                short ParameterNeeded = 0;
+                Module.ParameterRequiredAttribute ParameterAttri = toolbox.GetAttribute<Module.ParameterRequiredAttribute>(theCommand);
+                if (ParameterAttri != null)
                 {
-                    if ((theCommand.ParameterNeeded && !theMessage.HasArgs || !theCommand.ParameterNeeded && theMessage.HasArgs) && !theCommand.AcceptEveryParam)
+                    if (ParameterAttri.Required)
                     {
-                        theMessage.Answer(theCommand.HelpText);
+                        ParameterNeeded = 1;
                     }
                     else
+                    {
+                        ParameterNeeded = 2;
+                    }
+                }
+
+                if (!OPNeeded || toolbox.IsOp(theMessage.Nick))
+                {
+                    if (ParameterNeeded == 0 || (ParameterNeeded == 1 && theMessage.HasArgs) || (ParameterNeeded == 2 && !theMessage.HasArgs))
                     {
                         try
                         {
@@ -70,8 +82,12 @@ namespace FritzBot
                         }
                         catch (Exception ex)
                         {
-                            toolbox.Logging("Das Modul " + theCommand.Name[0] + " hat eine nicht abgefangene Exception ausgelöst: " + ex.Message);
+                            toolbox.Logging("Das Modul " + toolbox.GetAttribute<Module.NameAttribute>(theCommand).Names[0] + " hat eine nicht abgefangene Exception ausgelöst: " + ex.Message);
                         }
+                    }
+                    else
+                    {
+                        theMessage.Answer("Ungültiger Aufruf: " + toolbox.GetAttribute<Module.HelpAttribute>(theCommand).Help);
                     }
                 }
                 else if (theMessage.TheUser.IsOp)
@@ -99,7 +115,7 @@ namespace FritzBot
                 }
             }
 
-            if (!theMessage.Answered)
+            if (!theMessage.Answered && theMessage.IsPrivate)
             {
                 theMessage.Answer("Hallo, kann ich dir helfen ? Probiers doch mal mit !hilfe");
             }
@@ -198,6 +214,24 @@ namespace FritzBot
                 String[] ConsoleSplitted = ConsoleInput.Split(new String[] { " " }, 2, StringSplitOptions.None);
                 switch (ConsoleSplitted[0])
                 {
+                    case "op":
+                        User nutzer = null;
+                        if (TheUsers.Exists(ConsoleSplitted[1]))
+                        {
+                            nutzer = TheUsers[ConsoleSplitted[1]];
+                            if (nutzer.IsOp)
+                            {
+                                Console.WriteLine(nutzer.names[0] + " ist bereits OP");
+                                break;
+                            }
+                            nutzer.IsOp = true;
+                            Console.WriteLine(nutzer.names[0] + " zum OP befördert");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Benutzer " + ConsoleSplitted[1] + " nicht gefunden");
+                        }
+                        break;
                     case "exit":
                         TheServers.DisconnectAll();
                         break;
@@ -234,6 +268,7 @@ namespace FritzBot
         {
             restart = false;
             Commands = new List<ICommand>();
+            BackgroundTasks = new List<IBackgroundTask>();
             TheUsers = new UserCollection();
             toolbox.Logging(TheUsers.Count + " Benutzer geladen!");
             UserJoined = delegate { };
@@ -274,24 +309,53 @@ namespace FritzBot
             allTypes.AddRange(Bot.GetTypes());
             foreach (Type t in allTypes)
             {
-                if (t.Name != "ICommand" && (typeof(ICommand)).IsAssignableFrom(t) && !Properties.Settings.Default.IgnoredModules.Contains(t.Name))
+                Module.NameAttribute att = toolbox.GetAttribute<Module.NameAttribute>(t);
+                if (!Properties.Settings.Default.IgnoredModules.Contains(t.Name) && att != null)
                 {
-                    Boolean AlreadyLoaded = false;
-                    foreach (ICommand blah in Commands)
+                    foreach (Type IT in t.GetInterfaces())
                     {
-                        if (blah.GetType().Name == t.Name)
+                        object instance = null;
+                        Boolean existed = false;
+                        if (IT == typeof(ICommand) || IT == typeof(IBackgroundTask))
                         {
-                            AlreadyLoaded = true;
-                            break;
+                            instance = Activator.CreateInstance(t);
                         }
-                    }
-                    if (!AlreadyLoaded)
-                    {
-                        Commands.Add((ICommand)Activator.CreateInstance(t));
+                        if (instance is ICommand)
+                        {
+                            foreach (ICommand item in Commands)
+                            {
+                                if (toolbox.GetAttribute<Module.NameAttribute>(item).Match(att))
+                                {
+                                    existed = true;
+                                    break;
+                                }
+                            }
+                            if (!existed)
+                            {
+                                ICommand befehl = (ICommand)instance;
+                                Commands.Add(befehl);
+                            }
+                        }
+                        existed = false;
+                        if (instance is IBackgroundTask)
+                        {
+                            foreach (IBackgroundTask item in BackgroundTasks)
+                            {
+                                if (toolbox.GetAttribute<Module.NameAttribute>(item).Match(att))
+                                {
+                                    existed = true;
+                                }
+                            }
+                            if (!existed)
+                            {
+                                IBackgroundTask task = (IBackgroundTask)instance;
+                                task.Start();
+                                BackgroundTasks.Add(task);
+                            }
+                        }
                     }
                 }
             }
-
             TheServers = new ServerCollection(HandleIncomming);
             if (TheServers.ConnectionCount == 0)
             {
@@ -316,7 +380,10 @@ namespace FritzBot
             Properties.Settings.Default.Save();
             while (Commands.Count > 0)
             {
-                Commands[0].Destruct();
+                if (Commands[0] is IBackgroundTask)
+                {
+                    (Commands[0] as IBackgroundTask).Stop();
+                }
                 Commands[0] = null;
                 Commands.RemoveAt(0);
             }

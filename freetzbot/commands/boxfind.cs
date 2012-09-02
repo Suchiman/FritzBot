@@ -2,19 +2,11 @@
 
 namespace FritzBot.commands
 {
+    [Module.Name("boxfind")]
+    [Module.Help("Findet die Nutzer der angegebenen Box: Beispiel: \"!boxfind 7270\".")]
+    [Module.ParameterRequired]
     class boxfind : ICommand
     {
-        public String[] Name { get { return new String[] { "boxfind" }; } }
-        public String HelpText { get { return "Findet die Nutzer der angegebenen Box: Beispiel: \"!boxfind 7270\"."; } }
-        public Boolean OpNeeded { get { return false; } }
-        public Boolean ParameterNeeded { get { return true; } }
-        public Boolean AcceptEveryParam { get { return false; } }
-
-        public void Destruct()
-        {
-
-        }
-
         public void Run(ircMessage theMessage)
         {
             String besitzer = "";

@@ -3,19 +3,12 @@ using System.Net;
 
 namespace FritzBot.commands
 {
+    [Module.Name("connect")]
+    [Module.Help("Baut eine Verbindung zu einem anderen IRC Server auf, Syntax: !connect server,port,nick,quit_message,initial_channel")]
+    [Module.ParameterRequired]
+    [Module.Authorize]
     class connect : ICommand
     {
-        public String[] Name { get { return new String[] { "connect" }; } }
-        public String HelpText { get { return "Baut eine Verbindung zu einem anderen IRC Server auf, Syntax: !connect server,port,nick,quit_message,initial_channel"; ; } }
-        public Boolean OpNeeded { get { return true; } }
-        public Boolean ParameterNeeded { get { return true; } }
-        public Boolean AcceptEveryParam { get { return false; } }
-
-        public void Destruct()
-        {
-
-        }
-
         public void Run(ircMessage theMessage)
         {
             String[] parameter = theMessage.CommandLine.Split(new String[] { "," }, 5, StringSplitOptions.None);

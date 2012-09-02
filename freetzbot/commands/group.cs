@@ -3,21 +3,18 @@ using System.Collections.Generic;
 
 namespace FritzBot.commands
 {
-    class group : ICommand
+    [Module.Name("group")]
+    [Module.Help("Gruppiert 2 Benutzernamen zu einem internen Benutzer. z.b. !group Suchiman Suchi")]
+    [Module.ParameterRequired]
+    class group : ICommand, IBackgroundTask
     {
-        public String[] Name { get { return new String[] { "group" }; } }
-        public String HelpText { get { return "Gruppiert 2 Benutzernamen zu einem internen Benutzer. z.b. !group Suchiman Suchi"; } }
-        public Boolean OpNeeded { get { return false; } }
-        public Boolean ParameterNeeded { get { return true; } }
-        public Boolean AcceptEveryParam { get { return false; } }
-
-        public void Destruct()
+        public void Stop()
         {
             Program.UserMessaged -= new Program.MessageEventHandler(CheckPhase1);
             Program.UserMessaged -= new Program.MessageEventHandler(CheckPhase2);
         }
 
-        public group()
+        public void Start()
         {
             Program.UserMessaged += new Program.MessageEventHandler(CheckPhase1);
             Program.UserMessaged += new Program.MessageEventHandler(CheckPhase2);

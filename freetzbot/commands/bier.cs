@@ -2,20 +2,15 @@
 
 namespace FritzBot.commands
 {
-    class bier : ICommand
+    [Module.Name("bier")]
+    class bier : IBackgroundTask
     {
-        public String[] Name { get { return new String[] { "bier" }; } }
-        public String HelpText { get { return "Bier!"; } }
-        public Boolean OpNeeded { get { return true; } }
-        public Boolean ParameterNeeded { get { return false; } }
-        public Boolean AcceptEveryParam { get { return true; } }
-
-        public void Destruct()
+        public void Start()
         {
             Program.UserMessaged -= new Program.MessageEventHandler(Run);
         }
 
-        public bier()
+        public void Stop()
         {
             Program.UserMessaged += new Program.MessageEventHandler(Run);
         }

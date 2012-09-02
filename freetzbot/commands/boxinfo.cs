@@ -2,19 +2,10 @@
 
 namespace FritzBot.commands
 {
+    [Module.Name("boxinfo", "box")]
+    [Module.Help("Zeigt die Box/en des angegebenen Benutzers an.")]
     class boxinfo : ICommand
     {
-        public String[] Name { get { return new String[] { "boxinfo", "box" }; } }
-        public String HelpText { get { return "Zeigt die Box/en des angegebenen Benutzers an."; } }
-        public Boolean OpNeeded { get { return false; } }
-        public Boolean ParameterNeeded { get { return false; } }
-        public Boolean AcceptEveryParam { get { return true; } }
-
-        public void Destruct()
-        {
-
-        }
-
         public void Run(ircMessage theMessage)
         {
             String output = "";

@@ -2,19 +2,12 @@
 
 namespace FritzBot.commands
 {
+    [Module.Name("user")]
+    [Module.Help("Führt Operationen an meiner Benutzerdatenbank aus, Operator Befehl: !user remove, reload, flush, add <name>, box <name> <box>")]
+    [Module.ParameterRequired]
+    [Module.Authorize]
     class user : ICommand
     {
-        public String[] Name { get { return new String[] { "user" }; } }
-        public String HelpText { get { return "Führt Operationen an meiner Benutzerdatenbank aus, Operator Befehl: !user remove, reload, flush, add <name>, box <name> <box>"; } }
-        public Boolean OpNeeded { get { return true; } }
-        public Boolean ParameterNeeded { get { return true; } }
-        public Boolean AcceptEveryParam { get { return false; } }
-
-        public void Destruct()
-        {
-
-        }
-
         public void Run(ircMessage theMessage)
         {
             try

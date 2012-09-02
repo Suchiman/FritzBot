@@ -6,19 +6,11 @@ using System.Text.RegularExpressions;
 
 namespace FritzBot.commands
 {
+    [Module.Name("fw")]
+    [Module.Help("Sucht auf dem AVM FTP nach der Version des angegbenen Modells, z.b. \"!fw 7390\", \"!fw 7270_v1\", \"!fw 7390 source\", \"!fw 7390 recovery\" \"!fw 7390 all\"")]
+    [Module.ParameterRequired]
     class fw : ICommand
     {
-        public String[] Name { get { return new String[] { "fw" }; } }
-        public String HelpText { get { return "Sucht auf dem AVM FTP nach der Version des angegbenen Modells, z.b. \"!fw 7390\", \"!fw 7270_v1\", \"!fw 7390 source\", \"!fw 7390 recovery\" \"!fw 7390 all\""; } }
-        public Boolean OpNeeded { get { return false; } }
-        public Boolean ParameterNeeded { get { return true; } }
-        public Boolean AcceptEveryParam { get { return false; } }
-
-        public void Destruct()
-        {
-
-        }
-
         public void Run(ircMessage theMessage)
         {
             Boolean recovery = false;

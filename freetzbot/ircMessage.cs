@@ -249,6 +249,14 @@ namespace FritzBot
             }
         }
         /// <summary>
+        /// Sendet dem Nutzer die Hilfe
+        /// </summary>
+        public void AnswerHelp(object plugin)
+        {
+            Module.HelpAttribute help = toolbox.GetAttribute<Module.HelpAttribute>(plugin);
+            Answer(help.Help);
+        }
+        /// <summary>
         /// Antwortet dem Benutzer dort wo er den Befehl aufgerufen hat
         /// </summary>
         /// <param name="Message">Den zu Antwortenden Text</param>

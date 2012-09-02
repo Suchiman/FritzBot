@@ -223,6 +223,8 @@ namespace FritzBot
         private String _quit_message;
         private List<String> _channels;
         private Irc _connection;
+        private Irc.ReceivedEventHandler IRCEventHandler;
+        private Boolean _running;
 
         /// <summary>
         /// Erstellt ein neues Server Objekt welches die Verbindungsdaten zu einem Server verwaltet
@@ -247,26 +249,12 @@ namespace FritzBot
         /// <param name="HostName">Der Hostname des Servers z.b. example.com</param>
         /// <param name="Port">Der numerische Port des Servers, der Standard IRC Port ist 6667</param>
         /// <param name="Nickname">Der Nickname den der IRCbot für diese Verbindung verwenden soll</param>
-        public Server(String HostName, int Port, String Nickname)
-        {
-            _address = HostName;
-            _port = Port;
-            _nick = Nickname;
-            _quit_message = _nick;
-            _channels = new List<String>();
-        }
+        public Server(String HostName, int Port, String Nickname) : this(HostName, Port, Nickname, Nickname, new List<String>()) { }
         
         /// <summary>
         /// Erstellt ein neues Server Objekt welches die Verbindungsdaten zu einem Server verwaltet
         /// </summary>
-        public Server()
-        {
-            _address = "";
-            _port = 6667;
-            _nick = "";
-            _quit_message = "";
-            _channels = new List<String>();
-        }
+        public Server() : this("", 6667, "") { }
 
         /// <summary>
         /// Legt die Nachricht beim Verlassen des Servers fest
@@ -302,15 +290,7 @@ namespace FritzBot
         {
             get
             {
-                if (_connection == null)
-                {
-                    return false;
-                }
-                else if (_connection.Running)
-                {
-                    return true;
-                }
-                return false;
+                return _running;
             }
         }
 
@@ -320,15 +300,29 @@ namespace FritzBot
         /// <param name="theEventHandler">Die Methode für das ReceivedEvent</param>
         public void Connect(Irc.ReceivedEventHandler theEventHandler)
         {
+            IRCEventHandler = theEventHandler;
             _connection = new Irc(_address, _port, _nick);
+            _connection.ConnectionLost += new EventHandler(_connection_ConnectionLost);
             _connection.QuitMessage = _quit_message;
             _connection.Received += theEventHandler;
-            _connection.AutoReconnect = true;
             _connection.Connect();
             foreach (String channel in _channels)
             {
                 _connection.JoinChannel(channel);
             }
+            _running = true;
+        }
+
+        /// <summary>
+        /// Verarbeitet das ConnectionLost event und baut eine neue Verbindung auf
+        /// </summary>
+        /// <param name="sender">Das Objekt, welches das Event aufgerufen hat</param>
+        /// <param name="e">EventArgs</param>
+        void _connection_ConnectionLost(object sender, EventArgs e)
+        {
+            toolbox.Logging("Verbindung zu Server " + _address + " verloren");
+            _connection.Dispose();
+            Connect(IRCEventHandler);
         }
 
         /// <summary>
@@ -338,6 +332,8 @@ namespace FritzBot
         {
             _connection.Disconnect();
             _connection = null;
+            _running = false;
+            toolbox.Logging("Verbindung zu Server " + _address + " getrennt");
         }
 
         /// <summary>

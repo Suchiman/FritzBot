@@ -3,19 +3,11 @@ using System.Collections.Generic;
 
 namespace FritzBot.commands
 {
+    [Module.Name("alias", "a")]
+    [Module.Help("Legt einen Alias für einen Begriff fest, Beispiele, \"!a add freetz Eine Modifikation für...\", \"!a edit freetz DIE Modifikation\", \"!a remove freetz\", \"!a freetz\", Variablen: $1 ... $99 für Leerzeichen getrennte Argumente und $X für alle Argumente. encode(url) für URL Konforme Zeichencodierung")]
+    [Module.ParameterRequired]
     class alias : ICommand
     {
-        public String[] Name { get { return new String[] { "alias", "a" }; } }
-        public String HelpText { get { return "Legt einen Alias für einen Begriff fest, Beispiele, \"!a add freetz Eine Modifikation für...\", \"!a edit freetz DIE Modifikation\", \"!a remove freetz\", \"!a freetz\", Variablen: $1 ... $99 für Leerzeichen getrennte Argumente und $X für alle Argumente. encode(url) für URL Konforme Zeichencodierung"; } }
-        public Boolean OpNeeded { get { return false; } }
-        public Boolean ParameterNeeded { get { return true; } }
-        public Boolean AcceptEveryParam { get { return false; } }
-
-        public void Destruct()
-        {
-
-        }
-
         public void Run(ircMessage theMessage)
         {
             AliasCommand(theMessage);
@@ -126,10 +118,6 @@ namespace FritzBot.commands
             }
         }
     }
-}
-
-namespace FritzBot
-{
     public class AliasDB
     {
         public List<String> alias;

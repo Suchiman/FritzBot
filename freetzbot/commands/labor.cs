@@ -1,38 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Xml;
 
 namespace FritzBot.commands
 {
-    class labor : ICommand
+    [Module.Name("labor")]
+    [Module.Help("Ich schaue mal auf das aktuelle Datum der Labor Firmwares, Parameter: '7270', '7390', 'fhem', '7390at', 'android', 'ios'.")]
+    class labor : ICommand, IBackgroundTask
     {
-        public String[] Name { get { return new String[] { "labor" }; } }
-        public String HelpText { get { return "Ich schaue mal auf das aktuelle Datum der Labor Firmwares, Parameter: '7270', '7390', 'fhem', '7390at', 'android', 'ios'."; } }
-        public Boolean OpNeeded { get { return false; } }
-        public Boolean ParameterNeeded { get { return false; } }
-        public Boolean AcceptEveryParam { get { return true; } }
-
-        public labor()
+        public void Start()
         {
             boxdata = new Dictionary<String, int>()
             {
                 {"ios", 1},
                 {"android", 2},
-                //{"7390", 3},
-                {"fhem", 3},
+                {"7390", 3},
+                {"fhem", 4},
                 //{"7390at", 5},
                 //{"7320", 6},
-                {"7270", 4}
+                //{"7270", 4}
             };
             boxdatareverse = new Dictionary<int, String>()
             {
                 {1, "iOS App"},
                 {2, "Android App"},
-                //{3, "7390"},
-                {3, "7390 FHEM"},
+                {3, "7390"},
+                {4, "7390 FHEM"},
                 //{5, "7390 AT-CH"},
                 //{6, "7320"},
-                {4, "7270"}
+                //{4, "7270"}
             };
             LaborDaten = new Labordaten[boxdata.Count];
             laborthread = new Thread(new ThreadStart(this.labor_check));
@@ -42,7 +39,7 @@ namespace FritzBot.commands
             LaborDatenUpdate = DateTime.MinValue;
         }
 
-        public void Destruct()
+        public void Stop()
         {
             laborthread.Abort();
         }
@@ -217,7 +214,7 @@ namespace FritzBot
         public String daten;
         public String version;
         public String url;
-        
+
         public override int GetHashCode()
         {
             return daten.GetHashCode() ^ version.GetHashCode();
@@ -229,14 +226,14 @@ namespace FritzBot
                 return false;
 
             return Equals((Labordaten)obj);
-        }  
+        }
 
         public bool Equals(Labordaten other)
         {
             if (daten != other.daten)
                 return false;
 
-            return version == other.version;    
+            return version == other.version;
         }
 
         public static bool operator ==(Labordaten labordaten1, Labordaten labordaten2)
@@ -247,6 +244,6 @@ namespace FritzBot
         public static bool operator !=(Labordaten labordaten1, Labordaten labordaten2)
         {
             return !labordaten1.Equals(labordaten2);
-        }    
+        }
     }
 }

@@ -2,19 +2,11 @@
 
 namespace FritzBot.commands
 {
+    [Module.Name("zeit")]
+    [Module.Help("Das gibt die aktuelle Uhrzeit aus.")]
+    [Module.ParameterRequired(false)]
     class zeit : ICommand
     {
-        public String[] Name { get { return new String[] { "zeit" }; } }
-        public String HelpText { get { return "Das gibt die aktuelle Uhrzeit aus."; } }
-        public Boolean OpNeeded { get { return false; } }
-        public Boolean ParameterNeeded { get { return false; } }
-        public Boolean AcceptEveryParam { get { return false; } }
-
-        public void Destruct()
-        {
-
-        }
-
         public void Run(ircMessage theMessage)
         {
             try

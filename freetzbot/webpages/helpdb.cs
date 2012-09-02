@@ -15,17 +15,18 @@ namespace webpages
             theresponse.page += index.GenMenu(request);
             theresponse.page += "<table border=2px>";
             theresponse.page += "<tr><td><b>Befehl</b></td><td><b>Beschreibung</b></td></tr>";
-            foreach (ICommand thecommand in Program.Commands)
+            foreach (ICommand theCommand in Program.Commands)
             {
-                if (!(thecommand.OpNeeded && !toolbox.IsOp(logincheck)))
+                Boolean OPNeeded = toolbox.GetAttribute<FritzBot.Module.AuthorizeAttribute>(theCommand) != null;
+                if (toolbox.IsOp(logincheck) || !OPNeeded)
                 {
                     String names = "";
-                    foreach (String name in thecommand.Name)
+                    foreach (String name in toolbox.GetAttribute<FritzBot.Module.NameAttribute>(theCommand).Names)
                     {
                         names += ", " + name;
                     }
                     names = names.Remove(0, 2);
-                    theresponse.page += "<tr><td>" + names + "</td><td>" + thecommand.HelpText + "</td></tr>";
+                    theresponse.page += "<tr><td>" + names + "</td><td>" + toolbox.GetAttribute<FritzBot.Module.HelpAttribute>(theCommand).Help + "</td></tr>";
                 }
             }
             theresponse.page += "</table>";

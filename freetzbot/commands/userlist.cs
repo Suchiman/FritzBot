@@ -2,19 +2,11 @@
 
 namespace FritzBot.commands
 {
+    [Module.Name("userlist")]
+    [Module.Help("Das gibt eine Liste jener Benutzer aus, die mindestens eine Box bei mir registriert haben.")]
+    [Module.ParameterRequired(false)]
     class userlist : ICommand
     {
-        public String[] Name { get { return new String[] { "userlist" }; } }
-        public String HelpText { get { return "Das gibt eine Liste jener Benutzer aus, die mindestens eine Box bei mir registriert haben."; } }
-        public Boolean OpNeeded { get { return false; } }
-        public Boolean ParameterNeeded { get { return false; } }
-        public Boolean AcceptEveryParam { get { return false; } }
-
-        public void Destruct()
-        {
-
-        }
-
         public void Run(ircMessage theMessage)
         {
             String output = "";

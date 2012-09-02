@@ -12,16 +12,6 @@ namespace FritzBot.commands
         public Boolean ParameterNeeded { get { return true; } }
         public Boolean AcceptEveryParam { get { return false; } }
 
-        public void Destruct()
-        {
-
-        }
-
-        public fwnews()
-        {
-
-        }
-
         public void Run(ircMessage theMessage)
         {
             List<String> content = GetAll("ftp://ftp.avm.de/fritz.box/fritzbox.fon_wlan_7270_v2/");

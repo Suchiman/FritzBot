@@ -3,19 +3,10 @@ using System.Net;
 
 namespace FritzBot.commands
 {
+    [Module.Name("whmf", "w")]
+    [Module.Help("Das erzeugt einen Link zu wehavemorefun mit dem angegebenen Suchkriterium, Beispiele: !whmf 7270, !whmf CAPI Treiber")]
     class whmf : ICommand
     {
-        public String[] Name { get { return new String[] { "whmf", "w" }; } }
-        public String HelpText { get { return "Das erzeugt einen Link zu wehavemorefun mit dem angegebenen Suchkriterium, Beispiele: !whmf 7270, !whmf CAPI Treiber"; } }
-        public Boolean OpNeeded { get { return false; } }
-        public Boolean ParameterNeeded { get { return false; } }
-        public Boolean AcceptEveryParam { get { return true; } }
-
-        public void Destruct()
-        {
-
-        }
-
         public void Run(ircMessage theMessage)
         {
             String output = "http://wehavemorefun.de/fbwiki/index.php?search=";

@@ -2,19 +2,11 @@
 
 namespace FritzBot.commands
 {
+    [Module.Name("boxlist")]
+    [Module.Help("Dies listet alle registrierten Boxtypen auf.")]
+    [Module.ParameterRequired(false)]
     class boxlist : ICommand
     {
-        public String[] Name { get { return new String[] { "boxlist" }; } }
-        public String HelpText { get { return "Dies listet alle registrierten Boxtypen auf."; } }
-        public Boolean OpNeeded { get { return false; } }
-        public Boolean ParameterNeeded { get { return false; } }
-        public Boolean AcceptEveryParam { get { return false; } }
-
-        public void Destruct()
-        {
-
-        }
-
         public void Run(ircMessage theMessage)
         {
             String boxen = "";

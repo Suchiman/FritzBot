@@ -2,19 +2,10 @@
 
 namespace FritzBot.commands
 {
+    [Module.Name("freetz", "f")]
+    [Module.Help("Das erzeugt einen Link zum Freetz Trac mit dem angegebenen Suchkriterium, Beispiele: !freetz ngIRCd, !freetz Build System")]
     class freetz : ICommand
     {
-        public String[] Name { get { return new String[] { "freetz", "f" }; } }
-        public String HelpText { get { return "Das erzeugt einen Link zum Freetz Trac mit dem angegebenen Suchkriterium, Beispiele: !freetz ngIRCd, !freetz Build System"; } }
-        public Boolean OpNeeded { get { return false; } }
-        public Boolean ParameterNeeded { get { return false; } }
-        public Boolean AcceptEveryParam { get { return true; } }
-
-        public void Destruct()
-        {
-
-        }
-
         public void Run(ircMessage theMessage)
         {
             String output = "http://freetz.org/search?q=";

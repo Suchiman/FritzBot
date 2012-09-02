@@ -2,25 +2,17 @@
 
 namespace FritzBot.commands
 {
+    [Module.Name("uptime", "laufzeit")]
+    [Module.Help("Das zeigt meine aktuelle Laufzeit an und wie lange ich mit diesem Server verbunden bin.")]
+    [Module.ParameterRequired(false)]
     class uptime : ICommand
     {
-        public String[] Name { get { return new String[] { "uptime", "laufzeit" }; } }
-        public String HelpText { get { return "Das zeigt meine aktuelle Laufzeit an und wie lange ich mit diesem Server verbunden bin."; } }
-        public Boolean OpNeeded { get { return false; } }
-        public Boolean ParameterNeeded { get { return false; } }
-        public Boolean AcceptEveryParam { get { return false; } }
+        private DateTime startzeit;
 
         public uptime()
         {
             startzeit = DateTime.Now;
         }
-
-        public void Destruct()
-        {
-
-        }
-
-        private DateTime startzeit;
 
         public void Run(ircMessage theMessage)
         {

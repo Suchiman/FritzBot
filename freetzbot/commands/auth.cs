@@ -2,19 +2,11 @@
 
 namespace FritzBot.commands
 {
+    [Module.Name("auth")]
+    [Module.Help("Authentifiziert dich wenn du ein Passwort festgelegt hast. z.b. !auth passwort")]
+    [Module.ParameterRequired]
     class auth : ICommand
     {
-        public String[] Name { get { return new String[] { "auth" }; } }
-        public String HelpText { get { return "Authentifiziert dich wenn du ein Passwort festgelegt hast. z.b. !auth passwort"; } }
-        public Boolean OpNeeded { get { return false; } }
-        public Boolean ParameterNeeded { get { return true; } }
-        public Boolean AcceptEveryParam { get { return false; } }
-
-        public void Destruct()
-        {
-
-        }
-
         public void Run(ircMessage theMessage)
         {
             if (theMessage.TheUser.Authenticated)

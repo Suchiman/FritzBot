@@ -2,19 +2,11 @@
 
 namespace FritzBot.commands
 {
+    [Module.Name("trunk")]
+    [Module.Help("Dies zeigt den aktuellsten Changeset an.")]
+    [Module.ParameterRequired(false)]
     class trunk : ICommand
     {
-        public String[] Name { get { return new String[] { "trunk" }; } }
-        public String HelpText { get { return "Dies zeigt den aktuellsten Changeset an."; } }
-        public Boolean OpNeeded { get { return false; } }
-        public Boolean ParameterNeeded { get { return false; } }
-        public Boolean AcceptEveryParam { get { return false; } }
-
-        public void Destruct()
-        {
-
-        }
-
         public void Run(ircMessage theMessage)
         {
             String webseite = toolbox.GetWeb("http://freetz.org/changeset");

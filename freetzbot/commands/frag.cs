@@ -2,20 +2,17 @@
 
 namespace FritzBot.commands
 {
-    class frag : ICommand
+    [Module.Name("frag")]
+    [Module.Help("Dann werde ich den genannten Benutzer nach seiner Box fragen, z.b. !frag Anonymous")]
+    [Module.ParameterRequired]
+    class frag : ICommand, IBackgroundTask
     {
-        public String[] Name { get { return new String[] { "frag" }; } }
-        public String HelpText { get { return "Dann werde ich den genannten Benutzer nach seiner Box fragen, z.b. !frag Anonymous"; } }
-        public Boolean OpNeeded { get { return false; } }
-        public Boolean ParameterNeeded { get { return true; } }
-        public Boolean AcceptEveryParam { get { return false; } }
-
-        public void Destruct()
+        public void Stop()
         {
             Program.UserJoined -= new Program.JoinEventHandler(joined);
         }
 
-        public frag()
+        public void Start()
         {
             Program.UserJoined += new Program.JoinEventHandler(joined);
         }

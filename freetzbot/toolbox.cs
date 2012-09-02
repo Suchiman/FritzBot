@@ -116,7 +116,7 @@ namespace FritzBot
         /// </summary>
         /// <param name="fileName">Ein Array das die Dateinamen enthält</param>
         /// <returns>Das aus den Quellcode erstellte Assembly</returns>
-        public static Assembly LoadSource(String[] fileName)
+        public static Assembly LoadSource(params String[] fileName)
         {
             CSharpCodeProvider compiler = new CSharpCodeProvider();
             CompilerParameters compilerParams = new CompilerParameters();
@@ -238,12 +238,9 @@ namespace FritzBot
         {
             foreach (ICommand theCommand in Program.Commands)
             {
-                foreach (String theName in theCommand.Name)
+                if (toolbox.GetAttribute<Module.NameAttribute>(theCommand).IsNamed(Name))
                 {
-                    if (theName == Name)
-                    {
-                        return theCommand;
-                    }
+                    return theCommand;
                 }
             }
             throw new ArgumentException("Command not found");
@@ -264,6 +261,21 @@ namespace FritzBot
         public static Boolean IsIgnored(String Nickname)
         {
             return Program.TheUsers[Nickname].ignored;
+        }
+
+        public static T GetAttribute<T>(object obj)
+        {
+            return GetAttribute<T>(obj.GetType());
+        }
+
+        public static T GetAttribute<T>(Type type)
+        {
+            Attribute Attr = Attribute.GetCustomAttribute(type, typeof(T));
+            if (Attr == null)
+            {
+                return default(T);
+            }
+            return (T)(Attr as object);
         }
     }
 }
