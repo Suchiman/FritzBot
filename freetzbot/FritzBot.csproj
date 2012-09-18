@@ -203,7 +203,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>powershell Set-ExecutionPolicy RemoteSigned
-powershell -file "C:\Users\Robin\Documents\Visual Studio 2010\Projects\freetzbot\lines.ps1"</PreBuildEvent>
+powershell -file "$(SolutionDir)\lines.ps1"</PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

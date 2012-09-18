@@ -9,6 +9,10 @@ namespace FritzBot.commands
     [Module.Help("Gibt Informationen zu den aktuellen Labor Firmwares aus: !labor <boxnummer>")]
     class labor : ICommand, IBackgroundTask
     {
+        private List<Labordaten> LaborDaten = new List<Labordaten>();
+        private DateTime LaborDatenUpdate = DateTime.MinValue;
+        private Thread laborthread;
+
         public void Start()
         {
             laborthread = new Thread(new ThreadStart(this.LaborCheck))
@@ -22,75 +26,6 @@ namespace FritzBot.commands
         public void Stop()
         {
             laborthread.Abort();
-        }
-
-        private List<Labordaten> LaborDaten = new List<Labordaten>();
-        private DateTime LaborDatenUpdate = DateTime.MinValue;
-        Thread laborthread;
-
-        private void UpdateLaborCache()
-        {
-            LaborDaten = new List<Labordaten>();
-            String page = ReadyHtmlForDocument(toolbox.GetWeb("http://www.avm.de/de/Service/Service-Portale/Labor/index.php"));
-            if (String.IsNullOrEmpty(page))
-            {
-                throw new InvalidOperationException("Verbindungsfehler");
-            }
-            XmlDocument dies = new XmlDocument();
-            dies.LoadXml(page);
-            XmlNodeList huh = dies.SelectNodes("//h2");
-            foreach (XmlNode item in huh)
-            {
-                XmlNode aktuellerSibling = item.NextSibling;
-                while (aktuellerSibling.NextSibling != null && !String.IsNullOrEmpty(aktuellerSibling.NextSibling.InnerText))
-                {
-                    aktuellerSibling = aktuellerSibling.NextSibling;
-                    if (aktuellerSibling is XmlComment) continue;
-
-                    Labordaten daten = new Labordaten();
-                    daten.url = aktuellerSibling.SelectSingleNode(".//a/@href").Value.Trim();
-                    String newPage = ReadyHtmlForDocument(toolbox.GetWeb("http://www.avm.de/de/Service/Service-Portale/Labor/" + daten.url));
-                    XmlDocument ver = new XmlDocument();
-                    while (true)
-                    {
-                        try
-                        {
-                            ver.LoadXml(newPage);
-                            break;
-                        }
-                        catch (XmlException ex)
-                        {
-                            newPage = newPage.Remove(ex.LinePosition - 3, newPage.Substring(ex.LinePosition - 3).IndexOf('>') + 1);
-                            continue;
-                        }
-                    }
-                    XmlNodeList table = ver.SelectNodes("//table[@style=\"text-align:left; width:350px; float:left;\"]/tr[2]/td/text()");
-                    daten.typ = ver.SelectSingleNode("//h3[contains(@id, 'H')]/text()").Value.Trim();
-                    daten.typ = daten.typ.Substring(daten.typ.LastIndexOf(' ')).Trim();
-                    daten.version = table[0].Value.Trim();
-                    daten.datum = table[1].Value.Trim();
-                    LaborDaten.Add(daten);
-                }
-            }
-            LaborDatenUpdate = DateTime.Now;
-        }
-
-        private String ReadyHtmlForDocument(String html)
-        {
-            html = html.Replace("&ndash;", "–").Replace("&nbsp;", "").Replace("&uuml;", "ü").Replace("&auml;", "ä").Replace("&copy;", "©").Replace("<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"de\">", "<html>").Replace("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">", "<!DOCTYPE html>");
-            while (html.Contains("<br>") || html.Contains("\r") || html.Contains("\n") || html.Contains("\t") || html.Contains("  "))
-            {
-                html = html.Replace("\r", "").Replace("\n", "").Replace("\t", "").Replace("  ", " ").Replace("<br>", "");
-            }
-            while (html.Contains("<script") && html.Contains("</script"))
-            {
-                html = html.Remove(html.IndexOf("<script"), html.Substring(html.IndexOf("<script")).IndexOf("</script") + 8);
-            }
-            while (html.Contains("<img"))
-            {
-                html = html.Remove(html.IndexOf("<img"), html.Substring(html.IndexOf("<img")).IndexOf(">") + 1);
-            }
-            return html;
         }
 
         public void Run(ircMessage theMessage)
@@ -133,48 +68,22 @@ namespace FritzBot.commands
         private void LaborCheck()
         {
             List<Labordaten> alte = null;
+            while (!TryGetNewestLabors(out alte))
+            {
+                Thread.Sleep(1000);
+            }
             String output = "";
             while (true)
             {
                 if (Properties.Settings.Default.LaborCheck)
                 {
-                    do
+                    List<Labordaten> neue = null;
+                    while (!TryGetNewestLabors(out neue))
                     {
-                        try
-                        {
-                            UpdateLaborCache();
-                            alte = LaborDaten;
-                            break;
-                        }
-                        catch (Exception ex)
-                        {
-                            Thread.Sleep(1000);
-                            if (ex is IndexOutOfRangeException)
-                            {
-                                Program.TheServers.AnnounceGlobal("Mir ist bei der Verarbeitung der AVM Labor Webseite ein Fehler unterlaufen der typisch dafür ist, dass AVM etwas hinzugefügt oder entfernt hat. Zum Labor: " + toolbox.ShortUrl("http://www.avm.de/de/Service/Service-Portale/Labor/index.php"));
-                                return;
-                            }
-                        }
-                    } while (true);
-                    List<Labordaten> neue = LaborDaten;
-                    String labors = "";
-                    List<Labordaten> unEquals = new List<Labordaten>();
-                    foreach (Labordaten neueDaten in neue)
-                    {
-                        bool equals = false;
-                        foreach (Labordaten alteDaten in alte)
-                        {
-                            if(alteDaten.Equals(neueDaten))
-                            {
-                                equals = true;
-                                break;
-                            }
-                        }
-                        if (!equals)
-                        {
-                            unEquals.Add(neueDaten);
-                        }
+                        Thread.Sleep(1000);
                     }
+                    List<Labordaten> unEquals = GetDifferentLabors(alte, neue);
+                    String labors = "";
                     foreach (Labordaten item in unEquals)
                     {
                         labors += ", " + item.typ;
@@ -183,12 +92,9 @@ namespace FritzBot.commands
                     {
                         if (!String.IsNullOrEmpty(output))
                         {
-                            output += ", Neue Labor Versionen gesichtet! -" + labors.Remove(0, 1);
+                            output += ", ";
                         }
-                        else
-                        {
-                            output += "Neue Labor Versionen gesichtet! -" + labors.Remove(0, 1);
-                        }
+                        output += "Neue Labor Versionen gesichtet! -" + labors.Remove(0, 1);
                     }
                     if (!String.IsNullOrEmpty(output))
                     {
@@ -205,11 +111,117 @@ namespace FritzBot.commands
                 }
             }
         }
+
+        private Boolean TryGetNewestLabors(out List<Labordaten> Daten)
+        {
+            Daten = null;
+            try
+            {
+                UpdateLaborCache();
+                Daten = LaborDaten;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private List<Labordaten> GetDifferentLabors(List<Labordaten> alte, List<Labordaten> neue)
+        {
+            List<Labordaten> veränderte = new List<Labordaten>();
+            foreach (Labordaten neu in neue)
+            {
+                Boolean matching = false;
+                foreach (Labordaten alt in alte)
+                {
+                    if (alt == neu)
+                    {
+                        matching = true;
+                    }
+                }
+                if (!matching)
+                {
+                    veränderte.Add(neu);
+                }
+            }
+            return veränderte;
+        }
+
+        private String ReadyHtmlForDocument(String html)
+        {
+            html = html.Replace("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">", "<!DOCTYPE html>"); //Doctype deklaration ersetzen um aufhängen des XmlParsers zu verhindern
+            html = html.Replace("<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"de\">", "<html>");
+            html = html.Replace("&uuml;", "ü").Replace("&Uuml;", "Ü").Replace("&auml;", "ä").Replace("&Auml;", "Ä").Replace("&ouml;", "ö").Replace("&Ouml;", "Ö"); //Umlaute ersetzen
+            html = html.Replace("&ndash;", "–").Replace("&nbsp;", " ").Replace("&copy;", "©").Replace("&szlig;", "ß").Replace("&euro;", "€").Replace("&amp;", "&");
+            while (html.Contains("<br>") || html.Contains("\r") || html.Contains("\n") || html.Contains("\t") || html.Contains("  "))
+            {
+                html = html.Replace("\r", "").Replace("\n", "").Replace("\t", "").Replace("  ", " ").Replace("<br>", "");
+            }
+            while (html.Contains("<script") && html.Contains("</script"))
+            {
+                html = html.Remove(html.IndexOf("<script"), html.Substring(html.IndexOf("<script")).IndexOf("</script") + 8);
+            }
+            while (html.Contains("<img"))
+            {
+                html = html.Remove(html.IndexOf("<img"), html.Substring(html.IndexOf("<img")).IndexOf(">") + 1);
+            }
+            return html;
+        }
+
+        private void UpdateLaborCache()
+        {
+            List<Labordaten> NeueLaborDaten = new List<Labordaten>();
+            String page = ReadyHtmlForDocument(toolbox.GetWeb("http://www.avm.de/de/Service/Service-Portale/Labor/index.php"));
+            if (String.IsNullOrEmpty(page))
+            {
+                throw new InvalidOperationException("Verbindungsfehler");
+            }
+            XmlDocument dies = new XmlDocument();
+            dies.LoadXml(page);
+            XmlNodeList huh = dies.SelectNodes("//h2");
+            foreach (XmlNode item in huh)
+            {
+                XmlNode aktuellerSibling = item.NextSibling;
+                while (aktuellerSibling.NextSibling != null && !String.IsNullOrEmpty(aktuellerSibling.NextSibling.InnerText))
+                {
+                    aktuellerSibling = aktuellerSibling.NextSibling;
+                    if (aktuellerSibling is XmlComment) continue;
+
+                    Labordaten daten = new Labordaten();
+                    daten.url = aktuellerSibling.SelectSingleNode(".//a/@href").Value.Trim();
+                    String newPage = ReadyHtmlForDocument(toolbox.GetWeb("http://www.avm.de/de/Service/Service-Portale/Labor/" + daten.url));
+                    XmlDocument ver = new XmlDocument();
+                    while (true)
+                    {
+                        try
+                        {
+                            ver.LoadXml(newPage);
+                            break;
+                        }
+                        catch (XmlException ex)
+                        {
+                            newPage = newPage.Remove(ex.LinePosition - 3, newPage.Substring(ex.LinePosition - 3).IndexOf('>') + 1);
+                            continue;
+                        }
+                    }
+                    XmlNodeList table = ver.SelectNodes("//table[@style=\"text-align:left; width:350px; float:left;\"]/tr[2]/td/text()");
+                    daten.typ = ver.SelectSingleNode("//h3[contains(@id, 'H')]/text()").Value.Trim();
+                    daten.typ = daten.typ.Substring(daten.typ.LastIndexOf(' ')).Trim();
+                    daten.version = table[0].Value.Trim();
+                    daten.datum = table[1].Value.Trim();
+                    NeueLaborDaten.Add(daten);
+                }
+            }
+            if (NeueLaborDaten.Count > 1)
+            {
+                LaborDatenUpdate = DateTime.Now;
+                LaborDaten = NeueLaborDaten;
+            }
+        }
     }
-}
-namespace FritzBot
-{
-    struct Labordaten : IEquatable<Labordaten>
+
+    class Labordaten : IEquatable<Labordaten>
     {
         public String typ;
         public String datum;
