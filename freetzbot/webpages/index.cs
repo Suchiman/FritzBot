@@ -1,5 +1,6 @@
 ﻿using System;
 using FritzBot;
+using FritzBot.Core;
 
 namespace webpages
 {
@@ -14,7 +15,7 @@ namespace webpages
             menu += "<td><a href=\"boxdb\">BoxDB</a></td>";
             menu += "<td><a href=\"aliasdb\">Aliase</a></td>";
             menu += "<td><a href=\"/helpdb\">Hilfe</a></td>";
-            if (Program.TheUsers[login.CheckLogin(request)].IsOp)
+            if (UserManager.GetInstance()[login.CheckLogin(request)].IsOp)
             {
                 menu += "<td><a href=\"/settings\">Einstellungen</a></td>";
             }

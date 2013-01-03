@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>FritzBot</RootNamespace>
     <AssemblyName>FritzBot</AssemblyName>
-    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <PublishUrl>publish\</PublishUrl>
@@ -27,6 +27,7 @@
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -92,79 +93,94 @@
     <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="HtmlAgilityPack">
+      <HintPath>..\packages\HtmlAgilityPack.1.4.6\lib\Net20\HtmlAgilityPack.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Web" />
     <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Attribute.cs" />
-    <Compile Include="commands\taskcontrol.cs" />
-    <Compile Include="Interfaces.cs" />
-    <Compile Include="commands\about.cs" />
-    <Compile Include="commands\alias.cs" />
-    <Compile Include="commands\auth.cs" />
-    <Compile Include="commands\bier.cs" />
-    <Compile Include="commands\box.cs" />
-    <Compile Include="commands\boxfind.cs" />
-    <Compile Include="commands\boxinfo.cs" />
-    <Compile Include="commands\boxlist.cs" />
-    <Compile Include="commands\boxremove.cs" />
-    <Compile Include="commands\calc.cs" />
-    <Compile Include="commands\connect.cs" />
-    <Compile Include="commands\frag.cs" />
-    <Compile Include="commands\freetz.cs" />
-    <Compile Include="commands\fw.cs" />
-    <Compile Include="commands\fwnews.cs" />
-    <Compile Include="commands\google.cs" />
-    <Compile Include="commands\group.cs" />
-    <Compile Include="commands\hilfe.cs" />
-    <Compile Include="commands\ignore.cs" />
-    <Compile Include="commands\join.cs" />
-    <Compile Include="commands\labor.cs" />
-    <Compile Include="commands\leave.cs" />
-    <Compile Include="commands\lmgtfy.cs" />
-    <Compile Include="commands\loadmodule.cs" />
-    <Compile Include="commands\mem.cs" />
-    <Compile Include="commands\news.cs" />
-    <Compile Include="commands\op.cs" />
-    <Compile Include="commands\part.cs" />
-    <Compile Include="commands\passwd.cs" />
-    <Compile Include="commands\ping.cs" />
-    <Compile Include="commands\pushover.cs" />
-    <Compile Include="commands\quit.cs" />
-    <Compile Include="commands\remind.cs" />
-    <Compile Include="commands\restart.cs" />
-    <Compile Include="commands\seen.cs" />
-    <Compile Include="commands\shorturl.cs" />
-    <Compile Include="commands\title.cs" />
-    <Compile Include="commands\trunk.cs" />
-    <Compile Include="commands\unignore.cs" />
-    <Compile Include="commands\unloadmodule.cs" />
-    <Compile Include="commands\uptime.cs" />
-    <Compile Include="commands\user.cs" />
-    <Compile Include="commands\userlist.cs" />
-    <Compile Include="commands\webinterface.cs" />
-    <Compile Include="commands\witz.cs" />
-    <Compile Include="commands\zeit.cs" />
+    <Compile Include="DataModel\Attribute.cs" />
+    <Compile Include="Plugins\admin.cs" />
+    <Compile Include="Plugins\subscribe.cs" />
+    <Compile Include="Plugins\SubscriptionProviders\IRCSubscriptionProvider.cs" />
+    <Compile Include="Plugins\SubscriptionProviders\MailSubscriptionProvider.cs" />
+    <Compile Include="Plugins\SubscriptionProviders\PushoverSubscriptionProvider.cs" />
+    <Compile Include="Plugins\SubscriptionProviders\RSSSubscriptionProvider.cs" />
+    <Compile Include="Plugins\SubscriptionProviders\SubscriptionProvider.cs" />
+    <Compile Include="Plugins\taskcontrol.cs" />
+    <Compile Include="Core\Extensions.cs" />
+    <Compile Include="Core\PluginManager.cs" />
+    <Compile Include="Core\XMLStorageEngine.cs" />
+    <Compile Include="DataModel\BoxDatabase.cs" />
+    <Compile Include="DataModel\IRC\Channel.cs" />
+    <Compile Include="DataModel\IRC\IRCEvent.cs" />
+    <Compile Include="DataModel\ModulDataStorage.cs" />
+    <Compile Include="DataModel\PluginBase.cs" />
+    <Compile Include="Functions\DataCache.cs" />
+    <Compile Include="Functions\StringSimilarity.cs" />
+    <Compile Include="DataModel\Interfaces.cs" />
+    <Compile Include="Plugins\about.cs" />
+    <Compile Include="Plugins\alias.cs" />
+    <Compile Include="Plugins\auth.cs" />
+    <Compile Include="Plugins\bier.cs" />
+    <Compile Include="Plugins\box.cs" />
+    <Compile Include="Plugins\boxfind.cs" />
+    <Compile Include="Plugins\boxinfo.cs" />
+    <Compile Include="Plugins\boxlist.cs" />
+    <Compile Include="Plugins\boxremove.cs" />
+    <Compile Include="Plugins\calc.cs" />
+    <Compile Include="Plugins\connect.cs" />
+    <Compile Include="Plugins\frag.cs" />
+    <Compile Include="Plugins\freetz.cs" />
+    <Compile Include="Plugins\fw.cs" />
+    <Compile Include="Plugins\google.cs" />
+    <Compile Include="Plugins\group.cs" />
+    <Compile Include="Plugins\hilfe.cs" />
+    <Compile Include="Plugins\ignore.cs" />
+    <Compile Include="Plugins\join.cs" />
+    <Compile Include="Plugins\labor.cs" />
+    <Compile Include="Plugins\leave.cs" />
+    <Compile Include="Plugins\lmgtfy.cs" />
+    <Compile Include="Plugins\loadmodule.cs" />
+    <Compile Include="Plugins\mem.cs" />
+    <Compile Include="Plugins\news.cs" />
+    <Compile Include="Plugins\op.cs" />
+    <Compile Include="Plugins\part.cs" />
+    <Compile Include="Plugins\passwd.cs" />
+    <Compile Include="Plugins\ping.cs" />
+    <Compile Include="Plugins\quit.cs" />
+    <Compile Include="Plugins\remind.cs" />
+    <Compile Include="Plugins\restart.cs" />
+    <Compile Include="Plugins\seen.cs" />
+    <Compile Include="Plugins\shorturl.cs" />
+    <Compile Include="Plugins\title.cs" />
+    <Compile Include="Plugins\translate.cs" />
+    <Compile Include="Plugins\trunk.cs" />
+    <Compile Include="Plugins\unignore.cs" />
+    <Compile Include="Plugins\unloadmodule.cs" />
+    <Compile Include="Plugins\uptime.cs" />
+    <Compile Include="Plugins\user.cs" />
+    <Compile Include="Plugins\userlist.cs" />
+    <Compile Include="Plugins\webinterface.cs" />
+    <Compile Include="Plugins\witz.cs" />
+    <Compile Include="Plugins\zeit.cs" />
     <Compile Include="irc.cs" />
     <Compile Include="ircMessage.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Properties\Settings.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <DependentUpon>Settings.settings</DependentUpon>
-    </Compile>
-    <Compile Include="servers.cs" />
-    <Compile Include="Settings.cs" />
+    <Compile Include="Core\ServerManager.cs" />
     <Compile Include="toolbox.cs" />
-    <Compile Include="commands\whmf.cs" />
-    <Compile Include="users.cs" />
+    <Compile Include="Plugins\whmf.cs" />
+    <Compile Include="Core\UserManager.cs" />
     <Compile Include="webpages\aliasdb.cs" />
     <Compile Include="webpages\boxdb.cs" />
     <Compile Include="webpages\helpdb.cs" />
     <Compile Include="webpages\index.cs" />
+    <Compile Include="webpages\rss.cs" />
     <Compile Include="webpages\settings.cs" />
     <Compile Include="webpages\login.cs" />
     <Compile Include="webpages\logout.cs" />
@@ -173,7 +189,7 @@
     <Compile Include="webpages\web_data_struct.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="commands\APIsampe.txt" />
+    <Content Include="Plugins\APIsampe.txt" />
     <Content Include="ToDo.txt" />
   </ItemGroup>
   <ItemGroup>
@@ -194,16 +210,13 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
-    <None Include="Properties\Settings.settings">
-      <Generator>PublicSettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
+    <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>powershell Set-ExecutionPolicy RemoteSigned
-powershell -file "$(SolutionDir)\lines.ps1"</PreBuildEvent>
+    <PreBuildEvent>
+    </PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

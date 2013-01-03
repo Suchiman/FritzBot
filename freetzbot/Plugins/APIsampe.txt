@@ -1,0 +1,49 @@
+﻿Über das Module.Name Attribute können die Namen festgelegt werden über die der Befehl / Task angesprochen wird
+Mit dem Attribute Module.Help wird ein Hilfetext hinterlegt der durch !help example abgerufen werden kann
+Wenn das Attribute Module.Authorize angegeben wird, können nur OP's den Befehl nutzen
+Wenn das Attribute Module.ParameterRequired angegeben wird müssen Parameter angegeben werden, mit Module.ParameterRequired(false) können Parameter verboten werden
+und ein weglassen des Attributes deaktiviert die Prüfung auf Parameter
+wird ein parameter angegeben obwohl keiner erforderlich ist oder es wid kein parameter angegeben obwohl ein parameter erforderlich ist, wird der Hilfetext angezeigt.
+Die Run Methode wird ausgeführt wenn jemand den Befehl aufruft: !example z.b.
+	der Parameter vom Typ ircMessage bietet viele Hilfreiche Methoden wie z.b. Answer um dem Benutzer zu antworten. Die Befehle sind alle via IntelliSense dokumentiert
+
+namespace FritzBot.commands
+{
+    [Module.Name("example", "beispiel")]
+    [Module.Help("Die Hilfe zum Befehl")]
+    //[Module.ParameterRequired] //Wird ein ParameterBenötigt ?
+    //[Module.Authorize] //Werden Operator rechte benötigt ?
+    class example : ICommand
+    {
+        public void Run(ircMessage theMessage)
+        {
+			theMessage.Answer("Hallo Welt");
+		}
+    }
+}
+
+Mit dem Interface IBackgroundTask können hintergrundaufgaben definiert werden die sich über Start und Stop jeweils starten oder stoppen lassen können
+namespace FritzBot.commands
+{
+    [Module.Name("example", "beispiel")]
+    class example : IBackgroundTask
+    {
+		Thread myThread;
+        public void Start()
+        {
+			myThread = new Thread(new ThreadStart(MyThread));
+			myThread.IsBackground = true;
+			myThread.Start();
+		}
+
+		public void Stop()
+		{
+			myThread.Abort();
+		}
+
+		private void MyThread()
+		{
+			// Ich tue die ganze zeit irgendetwas brauchbares hoffe ich
+		}
+    }
+}

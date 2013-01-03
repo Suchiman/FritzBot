@@ -8,13 +8,14 @@ using System.Text;
 using System.Threading;
 using System.Web;
 using Microsoft.CSharp;
+using FritzBot.Core;
 
 namespace FritzBot
 {
     public static class toolbox
     {
         private static Thread LoggingThread = new Thread(new ThreadStart(LogThread));
-        private static Queue<String> LoggingList = new Queue<String>();
+        private static Queue<string> LoggingList = new Queue<string>();
         private static readonly object _LogThreadLocker = new object();
         private static readonly object _LoggingLocker = new object();
 
@@ -57,7 +58,12 @@ namespace FritzBot
             }
         }
 
-        public static void Logging(String toLog)
+        public static void Logging(Exception ex)
+        {
+            Logging(String.Format("Es ist eine Exception aufgetreten: {0} \r\n {1}", ex.Message, ex.StackTrace));
+        }
+
+        public static void Logging(string toLog)
         {
             lock (_LogThreadLocker)
             {
@@ -85,7 +91,7 @@ namespace FritzBot
         /// </summary>
         /// <param name="toCrypt">Der zu hashende String</param>
         /// <returns>Den Hashwert des Strings</returns>
-        public static String Crypt(String toCrypt)
+        public static string Crypt(string toCrypt)
         {
             byte[] hash = null;
             byte[] tocode = Encoding.UTF8.GetBytes(toCrypt.ToCharArray());
@@ -105,49 +111,11 @@ namespace FritzBot
         /// <param name="Nick">Der Nickname des Bots</param>
         /// <param name="Quit_Message">Die Nachricht beim Verlassen</param>
         /// <param name="Channels">Eine Liste von Channelnamen die der Bot betreten soll</param>
-        public static void InstantiateConnection(String server, int Port, String Nick, String Quit_Message, String Channel)
+        public static void InstantiateConnection(string server, int Port, string Nick, string Quit_Message, string Channel)
         {
-            List<String> channels = new List<String>() { { Channel } };
-            Program.TheServers.NewConnection(server, Port, Nick, Quit_Message, channels);
-        }
-
-        /// <summary>
-        /// Kompiliert Quellcode im Arbeitsspeicher zu einem Assembly
-        /// </summary>
-        /// <param name="fileName">Ein Array das die Dateinamen enthält</param>
-        /// <returns>Das aus den Quellcode erstellte Assembly</returns>
-        public static Assembly LoadSource(params String[] fileName)
-        {
-            CSharpCodeProvider compiler = new CSharpCodeProvider();
-            CompilerParameters compilerParams = new CompilerParameters();
-            compilerParams.CompilerOptions = "/target:library /optimize";
-            compilerParams.GenerateExecutable = false;
-            compilerParams.GenerateInMemory = true;
-            compilerParams.IncludeDebugInformation = false;
-            compilerParams.ReferencedAssemblies.Add("mscorlib.dll");
-            compilerParams.ReferencedAssemblies.Add("System.dll");
-            compilerParams.ReferencedAssemblies.Add("System.Data.dll");
-            compilerParams.ReferencedAssemblies.Add("System.Web.dll");
-            compilerParams.ReferencedAssemblies.Add("System.Xml.dll");
-            compilerParams.ReferencedAssemblies.Add(Assembly.GetExecutingAssembly().GetName().Name + ".exe");
-            CompilerResults results = null;
-            try
-            {
-                results = compiler.CompileAssemblyFromFile(compilerParams, fileName);
-            }
-            catch (Exception ex)
-            {
-                Logging(ex.Message);
-            }
-            if (results.Errors.Count > 0)
-            {
-                foreach (CompilerError theError in results.Errors)
-                {
-                    Logging("Compilerfehler: " + theError.ErrorText);
-                }
-                throw new Exception("Compilation failed");
-            }
-            return results.CompiledAssembly;
+            List<string> channels = new List<string>() { { Channel } };
+            Server Connection = ServerManager.GetInstance().NewConnection(server, Port, Nick, Quit_Message, channels);
+            Connection.Connect();
         }
 
         /// <summary>
@@ -156,12 +124,12 @@ namespace FritzBot
         /// <param name="Url">Die http WebAdresse</param>
         /// <param name="POSTParams">Optionale POST Parameter</param>
         /// <returns>Die Webseite als String</returns>
-        public static String GetWeb(String Url, Dictionary<String, String> POSTParams = null)
+        public static string GetWeb(string Url, Dictionary<string, string> POSTParams = null)
         {
-            String POSTData = "";
+            string POSTData = "";
             if (POSTParams != null)
             {
-                foreach (String key in POSTParams.Keys)
+                foreach (string key in POSTParams.Keys)
                 {
                     POSTData += HttpUtility.UrlEncode(key) + "=" + HttpUtility.UrlEncode(POSTParams[key]) + "&";
                 }
@@ -189,13 +157,13 @@ namespace FritzBot
                 Logging("Exception beim Webseiten Aufruf aufgetreten: " + ex.Message);
                 return "";
             }
-            String theEncoding = "UTF-8";
+            string theEncoding = "UTF-8";
             if (!String.IsNullOrEmpty(response.ContentEncoding))
             {
                 theEncoding = response.ContentEncoding;
             }
             StreamReader resStream = new StreamReader(response.GetResponseStream(), Encoding.GetEncoding(theEncoding, EncoderFallback.ReplacementFallback, DecoderFallback.ReplacementFallback));
-            String thepage = resStream.ReadToEnd();
+            string thepage = resStream.ReadToEnd();
             resStream.Close();
             response.Close();
 
@@ -207,7 +175,7 @@ namespace FritzBot
         /// </summary>
         /// <param name="Url">Die zu kürzende URL</param>
         /// <returns>Die gekürzte URL</returns>
-        public static String ShortUrl(String Url)
+        public static string ShortUrl(string Url)
         {
             try
             {
@@ -224,33 +192,16 @@ namespace FritzBot
         /// </summary>
         /// <param name="url">Der zu Codierende String</param>
         /// <returns>Einen URL Encodierten String</returns>
-        public static String UrlEncode(String url)
+        public static string UrlEncode(string url)
         {
             return System.Web.HttpUtility.UrlEncode(url, Encoding.UTF8);
         }
 
-        /// <summary>
-        /// Sucht nach der Instanz des Kommandos, wirft eine ArgumentException wenn das Kommando nicht gefunden wird
-        /// </summary>
-        /// <param name="Name">Der name des Kommandos</param>
-        /// <returns>Das gefundene Kommando Objekt</returns>
-        public static ICommand getCommandByName(String Name)
+        public static bool IsOp(string Nickname)
         {
-            foreach (ICommand theCommand in Program.Commands)
+            if (UserManager.GetInstance().Exists(Nickname))
             {
-                if (toolbox.GetAttribute<Module.NameAttribute>(theCommand).IsNamed(Name))
-                {
-                    return theCommand;
-                }
-            }
-            throw new ArgumentException("Command not found");
-        }
-
-        public static Boolean IsOp(String Nickname)
-        {
-            if (Program.TheUsers.Exists(Nickname))
-            {
-                if (Program.TheUsers[Nickname].IsOp && (Program.TheUsers[Nickname].Authenticated || String.IsNullOrEmpty(Program.TheUsers[Nickname].password)))
+                if (UserManager.GetInstance()[Nickname].IsOp && (UserManager.GetInstance()[Nickname].Authenticated || String.IsNullOrEmpty(UserManager.GetInstance()[Nickname].password)))
                 {
                     return true;
                 }
@@ -258,9 +209,9 @@ namespace FritzBot
             return false;
         }
 
-        public static Boolean IsIgnored(String Nickname)
+        public static bool IsIgnored(string Nickname)
         {
-            return Program.TheUsers[Nickname].ignored;
+            return UserManager.GetInstance()[Nickname].ignored;
         }
 
         public static T GetAttribute<T>(object obj)

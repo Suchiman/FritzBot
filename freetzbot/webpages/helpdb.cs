@@ -1,27 +1,29 @@
 ﻿using System;
 using FritzBot;
+using FritzBot.Core;
+using System.Linq;
 
 namespace webpages
 {
     class helpdb : IWebInterface
     {
-        public String Url { get { return "/helpdb"; } }
+        public string Url { get { return "/helpdb"; } }
 
         public HtmlResponse GenPage(HtmlRequest request)
         {
             HtmlResponse theresponse = new HtmlResponse();
-            String logincheck = login.CheckLogin(request);
+            string logincheck = login.CheckLogin(request);
             theresponse.page += "<!DOCTYPE html><html><body>";
             theresponse.page += index.GenMenu(request);
             theresponse.page += "<table border=2px>";
             theresponse.page += "<tr><td><b>Befehl</b></td><td><b>Beschreibung</b></td></tr>";
-            foreach (ICommand theCommand in Program.Commands)
+            foreach (ICommand theCommand in PluginManager.GetInstance().Get<ICommand>().Where(x => toolbox.GetAttribute<FritzBot.Module.NameAttribute>(x) != null))
             {
-                Boolean OPNeeded = toolbox.GetAttribute<FritzBot.Module.AuthorizeAttribute>(theCommand) != null;
+                bool OPNeeded = toolbox.GetAttribute<FritzBot.Module.AuthorizeAttribute>(theCommand) != null;
                 if (toolbox.IsOp(logincheck) || !OPNeeded)
                 {
-                    String names = "";
-                    foreach (String name in toolbox.GetAttribute<FritzBot.Module.NameAttribute>(theCommand).Names)
+                    string names = "";
+                    foreach (string name in toolbox.GetAttribute<FritzBot.Module.NameAttribute>(theCommand).Names)
                     {
                         names += ", " + name;
                     }

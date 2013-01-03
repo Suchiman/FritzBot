@@ -1,6 +1,11 @@
-﻿using System;
-using FritzBot;
-using FritzBot.commands;
+﻿using FritzBot;
+using FritzBot.Plugins;
+using FritzBot.Core;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Xml.Linq;
+
 namespace webpages
 {
     class aliasdb : IWebInterface
@@ -14,10 +19,10 @@ namespace webpages
             theresponse.page += index.GenMenu(request);
             theresponse.page += "<table border=2px>";
             theresponse.page += "<tr><td><b>Alias</b></td><td><b>Beschreibung</b></td></tr>";
-            AliasDB thealiases = Program.TheUsers.AllAliases();
-            for (int i = 0; i < thealiases.alias.Count; i++)
+            IEnumerable<XElement> thealiases = UserManager.GetInstance().SelectMany(x => x.GetModulUserStorage("alias").Storage.Elements("alias"));
+            foreach (XElement alias in thealiases.Where(x => x.HasElements))
             {
-                theresponse.page += "<tr><td>" + thealiases.alias[i] + "</td><td>" + thealiases.description[i] + "</td></tr>";
+                theresponse.page += "<tr><td>" + alias.Element("name").Value + "</td><td>" + alias.Element("beschreibung").Value + "</td></tr>";
             }
             theresponse.page += "</table>";
             theresponse.page += "</body></html>";

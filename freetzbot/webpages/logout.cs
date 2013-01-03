@@ -1,5 +1,6 @@
 ﻿using System;
 using FritzBot;
+using FritzBot.Core;
 
 namespace webpages
 {
@@ -17,9 +18,9 @@ namespace webpages
             {
                 name = request.cookies["username"].Value;
             }
-            if (Program.TheUsers.Exists(name))
+            if (UserManager.GetInstance().Exists(name))
             {
-                Program.TheUsers[name].authcookiedate = DateTime.MinValue;
+                UserManager.GetInstance()[name].GetModulUserStorage("login").SetVariable("authcookiedate", DateTime.MinValue);
                 theresponse.cookies["username"] = "";
                 theresponse.cookies["logindata"] = "";
                 theresponse.page += "Du bist jetzt ausgeloggt";

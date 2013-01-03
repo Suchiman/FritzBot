@@ -1,0 +1,198 @@
+﻿using FritzBot.DataModel;
+using Microsoft.CSharp;
+using System;
+using System.CodeDom.Compiler;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Threading;
+using System.Xml.Linq;
+
+namespace FritzBot.Core
+{
+    public class PluginManager
+    {
+        private static PluginManager instance;
+        private List<PluginBase> Plugins = new List<PluginBase>();
+
+        public static PluginManager GetInstance()
+        {
+            if (instance == null)
+            {
+                instance = new PluginManager();
+            }
+            return instance;
+        }
+
+        /// <summary>
+        /// Fährt den PluginManager herunter
+        /// </summary>
+        public static void Shutdown()
+        {
+            GetInstance().Get<IBackgroundTask>().Stop();
+        }
+
+        public PluginManager()
+        {
+            XElement storage = XMLStorageEngine.GetManager().GetGlobalSettingsStorage(this).Storage;
+            if (storage.Element("References") == null)
+            {
+                storage.Add(new XElement("References"));
+            }
+            if (storage.Element("References").Elements("Assembly").Count() == 0)
+            {
+                storage.Element("References").Add(
+                    new XElement("Assembly", "mscorlib.dll"),
+                    new XElement("Assembly", "System.dll"),
+                    new XElement("Assembly", "System.Data.dll"),
+                    new XElement("Assembly", "System.Web.dll"),
+                    new XElement("Assembly", "System.Xml.dll"),
+                    new XElement("Assembly", "System.Xml.Linq.dll"));
+            }
+        }
+
+        /// <summary>
+        /// Instanziert die Typen, entfernt bereits vorhandene Typen mit gleichem FullName und fügt die neuen hinzu.
+        /// </summary>
+        public int AddDistinct(bool AutostartTask, params Type[] Types)
+        {
+            IEnumerable<Type> FilteredTypes = Types.Where(x => !x.IsAbstract && !x.IsInterface && !typeof(Attribute).IsAssignableFrom(x)).Where(x => typeof(PluginBase).IsAssignableFrom(x));
+            Plugins.RemoveAll(x => FilteredTypes.Select(y => y.FullName).Contains(x.GetType().FullName));
+            List<PluginBase> NewPlugins = FilteredTypes.Select(x => Activator.CreateInstance(x)).Cast<PluginBase>().ToList<PluginBase>();
+            if (AutostartTask)
+            {
+                NewPlugins.Where(x => x is IBackgroundTask).Cast<IBackgroundTask>().ForEach(x => x.Start());
+            }
+            Plugins.AddRange(NewPlugins);
+            return NewPlugins.Count;
+        }
+
+        /// <summary>
+        /// Entfernt alle ICommands und IBackgroundTasks auf die die Bedingung zutrifft.
+        /// </summary>
+        public int Remove(Func<PluginBase, bool> bedingung)
+        {
+            List<PluginBase> toremove = Plugins.Where(x => bedingung(x)).ToList();
+            toremove.Where(x => x.GetType().GetInterface("IBackgroundTask") != null).Cast<IBackgroundTask>().Stop();
+            Plugins.RemoveAll(x => toremove.Contains(x));
+            return toremove.Count;
+        }
+
+        /// <summary>
+        /// Gibt alle Instanzen von ICommand oder IBackgroundTask zurück
+        /// </summary>
+        public IEnumerable<T> Get<T>() where T : class
+        {
+            return Plugins.Where(x => x is T).Cast<T>();
+        }
+
+        /// <summary>
+        /// Gibt das erste ICommand oder IBackgroundTask zurück auf das die Bedingung zutrifft
+        /// </summary>
+        public T Get<T>(Func<T, bool> bedingung) where T : class
+        {
+            return Plugins.Where(x => x is T).Cast<T>().FirstOrDefault(bedingung);
+        }
+
+        /// <summary>
+        /// Gibt das erste ICommand oder IBackgroundTask zurück mit dem angegebenen Namen
+        /// </summary>
+        public T Get<T>(String name) where T : class
+        {
+            return Plugins.Where(x => Module.NameAttribute.IsNamed(x, name)).Cast<T>().FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Initialisiert das Plugin System Asynchron
+        /// </summary>
+        public void BeginInit(bool AutostartTask)
+        {
+            new Thread(delegate() { Init(AutostartTask); }).Start();
+        }
+
+        /// <summary>
+        /// Initialisiert das Plugin System und instanziert alle Plugins
+        /// </summary>
+        public void Init(bool AutostartTask)
+        {
+            String PluginDirectory = Path.Combine(Environment.CurrentDirectory, "plugins");
+            if (!Directory.Exists(PluginDirectory))
+            {
+                Directory.CreateDirectory(PluginDirectory);
+            }
+            List<Type> allTypes = new List<Type>();
+            String[] allFiles = Directory.GetFiles(PluginDirectory).Where(x => x.EndsWith(".cs")).ToArray<String>();
+            Assembly Bot = Assembly.GetExecutingAssembly();
+            if (allFiles.Length > 0)
+            {
+                try
+                {
+                    Assembly Compiled = LoadSource(allFiles);
+                    allTypes.AddRange(Compiled.GetTypes());
+                }
+                catch
+                {
+                    toolbox.Logging("Das Laden der Source Module ist fehlgeschlagen und werden deshalb nicht zur Verfügung stehen!");
+                }
+            }
+            allTypes.AddRange(Bot.GetTypes().Where(x => !allTypes.Contains(x, y => y.FullName)));
+            AddDistinct(AutostartTask, allTypes.ToArray<Type>()); //Die Methode verwirft alle Typen die nicht IBackgroundTask oder ICommand sind
+        }
+
+        /// <summary>
+        /// Lädt ein oder mehrere Plugins aus den gegebenen Dateien und initialisiert sie
+        /// </summary>
+        /// <param name="Path"></param>
+        public int LoadPluginFromFile(params String[] Path)
+        {
+            Assembly assembly = LoadSource(Path);
+            return AddDistinct(true, assembly.GetTypes());
+        }
+
+        /// <summary>
+        /// Lädt ein Plugin mit angegebenen Namen aus der gegebenen Assembly
+        /// </summary>
+        /// <param name="assembly">Die Assembly die den Typ beinhaltet</param>
+        /// <param name="name">Der Name des Types</param>
+        public int LoadPluginByName(Assembly assembly, String name)
+        {
+            return AddDistinct(true, assembly.GetTypes().Where(x => Module.NameAttribute.IsNamed(x, name)).ToArray());
+        }
+
+        /// <summary>
+        /// Kompiliert Quellcode im Arbeitsspeicher zu einem Assembly
+        /// </summary>
+        /// <param name="fileName">Ein Array das die Dateinamen enthält</param>
+        /// <returns>Das aus den Quellcode erstellte Assembly</returns>
+        public Assembly LoadSource(params String[] fileName)
+        {
+            CSharpCodeProvider compiler = new CSharpCodeProvider(new Dictionary<String, String> { { "CompilerVersion", "v3.5" } });
+            CompilerParameters compilerParams = new CompilerParameters();
+            compilerParams.CompilerOptions = "/target:library /optimize";
+            compilerParams.GenerateExecutable = false;
+            compilerParams.GenerateInMemory = true;
+            compilerParams.IncludeDebugInformation = false;
+            compilerParams.ReferencedAssemblies.AddRange(XMLStorageEngine.GetManager().GetGlobalSettingsStorage(this).Storage.Element("References").Elements("Assembly").Where(x => !String.IsNullOrEmpty(x.Value)).Select(x => x.Value).ToArray());
+            compilerParams.ReferencedAssemblies.Add(Path.GetFileName(Assembly.GetExecutingAssembly().Location));
+            CompilerResults results = null;
+            try
+            {
+                results = compiler.CompileAssemblyFromFile(compilerParams, fileName);
+            }
+            catch (Exception ex)
+            {
+                toolbox.Logging(ex.Message);
+            }
+            if (results.Errors.Count > 0)
+            {
+                foreach (CompilerError theError in results.Errors)
+                {
+                    toolbox.Logging("Compilerfehler: " + theError.ErrorText);
+                }
+                throw new Exception("Compilation failed");
+            }
+            return results.CompiledAssembly;
+        }
+    }
+}

@@ -1,5 +1,7 @@
-﻿using System;
-using FritzBot;
+﻿using FritzBot;
+using FritzBot.Core;
+using System;
+using System.Linq;
 
 namespace webpages
 {
@@ -17,28 +19,9 @@ namespace webpages
             {
                 theresponse.page += "<table border=2px>";
                 theresponse.page += "<tr><td><b>Besitzer</b></td><td><b>Boxen</b></td></tr>";
-                foreach (User theuser in Program.TheUsers)
+                foreach (User theuser in UserManager.GetInstance().Where(x => x.GetModulUserStorage("box").Storage.Elements("box").Count() > 0))
                 {
-                    if (!(theuser.boxes.Count > 0))
-                    {
-                        continue;
-                    }
-                    String boxes = "";
-                    String names = "";
-                    foreach (String thename in theuser.names)
-                    {
-                        names += ", " + thename;
-                    }
-                    names = names.Remove(0, 2);
-                    foreach (String tddata in theuser.boxes)
-                    {
-                        boxes += ", " + tddata;
-                    }
-                    if (boxes.Length > 0)
-                    {
-                        boxes = boxes.Remove(0, 2);
-                    }
-                    theresponse.page += "<tr><td>" + names + "</td><td>" + boxes + "</td></tr>";
+                    theresponse.page += "<tr><td>" + String.Join(", ", theuser.names.ToArray<String>()) + "</td><td>" + String.Join(", ", theuser.GetModulUserStorage("box").Storage.Elements("box").Select(x => x.Value).ToArray<String>()) + "</td></tr>";
                 }
                 theresponse.page += "</table>";
             }

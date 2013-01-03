@@ -1,27 +1,26 @@
-﻿using System;
+﻿using FritzBot.Core;
+using FritzBot.DataModel.IRC;
+using System;
 using System.Collections.Generic;
 
 namespace FritzBot
 {
-    public class ircMessage
+    public class ircMessage : IRCEvent
     {
-        private String _sender;
-        private String _source;
-        private String _message;
-        private Boolean _isprivate;
-        private Boolean _iscommand;
-        private Boolean _answered;
-        private Boolean _hasargs;
-        private Boolean _handled;
-        private Boolean _preprocessed;
-        private Boolean _hidden;
-        private Boolean _ignored;
-        private String _commandline;
-        private String _commandname;
-        private List<String> _args;
-        private User _theuser;
-        private UserCollection _theusers;
-        private Irc _connection;
+        private string _origin;
+        private string _message;
+        private bool _isprivate;
+        private bool _iscommand;
+        private bool _answered;
+        private bool _hasargs;
+        private bool _handled;
+        private bool _preprocessed;
+        private bool _hidden;
+        private bool _ignored;
+        private string _commandline;
+        private string _commandname;
+        private List<string> _args;
+        private Queue<string> _loggingQueue;
 
         /// <summary>
         /// Erstellt ein neues ircMessage Objekt um eine IRC Nachricht dazustellen
@@ -31,16 +30,19 @@ namespace FritzBot
         /// <param name="message">Die Nachricht</param>
         /// <param name="AllUsers">Die Benutzerdatenbank</param>
         /// <param name="connection">Die Zugrunde liegende IRC Verbindung</param>
-        public ircMessage(String sender, String source, String message, UserCollection AllUsers, Irc connection)
+        public ircMessage(string sender, string source, string message, Irc connection)
+            : base(connection)
         {
-            _sender = sender;
-            _source = source;
-            _message = message;
-            _theusers = AllUsers;
-            _connection = connection;
-            _theuser = _theusers[_sender];
+            Nickname = sender;
+            if (source == IRC.Nickname)
+            {
+                source = Nickname;
+            }
+            _origin = source;
+            _message = message.Trim();
             _answered = false;
-            if ((_sender.Contains("#") || _sender.Contains(".") || _sender.Contains(_connection.Nickname) || _sender.ToLower().Contains("nickserv") || _theuser.ignored || _message.Contains("[Global Notice]")) && !_theuser.IsOp)
+            _loggingQueue = new Queue<string>(3);
+            if ((Nickname.Contains("#") || Nickname.Contains(".") || Nickname.Contains(this.IRC.Nickname) || Nickname.ToLower().Contains("nickserv") || TheUser.ignored || _message.Contains("[Global Notice]")) && !TheUser.IsOp)
             {
                 _ignored = true;
             }
@@ -48,7 +50,7 @@ namespace FritzBot
             {
                 _ignored = false;
             }
-            _isprivate = _sender == _source;
+            _isprivate = Nickname == _origin;
             if (message.Length > 0)
             {
                 _iscommand = message.ToCharArray()[0] == '!';
@@ -66,20 +68,20 @@ namespace FritzBot
                 }
                 _commandline = _message.Remove(0, index).Trim();
                 _commandname = _message.Substring(1, index - 1).Trim();
-                _args = new List<String>(_commandline.Split(' '));
+                _args = new List<string>(_commandline.Split(' '));
             }
             else
             {
                 _commandline = "";
                 _commandname = "";
-                _args = new List<String>();
+                _args = new List<string>();
             }
             _hasargs = !String.IsNullOrEmpty(_commandline);
         }
         /// <summary>
         /// Gibt an, ob die Nachricht per QUERY gesandt wurde
         /// </summary>
-        public Boolean IsPrivate
+        public bool IsPrivate
         {
             get
             {
@@ -89,7 +91,7 @@ namespace FritzBot
         /// <summary>
         /// Gibt an ob diese Nachricht zu ignorieren ist
         /// </summary>
-        public Boolean IsIgnored
+        public bool IsIgnored
         {
             get
             {
@@ -99,7 +101,7 @@ namespace FritzBot
         /// <summary>
         /// Gibt an ob die Nachricht ein Befehl ist ( ! Befehlprefix )
         /// </summary>
-        public Boolean IsCommand
+        public bool IsCommand
         {
             get
             {
@@ -109,7 +111,7 @@ namespace FritzBot
         /// <summary>
         /// Gibt an, wenn es sich um einen Befehl handelt, ob weitere Argumente mitgeschickt wurden
         /// </summary>
-        public Boolean HasArgs
+        public bool HasArgs
         {
             get
             {
@@ -119,7 +121,7 @@ namespace FritzBot
         /// <summary>
         /// Gibt an ob dem Benutzer im IRC geantwortet wurde
         /// </summary>
-        public Boolean Answered
+        public bool Answered
         {
             get
             {
@@ -129,7 +131,7 @@ namespace FritzBot
         /// <summary>
         /// Gibt an, ob die Nachricht durch ein Event verarbeitet wurde und von der Restlichen Verarbeitung ausgeschlossen wird
         /// </summary>
-        public Boolean Handled
+        public bool Handled
         {
             get
             {
@@ -141,9 +143,19 @@ namespace FritzBot
             }
         }
         /// <summary>
+        /// Gibt an, ob die Nachricht unabhängig vom Ursprung Privat gesendet wird
+        /// </summary>
+        public bool ForcedPrivat
+        {
+            get
+            {
+                return XMLStorageEngine.GetManager().GetGlobalSettingsStorage("Bot").GetVariable("Silence", "false") == "true";
+            }
+        }
+        /// <summary>
         /// Gibt an ob die Nachricht das MessageEvent durchlaufen hat
         /// </summary>
-        public Boolean PreProcessed
+        public bool PreProcessed
         {
             get
             {
@@ -157,7 +169,7 @@ namespace FritzBot
         /// <summary>
         /// Gibt an ob die Nachricht nicht geloggt werden soll
         /// </summary>
-        public Boolean Hidden
+        public bool Hidden
         {
             get
             {
@@ -171,7 +183,7 @@ namespace FritzBot
         /// <summary>
         /// Wenn es sich um einen Befehl handelt, stellt dies den Befehlsnamen (!befehlsname) da
         /// </summary>
-        public String CommandName
+        public string CommandName
         {
             get
             {
@@ -181,7 +193,7 @@ namespace FritzBot
         /// <summary>
         /// Gibt alles zurück, was hinter dem Befehlsnamen steht
         /// </summary>
-        public String CommandLine
+        public string CommandLine
         {
             get
             {
@@ -191,21 +203,11 @@ namespace FritzBot
         /// <summary>
         /// Enthält die Leerzeichen getrennte Befehlsargumente
         /// </summary>
-        public List<String> CommandArgs
+        public List<string> CommandArgs
         {
             get
             {
                 return _args;
-            }
-        }
-        /// <summary>
-        /// Stellt den IRC Namen des Benutzers da
-        /// </summary>
-        public String Nick
-        {
-            get
-            {
-                return _sender;
             }
         }
         /// <summary>
@@ -215,23 +217,13 @@ namespace FritzBot
         {
             get
             {
-                return _theuser;
-            }
-        }
-        /// <summary>
-        /// Die Benutzerdatenbank
-        /// </summary>
-        public UserCollection TheUsers
-        {
-            get
-            {
-                return _theusers;
+                return UserManager.GetInstance()[Nickname];
             }
         }
         /// <summary>
         /// Die ursprüngliche IRC Nachricht
         /// </summary>
-        public String Message
+        public string Message
         {
             get
             {
@@ -239,13 +231,23 @@ namespace FritzBot
             }
         }
         /// <summary>
-        /// Die Quelle der Nachricht (#channel oder Nickname)
+        /// Bisher ungeloggte IRC Nachrichten
         /// </summary>
-        public String Source
+        public Queue<string> UnloggedMessages
         {
             get
             {
-                return _source;
+                return _loggingQueue;
+            }
+        }
+        /// <summary>
+        /// Die Quelle der Nachricht (#channel oder Nickname)
+        /// </summary>
+        public string Source
+        {
+            get
+            {
+                return _origin;
             }
         }
         /// <summary>
@@ -260,47 +262,46 @@ namespace FritzBot
         /// Antwortet dem Benutzer dort wo er den Befehl aufgerufen hat
         /// </summary>
         /// <param name="Message">Den zu Antwortenden Text</param>
-        public void Answer(String Message)
+        public void Answer(string Message)
         {
             _answered = true;
-            _connection.Sendmsg(Message, _source);
+            IRC.Sendmsg(Message, _origin);
+            _loggingQueue.Enqueue(String.Format("An {0}: {1}", ForcedPrivat ? Nickname : _origin, Message));
         }
         /// <summary>
         /// Sendet dem Benutzer dort wo er den Befehl aufgerufen eine Aktion hat
         /// </summary>
         /// <param name="Message">Den zu Antwortenden Text</param>
-        public void AnswerAction(String Message)
+        public void AnswerAction(string Message)
         {
             _answered = true;
-            _connection.Sendaction(Message, _source);
+            IRC.Sendaction(Message, _origin);
+            _loggingQueue.Enqueue(String.Format("An {0}: ***{1}***", ForcedPrivat ? Nickname : _origin, Message));
         }
         /// <summary>
         /// Schickt dem Benutzer eine Nachricht im QUERY, unabhängig davon wo er geschrieben hat
         /// </summary>
         /// <param name="Message">Den zu Antwortenden Text</param>
-        public void SendPrivateMessage(String Message)
+        public void SendPrivateMessage(string Message)
         {
             _answered = true;
-            _connection.Sendmsg(Message, _sender);
+            IRC.Sendmsg(Message, Nickname);
+            _loggingQueue.Enqueue(String.Format("An {0}: {1}", Nickname, Message));
         }
         /// <summary>
         /// Schickt dem Benutzer eine Aktion im QUERY, unabhängig davon wo er geschrieben hat
         /// </summary>
         /// <param name="Message">Den zu Antwortenden Text</param>
-        public void SendPrivateAction(String Message)
+        public void SendPrivateAction(string Message)
         {
             _answered = true;
-            _connection.Sendaction(Message, _sender);
+            IRC.Sendaction(Message, Nickname);
+            _loggingQueue.Enqueue(String.Format("An {0}: {1}", Nickname, Message));
         }
-        /// <summary>
-        /// Gibt die zugrunde liegende IRC Verbindung zurück
-        /// </summary>
-        public Irc Connection
+
+        public override string ToString()
         {
-            get
-            {
-                return _connection;
-            }
+            return _message;
         }
     }
 }

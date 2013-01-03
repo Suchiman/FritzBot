@@ -4,7 +4,7 @@ using System.Text;
 
 namespace FritzBot
 {
-    interface IWebInterface
+    public interface IWebInterface
     {
         //Ein Interface für die Websesiten des HTTPListeners implementieren
         //Was wird gebraucht und was wird zurückgegeben?

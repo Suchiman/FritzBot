@@ -1,27 +1,28 @@
 ﻿using System;
 using FritzBot;
+using FritzBot.Core;
 
 namespace webpages
 {
     class login : IWebInterface
     {
-        public String Url { get { return "/login"; } }
+        public string Url { get { return "/login"; } }
 
         public HtmlResponse GenPage(HtmlRequest request)
         {
             HtmlResponse theresponse = new HtmlResponse();
-            Boolean LoginSuccesfull = false;
+            bool LoginSuccesfull = false;
             theresponse.page += "<!DOCTYPE html><html><body>";
             if (request.postdata.Count > 0)
             {
-                String name = request.postdata["name"];
-                String passwort = request.postdata["pw"];
-                if (Program.TheUsers.Exists(name))
+                string name = request.postdata["name"];
+                string passwort = request.postdata["pw"];
+                if (UserManager.GetInstance().Exists(name))
                 {
-                    if (Program.TheUsers[name].CheckPassword(passwort))
+                    if (UserManager.GetInstance()[name].CheckPassword(passwort))
                     {
-                        Program.TheUsers[name].authcookiedate = DateTime.Now;
-                        String hash = toolbox.Crypt(name + Program.TheUsers[name].authcookiedate.ToString() + request.useradress.ToString());
+                        UserManager.GetInstance()[name].GetModulUserStorage("login").SetVariable("authcookiedate", DateTime.Now);
+                        string hash = toolbox.Crypt(name + UserManager.GetInstance()[name].GetModulUserStorage("login").GetVariable("authcookiedate") + request.useradress.ToString());
                         theresponse.cookies["username"] = name;
                         theresponse.cookies["logindata"] = hash;
                         request.cookies.Add(new System.Net.Cookie("username", name));
@@ -54,18 +55,18 @@ namespace webpages
             return theresponse;
         }
 
-        public static String CheckLogin(HtmlRequest request)
+        public static string CheckLogin(HtmlRequest request)
         {
-            String name = "";
-            String hash = "";
+            string name = "";
+            string hash = "";
             if (request.cookies["username"] != null && request.cookies["logindata"] != null)
             {
                 name = request.cookies["username"].Value;
                 hash = request.cookies["logindata"].Value;
             }
-            if (Program.TheUsers.Exists(name))
+            if (UserManager.GetInstance().Exists(name))
             {
-                String calchash = toolbox.Crypt(name + Program.TheUsers[name].authcookiedate.ToString() + request.useradress.ToString());
+                string calchash = toolbox.Crypt(name + UserManager.GetInstance()[name].GetModulUserStorage("login").GetVariable("authcookiedate") + request.useradress.ToString());
                 if (calchash == hash)
                 {
                     return name;

@@ -4,7 +4,7 @@ using System.Net;
 
 namespace FritzBot
 {
-    class HtmlResponse
+    public class HtmlResponse
     {
         public OwnCookieCollection cookies = new OwnCookieCollection();
         public String page = "";
@@ -12,14 +12,14 @@ namespace FritzBot
         public String content_type = "text/html; charset=iso-8859-1";
         public int status_code = 404;
     }
-    class HtmlRequest
+    public class HtmlRequest
     {
         public Dictionary<String, String> postdata = new Dictionary<String, String>();
         public Dictionary<String, String> getdata = new Dictionary<String, String>();
         public CookieCollection cookies = new CookieCollection();
         public IPAddress useradress = IPAddress.Loopback;
     }
-    class OwnCookieCollection
+    public class OwnCookieCollection
     {
         List<OwnCookie> TheCookies = new List<OwnCookie>();
         public String this[String name]
