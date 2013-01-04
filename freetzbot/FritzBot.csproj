@@ -104,6 +104,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DataModel\Attribute.cs" />
+    <Compile Include="Functions\UTF8Checker.cs" />
     <Compile Include="Plugins\admin.cs" />
     <Compile Include="Plugins\subscribe.cs" />
     <Compile Include="Plugins\SubscriptionProviders\IRCSubscriptionProvider.cs" />

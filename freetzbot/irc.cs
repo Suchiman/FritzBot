@@ -1,14 +1,14 @@
-﻿using FritzBot.DataModel.IRC;
+﻿using FritzBot.Core;
+using FritzBot.DataModel.IRC;
+using FritzBot.Functions;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
-using System.Linq;
-using FritzBot.Core;
-using System.Globalization;
 
 namespace FritzBot
 {
@@ -305,12 +305,23 @@ namespace FritzBot
 
         private void ReceiveDataLoop()
         {
-            StreamReader stream = new StreamReader(_connection.GetStream(), CharEncoding);
+            NetworkStream stream = _connection.GetStream();
+            stream.ReadTimeout = 100;
             while (true)
             {
                 try
                 {
-                    string Daten = stream.ReadLine();
+                    WaitForAvailable(stream);
+                    byte[] buffer = ReadLine(stream);
+                    string Daten = String.Empty;
+                    if (UTF8Checker.IsUtf8(buffer))
+                    {
+                        Daten = Encoding.UTF8.GetString(buffer).TrimEnd('\r', '\n');
+                    }
+                    else
+                    {
+                        Daten = CharEncoding.GetString(buffer).TrimEnd('\r', '\n');
+                    }
                     if (String.IsNullOrEmpty(Daten))
                     {
                         return; //Connection Lost
@@ -327,6 +338,24 @@ namespace FritzBot
                     return;
                 }
             }
+        }
+
+        public void WaitForAvailable(NetworkStream stream)
+        {
+            while (!stream.DataAvailable)
+            {
+                Thread.Sleep(100);
+            }
+        }
+
+        public byte[] ReadLine(NetworkStream stream)
+        {
+            List<byte> input = new List<byte>(512);
+            while (stream.DataAvailable && input.LastOrDefault() != '\n')
+            {
+                input.Add((byte)stream.ReadByte());
+            }
+            return input.ToArray();
         }
 
         public void RaiseReceived(IRCEvent Daten)
@@ -353,7 +382,7 @@ namespace FritzBot
             //Ping anforderung des Servers: "PING :fritz.box"
             //WHO #fritzbot ":calvino.freenode.net 352 TESTIBOA #fritzbot uid3778 gateway/web/irccloud.com/x-emoebkdpqrellyuq verne.freenode.net Suchiman H :0 Suchiman"
             //WHO Suchiman ":niven.freenode.net 352 TESTIBOA * uid3778 gateway/web/irccloud.com/x-wfssqeobhqhlpxba adams.freenode.net Suchiman H :0 Suchiman"
-            
+
             Match regex;
 
             regex = GenericIRCAction.Match(message);
