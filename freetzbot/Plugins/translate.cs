@@ -1,5 +1,6 @@
 ﻿using FritzBot.DataModel;
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -23,12 +24,17 @@ namespace FritzBot.Plugins
             Match m = Regex.Match(response, "\\[\\[\\[\"(?<translation>[^\"]*)\",\"(?<input>[^\"]*)\",\"\",\"\"\\]\\],.*,\"(?<source>[^\"]*)\",.*,");
             if (m.Success)
             {
-                theMessage.Answer(m.Groups["translation"].Value);
+                theMessage.Answer(DecodeEncodedNonAsciiCharacters(m.Groups["translation"].Value));
             }
             else
             {
                 theMessage.Answer("Die API hat mir eine unerwartete Antwort geliefert");
             }
+        }
+
+        static string DecodeEncodedNonAsciiCharacters(string value)
+        {
+            return Regex.Replace(value, @"\\u(?<Value>[a-zA-Z0-9]{4})", m => ((char)int.Parse(m.Groups["Value"].Value, NumberStyles.HexNumber)).ToString());
         }
     }
 }
