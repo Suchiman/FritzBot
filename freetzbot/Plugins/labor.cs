@@ -14,7 +14,7 @@ namespace FritzBot.Plugins
     [Module.Subscribeable]
     class labor : PluginBase, ICommand, IBackgroundTask
     {
-        public const String BaseUrl = "http://www.avm.de/de/Service/Service-Portale/Labor/";
+        public const string BaseUrl = "http://www.avm.de/de/Service/Service-Portale/Labor/";
         private DataCache<List<Labordaten>> LaborDaten = null;
         private Thread laborthread;
 
@@ -168,14 +168,14 @@ namespace FritzBot.Plugins
 
     class Labordaten : IEquatable<Labordaten>
     {
-        public String typ;
-        public String datum;
-        public String version;
-        public String url;
+        public string typ;
+        public string datum;
+        public string version;
+        public string url;
 
         public Labordaten() { }
 
-        public static IEnumerable<Labordaten> GetDaten(String url)
+        public static IEnumerable<Labordaten> GetDaten(string url)
         {
             HtmlNode LaborSeite = new HtmlDocument().LoadUrl(labor.BaseUrl + url).DocumentNode.StripComments();
 
@@ -223,12 +223,28 @@ namespace FritzBot.Plugins
 
         public static bool operator ==(Labordaten labordaten1, Labordaten labordaten2)
         {
-            return labordaten1.Equals(labordaten2);
+            if ((object)labordaten1 != null)
+            {
+                return labordaten1.Equals(labordaten2);
+            }
+            else if ((object)labordaten2 != null)
+            {
+                return false;
+            }
+            return true;
         }
 
         public static bool operator !=(Labordaten labordaten1, Labordaten labordaten2)
         {
-            return !labordaten1.Equals(labordaten2);
+            if ((object)labordaten1 != null)
+            {
+                return !labordaten1.Equals(labordaten2);
+            }
+            else if ((object)labordaten2 != null)
+            {
+                return true;
+            }
+            return false;
         }
     }
 }

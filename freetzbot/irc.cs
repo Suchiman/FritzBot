@@ -367,8 +367,8 @@ namespace FritzBot
             }
         }
 
-        Regex MessageRegex = new Regex(@":(?<nick>[A-Za-z0-9<\-_\[\]\\\^{}]{2,15})!~?(?<realname>.*)@(?<host>.*) (?<action>[A-z]+) (?<origin>.*) :(?<message>.*)", RegexOptions.Compiled);
-        Regex GenericIRCAction = new Regex(@":(?<sender>.*) (?<action>\d\d\d)( \*)? (?<nick>[A-Za-z0-9<\-_\[\]\\\^{}]{2,15}) :?(?<message>.*)", RegexOptions.Compiled);
+        Regex MessageRegex = new Regex(@":(?<nick>[A-Za-z0-9<\-_\|\[\]\\\^{}]{2,15})!~?(?<realname>.*)@(?<host>.*) (?<action>[A-z]+) (?<origin>[^ :]*) :(?<message>.*)", RegexOptions.Compiled);
+        Regex GenericIRCAction = new Regex(@":(?<sender>.*) (?<action>\d\d\d)( \*)? (?<nick>[A-Za-z0-9<\-_\|\[\]\\\^{}]{2,15}) :?(?<message>.*)", RegexOptions.Compiled);
 
         private void ProcessRespond(string message)
         {

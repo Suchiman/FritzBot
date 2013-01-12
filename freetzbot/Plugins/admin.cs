@@ -96,7 +96,7 @@ namespace FritzBot.Plugins
                 if (m.Success)
                 {
                     Box box = BoxDatabase.GetInstance().GetBoxByShortName(m.Groups["short"].Value);
-                    String[] regexes = Regex.Matches(m.Groups["regex"].Value, "\"(?<value>[^\"]*)\"").Cast<Match>().Select(x => x.Groups["value"].Value).ToArray();
+                    string[] regexes = Regex.Matches(m.Groups["regex"].Value, "\"(?<value>[^\"]*)\"").Cast<Match>().Select(x => x.Groups["value"].Value).ToArray();
                     if (box == null)
                     {
                         box = BoxDatabase.GetInstance().AddBox(m.Groups["short"].Value, m.Groups["full"].Value, regexes);
@@ -116,7 +116,7 @@ namespace FritzBot.Plugins
             }
             if (theMessage.CommandArgs[1] == "remove")
             {
-                Box box = BoxDatabase.GetInstance().GetBoxByShortName(theMessage.CommandArgs[2]);
+                Box box = BoxDatabase.GetInstance().GetBoxByShortName(String.Join(" ", theMessage.CommandArgs.Skip(2).ToArray()));
                 if (box != null)
                 {
                     box.Remove();
@@ -151,7 +151,7 @@ namespace FritzBot.Plugins
             }
             if (theMessage.CommandArgs[1] == "list")
             {
-                string[] AlleBoxen = BoxDatabase.GetInstance().GetBoxen().Select(x => x.ShortName).ToArray();
+                string[] AlleBoxen = BoxDatabase.GetInstance().GetBoxen().Select(x => x.ShortName).OrderByDescending(x => x).ToArray();
                 if (AlleBoxen.Length == 0)
                 {
                     theMessage.Answer("Oh... ich habe keine Einträge über Boxen");

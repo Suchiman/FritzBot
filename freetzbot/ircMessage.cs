@@ -51,9 +51,9 @@ namespace FritzBot
                 _ignored = false;
             }
             _isprivate = Nickname == _origin;
-            if (message.Length > 0)
+            if (_message.Length > 0)
             {
-                _iscommand = message.ToCharArray()[0] == '!';
+                _iscommand = _message.ToCharArray()[0] == '!';
             }
             else
             {
