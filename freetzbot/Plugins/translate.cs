@@ -1,4 +1,5 @@
 ﻿using FritzBot.DataModel;
+using FritzBot.Functions;
 using System;
 using System.Globalization;
 using System.Linq;
@@ -19,22 +20,17 @@ namespace FritzBot.Plugins
                 target = "en";
                 word = String.Join(" ", theMessage.CommandArgs.ToArray());
             }
-            string url = String.Format("http://translate.google.com/translate_a/t?client=t&text={0}&hl={1}&sl={2}&tl={1}&ie=UTF-8&oe=UTF-8&multires=1&otf=1&pc=1&trs=1&ssel=3&tsel=6&sc=1", toolbox.UrlEncode(word), target, ""); //"" Für Auto Erkennung der Ausgangssprache
-            string response = toolbox.GetWeb(url);
-            Match m = Regex.Match(response, "\\[\\[\\[\"(?<translation>[^\"]*)\",\"(?<input>[^\"]*)\",\"\",\"\"\\]\\],.*,\"(?<source>[^\"]*)\",.*,");
-            if (m.Success)
+
+            string translation = GoogleTranslator.TranslateTextSimple(word, target);
+
+            if (!String.IsNullOrEmpty(translation))
             {
-                theMessage.Answer(DecodeEncodedNonAsciiCharacters(m.Groups["translation"].Value));
+                theMessage.Answer(translation);
             }
             else
             {
-                theMessage.Answer("Die API hat mir eine unerwartete Antwort geliefert");
+                theMessage.Answer("Das hat nicht so geklappt wie erwartet");
             }
-        }
-
-        static string DecodeEncodedNonAsciiCharacters(string value)
-        {
-            return Regex.Replace(value, @"\\u(?<Value>[a-zA-Z0-9]{4})", m => ((char)int.Parse(m.Groups["Value"].Value, NumberStyles.HexNumber)).ToString());
         }
     }
 }

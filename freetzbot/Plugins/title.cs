@@ -1,41 +1,37 @@
-﻿using FritzBot.DataModel;
-using System;
+﻿using FritzBot.Core;
+using FritzBot.DataModel;
+using HtmlAgilityPack;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace FritzBot.Plugins
 {
     [Module.Name("title")]
     [Module.Help("Ruft den Titel der Webseite ab")]
     [Module.ParameterRequired]
-    class title : PluginBase, ICommand
+    class title : PluginBase, IBackgroundTask
     {
         public void Run(ircMessage theMessage)
         {
             try
             {
-                String webpage = toolbox.GetWeb(theMessage.CommandArgs[0]);
-                String title = webpage.Split(new String[] { "<title>" }, 8, StringSplitOptions.None)[1].Split(new String[] { "</title>" }, 2, StringSplitOptions.None)[0];
-                while (title.IndexOf('\n') != -1)
-                {
-                    title = title.Remove(title.IndexOf('\n'), 1);
-                }
-                while (title.Contains("  "))
-                {
-                    title = title.Replace("  ", " ");
-                }
-                if(title.ToCharArray()[0] == ' ')
-                {
-                    title = title.Remove(0, 1);
-                }
-                if (title.ToCharArray()[title.ToCharArray().Length - 1] == ' ')
-                {
-                    title = title.Remove(title.ToCharArray().Length - 1, 1);
-                }
+                string link = theMessage.CommandArgs.FirstOrDefault(x => x.StartsWith("http"));
+                string webseite = toolbox.GetWeb(link);
+                HtmlNode titleNode = HtmlDocumentExtensions.GetHtmlNode(webseite).SelectSingleNode("//head/title");
+                string title = Regex.Replace(titleNode.InnerText.Trim().Replace("\n", "").Replace("\r", ""), "[ ]{2,}", " ");
                 theMessage.Answer(title);
             }
-            catch
-            {
-                theMessage.Answer("Entweder hat die Webseite keine Überschrift oder die URL ist nicht gültig");
-            }
+            catch { }
+        }
+
+        public void Start()
+        {
+            Program.UserMessaged += Run;
+        }
+
+        public void Stop()
+        {
+            Program.UserMessaged -= Run;
         }
     }
 }

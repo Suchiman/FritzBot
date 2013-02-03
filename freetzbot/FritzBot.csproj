@@ -28,6 +28,8 @@
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
     <TargetFrameworkProfile />
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -99,13 +101,17 @@
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Web" />
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DataModel\Attribute.cs" />
+    <Compile Include="Functions\Geolocation.cs" />
+    <Compile Include="Functions\GoogleTranslator.cs" />
     <Compile Include="Functions\UTF8Checker.cs" />
     <Compile Include="Plugins\admin.cs" />
+    <Compile Include="Plugins\geolocator.cs" />
     <Compile Include="Plugins\subscribe.cs" />
     <Compile Include="Plugins\SubscriptionProviders\IRCSubscriptionProvider.cs" />
     <Compile Include="Plugins\SubscriptionProviders\MailSubscriptionProvider.cs" />
@@ -219,6 +225,7 @@
     <PreBuildEvent>
     </PreBuildEvent>
   </PropertyGroup>
+  <Import Project="$(SolutionDir)\.nuget\nuget.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

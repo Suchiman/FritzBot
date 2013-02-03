@@ -68,13 +68,11 @@ namespace FritzBot
                 }
                 _commandline = _message.Remove(0, index).Trim();
                 _commandname = _message.Substring(1, index - 1).Trim();
-                _args = new List<string>(_commandline.Split(' '));
             }
             else
             {
-                _commandline = "";
+                _commandline = _message;
                 _commandname = "";
-                _args = new List<string>();
             }
             _hasargs = !String.IsNullOrEmpty(_commandline);
         }
@@ -207,6 +205,10 @@ namespace FritzBot
         {
             get
             {
+                if (_args == null)
+                {
+                    _args = new List<string>(_commandline.Split(' '));
+                }
                 return _args;
             }
         }

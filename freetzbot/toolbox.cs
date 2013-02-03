@@ -158,9 +158,9 @@ namespace FritzBot
                 return "";
             }
             string theEncoding = "UTF-8";
-            if (!String.IsNullOrEmpty(response.ContentEncoding))
+            if (!String.IsNullOrEmpty(response.CharacterSet))
             {
-                theEncoding = response.ContentEncoding;
+                theEncoding = response.CharacterSet;
             }
             StreamReader resStream = new StreamReader(response.GetResponseStream(), Encoding.GetEncoding(theEncoding, EncoderFallback.ReplacementFallback, DecoderFallback.ReplacementFallback));
             string thepage = resStream.ReadToEnd();
