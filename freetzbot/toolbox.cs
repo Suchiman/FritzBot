@@ -87,7 +87,7 @@ namespace FritzBot
         }
 
         /// <summary>
-        /// Hasht einen String mit dem SHA512 Algorithmus
+        /// Hasht einen string mit dem SHA512 Algorithmus
         /// </summary>
         /// <param name="toCrypt">Der zu hashende String</param>
         /// <returns>Den Hashwert des Strings</returns>
@@ -188,7 +188,7 @@ namespace FritzBot
         }
 
         /// <summary>
-        /// Codiert den String entsprechend den Anforderungen einer URL
+        /// Codiert den string entsprechend den Anforderungen einer URL
         /// </summary>
         /// <param name="url">Der zu Codierende String</param>
         /// <returns>Einen URL Encodierten String</returns>

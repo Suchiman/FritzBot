@@ -5,7 +5,7 @@ namespace webpages
 {
     class robots : IWebInterface
     {
-        public String Url { get { return "/robots.txt"; } }
+        public string Url { get { return "/robots.txt"; } }
 
         public HtmlResponse GenPage(HtmlRequest request)
         {

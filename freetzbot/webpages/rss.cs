@@ -40,7 +40,7 @@ namespace FritzBot.webpages
                 XElement Subscriptions = UserManager.GetInstance()[request.getdata["user"]].GetModulUserStorage("subscribe").GetElement("Subscriptions", false);
                 if (Subscriptions != null)
                 {
-                    List<String> plugins = Subscriptions.Elements("Plugin").Where(x => x.Attribute("Provider") != null && x.Attribute("Provider").Value == "RSSSubscriptionProvider").Select(x => x.Value).ToList();
+                    List<string> plugins = Subscriptions.Elements("Plugin").Where(x => x.Attribute("Provider") != null && x.Attribute("Provider").Value == "RSSSubscriptionProvider").Select(x => x.Value).ToList();
                     notifications = notifications.Where(x => x.Attribute("Plugin") != null && plugins.Contains(x.Attribute("Plugin").Value));
                 }
             }

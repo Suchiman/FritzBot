@@ -11,7 +11,7 @@ namespace FritzBot.Core
 {
     public class XMLStorageEngine
     {
-        private const String databaseName = "database.xml";
+        private const string databaseName = "database.xml";
         private static XMLStorageEngine xdm = null;
         private const int MostUpToDateVersion = 1;
         private bool databaseChanged = false;
@@ -98,17 +98,17 @@ namespace FritzBot.Core
             databaseChanged = true;
         }
 
-        public XElement GetElement(String name)
+        public XElement GetElement(string name)
         {
             return database.Element("Fritzbot").Element(name);
         }
 
         public ModulDataStorage GetGlobalSettingsStorage(object plugin)
         {
-            String id = "";
-            if (plugin is String)
+            string id = "";
+            if (plugin is string)
             {
-                id = (String)plugin;
+                id = (string)plugin;
             }
             else
             {
@@ -229,8 +229,8 @@ namespace FritzBot.Core
                     {
                         XElement aliasstorage = new XElement("Storage", new XAttribute("id", "alias"));
 
-                        List<String> aliasnamen = user.Element("alias").Element("alias").Elements().Select(x => x.Value).ToList<String>();
-                        List<String> beschreibungen = user.Element("alias").Element("description").Elements().Select(x => x.Value).ToList<String>();
+                        List<string> aliasnamen = user.Element("alias").Element("alias").Elements().Select(x => x.Value).ToList<string>();
+                        List<string> beschreibungen = user.Element("alias").Element("description").Elements().Select(x => x.Value).ToList<string>();
                         for (int i = 0; i < aliasnamen.Count; i++)
                         {
                             aliasstorage.Add(new XElement("alias", new XElement("name", aliasnamen[i]), new XElement("beschreibung", beschreibungen[i])));
@@ -249,8 +249,8 @@ namespace FritzBot.Core
 
                     XElement remindstorage = new XElement("Storage", new XAttribute("id", "remind"));
                     {
-                        List<String> RememberNicks = user.Element("RememberNick").Elements("string").Select(x => x.Value).ToList<String>();
-                        List<String> RememberMessages = user.Element("RememberMessage").Elements("string").Select(x => x.Value).ToList<String>();
+                        List<string> RememberNicks = user.Element("RememberNick").Elements("string").Select(x => x.Value).ToList<string>();
+                        List<string> RememberMessages = user.Element("RememberMessage").Elements("string").Select(x => x.Value).ToList<string>();
                         List<DateTime> RememberTimes = user.Element("RememberTime").Elements("dateTime").Select(x => DateTime.Parse(x.Value)).ToList<DateTime>();
                         List<bool> Remembereders = user.Element("Remembered").Elements("boolean").Select(x => Boolean.Parse(x.Value)).ToList<bool>();
                         for (int i = 0; i < RememberNicks.Count; i++)

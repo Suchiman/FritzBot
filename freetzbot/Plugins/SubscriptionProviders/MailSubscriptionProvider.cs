@@ -15,7 +15,7 @@ namespace FritzBot.Plugins.SubscriptionProviders
     [Module.Hidden]
     public class MailSubscriptionProvider : SubscriptionProvider
     {
-        public override void SendNotification(User user, String message)
+        public override void SendNotification(User user, string message)
         {
             SmtpClient client = new SmtpClient(PluginStorage.GetVariable("SMTPServer"), Convert.ToInt32(PluginStorage.GetVariable("SMTPPort")));
             client.EnableSsl = Boolean.Parse(PluginStorage.GetVariable("SMTPSSL", "false"));

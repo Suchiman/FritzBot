@@ -12,7 +12,7 @@ namespace FritzBot.Plugins
     {
         public void Run(ircMessage theMessage)
         {
-            String BoxName = BoxDatabase.GetInstance().GetShortName(theMessage.CommandLine);
+            string BoxName = BoxDatabase.GetInstance().GetShortName(theMessage.CommandLine);
             XElement boxToDelete = theMessage.TheUser.GetModulUserStorage("box").Storage.Elements("box").FirstOrDefault(x => x.Value == BoxName);
             if (boxToDelete != null)
             {

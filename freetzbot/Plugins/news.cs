@@ -30,8 +30,8 @@ namespace FritzBot.Plugins
 
         private void NewsThread()
         {
-            const String baseurl = "http://webgw.avm.de/download/UpdateNews.jsp";
-            String output = string.Empty;
+            const string baseurl = "http://webgw.avm.de/download/UpdateNews.jsp";
+            string output = string.Empty;
             List<NewsEntry> NewsDE = GetNews(baseurl + "?lang=de").ToList();
             List<NewsEntry> NewsEN = GetNews(baseurl + "?lang=en").ToList();
             while (true)
@@ -39,19 +39,28 @@ namespace FritzBot.Plugins
                 Thread.Sleep(Convert.ToInt32(PluginStorage.GetVariable("Intervall", "300")) * 1000);
                 List<NewsEntry> NewsDENew = GetNews(baseurl + "?lang=de").ToList();
                 List<NewsEntry> NewsENNew = GetNews(baseurl + "?lang=en").ToList();
-                String[] DiffDE = NewsDENew.Where(x => !NewsDE.Contains(x)).Select(x => x.Titel).ToArray();
-                String[] DiffEN = NewsENNew.Where(x => !NewsEN.Contains(x)).Select(x => x.Titel).ToArray();
-                if (DiffDE.Length > 0)
+                string[] DiffDE = NewsDENew.Where(x => !NewsDE.Contains(x)).Select(x => x.Titel).Distinct().ToArray();
+                string[] DiffEN = NewsENNew.Where(x => !NewsEN.Contains(x)).Select(x => x.Titel).Distinct().ToArray();
+                string DiffDEstring = String.Join(", ", DiffDE);
+                string DiffENstring = String.Join(", ", DiffEN);
+                if (DiffDE.Length > 0 && DiffDEstring == DiffENstring)
                 {
-                    output = "Neue Deutsche News: " + String.Join(", ", DiffDE);
+                    output = "Neue News: " + DiffDEstring;
                 }
-                if (DiffEN.Length > 0)
+                else
                 {
-                    if (output != String.Empty)
+                    if (DiffDE.Length > 0)
                     {
-                        output += ", ";
+                        output = "Neue Deutsche News: " + DiffDEstring;
                     }
-                    output += "Neue Englische News: " + String.Join(", ", DiffEN);
+                    if (DiffEN.Length > 0)
+                    {
+                        if (output != String.Empty)
+                        {
+                            output += ", ";
+                        }
+                        output += "Neue Englische News: " + DiffENstring;
+                    }
                 }
                 if (output != String.Empty)
                 {
@@ -59,10 +68,12 @@ namespace FritzBot.Plugins
                     NotifySubscribers(output);
                 }
                 output = String.Empty;
+                NewsDE = NewsDENew;
+                NewsEN = NewsENNew;
             }
         }
 
-        private IEnumerable<NewsEntry> GetNews(String Url)
+        private IEnumerable<NewsEntry> GetNews(string Url)
         {
             return new HtmlDocument().LoadUrl(Url).DocumentNode.StripComments().SelectNodes("//table[@width='100%'][@border='0'][@cellpadding='0'][@cellspacing='0'][@bgcolor='F6F6F6']").Select(x => new NewsEntry(x));
         }
@@ -70,8 +81,8 @@ namespace FritzBot.Plugins
 
     class NewsEntry
     {
-        public String Titel;
-        public String Version;
+        public string Titel;
+        public string Version;
         public DateTime Datum;
 
         public NewsEntry(HtmlNode node)

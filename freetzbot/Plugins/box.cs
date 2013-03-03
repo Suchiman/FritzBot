@@ -15,7 +15,7 @@ namespace FritzBot.Plugins
         public void Run(ircMessage theMessage)
         {
             List<Box> MatchingBoxes = BoxDatabase.GetInstance().FindBoxes(theMessage.CommandLine).ToList();
-            String BoxToAdd = "";
+            string BoxToAdd = "";
             if (MatchingBoxes.Count == 0)
             {
                 BoxToAdd = theMessage.CommandLine;

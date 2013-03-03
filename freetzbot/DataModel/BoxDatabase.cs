@@ -27,7 +27,7 @@ namespace FritzBot.DataModel
         /// <param name="ShortName">Der Kurzname der Box, z.B. 7270v2</param>
         /// <param name="FullName">Der vollständige Name</param>
         /// <param name="RegexPattern">Ein oder mehrere Reguläre Ausdrücke um die Box zu erkennen</param>
-        public Box AddBox(String ShortName, String FullName, params String[] RegexPattern)
+        public Box AddBox(string ShortName, string FullName, params String[] RegexPattern)
         {
             if (GetBoxByShortName(ShortName) != null)
             {
@@ -36,7 +36,7 @@ namespace FritzBot.DataModel
             XElement NewBox = PluginStorage.GetNewElement("Box");
             NewBox.Add(new XElement("ShortName", ShortName), new XElement("FullName", FullName));
             XElement regexes = NewBox.AddSingle(new XElement("Regex"));
-            foreach (String pattern in RegexPattern)
+            foreach (string pattern in RegexPattern)
             {
                 regexes.Add(new XElement("Pattern", pattern));
             }
@@ -47,7 +47,7 @@ namespace FritzBot.DataModel
         /// Gibt die Box mit entsprechendem ShortName zurück
         /// </summary>
         /// <param name="ShortName">Der Kurzname der Box</param>
-        public Box GetBoxByShortName(String ShortName)
+        public Box GetBoxByShortName(string ShortName)
         {
             XElement box = PluginStorage.Storage.Elements("Box").FirstOrDefault(x => x.Element("ShortName").Value == ShortName);
             return box != null ? new Box(box) : null;
@@ -56,8 +56,8 @@ namespace FritzBot.DataModel
         /// <summary>
         /// Versucht die zum input passende Box zu finden und den ShortName zurückzugeben. Andernfalls ist die Rückgabe der input
         /// </summary>
-        /// <param name="input">Ein String anhand dessen versucht werden soll die passende Box zu finden</param>
-        public String GetShortName(String input)
+        /// <param name="input">Ein string anhand dessen versucht werden soll die passende Box zu finden</param>
+        public string GetShortName(string input)
         {
             Box ToFind;
             if (TryFindExactBox(input, out ToFind))
@@ -70,11 +70,11 @@ namespace FritzBot.DataModel
         /// <summary>
         /// Versucht die zum input passende Box zu finden und den ShortName zurückzugeben.
         /// </summary>
-        /// <param name="input">Ein String anhand dessen versucht werden soll die passende Box zu finden</param>
-        public bool TryGetShortName(String input, out String ShortName)
+        /// <param name="input">Ein string anhand dessen versucht werden soll die passende Box zu finden</param>
+        public bool TryGetShortName(string input, out string ShortName)
         {
             ShortName = null;
-            String result = GetShortName(input);
+            string result = GetShortName(input);
             if (result != input)
             {
                 ShortName = result;
@@ -86,7 +86,7 @@ namespace FritzBot.DataModel
         /// <summary>
         /// Versucht anhand des Inputs mit den gegebenen Daten die passende Box zu ermitteln
         /// </summary>
-        public IEnumerable<Box> FindBoxes(String input)
+        public IEnumerable<Box> FindBoxes(string input)
         {
             return GetBoxen().Where(x => x.Matches(input));
         }
@@ -94,7 +94,7 @@ namespace FritzBot.DataModel
         /// <summary>
         /// Versucht anhand des Inputs mit den gegebenen Daten die einzig passende Box zu ermitteln
         /// </summary>
-        public bool TryFindExactBox(String input, out Box box)
+        public bool TryFindExactBox(string input, out Box box)
         {
             box = null;
             try
@@ -117,7 +117,7 @@ namespace FritzBot.DataModel
     public class Box
     {
         private XElement storage;
-        public String ShortName
+        public string ShortName
         {
             get
             {
@@ -128,7 +128,7 @@ namespace FritzBot.DataModel
                 storage.Element("ShortName").Value = value;
             }
         }
-        public String FullName
+        public string FullName
         {
             get
             {
@@ -139,7 +139,7 @@ namespace FritzBot.DataModel
                 storage.Element("FullName").Value = value;
             }
         }
-        public IEnumerable<String> RegexPattern
+        public IEnumerable<string> RegexPattern
         {
             get
             {
@@ -155,7 +155,7 @@ namespace FritzBot.DataModel
         /// <summary>
         /// Überprüft mit den gegebenen Daten ob der input dieser Box entspricht
         /// </summary>
-        public bool Matches(String input)
+        public bool Matches(string input)
         {
             return ((ShortName == input) || (FullName == input) || RegexPattern.Any(x => Regex.Match(input, x).Success));
         }
@@ -174,7 +174,7 @@ namespace FritzBot.DataModel
         /// <summary>
         /// Entfernt einen Regulären Ausdruck aus den Erkennungsmustern
         /// </summary>
-        public void RemoveRegex(String pattern)
+        public void RemoveRegex(string pattern)
         {
             storage.Element("Regex").Elements("Pattern").Where(x => x.Value == pattern).Remove();
         }

@@ -53,7 +53,7 @@ namespace FritzBot
         public void Connect()
         {
             InitConnection();
-            WaitForReady();
+            WaitForReady(30);
             toolbox.Logging("Verbindung mit Server " + _server + " hergestellt");
             _connecttime = DateTime.Now;
         }
@@ -98,11 +98,12 @@ namespace FritzBot
         public void WaitForReady(int timeout)
         {
             int counter = 0;
+            timeout = timeout * 2;
             while (!Ready)
             {
                 Thread.Sleep(500);
                 counter++;
-                if ((counter / 2) > timeout)
+                if ((counter) > timeout)
                 {
                     throw new TimeoutException("Die Verbindung wurde nicht innerhalb des gegebenen Timeouts bereit");
                 }
@@ -135,7 +136,15 @@ namespace FritzBot
 
         public Channel GetChannel(string name)
         {
-            return Channels.Single(x => x.ChannelName == name);
+            try
+            {
+                return Channels.Single(x => x.ChannelName == name);
+            }
+            catch
+            {
+                toolbox.Logging(String.Format("Konnte Channel {0} nicht Single'", name));
+                throw;
+            }
         }
 
         public string Nickname
@@ -306,7 +315,7 @@ namespace FritzBot
         private void ReceiveDataLoop()
         {
             NetworkStream stream = _connection.GetStream();
-            stream.ReadTimeout = 100;
+            stream.ReadTimeout = 1000;
             while (true)
             {
                 try
@@ -324,7 +333,8 @@ namespace FritzBot
                     }
                     if (String.IsNullOrEmpty(Daten))
                     {
-                        return; //Connection Lost
+                        //return; //Connection Lost
+                        continue;
                     }
                     if (Daten.StartsWith("PING"))
                     {
@@ -333,8 +343,9 @@ namespace FritzBot
                     }
                     ProcessRespond(Daten);
                 }
-                catch
+                catch (Exception ex)
                 {
+                    toolbox.Logging(ex);
                     return;
                 }
             }
@@ -367,8 +378,8 @@ namespace FritzBot
             }
         }
 
-        Regex MessageRegex = new Regex(@":(?<nick>[A-Za-z0-9<\-_\|\[\]\\\^{}]{2,15})!~?(?<realname>.*)@(?<host>.*) (?<action>[A-z]+) (?<origin>[^ :]*) :(?<message>.*)", RegexOptions.Compiled);
-        Regex GenericIRCAction = new Regex(@":(?<sender>.*) (?<action>\d\d\d)( \*)? (?<nick>[A-Za-z0-9<\-_\|\[\]\\\^{}]{2,15}) :?(?<message>.*)", RegexOptions.Compiled);
+        Regex MessageRegex = new Regex(@"^:(?<nick>[A-Za-z0-9<\-_\|\[\]\\\^{}]{2,15})!~?(?<realname>[^ ]*)@(?<host>[^ ]*) (?<action>[A-z]+) (?<origin>[^ :]*) :(?<message>.*)", RegexOptions.Compiled);
+        Regex GenericIRCAction = new Regex(@"^:(?<sender>[^ :]*) (?<action>\d\d\d)( \*)? (?<nick>[A-Za-z0-9<\-_\|\[\]\\\^{}]{2,15}) :?(?<message>.*)", RegexOptions.Compiled);
 
         private void ProcessRespond(string message)
         {
@@ -409,6 +420,10 @@ namespace FritzBot
                         return;
                     case "352": //WHO Reply
                         Match M352 = Regex.Match(messie, @"(?<channel>#.*) .* .* .* (?<nick>.*) (?<modes>.*) :(?<hopcount>\d) (?<realname>.*)");
+                        if (String.IsNullOrEmpty(M352.Groups["channel"].Value))
+                        {
+                            return;
+                        }
                         Channel M352chan = GetChannel(M352.Groups["channel"].Value);
                         User M352User = UserManager.GetInstance()[M352.Groups["nick"].Value];
                         M352User.LastUsedNick = M352.Groups["nick"].Value;
@@ -421,6 +436,10 @@ namespace FritzBot
                         return;
                     case "315": //WHO End
                         Match M315 = Regex.Match(messie, @"(?<channel>#.*) :");
+                        if (String.IsNullOrEmpty(M315.Groups["channel"].Value))
+                        {
+                            return;
+                        }
                         Channel M315chan = GetChannel(M315.Groups["channel"].Value);
                         M315chan.EndOfWho = true;
                         return;

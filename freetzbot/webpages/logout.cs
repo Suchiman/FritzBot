@@ -6,14 +6,14 @@ namespace webpages
 {
     class logout : IWebInterface
     {
-        public String Url { get { return "/logout"; } }
+        public string Url { get { return "/logout"; } }
 
         public HtmlResponse GenPage(HtmlRequest request)
         {
             HtmlResponse theresponse = new HtmlResponse();
             theresponse.page += "<!DOCTYPE html><html><body>";
             theresponse.page += index.GenMenu(request);
-            String name = "";
+            string name = "";
             if (request.cookies["username"] != null)
             {
                 name = request.cookies["username"].Value;

@@ -10,7 +10,7 @@ namespace FritzBot.Plugins.SubscriptionProviders
 {
     public abstract class SubscriptionProvider : PluginBase
     {
-        public abstract void SendNotification(User user, String message);
+        public abstract void SendNotification(User user, string message);
 
         public virtual void AddSubscription(ircMessage theMessage, PluginBase plugin, XElement storage)
         {

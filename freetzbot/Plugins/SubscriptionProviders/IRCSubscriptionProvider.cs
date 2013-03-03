@@ -13,7 +13,7 @@ namespace FritzBot.Plugins.SubscriptionProviders
     [Module.Hidden]
     public class IRCSubscriptionProvider : SubscriptionProvider
     {
-        public override void SendNotification(User user, String message)
+        public override void SendNotification(User user, string message)
         {
             Irc UserConnection = ServerManager.GetInstance().GetAllConnections().FirstOrDefault(x => x.Channels.Any(y => y.User.Contains(user)));
             if (UserConnection != null)

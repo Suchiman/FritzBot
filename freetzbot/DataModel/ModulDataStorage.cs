@@ -24,7 +24,7 @@ namespace FritzBot.DataModel
             }
         }
 
-        public void SetVariable(String name, object value)
+        public void SetVariable(string name, object value)
         {
             if (storage.Element(name) != null)
             {
@@ -36,7 +36,7 @@ namespace FritzBot.DataModel
             }
         }
 
-        public String GetVariable(String name)
+        public string GetVariable(string name)
         {
             XElement xe = storage.Element(name);
             if (xe != null)
@@ -46,12 +46,12 @@ namespace FritzBot.DataModel
             return null;
         }
 
-        public String GetVariable(String name, String @default)
+        public string GetVariable(string name, string @default)
         {
             return GetVariable(name) ?? @default;
         }
 
-        public XElement GetElement(String name, bool CreateIfNotExist)
+        public XElement GetElement(string name, bool CreateIfNotExist)
         {
             XElement el = storage.Element(name);
             if (el == null && CreateIfNotExist)
@@ -62,7 +62,7 @@ namespace FritzBot.DataModel
             return el;
         }
 
-        public XElement GetNewElement(String name)
+        public XElement GetNewElement(string name)
         {
             XElement el = new XElement(name);
             storage.Add(el);

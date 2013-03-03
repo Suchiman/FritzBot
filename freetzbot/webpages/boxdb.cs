@@ -7,12 +7,12 @@ namespace webpages
 {
     class boxdb : IWebInterface
     {
-        public String Url { get { return "/boxdb"; } }
+        public string Url { get { return "/boxdb"; } }
 
         public HtmlResponse GenPage(HtmlRequest request)
         {
             HtmlResponse theresponse = new HtmlResponse();
-            String LoginCheck = login.CheckLogin(request);
+            string LoginCheck = login.CheckLogin(request);
             theresponse.page += "<!DOCTYPE html><html><body>";
             theresponse.page += index.GenMenu(request);
             if (!String.IsNullOrEmpty(LoginCheck))
@@ -21,7 +21,7 @@ namespace webpages
                 theresponse.page += "<tr><td><b>Besitzer</b></td><td><b>Boxen</b></td></tr>";
                 foreach (User theuser in UserManager.GetInstance().Where(x => x.GetModulUserStorage("box").Storage.Elements("box").Count() > 0))
                 {
-                    theresponse.page += "<tr><td>" + String.Join(", ", theuser.names.ToArray<String>()) + "</td><td>" + String.Join(", ", theuser.GetModulUserStorage("box").Storage.Elements("box").Select(x => x.Value).ToArray<String>()) + "</td></tr>";
+                    theresponse.page += "<tr><td>" + String.Join(", ", theuser.names.ToArray<string>()) + "</td><td>" + String.Join(", ", theuser.GetModulUserStorage("box").Storage.Elements("box").Select(x => x.Value).ToArray<string>()) + "</td></tr>";
                 }
                 theresponse.page += "</table>";
             }

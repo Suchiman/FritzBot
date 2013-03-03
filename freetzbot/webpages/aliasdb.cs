@@ -10,7 +10,7 @@ namespace webpages
 {
     class aliasdb : IWebInterface
     {
-        public String Url { get { return "/aliasdb"; } }
+        public string Url { get { return "/aliasdb"; } }
 
         public HtmlResponse GenPage(HtmlRequest request)
         {

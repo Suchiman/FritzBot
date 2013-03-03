@@ -67,7 +67,7 @@ namespace FritzBot.Core
             return element;
         }
 
-        public static XElement GetElementOrCreate(this XElement storage, String name)
+        public static XElement GetElementOrCreate(this XElement storage, string name)
         {
             XElement el = storage.Element(name);
             if (el == null)
@@ -78,7 +78,7 @@ namespace FritzBot.Core
             return el;
         }
 
-        public static String AttributeValueOrEmpty(this XElement element, String name)
+        public static string AttributeValueOrEmpty(this XElement element, string name)
         {
             XAttribute a = element.Attribute(name);
             if (a != null)
@@ -111,9 +111,9 @@ namespace FritzBot.Core
 
     public static class HtmlDocumentExtensions
     {
-        public static HtmlDocument LoadUrl(this HtmlDocument doc, String url)
+        public static HtmlDocument LoadUrl(this HtmlDocument doc, string url)
         {
-            String page = toolbox.GetWeb(url);
+            string page = toolbox.GetWeb(url);
             if (String.IsNullOrEmpty(page))
             {
                 throw new InvalidOperationException("Verbindungsfehler");
@@ -122,7 +122,7 @@ namespace FritzBot.Core
             return doc;
         }
 
-        public static HtmlNode GetHtmlNode(String html)
+        public static HtmlNode GetHtmlNode(string html)
         {
             HtmlDocument doc = new HtmlDocument();
             doc.LoadHtml(html);
@@ -131,7 +131,7 @@ namespace FritzBot.Core
 
         public static HtmlNode StripComments(this HtmlNode node)
         {
-            foreach (HtmlNode item in node.Descendants().Where(x => x is HtmlCommentNode).ToList())
+            foreach (HtmlNode item in node.Descendants().OfType<HtmlCommentNode>().ToList())
             {
                 item.Remove();
             }
@@ -152,21 +152,6 @@ namespace FritzBot.Core
             {
                 tmp = tmp.NextSibling;
                 yield return tmp;
-            }
-        }
-    }
-
-    public static class PluginExtensions
-    {
-        /// <summary>
-        /// Stoppt alle Tasks
-        /// </summary>
-        public static IEnumerable<IBackgroundTask> Stop(this IEnumerable<IBackgroundTask> tasks)
-        {
-            foreach (IBackgroundTask task in tasks)
-            {
-                task.Stop();
-                yield return task;
             }
         }
     }

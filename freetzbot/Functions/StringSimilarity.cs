@@ -18,7 +18,7 @@ namespace FritzBot.Functions
         /// </summary>
         private static int LevenshteinDistance(Char[] str1, int i, int len1, Char[] str2, int j, int len2)
         {
-            String key = String.Join(",", new string[] { i.ToString(), len1.ToString(), j.ToString(), len2.ToString() });
+            string key = String.Join(",", new string[] { i.ToString(), len1.ToString(), j.ToString(), len2.ToString() });
             if (memo.ContainsKey(key)) return memo[key];
 
             if (len1 == 0) return len2;
@@ -38,7 +38,7 @@ namespace FritzBot.Functions
         /// <param name="str1">Erster String</param>
         /// <param name="str2">Zweiter String</param>
         /// <param name="IgnoreCase">Groß / Kleinschreibung ignorieren</param>
-        public static int Compare(String str1, String str2, bool IgnoreCase)
+        public static int Compare(string str1, string str2, bool IgnoreCase)
         {
             memo = new Dictionary<String, int>();
             if (IgnoreCase)
@@ -55,7 +55,7 @@ namespace FritzBot.Functions
         /// <param name="str1">Erster String</param>
         /// <param name="str2">Zweiter String</param>
         /// <param name="IgnoreCase">Groß / Kleinschreibung ignorieren</param>
-        public static double ComparePercent(String str1, String str2, bool IgnoreCase)
+        public static double ComparePercent(string str1, string str2, bool IgnoreCase)
         {
             double distance = Compare(str1, str2, IgnoreCase);
             double maxlength = Math.Max(str1.Length, str2.Length);

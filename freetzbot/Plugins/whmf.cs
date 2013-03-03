@@ -10,7 +10,7 @@ namespace FritzBot.Plugins
     {
         public void Run(ircMessage theMessage)
         {
-            String output = "http://wehavemorefun.de/fbwiki/index.php?search=";
+            string output = "http://wehavemorefun.de/fbwiki/index.php?search=";
             if (!theMessage.HasArgs)
             {
                 output = "http://wehavemorefun.de/fbwiki";

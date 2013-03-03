@@ -10,31 +10,31 @@ namespace FritzBot.DataModel
 {
     public abstract class PluginBase
     {
-        public String PluginID { get; protected set; }
+        public string PluginID { get; protected set; }
 
         public PluginBase()
         {
             PluginID = this.GetType().Name;
         }
 
-        protected virtual void NotifySubscribers(String message)
+        protected virtual void NotifySubscribers(string message)
         {
             NotifySubscribers(message, new String[0]);
         }
 
-        protected virtual void NotifySubscribers(String message, String[] criteria)
+        protected virtual void NotifySubscribers(string message, String[] criteria)
         {
             SaveNotification(message);
             GetSubscribers(criteria).ForEach(x => DoNotification(x, message));
         }
 
-        protected virtual void SaveNotification(String message)
+        protected virtual void SaveNotification(string message)
         {
             ModulDataStorage mds = XMLStorageEngine.GetManager().GetGlobalSettingsStorage("NotificationHistory");
             mds.Storage.Add(new XElement("Notification", message, new XAttribute("Created", DateTime.Now), new XAttribute("Plugin", PluginID)));
         }
 
-        protected virtual void DoNotification(User user, String message)
+        protected virtual void DoNotification(User user, string message)
         {
             IEnumerable<XElement> subscription = user.GetSubscriptions().Where(x => x.Value == PluginID);
             IEnumerable<SubscriptionProvider> providers = PluginManager.GetInstance().Get<SubscriptionProvider>();

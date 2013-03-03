@@ -20,7 +20,7 @@ namespace FritzBot.Plugins.SubscriptionProviders
             {
                 return;
             }
-            String userToken = settings.Value;
+            string userToken = settings.Value;
             Dictionary<String, String> Parameter = new Dictionary<String, String>()
             {
                 {"token", "b6p6augH1KDpxcRxyo4I35Yxl9XP5x"},

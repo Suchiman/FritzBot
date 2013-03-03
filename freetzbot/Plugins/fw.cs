@@ -17,23 +17,23 @@ namespace FritzBot.Plugins
     [Module.Subscribeable]
     class fw : PluginBase, ICommand, IBackgroundTask
     {
-        const String BaseDirectory = "ftp://ftp.avm.de/fritz.box/";
+        const string BaseDirectory = "ftp://ftp.avm.de/fritz.box/";
         Thread worker;
 
         public void Start()
         {
-            return;
-            try
-            {
-                worker = new Thread(new ThreadStart(WorkerThread));
-                worker.IsBackground = true;
-                worker.Name = PluginID;
-                worker.Start();
-            }
-            catch (Exception ex)
-            {
-                toolbox.Logging(ex);
-            }
+            //return;
+            //try
+            //{
+            //    worker = new Thread(new ThreadStart(WorkerThread));
+            //    worker.IsBackground = true;
+            //    worker.Name = PluginID;
+            //    worker.Start();
+            //}
+            //catch (Exception ex)
+            //{
+            //    toolbox.Logging(ex);
+            //}
         }
 
         public void Stop()
@@ -54,17 +54,17 @@ namespace FritzBot.Plugins
         public void WorkerThread()
         {
             Stopwatch sw = Stopwatch.StartNew();
-            List<String> alte = FTPGrabber.Scan(BaseDirectory, 1);
+            List<string> alte = FTPGrabber.Scan(BaseDirectory, 1);
             sw.Stop();
             while (true)
             {
                 if (PluginStorage.GetVariable("CheckEnabled", "true") == "true")
                 {
-                    List<String> neue = FTPGrabber.Scan(BaseDirectory, 4);
-                    List<String> unEquals = neue.Where(x => !alte.Contains(x)).ToList();
+                    List<string> neue = FTPGrabber.Scan(BaseDirectory, 4);
+                    List<string> unEquals = neue.Where(x => !alte.Contains(x)).ToList();
                     if (unEquals.Count > 0)
                     {
-                        String labors = "Änderungen auf dem FTP gesichtet! - " + String.Join(", ", unEquals.Select(x => GetReadableString(x) + ": " + x.Split(' ').Last()).ToArray()) + " - Zum FTP: " + BaseDirectory;
+                        string labors = "Änderungen auf dem FTP gesichtet! - " + String.Join(", ", unEquals.Select(x => GetReadableString(x) + ": " + x.Split(' ').Last()).ToArray()) + " - Zum FTP: " + BaseDirectory;
                         ServerManager.GetInstance().AnnounceGlobal(labors);
                         NotifySubscribers(labors, unEquals.Select(x => BoxDatabase.GetInstance().GetShortName(x)).ToArray());
                         alte = neue;
@@ -137,11 +137,11 @@ namespace FritzBot.Plugins
                 firmware = true;
             }
 
-            String ftp = BaseDirectory;
-            String output = "";
+            string ftp = BaseDirectory;
+            string output = "";
 
-            List<String> DirectoryNames = GetListingNames(FtpDirectory(ftp)).ToList();
-            foreach (String Directory in DirectoryNames)
+            List<string> DirectoryNames = GetListingNames(FtpDirectory(ftp)).ToList();
+            foreach (string Directory in DirectoryNames)
             {
                 if (BoxDatabase.GetInstance().FindBoxes(Directory).Any(x => x == box))
                 {
@@ -151,7 +151,7 @@ namespace FritzBot.Plugins
             }
             if (ftp == BaseDirectory)
             {
-                foreach (String Directory in DirectoryNames)
+                foreach (string Directory in DirectoryNames)
                 {
                     if (Directory.Contains(theMessage.CommandLine))
                     {
@@ -167,13 +167,13 @@ namespace FritzBot.Plugins
             }
             output = ftp;
             //Box Ordner ist nun gefunden, Firmware Image muss gefunden werden, vorsicht könnte bereits hier sein oder erst in einem weiteren Unterordner
-            List<String> recoveries = new List<String>();
-            List<String> sources = new List<String>();
-            List<String> firmwares = new List<String>();
-            foreach (String datei in FtpRecursiv(ftp))
+            List<string> recoveries = new List<string>();
+            List<string> sources = new List<string>();
+            List<string> firmwares = new List<string>();
+            foreach (string datei in FtpRecursiv(ftp))
             {
                 String[] slashsplit = datei.Split(new String[] { "/" }, 2, StringSplitOptions.None);
-                String final = slashsplit[0] + "/";
+                string final = slashsplit[0] + "/";
                 if (slashsplit[1].EndsWith(".image"))
                 {
                     firmwares.Add(final + ExtractVersion(slashsplit[1]));
@@ -212,26 +212,26 @@ namespace FritzBot.Plugins
         /// <param name="toExtract">Der Dateiname</param>
         /// <returns>Die Versionsnummer</returns>
         /// <exception cref="ArgumentException">Tritt ein wenn kein korrektes Versionsformat übergeben wurde</exception>
-        public static String ExtractVersion(String toExtract)
+        public static string ExtractVersion(string toExtract)
         {
-            Match regex = Regex.Match(toExtract, @"((\d{2,3}\.)?\d\d\.\d\d)\.\D"); //@"\d{2,3}\.\d\d\.\d\d"
+            Match regex = Regex.Match(toExtract, @"((\d{2,3}\.)?\d\d\.\d\d-?\d?\d?)\.\D"); //@"\d{2,3}\.\d\d\.\d\d"
             if (regex.Success)
             {
                 return regex.Groups[1].Value;
             }
-            throw new ArgumentException("Der angegebene String enthält kein korrektes Versionsformat");
+            throw new ArgumentException("Der angegebene string enthält kein korrektes Versionsformat");
         }
         /// <summary>
         /// Extrahiert aus der FTP Verzeichnisauflistung die Namen der Dateien und Ordner
         /// </summary>
         /// <param name="Listing">Die FTP Verzeichnisauflistung</param>
         /// <returns>Eine Liste die alle Namen beinhaltet</returns>
-        public static IEnumerable<String> GetListingNames(String Listing)
+        public static IEnumerable<string> GetListingNames(string Listing)
         {
-            String[] Entries = Listing.Split(new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (String Entry in Entries)
+            string[] Entries = Listing.Split(new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (string Entry in Entries)
             {
-                yield return Entry.Split(new String[] { " " }, 9, StringSplitOptions.RemoveEmptyEntries)[8];
+                yield return Entry.Split(new string[] { " " }, 9, StringSplitOptions.RemoveEmptyEntries)[8];
             }
         }
         /// <summary>
@@ -239,22 +239,22 @@ namespace FritzBot.Plugins
         /// </summary>
         /// <param name="ftp">Die FTP Adresse</param>
         /// <returns>Eine Liste mit den gefundenen Dateinamen inklusive relativen Pfad angaben</returns>
-        public static IEnumerable<String> FtpRecursiv(String ftp)
+        public static IEnumerable<string> FtpRecursiv(string ftp)
         {
             String[] lines = FtpDirectory(ftp).Split(new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (String daten in lines)
+            foreach (string daten in lines)
             {
                 if (daten.ToCharArray()[0] == 'd')
                 {
-                    String pfad = daten.Split(new String[] { " " }, 9, StringSplitOptions.RemoveEmptyEntries)[8];
-                    foreach (String recursiv in FtpRecursiv(ftp + pfad + "/"))
+                    string pfad = daten.Split(new String[] { " " }, 9, StringSplitOptions.RemoveEmptyEntries)[8];
+                    foreach (string recursiv in FtpRecursiv(ftp + pfad + "/"))
                     {
                         yield return recursiv;
                     }
                 }
                 else if (daten.ToCharArray()[0] == '-' && (daten.EndsWith(".image") || daten.EndsWith(".recover-image.exe") || daten.EndsWith(".tar.gz")))
                 {
-                    String file = daten.Split(new String[] { " " }, 9, StringSplitOptions.RemoveEmptyEntries)[8];
+                    string file = daten.Split(new String[] { " " }, 9, StringSplitOptions.RemoveEmptyEntries)[8];
                     String[] FtpSplitted = ftp.Split(new String[] { "/" }, StringSplitOptions.RemoveEmptyEntries);
                     yield return FtpSplitted.Last() + "/" + file;
                 }
@@ -265,7 +265,7 @@ namespace FritzBot.Plugins
         /// </summary>
         /// <param name="ftp">Die FTP Adresse des Servers</param>
         /// <returns>Verzeichnissauflistung (String)</returns>
-        public static String FtpDirectory(String ftp)
+        public static string FtpDirectory(string ftp)
         {
             FtpWebRequest request = (FtpWebRequest)WebRequest.Create(ftp);
             request.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
@@ -277,7 +277,7 @@ namespace FritzBot.Plugins
 
     class FTPGrabber
     {
-        public static List<string> Scan(String Adress, int Threads)
+        public static List<string> Scan(string Adress, int Threads)
         {
             FTPGrabber grabber = new FTPGrabber(Adress, Threads);
             return grabber.Grab().OrderBy(x => x).ToList();

@@ -168,7 +168,7 @@ namespace FritzBot.Plugins
             if (Subscriptions != null)
             {
                 IEnumerable<IGrouping<String, XElement>> Subscription = Subscriptions.Elements("Plugin").Where(x => x.Attribute("Provider") != null).GroupBy(x => x.Attribute("Provider").Value);
-                String output = String.Join("; ", Subscription.Select(x => String.Format("{0}: {1}", toolbox.GetAttribute<Module.NameAttribute>(PluginManager.GetInstance().Get<SubscriptionProvider>().First(z => z.PluginID == x.Key)).Names.First(), String.Join(", ", x.Select(y => y.Value).ToArray()))).ToArray());
+                string output = String.Join("; ", Subscription.Select(x => String.Format("{0}: {1}", toolbox.GetAttribute<Module.NameAttribute>(PluginManager.GetInstance().Get<SubscriptionProvider>().First(z => z.PluginID == x.Key)).Names.First(), String.Join(", ", x.Select(y => y.Value).ToArray()))).ToArray());
                 theMessage.Answer(output);
             }
         }

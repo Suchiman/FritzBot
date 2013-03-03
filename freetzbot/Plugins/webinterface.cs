@@ -17,7 +17,7 @@ namespace FritzBot.Plugins
         private HttpListener Listener;
         private Thread ListenerThread;
         private List<IWebInterface> pages;
-        public const String Address = "http://teneon.de:8080/";
+        public const string Address = "http://teneon.de:8080/";
 
         public void Stop()
         {
@@ -80,7 +80,7 @@ namespace FritzBot.Plugins
                         HttpListenerRequest Request = Context.Request;
                         HttpListenerResponse Response = Context.Response;
                         Response.Headers.Add(HttpResponseHeader.Server, "FritzBot");
-                        String url = Request.RawUrl;
+                        string url = Request.RawUrl;
                         HtmlResponse TheResponse = new HtmlResponse();
                         HtmlRequest TheRequest = new HtmlRequest();
                         TheRequest.useradress = Request.RemoteEndPoint.Address;
@@ -88,17 +88,17 @@ namespace FritzBot.Plugins
                         if (Request.HasEntityBody)
                         {
                             StreamReader stream = new StreamReader(Request.InputStream, Request.ContentEncoding);
-                            String streamdata = stream.ReadToEnd();
-                            List<String> post = new List<String>();
+                            string streamdata = stream.ReadToEnd();
+                            List<string> post = new List<string>();
                             if (streamdata.Contains("&"))
                             {
-                                post = new List<String>(streamdata.Split('&'));
+                                post = new List<string>(streamdata.Split('&'));
                             }
                             else
                             {
                                 post.Add(streamdata);
                             }
-                            foreach (String data in post)
+                            foreach (string data in post)
                             {
                                 String[] split = data.Split('=');
                                 String[] ToAdd = new String[2];
@@ -126,16 +126,16 @@ namespace FritzBot.Plugins
                         {
                             String[] UrlSub = url.Split('?');
                             url = UrlSub[0];
-                            List<String> GetData = new List<String>();
+                            List<string> GetData = new List<string>();
                             if (UrlSub[1].Contains("&"))
                             {
-                                GetData = new List<String>(UrlSub[1].Split('&'));
+                                GetData = new List<string>(UrlSub[1].Split('&'));
                             }
                             else
                             {
                                 GetData.Add(UrlSub[1]);
                             }
-                            foreach (String data in GetData)
+                            foreach (string data in GetData)
                             {
                                 String[] split = data.Split('=');
                                 String[] ToAdd = new String[2];
@@ -177,8 +177,8 @@ namespace FritzBot.Plugins
                             }
                             else
                             {
-                                List<String> myCookies = TheResponse.cookies.GetHeader();
-                                foreach (String oneheader in myCookies)
+                                List<string> myCookies = TheResponse.cookies.GetHeader();
+                                foreach (string oneheader in myCookies)
                                 {
                                     Response.Headers.Add(oneheader);
                                 }

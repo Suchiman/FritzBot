@@ -7,9 +7,9 @@ namespace FritzBot
     public class HtmlResponse
     {
         public OwnCookieCollection cookies = new OwnCookieCollection();
-        public String page = "";
-        public String refer = "";
-        public String content_type = "text/html; charset=iso-8859-1";
+        public string page = "";
+        public string refer = "";
+        public string content_type = "text/html; charset=iso-8859-1";
         public int status_code = 404;
     }
     public class HtmlRequest
@@ -22,7 +22,7 @@ namespace FritzBot
     public class OwnCookieCollection
     {
         List<OwnCookie> TheCookies = new List<OwnCookie>();
-        public String this[String name]
+        public string this[string name]
         {
             get
             {
@@ -48,9 +48,9 @@ namespace FritzBot
                 TheCookies.Add(new OwnCookie(name, value));
             }
         }
-        public List<String> GetHeader()
+        public List<string> GetHeader()
         {
-            List<String> header = new List<String>();
+            List<string> header = new List<string>();
             foreach (OwnCookie onecookie in TheCookies)
             {
                 header.Add("Set-Cookie: " + onecookie.GetCookie());
@@ -60,19 +60,19 @@ namespace FritzBot
     }
     class OwnCookie
     {
-        public String name;
-        public String value;
+        public string name;
+        public string value;
         public OwnCookie()
         {
             name = "";
             value = "";
         }
-        public OwnCookie(String name, String value)
+        public OwnCookie(string name, string value)
         {
             this.name = name;
             this.value = value;
         }
-        public String GetCookie()
+        public string GetCookie()
         {
             return name + "=" + value;
         }

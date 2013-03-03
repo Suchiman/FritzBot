@@ -6,14 +6,14 @@ namespace webpages
 {
     class settings : IWebInterface
     {
-        public String Url { get { return "/settings"; } }
+        public string Url { get { return "/settings"; } }
 
         public HtmlResponse GenPage(HtmlRequest request)
         {
             HtmlResponse theresponse = new HtmlResponse();
             theresponse.page += "<!DOCTYPE html><html><body>";
             theresponse.page += index.GenMenu(request);
-            String logincheck = login.CheckLogin(request);
+            string logincheck = login.CheckLogin(request);
             if (!String.IsNullOrEmpty(logincheck))
             {
                 if (UserManager.GetInstance()[logincheck].IsOp)

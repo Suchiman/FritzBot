@@ -12,7 +12,7 @@ namespace FritzBot.Plugins
     {
         public void Run(ircMessage theMessage)
         {
-            string output = String.Join(", ", UserManager.GetInstance().Where(x => x.GetModulUserStorage("box").Storage.Elements("box").Count() > 0).Select(x => x.names.FirstOrDefault()).ToArray<String>());
+            string output = String.Join(", ", UserManager.GetInstance().Where(x => x.GetModulUserStorage("box").Storage.Elements("box").Count() > 0).Select(x => x.names.FirstOrDefault()).ToArray<string>());
             if (!String.IsNullOrEmpty(output))
             {
                 theMessage.SendPrivateMessage("Diese Benutzer haben bei mir mindestens eine Box registriert: " + output);

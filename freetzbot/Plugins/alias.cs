@@ -91,6 +91,12 @@ namespace FritzBot.Plugins
                     }
                     else
                     {
+                        XElement global = XMLStorageEngine.GetManager().Database.Descendants("alias").FirstOrDefault(x => x.Element("name").Value == theMessage.CommandArgs[1]);
+                        if (global != null)
+                        {
+                            IEnumerable<XElement> owner = global.Parent.Parent.Parent.Element("names").Elements("name");
+                            theMessage.Answer(String.Format("Dieser Alias gehört {0}.", ""));
+                        }
                         theMessage.Answer("Du scheinst keinen solchen Alias definiert zu haben");
                     }
                     return true;

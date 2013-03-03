@@ -33,7 +33,7 @@ namespace FritzBot.Core
             _servers = _storage.Elements("Server").Select(x => new Server(x, ReceivedInterceptor)).ToList<Server>();
         }
 
-        public Server this[String Hostname]
+        public Server this[string Hostname]
         {
             get
             {
@@ -98,10 +98,10 @@ namespace FritzBot.Core
         /// <param name="Nickname">Der Nickname den der IRCbot für diese Verbindung verwenden soll</param>
         /// <param name="QuitMessage">Legt die Nachricht beim Verlassen des Servers fest</param>
         /// <param name="Channels">Alle Channels die Betreten werden sollen</param>
-        public Server NewConnection(String HostName, int Port, String Nickname, String QuitMessage, List<String> Channels)
+        public Server NewConnection(string HostName, int Port, string Nickname, string QuitMessage, List<string> Channels)
         {
             XElement channels = new XElement("Channels");
-            foreach (String channel in Channels)
+            foreach (string channel in Channels)
             {
                 channels.Add(new XElement("Channel", channel));
             }
@@ -170,7 +170,7 @@ namespace FritzBot.Core
         /// Gibt eine Nachricht in allen Channels auf allen Servern bekannt
         /// </summary>
         /// <param name="message">Die Nachricht</param>
-        public void AnnounceGlobal(String message)
+        public void AnnounceGlobal(string message)
         {
             foreach (Server theServer in _servers)
             {
@@ -184,7 +184,7 @@ namespace FritzBot.Core
         /// <summary>
         /// Der Hostname des Servers zu dem die Verbindung aufgebaut wird
         /// </summary>
-        public String Hostname
+        public string Hostname
         {
             get
             {
@@ -206,7 +206,7 @@ namespace FritzBot.Core
                 _serverElement.Element("Port").Value = value.ToString();
             }
         }
-        public String Nickname
+        public string Nickname
         {
             get
             {
@@ -217,7 +217,7 @@ namespace FritzBot.Core
                 _serverElement.Element("Nickname").Value = value;
             }
         }
-        public String QuitMessage
+        public string QuitMessage
         {
             get
             {
@@ -230,11 +230,11 @@ namespace FritzBot.Core
                 _connection.QuitMessage = value;
             }
         }
-        public ReadOnlyCollection<String> Channels
+        public ReadOnlyCollection<string> Channels
         {
             get
             {
-                return _serverElement.Element("Channels").Elements("Channel").Select(x => x.Value).ToList<String>().AsReadOnly();
+                return _serverElement.Element("Channels").Elements("Channel").Select(x => x.Value).ToList<string>().AsReadOnly();
             }
         }
         private Irc _connection;
@@ -251,7 +251,7 @@ namespace FritzBot.Core
             _serverElement = serverElement;
         }
 
-        public void JoinChannel(String channel)
+        public void JoinChannel(string channel)
         {
             XElement channels = _serverElement.Element("Channels");
             if (channels.Elements("Channel").FirstOrDefault(x => x.Value == channel) == null)
@@ -282,8 +282,7 @@ namespace FritzBot.Core
             _connection.QuitMessage = QuitMessage;
             _connection.ReceivedEvent += IRCEventHandler;
             _connection.Connect();
-            _connection.WaitForReady(30);
-            foreach (String channel in Channels)
+            foreach (string channel in Channels)
             {
                 _connection.JoinChannel(channel);
             }
@@ -340,9 +339,9 @@ namespace FritzBot.Core
         /// Gibt eine Nachricht in allen Channels bekannt
         /// </summary>
         /// <param name="message">Die Nachricht</param>
-        public void Announce(String message)
+        public void Announce(string message)
         {
-            foreach (String channel in Channels)
+            foreach (string channel in Channels)
             {
                 _connection.Sendmsg(message, channel);
             }

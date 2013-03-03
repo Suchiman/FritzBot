@@ -10,7 +10,7 @@ namespace FritzBot
         //Was wird gebraucht und was wird zurückgegeben?
         //Brauch: POST parameter, Cookies, sonst ?
         //Zurückgeben: Webseite, Neue cookies, statuscode evtl.? (404 ...)
-        String Url { get; }
+        string Url { get; }
         HtmlResponse GenPage(HtmlRequest request);
     }
 }

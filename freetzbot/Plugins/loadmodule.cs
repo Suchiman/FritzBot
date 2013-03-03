@@ -17,8 +17,8 @@ namespace FritzBot.Plugins
         {
             try
             {
-                String PluginDirectory = Path.Combine(Environment.CurrentDirectory, "plugins");
-                String name = theMessage.CommandLine;
+                string PluginDirectory = Path.Combine(Environment.CurrentDirectory, "plugins");
+                string name = theMessage.CommandLine;
                 int loaded = 0;
 
                 if (name.StartsWith("http://"))

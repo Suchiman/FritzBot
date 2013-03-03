@@ -20,7 +20,7 @@ namespace FritzBot.Plugins
 
         public void Run(ircMessage theMessage)
         {
-            String Joke = "";
+            string Joke = "";
             if (theMessage.HasArgs)
             {
                 if (theMessage.CommandArgs[0].ToLower() == "add")
@@ -30,7 +30,7 @@ namespace FritzBot.Plugins
                 }
                 else
                 {
-                    Joke = GetRandom(GetSpecialJokes(theMessage.CommandArgs, UserManager.GetInstance().SelectMany(x => x.GetModulUserStorage(this).Storage.Elements("witz")).Select(x => x.Value).ToList<String>()));
+                    Joke = GetRandom(GetSpecialJokes(theMessage.CommandArgs, UserManager.GetInstance().SelectMany(x => x.GetModulUserStorage(this).Storage.Elements("witz")).Select(x => x.Value).ToList<string>()));
                     if (String.IsNullOrEmpty(Joke))
                     {
                         theMessage.Answer("Tut mir leid ich kenne leider keinen Witz der alle deine Stichwörter beinhaltet");
@@ -40,7 +40,7 @@ namespace FritzBot.Plugins
             }
             else
             {
-                Joke = GetRandom(UserManager.GetInstance().SelectMany(x => x.GetModulUserStorage(this).Storage.Elements("witz")).Select(x => x.Value).ToList<String>());
+                Joke = GetRandom(UserManager.GetInstance().SelectMany(x => x.GetModulUserStorage(this).Storage.Elements("witz")).Select(x => x.Value).ToList<string>());
                 if (String.IsNullOrEmpty(Joke))
                 {
                     theMessage.Answer("Mir fällt gerade kein Fritz!Witz ein");
@@ -50,7 +50,7 @@ namespace FritzBot.Plugins
             theMessage.Answer(Joke);
         }
 
-        private List<String> GetSpecialJokes(List<String> Filter, List<String> ToFilter)
+        private List<string> GetSpecialJokes(List<string> Filter, List<string> ToFilter)
         {
             for (int i = 0; i < ToFilter.Count; i++)
             {
@@ -67,7 +67,7 @@ namespace FritzBot.Plugins
             return ToFilter;
         }
 
-        private String GetRandom(List<String> Jokes)
+        private string GetRandom(List<string> Jokes)
         {
             if (!(Jokes.Count > 0))
             {

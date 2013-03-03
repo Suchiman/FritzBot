@@ -6,11 +6,11 @@ namespace webpages
 {
     class index : IWebInterface
     {
-        public String Url { get { return "/"; } }
+        public string Url { get { return "/"; } }
 
-        public static String GenMenu(HtmlRequest request)
+        public static string GenMenu(HtmlRequest request)
         {
-            String menu = "";
+            string menu = "";
             menu += "<div><table cellspacing=10px><tr>";
             menu += "<td><a href=\"boxdb\">BoxDB</a></td>";
             menu += "<td><a href=\"aliasdb\">Aliase</a></td>";

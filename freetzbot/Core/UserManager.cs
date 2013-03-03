@@ -40,7 +40,7 @@ namespace FritzBot.Core
             }
         }
 
-        public User this[String name]
+        public User this[string name]
         {
             get
             {
@@ -79,22 +79,12 @@ namespace FritzBot.Core
             }
         }
 
-        public bool Exists(String name)
+        public bool Exists(string name)
         {
-            foreach (User theuser in TheUsers)
-            {
-                foreach (String onename in theuser.names)
-                {
-                    if (onename.ToLower() == name.ToLower())
-                    {
-                        return true;
-                    }
-                }
-            }
-            return false;
+            return TheUsers.SelectMany(x => x.names).Any(x => x.ToLower() == name.ToLower());
         }
 
-        public User Add(String name)
+        public User Add(string name)
         {
             if (TheUsers.FirstOrDefault(x => x.names.Contains(name)) == null)
             {
@@ -119,7 +109,7 @@ namespace FritzBot.Core
             return TheUsers.FirstOrDefault(x => x.ID == id);
         }
 
-        public void Remove(String name)
+        public void Remove(string name)
         {
             User toRemvoe = TheUsers.FirstOrDefault(x => x.names.Contains(name));
             if (toRemvoe != null)
@@ -168,7 +158,7 @@ namespace FritzBot.Core
             //TheUsers = newUsers;
         }
 
-        public void GroupUser(String user1, String user2)
+        public void GroupUser(string user1, string user2)
         {
             //User Fusioned = new User();
             //int u1 = -1, u2 = -1;
@@ -193,15 +183,15 @@ namespace FritzBot.Core
             //{
             //    throw new ArgumentException("User not found");
             //}
-            //foreach (String oldname in TheUsers[u1].names)
+            //foreach (string oldname in TheUsers[u1].names)
             //{
             //    Fusioned.AddName(oldname);
             //}
-            //foreach (String oldbox in TheUsers[u1].boxes)
+            //foreach (string oldbox in TheUsers[u1].boxes)
             //{
             //    Fusioned.AddBox(oldbox);
             //}
-            //foreach (String oldjoke in TheUsers[u1].jokes)
+            //foreach (string oldjoke in TheUsers[u1].jokes)
             //{
             //    Fusioned.AddJoke(oldjoke);
             //}
@@ -254,14 +244,14 @@ namespace FritzBot.Core
     {
         private XElement UserNode;
         private XElement storage;
-        public IEnumerable<String> names
+        public IEnumerable<string> names
         {
             get
             {
                 return UserNode.Element("names").Elements("name").Select(x => x.Value);
             }
         }
-        public String LastUsedNick
+        public string LastUsedNick
         {
             get
             {
@@ -288,7 +278,7 @@ namespace FritzBot.Core
                 return Convert.ToInt32(UserNode.Attribute("id").Value);
             }
         }
-        public String password
+        public string password
         {
             get
             {
@@ -358,18 +348,18 @@ namespace FritzBot.Core
         void names_ListChanged(object sender, ListChangedEventArgs e)
         {
             UserNode.Element("names").RemoveNodes();
-            foreach (String item in names.OrderBy(x => x))
+            foreach (string item in names.OrderBy(x => x))
             {
                 UserNode.Element("names").Add(new XElement("name", item));
             }
         }
 
-        public void SetPassword(String pw)
+        public void SetPassword(string pw)
         {
             password = toolbox.Crypt(pw);
         }
 
-        public bool CheckPassword(String pw)
+        public bool CheckPassword(string pw)
         {
             if (password == toolbox.Crypt(pw))
             {
@@ -378,7 +368,7 @@ namespace FritzBot.Core
             return false;
         }
 
-        public bool AddName(String name)
+        public bool AddName(string name)
         {
             if (!names.Contains(name))
             {
@@ -401,10 +391,10 @@ namespace FritzBot.Core
 
         public ModulDataStorage GetModulUserStorage(object modul)
         {
-            String id = "";
-            if (modul is String)
+            string id = "";
+            if (modul is string)
             {
-                id = (String)modul;
+                id = (string)modul;
             }
             else
             {

@@ -12,7 +12,7 @@ namespace FritzBot.Plugins.SubscriptionProviders
     [Module.Hidden]
     public class RSSSubscriptionProvider : SubscriptionProvider
     {
-        public override void SendNotification(User user, String message) { } //Anzeige erfolgt über Webinterface, Nothing ToDo here
+        public override void SendNotification(User user, string message) { } //Anzeige erfolgt über Webinterface, Nothing ToDo here
 
         public override void ParseSubscriptionSetup(ircMessage theMessage, XElement storage)
         {

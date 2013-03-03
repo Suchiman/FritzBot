@@ -67,7 +67,7 @@ namespace FritzBot.Plugins
             }
             else
             {
-                String BoxName = BoxDatabase.GetInstance().GetShortName(theMessage.CommandLine);
+                string BoxName = BoxDatabase.GetInstance().GetShortName(theMessage.CommandLine);
                 Labordaten first = daten.FirstOrDefault(x => x.typ == BoxName);
                 if (first != null)
                 {
@@ -99,7 +99,7 @@ namespace FritzBot.Plugins
                     List<Labordaten> unEquals = GetDifferentLabors(alte, neue);
                     if (unEquals.Count > 0)
                     {
-                        String labors = "Neue Labor Versionen gesichtet! - " + String.Join(", ", unEquals.Select(x => x.typ).ToArray()) + " - Zum Labor: " + toolbox.ShortUrl("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
+                        string labors = "Neue Labor Versionen gesichtet! - " + String.Join(", ", unEquals.Select(x => String.Format("{0} ({1})", x.typ, x.version)).ToArray()) + " - Zum Labor: " + toolbox.ShortUrl("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
                         ServerManager.GetInstance().AnnounceGlobal(labors);
                         NotifySubscribers(labors);
                         alte = neue;
@@ -183,7 +183,7 @@ namespace FritzBot.Plugins
             foreach (IGrouping<String, HtmlNode> single in node)
             {
                 HtmlNodeCollection table = single.First(x => x.Name == "div").SelectNodes("./table[@style=\"text-align:left; width:350px; float:left;\"]/tr[2]/td/text()");
-                String RawTyp = single.First(x => x.Name == "h3").InnerText.Trim();
+                string RawTyp = single.First(x => x.Name == "h3").InnerText.Trim();
                 Labordaten daten = new Labordaten();
                 if (!BoxDatabase.GetInstance().TryGetShortName(RawTyp, out daten.typ))
                 {

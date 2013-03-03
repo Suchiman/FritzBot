@@ -11,10 +11,10 @@ namespace FritzBot.DataModel.IRC
     {
         private Irc Connection;
         public List<User> User { get; private set; }
-        public String ChannelName { get; private set; }
+        public string ChannelName { get; private set; }
         public bool EndOfWho { get; set; }
 
-        public Channel(Irc irc, String name)
+        public Channel(Irc irc, string name)
         {
             ChannelName = name;
             Connection = irc;
@@ -27,7 +27,7 @@ namespace FritzBot.DataModel.IRC
             Connection.Sendraw("WHO " + ChannelName);
         }
 
-        public void SendMessage(String Message)
+        public void SendMessage(string Message)
         {
             Connection.Sendmsg(Message, ChannelName);
         }

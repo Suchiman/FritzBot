@@ -8,7 +8,7 @@ namespace FritzBot.DataModel.IRC
     public abstract class IRCEvent
     {
         public Irc IRC { get; set; }
-        public String Nickname { get; set; }
+        public string Nickname { get; set; }
         public IRCEvent(Irc obj)
         {
             IRC = obj;
@@ -46,7 +46,7 @@ namespace FritzBot.DataModel.IRC
 
     public class Kick : IRCEvent
     {
-        public String KickedBy { get; set; }
+        public string KickedBy { get; set; }
         public Channel Channel { get; set; }
         public Kick(Irc obj) : base(obj) { }
         public override string ToString()
@@ -57,7 +57,7 @@ namespace FritzBot.DataModel.IRC
 
     public class Nick : IRCEvent
     {
-        public String NewNickname { get; set; }
+        public string NewNickname { get; set; }
         public Nick(Irc obj) : base(obj) { }
         public override string ToString()
         {

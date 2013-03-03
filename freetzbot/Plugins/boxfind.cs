@@ -12,8 +12,8 @@ namespace FritzBot.Plugins
     {
         public void Run(ircMessage theMessage)
         {
-            String BoxName = BoxDatabase.GetInstance().GetShortName( theMessage.CommandLine);
-            String besitzer = String.Join(", ", UserManager.GetInstance().Where(x => x.GetModulUserStorage("box").Storage.Elements("box").Any(y => y.Value == BoxName)).Select(x => x.names.FirstOrDefault()).ToArray<String>());
+            string BoxName = BoxDatabase.GetInstance().GetShortName( theMessage.CommandLine);
+            string besitzer = String.Join(", ", UserManager.GetInstance().Where(x => x.GetModulUserStorage("box").Storage.Elements("box").Any(y => y.Value == BoxName)).Select(x => x.names.FirstOrDefault()).ToArray<string>());
             if (!String.IsNullOrEmpty(besitzer))
             {
                 theMessage.SendPrivateMessage("Folgende Benutzer scheinen diese Box zu besitzen: " + besitzer);

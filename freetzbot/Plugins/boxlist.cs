@@ -12,7 +12,7 @@ namespace FritzBot.Plugins
     {
         public void Run(ircMessage theMessage)
         {
-            String boxen = String.Join(", ", UserManager.GetInstance().SelectMany(x => x.GetModulUserStorage("box").Storage.Elements("box")).Select(x => x.Value).Distinct().ToArray<String>());
+            string boxen = String.Join(", ", UserManager.GetInstance().SelectMany(x => x.GetModulUserStorage("box").Storage.Elements("box")).Select(x => x.Value).Distinct().ToArray<string>());
             theMessage.Answer("Folgende Boxen wurden bei mir registriert: " + boxen);
         }
     }

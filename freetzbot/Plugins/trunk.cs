@@ -14,14 +14,14 @@ namespace FritzBot.Plugins
     {
         public void Run(ircMessage theMessage)
         {
-            String webseite = toolbox.GetWeb("http://freetz.org/changeset");
+            string webseite = toolbox.GetWeb("http://freetz.org/changeset");
             if (!String.IsNullOrEmpty(webseite))
             {
                 try
                 {
                     HtmlNode content = HtmlDocumentExtensions.GetHtmlNode(webseite).Descendants("div").First(x => x.GetAttributeValue("id", "").Equals("content") && x.GetAttributeValue("class", "").Equals("changeset"));
-                    String changeset = content.Elements("div").First(x => x.GetAttributeValue("id", "").Equals("title")).Element("h1").InnerText.Split(' ')[1];
-                    String datum = content.Elements("dl").First(x => x.GetAttributeValue("id", "").Equals("overview")).Elements("dd").First(x => x.GetAttributeValue("class", "").Equals("time")).InnerText;
+                    string changeset = content.Elements("div").First(x => x.GetAttributeValue("id", "").Equals("title")).Element("h1").InnerText.Split(' ')[1];
+                    string datum = content.Elements("dl").First(x => x.GetAttributeValue("id", "").Equals("overview")).Elements("dd").First(x => x.GetAttributeValue("class", "").Equals("time")).InnerText;
                     theMessage.Answer(String.Format("Der aktuellste Changeset ist {0} und wurde am {1} in den Trunk eingecheckt. Siehe: http://freetz.org/changeset", changeset, Regex.Replace(datum.Trim().Replace("\n", ""), "[ ]{2,}", " ")));
                 }
                 catch (Exception ex)

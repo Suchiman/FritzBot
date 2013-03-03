@@ -32,7 +32,7 @@ namespace FritzBot.Plugins
             boxfrage(theMessage.IRC, theMessage.CommandLine, theMessage.CommandLine, false);
         }
 
-        public void boxfrage(Irc connection, String sender, String receiver, bool check_db = true)
+        public void boxfrage(Irc connection, string sender, string receiver, bool check_db = true)
         {
             try
             {

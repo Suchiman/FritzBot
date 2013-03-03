@@ -9,7 +9,7 @@ namespace FritzBot.Plugins
     [Module.ParameterRequired(false)]
     class passwd : PluginBase, ICommand, IBackgroundTask
     {
-        private List<String> CheckUserInProgress = new List<String>();
+        private List<string> CheckUserInProgress = new List<string>();
 
         private void CheckOldPW(ircMessage theMessage)
         {
@@ -31,7 +31,7 @@ namespace FritzBot.Plugins
             }
         }
 
-        private List<String> SetUserInProgress = new List<String>();
+        private List<string> SetUserInProgress = new List<string>();
 
         void SetNewPW(ircMessage theMessage)
         {

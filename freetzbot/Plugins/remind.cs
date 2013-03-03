@@ -34,7 +34,7 @@ namespace FritzBot.Plugins
             SendIt(theMessage.TheUser, theMessage.SendPrivateMessage);
         }
 
-        private void SendIt(User theUser, Action<String> SendAction)
+        private void SendIt(User theUser, Action<string> SendAction)
         {
             List<XElement> AllUnread = theUser.GetModulUserStorage(this).Storage.Elements("reminder").ToList<XElement>();
             foreach (XElement OneUnread in AllUnread)

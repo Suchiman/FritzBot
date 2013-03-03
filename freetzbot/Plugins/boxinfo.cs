@@ -11,15 +11,15 @@ namespace FritzBot.Plugins
     {
         public void Run(ircMessage theMessage)
         {
-            String output = "";
-            String UserToUse = theMessage.CommandLine;
+            string output = "";
+            string UserToUse = theMessage.CommandLine;
             if (!theMessage.HasArgs)
             {
                 UserToUse = theMessage.Nickname;
             }
             if (UserManager.GetInstance().Exists(UserToUse))
             {
-                output += String.Join(", ", UserManager.GetInstance()[UserToUse].GetModulUserStorage("box").Storage.Elements("box").Select(x => x.Value).ToArray<String>());
+                output += String.Join(", ", UserManager.GetInstance()[UserToUse].GetModulUserStorage("box").Storage.Elements("box").Select(x => x.Value).ToArray<string>());
             }
             else
             {
