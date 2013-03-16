@@ -30,7 +30,7 @@ namespace FritzBot.Core
         /// </summary>
         public static void Shutdown()
         {
-            GetInstance().Get<IBackgroundTask>().ForEach(x => x.Stop());
+            GetInstance().Get<IBackgroundTask>().TryLogEach(x => x.Stop());
         }
 
         public PluginManager()
@@ -58,12 +58,12 @@ namespace FritzBot.Core
         public int AddDistinct(bool AutostartTask, params Type[] Types)
         {
             IEnumerable<Type> FilteredTypes = Types.Where(x => !x.IsAbstract && !x.IsInterface && !typeof(Attribute).IsAssignableFrom(x)).Where(x => typeof(PluginBase).IsAssignableFrom(x));
-            Plugins.OfType<IBackgroundTask>().Where(x => FilteredTypes.Select(y => y.FullName).Contains(x.GetType().FullName)).ForEach(x => x.Stop());
+            Plugins.OfType<IBackgroundTask>().Where(x => FilteredTypes.Select(y => y.FullName).Contains(x.GetType().FullName)).TryLogEach(x => x.Stop());
             Plugins.RemoveAll(x => FilteredTypes.Select(y => y.FullName).Contains(x.GetType().FullName));
             List<PluginBase> NewPlugins = FilteredTypes.Select(x => Activator.CreateInstance(x)).Cast<PluginBase>().ToList<PluginBase>();
             if (AutostartTask)
             {
-                NewPlugins.OfType<IBackgroundTask>().ForEach(x => x.Start());
+                NewPlugins.OfType<IBackgroundTask>().TryLogEach(x => x.Start());
             }
             Plugins.AddRange(NewPlugins);
             return NewPlugins.Count;
@@ -75,7 +75,7 @@ namespace FritzBot.Core
         public int Remove(Func<PluginBase, bool> bedingung)
         {
             List<PluginBase> toremove = Plugins.Where(bedingung).ToList();
-            toremove.OfType<IBackgroundTask>().ForEach(x => x.Stop());
+            toremove.OfType<IBackgroundTask>().TryLogEach(x => x.Stop());
             Plugins.RemoveAll(x => toremove.Contains(x));
             return toremove.Count;
         }
@@ -138,7 +138,7 @@ namespace FritzBot.Core
                 }
             }
             allTypes.AddRange(Bot.GetTypes().Where(x => !allTypes.Contains(x, y => y.FullName)));
-            AddDistinct(AutostartTask, allTypes.ToArray<Type>()); //Die Methode verwirft alle Typen die nicht IBackgroundTask oder ICommand sind
+            AddDistinct(AutostartTask, allTypes.ToArray<Type>()); //Die Methode verwirft alle Typen die nicht von PluginBase abgeleitet sind
         }
 
         /// <summary>
@@ -168,7 +168,7 @@ namespace FritzBot.Core
         /// <returns>Das aus den Quellcode erstellte Assembly</returns>
         public Assembly LoadSource(params string[] fileName)
         {
-            CSharpCodeProvider compiler = new CSharpCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v3.5" } });
+            CSharpCodeProvider compiler = new CSharpCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v3.5" } }); //Default ist sonst .NET 2.0
             CompilerParameters compilerParams = new CompilerParameters();
             compilerParams.CompilerOptions = "/target:library /optimize";
             compilerParams.GenerateExecutable = false;

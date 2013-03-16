@@ -197,7 +197,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Plugins\APIsampe.txt" />
-    <Content Include="ToDo.txt" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">

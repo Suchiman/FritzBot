@@ -10,6 +10,22 @@ namespace FritzBot.Core
 {
     public static class LinqExtensions
     {
+        public static IEnumerable<T> TryLogEach<T>(this IEnumerable<T> list, Action<T> action)
+        {
+            foreach (T item in list)
+            {
+                try
+                {
+                    action(item);
+                }
+                catch (Exception ex)
+                {
+                    toolbox.Logging(ex);
+                }
+            }
+            return list;
+        }
+
         public static IEnumerable<T> ForEach<T>(this IEnumerable<T> list, Action<T> action)
         {
             foreach (T item in list)
