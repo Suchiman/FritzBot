@@ -45,13 +45,13 @@ namespace FritzBot.Plugins
                 string DiffENstring = String.Join(", ", DiffEN);
                 if (DiffDE.Length > 0 && DiffDEstring == DiffENstring)
                 {
-                    output = "Neue News: " + DiffDEstring;
+                    output = "Neue News: " + DiffDEstring + String.Format(" Auf zu den News: {0}", baseurl);
                 }
                 else
                 {
                     if (DiffDE.Length > 0)
                     {
-                        output = "Neue Deutsche News: " + DiffDEstring;
+                        output = "Neue Deutsche News: " + DiffDEstring + String.Format(" Auf zu den DE-News: {0}?lang=de", baseurl); ;
                     }
                     if (DiffEN.Length > 0)
                     {
@@ -59,7 +59,7 @@ namespace FritzBot.Plugins
                         {
                             output += ", ";
                         }
-                        output += "Neue Englische News: " + DiffENstring;
+                        output += "Neue Englische News: " + DiffENstring + String.Format(" Auf zu den EN-News: {0}?lang=en", baseurl); ;;
                     }
                 }
                 if (output != String.Empty)
