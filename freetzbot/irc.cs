@@ -353,8 +353,16 @@ namespace FritzBot
 
         public void WaitForAvailable(NetworkStream stream)
         {
-            while (!stream.DataAvailable)
+            for (int i = 0; !stream.DataAvailable; i++)
             {
+                if (i == 600)
+                {
+                    Sendraw("PING :" + _server);
+                }
+                if (i > 1200)
+                {
+                    throw new TimeoutException("IRC Server timed out");
+                }
                 Thread.Sleep(100);
             }
         }
