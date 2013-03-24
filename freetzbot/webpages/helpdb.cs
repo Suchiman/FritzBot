@@ -17,10 +17,20 @@ namespace webpages
             theresponse.page += index.GenMenu(request);
             theresponse.page += "<table border=2px>";
             theresponse.page += "<tr><td><b>Befehl</b></td><td><b>Beschreibung</b></td></tr>";
-            foreach (ICommand theCommand in PluginManager.GetInstance().Get<ICommand>().Where(x => toolbox.GetAttribute<FritzBot.Module.NameAttribute>(x) != null))
+            bool Admin = false;
+            using (DBProvider db = new DBProvider())
+            {
+                User u = db.GetUser(logincheck);
+                if (u != null)
+                {
+                    Admin = toolbox.IsOp(u);
+                }
+            }
+
+            foreach (ICommand theCommand in PluginManager.GetInstance().Get<ICommand>().HasAttribute<ICommand, FritzBot.Module.NameAttribute>())
             {
                 bool OPNeeded = toolbox.GetAttribute<FritzBot.Module.AuthorizeAttribute>(theCommand) != null;
-                if (toolbox.IsOp(logincheck) || !OPNeeded)
+                if (Admin || !OPNeeded)
                 {
                     string names = "";
                     foreach (string name in toolbox.GetAttribute<FritzBot.Module.NameAttribute>(theCommand).Names)

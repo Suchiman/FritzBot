@@ -18,13 +18,6 @@ namespace FritzBot.Plugins
             else
             {
                 output += toolbox.UrlEncode(theMessage.CommandLine);
-                if (PluginStorage.GetVariable("urlResolve", "false") == "true")
-                {
-                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(output);
-                    request.Timeout = 10000;
-                    HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-                    output = response.ResponseUri.ToString();
-                }
             }
             output = output.Replace("%23", "#");
             theMessage.Answer(output);

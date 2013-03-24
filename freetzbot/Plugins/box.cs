@@ -1,4 +1,5 @@
-﻿using FritzBot.DataModel;
+﻿using FritzBot.Core;
+using FritzBot.DataModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,38 +10,114 @@ namespace FritzBot.Plugins
     [Module.Name("boxadd")]
     [Module.Help("Dies trägt deine Boxdaten ein, Beispiel: \"!boxadd 7270\", bitte jede Box einzeln angeben.")]
     [Module.ParameterRequired]
-    [Module.Subscribeable]
-    class box : PluginBase, ICommand
+    class boxadd : PluginBase, ICommand
     {
         public void Run(ircMessage theMessage)
         {
-            List<Box> MatchingBoxes = BoxDatabase.GetInstance().FindBoxes(theMessage.CommandLine).ToList();
-            string BoxToAdd = "";
-            if (MatchingBoxes.Count == 0)
+            using (DBProvider db = new DBProvider())
             {
-                BoxToAdd = theMessage.CommandLine;
+                BoxEntry boxen = db.QueryLinkedData<BoxEntry, User>(theMessage.TheUser).FirstOrDefault();
+                if (boxen == null)
+                {
+                    boxen = new BoxEntry();
+                    boxen.Reference = theMessage.TheUser;
+                }
+
+                if (!boxen.HasBox(theMessage.CommandLine))
+                {
+                    boxen.AddBox(theMessage.CommandLine);
+                    theMessage.Answer("Okay danke, ich werde mir deine \"" + theMessage.CommandLine + "\" notieren.");
+                }
+                else
+                {
+                    theMessage.Answer("Wups, danke aber du hast mir deine \"" + theMessage.CommandLine + "\" bereits mitgeteilt ;-).");
+                }
+
+                db.SaveOrUpdate(boxen);
             }
-            else if (MatchingBoxes.Count == 1)
+        }
+    }
+
+    public class BoxEntry : LinkedData<User>
+    {
+        private Dictionary<string, Box> Entrys { get; set; }
+        public int Count { get { return Entrys.Count; } }
+
+        public BoxEntry()
+        {
+            Entrys = new Dictionary<string, Box>();
+        }
+
+        public void AddBox(string input)
+        {
+            Box result;
+            if (BoxDatabase.GetInstance().TryFindExactBox(input, out result))
             {
-                BoxToAdd = MatchingBoxes.First().ShortName;
-            }
-            else if (MatchingBoxes.Count > 1)
-            {
-                theMessage.Answer("Multiple Treffer, bitte entscheide dich für eine: " + String.Join(", ", MatchingBoxes.Select(x => x.ShortName).ToArray()));
-                return;
-            }
-            ModulDataStorage mds = theMessage.TheUser.GetModulUserStorage("box");
-            XElement box = mds.Storage.Elements("box").FirstOrDefault(x => x.Value == BoxToAdd);
-            if (box == null)
-            {
-                mds.Storage.Add(new XElement("box", BoxToAdd));
-                theMessage.Answer("Okay danke, ich werde mir deine \"" + BoxToAdd + "\" notieren.");
-                NotifySubscribers(String.Format("Benutzer {0} hat eine neue Box registriert: {1}", theMessage.Nickname, BoxToAdd));
+                Entrys.Add(input, result);
             }
             else
             {
-                theMessage.Answer("Wups, danke aber du hast mir deine \"" + BoxToAdd + "\" bereits mitgeteilt ;-).");
+                Entrys.Add(input, null);
             }
+        }
+
+        public bool RemoveBox(string input)
+        {
+            KeyValuePair<string, Box> found = Entrys.FirstOrDefault(x => x.Key == input);
+
+            if (String.IsNullOrEmpty(found.Key))
+            {
+                Box result;
+                if (BoxDatabase.GetInstance().TryFindExactBox(input, out result))
+                {
+                    found = Entrys.FirstOrDefault(x => x.Value == result);
+                }
+            }
+
+            if (!String.IsNullOrEmpty(found.Key) && Entrys.Contains(found))
+            {
+                Entrys.Remove(found.Key);
+                return true;
+            }
+            return false;
+        }
+
+        public bool HasBox(string input)
+        {
+            if (GetRawUserBoxen().Contains(input))
+            {
+                return true;
+            }
+            Box result;
+            return BoxDatabase.GetInstance().TryFindExactBox(input, out result) && GetMapAbleBoxen().Contains(result);
+        }
+
+        public void ReAssociateBoxes()
+        {
+            Dictionary<string, Box> tmp = new Dictionary<string, Box>();
+            foreach (KeyValuePair<string, Box> item in Entrys.Distinct(x => x.Key).OrderBy(x => x.Key))
+            {
+                Box result;
+                if (BoxDatabase.GetInstance().TryFindExactBox(item.Key, out result))
+                {
+                    tmp.Add(item.Key, result);
+                }
+                else
+                {
+                    tmp.Add(item.Key, null);
+                }
+            }
+            Entrys = tmp;
+        }
+
+        public IEnumerable<string> GetRawUserBoxen()
+        {
+            return Entrys.Select(x => x.Key);
+        }
+
+        public IEnumerable<Box> GetMapAbleBoxen()
+        {
+            return Entrys.Select(x => x.Value).NotNull();
         }
     }
 }

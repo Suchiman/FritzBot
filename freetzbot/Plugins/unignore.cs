@@ -12,13 +12,16 @@ namespace FritzBot.Plugins
     {
         public void Run(ircMessage theMessage)
         {
-            UserManager um = UserManager.GetInstance();
-            if (um.Exists(theMessage.CommandArgs[0]))
+            using (DBProvider db = new DBProvider())
             {
-                um[theMessage.CommandArgs[0]].ignored = false;
-                theMessage.Answer(String.Format("Ingoranz für {0} aufgehoben", um[theMessage.CommandArgs[0]].LastUsedNick));
+                User u = db.GetUser(theMessage.CommandArgs[0]);
+                if (u != null)
+                {
+                    u.Ignored = false;
+                    theMessage.Answer(String.Format("Ingoranz für {0} aufgehoben", u.LastUsedName));
+                }
+                theMessage.Answer("Oh... Dieser User ist mir nicht bekannt");
             }
-            theMessage.Answer("Oh... Dieser User ist mir nicht bekannt");
         }
     }
 }

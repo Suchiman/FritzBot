@@ -3,7 +3,6 @@ using FritzBot.DataModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Xml.Linq;
 
 namespace FritzBot.Plugins
 {
@@ -19,120 +18,129 @@ namespace FritzBot.Plugins
 
         public static string GetAlias(ircMessage theMessage)
         {
-            List<string> SplitString = new List<string>(theMessage.Message.Remove(0, 1).Split(' '));
+            List<string> SplitString = new List<string>(theMessage.Message.TrimStart('!', ' ').Split(' '));
             if (SplitString[0] == "alias" || SplitString[0] == "a")
             {
                 SplitString.RemoveAt(0);
             }
-            string thealias = UserManager.GetInstance().SelectMany(x => x.GetModulUserStorage("alias").Storage.Elements("alias")).Where(x => x.Element("name").Value == SplitString[0]).Select(x => x.Element("beschreibung").Value).FirstOrDefault();
-            if (!String.IsNullOrEmpty(thealias))
+            string thealias;
+            using (DBProvider db = new DBProvider())
             {
-                for (int i = 0; thealias.Contains("$"); i++)
+                AliasEntry entry = db.Query<AliasEntry>(x => x.Key == SplitString[0]).FirstOrDefault();
+                if (entry != null && !String.IsNullOrEmpty(entry.Text))
                 {
-                    if (SplitString.Count > 1)
+                    thealias = entry.Text;
+                }
+                else
+                {
+                    return String.Empty;
+                }
+            }
+            for (int i = 0; thealias.Contains("$"); i++)
+            {
+                if (SplitString.Count > 1)
+                {
+                    string commandline = String.Join(" ", SplitString.Skip(1));
+                    thealias = thealias.Replace("$x", commandline).Replace("$X", commandline);
+                }
+                else
+                {
+                    thealias = thealias.Replace("$x", "").Replace("$X", "");
+                }
+                while (true)
+                {
+                    int index = thealias.IndexOf("$" + (i + 1));
+                    if (index == -1) break;
+                    thealias = thealias.Remove(index, 2);
+                    if (SplitString.Count - 1 > i)
                     {
-                        string commandline = String.Join(" ", SplitString.ToArray(), 1, SplitString.Count - 1);
-                        thealias = thealias.Replace("$x", commandline).Replace("$X", commandline);
+                        thealias = thealias.Insert(index, SplitString[i + 1]);
                     }
                     else
                     {
-                        thealias = thealias.Replace("$x", "").Replace("$X", "");
-                    }
-                    while (true)
-                    {
-                        int index = thealias.IndexOf("$" + (i + 1));
-                        if (index == -1) break;
-                        thealias = thealias.Remove(index, 2);
-                        if (SplitString.Count - 1 > i)
-                        {
-                            thealias = thealias.Insert(index, SplitString[i + 1]);
-                        }
-                        else
-                        {
-                            thealias = thealias.Insert(index, "");
-                        }
+                        thealias = thealias.Insert(index, "");
                     }
                 }
-                while (thealias.Contains("encode("))
-                {
-                    int start = thealias.LastIndexOf("encode(");
-                    int end = thealias.Remove(0, start).IndexOf(')') + 1 + start;
-
-                    string second = thealias.Substring(start + 7, end - (start + 8));
-                    second = toolbox.UrlEncode(second);
-                    second = second.Replace("%23", "#").Replace("%3a", ":").Replace("%2f", "/").Replace("%3f", "?");
-
-                    thealias = thealias.Substring(0, start) + second + thealias.Substring(end);
-                }
-                return thealias;
             }
-            return "";
+            while (thealias.Contains("encode("))
+            {
+                int start = thealias.LastIndexOf("encode(");
+                int end = thealias.Remove(0, start).IndexOf(')') + 1 + start;
+
+                string second = thealias.Substring(start + 7, end - (start + 8));
+                second = toolbox.UrlEncode(second);
+                second = second.Replace("%23", "#").Replace("%3a", ":").Replace("%2f", "/").Replace("%3f", "?");
+
+                thealias = thealias.Substring(0, start) + second + thealias.Substring(end);
+            }
+            return thealias;
         }
 
         public static bool AliasCommand(ircMessage theMessage)
         {
-            switch (theMessage.CommandArgs[0].ToLower())
+            using (DBProvider db = new DBProvider())
             {
-                case "add":
-                    if (!UserManager.GetInstance().SelectMany(x => x.GetModulUserStorage("alias").Storage.Elements("alias")).Any(x => x.Element("name").Value == theMessage.CommandArgs[1]))
-                    {
-                        theMessage.TheUser.GetModulUserStorage("alias").Storage.Add(new XElement("alias", new XElement("name", theMessage.CommandArgs[1]), new XElement("beschreibung", String.Join(" ", theMessage.CommandArgs.ToArray(), 2, theMessage.CommandArgs.Count - 2))));
+                switch (theMessage.CommandArgs[0].ToLower())
+                {
+                    case "add":
+                        AliasEntry add = db.Query<AliasEntry>(x => x.Key == theMessage.CommandArgs[1]).FirstOrDefault();
+                        if (add != null)
+                        {
+                            theMessage.Answer("Diesen Alias gibt es bereits");
+                            return false;
+                        }
+                        add = new AliasEntry();
+                        add.Key = theMessage.CommandArgs[1];
+                        add.Text = String.Join(" ", theMessage.CommandArgs.Skip(2));
+                        add.Creator = theMessage.TheUser;
+                        add.Created = DateTime.Now;
+                        db.SaveOrUpdate(add);
                         theMessage.Answer("Der Alias wurde erfolgreich hinzugefügt");
                         return true;
-                    }
-                    theMessage.Answer("Diesen Alias gibt es bereits");
-                    return false;
-                case "edit":
-                    XElement alias = theMessage.TheUser.GetModulUserStorage("alias").Storage.Elements("alias").FirstOrDefault(x => x.Element("name").Value == theMessage.CommandArgs[1]);
-                    if (alias != null)
-                    {
-                        alias.Element("beschreibung").Value = String.Join(" ", theMessage.CommandArgs.Skip(2).ToArray());
-                        theMessage.Answer("Der Alias wurde erfolgreich bearbeitet");
-                    }
-                    else
-                    {
-                        XElement global = XMLStorageEngine.GetManager().Database.Descendants("alias").FirstOrDefault(x => x.Element("name").Value == theMessage.CommandArgs[1]);
-                        if (global != null)
+                    case "edit":
+                        AliasEntry edit = db.Query<AliasEntry>(x => x.Key == theMessage.CommandArgs[1]).FirstOrDefault();
+                        if (edit != null)
                         {
-                            IEnumerable<XElement> owner = global.Parent.Parent.Parent.Element("names").Elements("name");
-                            theMessage.Answer(String.Format("Dieser Alias gehört {0}.", ""));
+                            edit.Text = String.Join(" ", theMessage.CommandArgs.Skip(2));
+                            edit.Updater = theMessage.TheUser;
+                            edit.Updated = DateTime.Now;
+                            db.SaveOrUpdate(edit);
+                            theMessage.Answer("Der Alias wurde erfolgreich bearbeitet");
+                            return true;
                         }
-                        theMessage.Answer("Du scheinst keinen solchen Alias definiert zu haben");
-                    }
-                    return true;
-                case "remove":
-                    XElement ralias = theMessage.TheUser.GetModulUserStorage("alias").Storage.Elements("alias").FirstOrDefault(x => x.Element("name").Value == theMessage.CommandArgs[1]);
-                    if (ralias != null)
-                    {
-                        ralias.Remove();
-                        theMessage.Answer("Alias wurde gelöscht");
-                    }
-                    else if (toolbox.IsOp(theMessage.Nickname))
-                    {
-                        ralias = UserManager.GetInstance().SelectMany(x => x.GetModulUserStorage("alias").Storage.Elements("alias")).FirstOrDefault(x => x.Element("name").Value == theMessage.CommandArgs[1]);
-                        if (ralias != null)
+                        theMessage.Answer("So ein Alias wurde noch nicht definiert");
+                        return false;
+                    case "remove":
+                        AliasEntry remove = db.Query<AliasEntry>(x => x.Key == theMessage.CommandArgs[1]).FirstOrDefault();
+                        if (remove != null)
                         {
-                            ralias.Remove();
+                            db.Remove(remove);
                             theMessage.Answer("Alias wurde gelöscht");
                             return true;
                         }
-                        theMessage.Answer("Alias wurde nicht gefunden");
-                    }
-                    else
-                    {
-                        theMessage.Answer("Du scheinst keinen solchen Alias definiert zu haben");
-                    }
-                    return true;
-                default:
-                    string theAlias = GetAlias(theMessage);
-                    if (!String.IsNullOrEmpty(theAlias))
-                    {
-                        theMessage.Answer(theAlias);
-                        return true;
-                    }
-                    theMessage.Answer("Wups, diesen Alias gibt es nicht");
-                    return false;
+                        theMessage.Answer("Diesen Alias gibt es nicht");
+                        return false;
+                    default:
+                        string theAlias = GetAlias(theMessage);
+                        if (!String.IsNullOrEmpty(theAlias))
+                        {
+                            theMessage.Answer(theAlias);
+                            return true;
+                        }
+                        theMessage.Answer("Wups, diesen Alias gibt es nicht");
+                        return false;
+                }
             }
         }
+    }
+
+    public class AliasEntry
+    {
+        public string Key { get; set; }
+        public string Text { get; set; }
+        public User Creator { get; set; }
+        public DateTime Created { get; set; }
+        public User Updater { get; set; }
+        public DateTime Updated { get; set; }
     }
 }

@@ -42,7 +42,7 @@ namespace FritzBot
             _message = message.Trim();
             _answered = false;
             _loggingQueue = new Queue<string>(3);
-            if ((Nickname.Contains("#") || Nickname.Contains(".") || Nickname.Contains(this.IRC.Nickname) || Nickname.ToLower().Contains("nickserv") || TheUser.ignored || _message.Contains("[Global Notice]")) && !TheUser.IsOp)
+            if ((Nickname.Contains("#") || Nickname.Contains(".") || Nickname.Contains(this.IRC.Nickname) || Nickname.ToLower().Contains("nickserv") || TheUser.Ignored || _message.Contains("[Global Notice]")) && !TheUser.Admin)
             {
                 _ignored = true;
             }
@@ -147,7 +147,7 @@ namespace FritzBot
         {
             get
             {
-                return XMLStorageEngine.GetManager().GetGlobalSettingsStorage("Bot").GetVariable("Silence", "false") == "true";
+                return Program.BotSettings.Get("Silence", false);
             }
         }
         /// <summary>
@@ -219,7 +219,7 @@ namespace FritzBot
         {
             get
             {
-                return UserManager.GetInstance()[Nickname];
+                return new DBProvider().GetUser(Nickname);
             }
         }
         /// <summary>

@@ -12,14 +12,17 @@ namespace FritzBot.Plugins
     {
         public void Run(ircMessage theMessage)
         {
-            string output = String.Join(", ", UserManager.GetInstance().Where(x => x.GetModulUserStorage("box").Storage.Elements("box").Count() > 0).Select(x => x.names.FirstOrDefault()).ToArray<string>());
-            if (!String.IsNullOrEmpty(output))
+            using (DBProvider db = new DBProvider())
             {
-                theMessage.SendPrivateMessage("Diese Benutzer haben bei mir mindestens eine Box registriert: " + output);
-            }
-            else
-            {
-                theMessage.Answer("Ich fürchte, mir ist ein Fehler unterlaufen. Ich kann keine registrierten Benutzer feststellen.");
+                string output = String.Join(", ", db.Query<BoxEntry>(x => x.Count > 0).Select(x => x.Reference).NotNull().Select(x => x.LastUsedName).ToArray());
+                if (!String.IsNullOrEmpty(output))
+                {
+                    theMessage.SendPrivateMessage("Diese Benutzer haben bei mir mindestens eine Box registriert: " + output);
+                }
+                else
+                {
+                    theMessage.Answer("Ich fürchte, mir ist ein Fehler unterlaufen. Ich kann keine registrierten Benutzer feststellen.");
+                }
             }
         }
     }

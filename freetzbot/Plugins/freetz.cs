@@ -12,7 +12,7 @@ namespace FritzBot.Plugins
     [Module.Help("Das erzeugt einen Link zu einem Freetz Packet, Beispiel: !fp dnsmasq")]
     class freetz : PluginBase, ICommand
     {
-        private DataCache<List<KeyValuePair<String, String>?>> PackagesCache = new DataCache<List<KeyValuePair<String, String>?>>(GetPackages, 30);
+        private DataCache<List<KeyValuePair<string, string>?>> PackagesCache = new DataCache<List<KeyValuePair<string, string>?>>(GetPackages, 30);
 
         public void Run(ircMessage theMessage)
         {
@@ -32,8 +32,8 @@ namespace FritzBot.Plugins
                 input = split[0];
             }
             int inputLength = input.Length;
-            List<KeyValuePair<String, String>?> packages = PackagesCache.GetItem(true).Where(x => x.HasValue).ToList(); //PackagesCache.GetItem(true).Where(x => x.HasValue && (x.Value.Key.Length < (inputLength + 2) && x.Value.Key.Length > (inputLength - 2))).ToList();
-            KeyValuePair<String, String>? TheChoosenOne = packages.FirstOrDefault(x => x.Value.Key.Equals(input, StringComparison.OrdinalIgnoreCase));
+            List<KeyValuePair<string, string>?> packages = PackagesCache.GetItem(true).Where(x => x.HasValue).ToList(); //PackagesCache.GetItem(true).Where(x => x.HasValue && (x.Value.Key.Length < (inputLength + 2) && x.Value.Key.Length > (inputLength - 2))).ToList();
+            KeyValuePair<string, string>? TheChoosenOne = packages.FirstOrDefault(x => x.Value.Key.Equals(input, StringComparison.OrdinalIgnoreCase));
             if (TheChoosenOne == null)
             {
                 TheChoosenOne = packages.Where(x => x.HasValue).FirstOrDefault(x => x.Value.Key.ToLower().StartsWith(input));
@@ -45,7 +45,7 @@ namespace FritzBot.Plugins
             if (TheChoosenOne == null)
             {
                 lowestDifference = 1000;
-                foreach (KeyValuePair<String, String> one in packages)
+                foreach (KeyValuePair<string, string> one in packages)
                 {
                     int result = StringSimilarity.Compare(input, one.Key, true);
                     if (result < lowestDifference)
@@ -72,12 +72,12 @@ namespace FritzBot.Plugins
             }
         }
 
-        private static List<KeyValuePair<String, String>?> GetPackages(List<KeyValuePair<String, String>?> Alte)
+        private static List<KeyValuePair<string, string>?> GetPackages(List<KeyValuePair<string, string>?> Alte)
         {
             try
             {
                 HtmlNode document = new HtmlDocument().LoadUrl("http://freetz.org/wiki/packages").DocumentNode;
-                return document.SelectNodes("//table[@class='wiki']/tr/td/a[@class='wiki']").Select(x => new KeyValuePair<String, String>?(new KeyValuePair<String, String>(x.InnerText, x.GetAttributeValue("href", "")))).ToList();
+                return document.SelectNodes("//table[@class='wiki']/tr/td/a[@class='wiki']").Select(x => new KeyValuePair<string, string>?(new KeyValuePair<string, string>(x.InnerText, x.GetAttributeValue("href", "")))).ToList();
             }
             catch
             {

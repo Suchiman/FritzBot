@@ -18,25 +18,51 @@ namespace FritzBot.Plugins
             {
                 if (theMessage.CommandArgs[0] == "add")
                 {
-                    UserManager.GetInstance().Add(theMessage.CommandArgs[1]);
+                    User u = new User();
+                    u.LastUsedName = theMessage.CommandArgs[1];
+                    u.Names.Add(theMessage.CommandArgs[1]);
+                    using (DBProvider db = new DBProvider())
+                    {
+                        db.SaveOrUpdate(u);
+                    }
+                    theMessage.Answer("User hinzugefügt");
                 }
                 if (theMessage.CommandArgs[0] == "box")
                 {
-                    XElement boxen = UserManager.GetInstance()[theMessage.CommandArgs[1]].GetModulUserStorage("box").Storage;
-                    if (!boxen.Elements("box").Any(x => x.Value == theMessage.CommandArgs[2]))
+                    using (DBProvider db = new DBProvider())
                     {
-                        boxen.Add(new XElement("box", theMessage.CommandArgs[2]));
+                        User u = db.GetUser(theMessage.CommandArgs[1]);
+                        if (u != null)
+                        {
+                            BoxEntry entry = db.QueryLinkedData<BoxEntry, User>(u).FirstOrDefault();
+                            if (entry == null)
+                            {
+                                entry = new BoxEntry();
+                                entry.Reference = u;
+                            }
+                            entry.AddBox(String.Join(" ", theMessage.CommandArgs.Skip(2)));
+                            db.SaveOrUpdate(entry);
+                            theMessage.Answer("Hinzugefügt");
+                        }
+                        theMessage.Answer("User gibbet nicht");
                     }
                 }
                 if (theMessage.CommandArgs[0] == "remove")
                 {
-                    UserManager.GetInstance().Remove(theMessage.CommandArgs[1]);
+                    using (DBProvider db = new DBProvider())
+                    {
+                        User u = db.GetUser(theMessage.CommandArgs[1]);
+                        if (u != null)
+                        {
+                            db.Remove(u);
+                            theMessage.Answer("Entfernt!");
+                        }
+                        else
+                        {
+                            theMessage.Answer("Nicht gefunden");
+                        }
+                    }
                 }
-                if (theMessage.CommandArgs[0] == "maintain")
-                {
-                    UserManager.GetInstance().Maintain();
-                }
-                theMessage.Answer("Okay");
             }
             catch (Exception ex)
             {

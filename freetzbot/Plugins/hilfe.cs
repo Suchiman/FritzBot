@@ -19,7 +19,7 @@ namespace FritzBot.Plugins
                 {
                     Module.AuthorizeAttribute Authorization = toolbox.GetAttribute<Module.AuthorizeAttribute>(theCommand); 
                     Module.NameAttribute Namen = toolbox.GetAttribute<Module.NameAttribute>(theCommand);
-                    if (Authorization == null || toolbox.IsOp(theMessage.Nickname))
+                    if (Authorization == null || toolbox.IsOp(theMessage.TheUser))
                     {
                         befehle.Add(Namen.Names[0]);
                     }

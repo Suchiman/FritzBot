@@ -7,7 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
-using System.Xml.Linq;
 
 namespace FritzBot.Core
 {
@@ -35,20 +34,28 @@ namespace FritzBot.Core
 
         public PluginManager()
         {
-            XElement storage = XMLStorageEngine.GetManager().GetGlobalSettingsStorage(this).Storage;
-            if (storage.Element("References") == null)
+            using (DBProvider db = new DBProvider())
             {
-                storage.Add(new XElement("References"));
-            }
-            if (storage.Element("References").Elements("Assembly").Count() == 0)
-            {
-                storage.Element("References").Add(
-                    new XElement("Assembly", "mscorlib.dll"),
-                    new XElement("Assembly", "System.dll"),
-                    new XElement("Assembly", "System.Data.dll"),
-                    new XElement("Assembly", "System.Web.dll"),
-                    new XElement("Assembly", "System.Xml.dll"),
-                    new XElement("Assembly", "System.Xml.Linq.dll"));
+                SimpleStorage storage = db.GetSimpleStorage("PluginManager");
+                string[] ReferencedAssemblies = storage.Get<string[]>("ReferencedAssemblies", null);
+                if (ReferencedAssemblies == null)
+                {
+                    ReferencedAssemblies = new string[]
+                    {
+                        "mscorlib.dll",
+                        "System.dll",
+                        "System.Web.dll",
+                        "System.Xml.dll",
+                        "System.Xml.Linq.dll",
+                        "Db4objects.Db4o.dll",
+                        "Db4objects.Db4o.Linq.dll",
+                        "HtmlAgilityPack.dll",
+                        "Mono.Reflection.dll",
+                        "Newtonsoft.Json.dll"
+                    };
+                    storage.Store("ReferencedAssemblies", ReferencedAssemblies);
+                    db.SaveOrUpdate(storage);
+                }
             }
         }
 
@@ -175,7 +182,14 @@ namespace FritzBot.Core
             compilerParams.GenerateInMemory = true;
             compilerParams.IncludeDebugInformation = false;
             compilerParams.WarningLevel = 0;
-            compilerParams.ReferencedAssemblies.AddRange(XMLStorageEngine.GetManager().GetGlobalSettingsStorage(this).Storage.Element("References").Elements("Assembly").Where(x => !String.IsNullOrEmpty(x.Value)).Select(x => x.Value).ToArray());
+            using (DBProvider db = new DBProvider())
+            {
+                SimpleStorage storage = db.GetSimpleStorage("PluginManager");
+                if (storage != null)
+                {
+                    compilerParams.ReferencedAssemblies.AddRange(storage.Get<string[]>("ReferencedAssemblies"));
+                }
+            }
             compilerParams.ReferencedAssemblies.Add(Path.GetFileName(Assembly.GetExecutingAssembly().Location));
             CompilerResults results = null;
             try

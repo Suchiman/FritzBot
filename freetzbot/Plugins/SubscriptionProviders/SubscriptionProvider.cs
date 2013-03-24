@@ -12,74 +12,68 @@ namespace FritzBot.Plugins.SubscriptionProviders
     {
         public abstract void SendNotification(User user, string message);
 
-        public virtual void AddSubscription(ircMessage theMessage, PluginBase plugin, XElement storage)
+        public virtual void AddSubscription(ircMessage theMessage, PluginBase plugin)
         {
-            XElement SpecificSubscription = storage.Elements("Plugin").FirstOrDefault(x => x.Attribute("Provider") != null && x.Attribute("Provider").Value == PluginID && x.Value == plugin.PluginID);
-            if (SpecificSubscription == null)
+            using (DBProvider db = new DBProvider())
             {
-                SpecificSubscription = new XElement("Plugin", new XAttribute("Provider", PluginID), plugin.PluginID);
-                if (theMessage.CommandArgs.Count > 3 && !String.IsNullOrEmpty(theMessage.CommandArgs[3]))
+                Subscription SpecificSubscription = db.QueryLinkedData<Subscription, User>(theMessage.TheUser).FirstOrDefault(x => x.Provider == PluginID && x.Plugin == plugin.PluginID);
+
+                if (SpecificSubscription == null)
                 {
-                    SpecificSubscription.Add(new XAttribute("Bedingung", theMessage.CommandArgs[3]));
-                }
-                theMessage.Answer(String.Format("Du wirst absofort mit {0} für {1} benachrichtigt", toolbox.GetAttribute<Module.NameAttribute>(this).Names[0], toolbox.GetAttribute<Module.NameAttribute>(plugin).Names[0]));
-                storage.Add(SpecificSubscription);
-            }
-            else
-            {
-                if (theMessage.CommandArgs.Count > 3 && !String.IsNullOrEmpty(theMessage.CommandArgs[3]))
-                {
-                    XAttribute bedingung = SpecificSubscription.Attribute("Bedingung");
-                    if (bedingung == null)
+                    SpecificSubscription = new Subscription()
                     {
-                        bedingung = new XAttribute("Bedingung", theMessage.CommandArgs[3]);
-                        SpecificSubscription.Add(bedingung);
-                        theMessage.Answer("Bedingung für Subscription hinzugefügt");
-                    }
-                    else
+                        Plugin = plugin.PluginID,
+                        Provider = PluginID,
+                        Reference = theMessage.TheUser
+                    };
+                    if (theMessage.CommandArgs.Count > 3 && !String.IsNullOrEmpty(theMessage.CommandArgs[3]))
                     {
-                        bedingung.Value = theMessage.CommandArgs[3];
-                        theMessage.Answer("Bedingung für Subscription geändert");
+                        SpecificSubscription.Bedingungen.Add(theMessage.CommandArgs[3]);
                     }
-                }
-                else if (SpecificSubscription.Attribute("Bedingung") != null)
-                {
-                    SpecificSubscription.Attribute("Bedingung").Remove();
-                    theMessage.Answer("Bedingung entfernt");
+                    theMessage.Answer(String.Format("Du wirst absofort mit {0} für {1} benachrichtigt", toolbox.GetAttribute<Module.NameAttribute>(this).Names[0], toolbox.GetAttribute<Module.NameAttribute>(plugin).Names[0]));
                 }
                 else
                 {
-                    theMessage.Answer("Du bist bereits für dieses Plugin eingetragen");
+                    if (theMessage.CommandArgs.Count > 3 && !String.IsNullOrEmpty(theMessage.CommandArgs[3]) && SpecificSubscription.Bedingungen.Count == 0)
+                    {
+                        SpecificSubscription.Bedingungen.Add(theMessage.CommandArgs[3]);
+                        SpecificSubscription.Bedingungen = SpecificSubscription.Bedingungen.Distinct().OrderBy(x => x).ToList();
+                        theMessage.Answer("Bedingung für Subscription hinzugefügt");
+                    }
+                    else if (SpecificSubscription.Bedingungen.Count > 0)
+                    {
+                        SpecificSubscription.Bedingungen.Clear();
+                        db.SaveOrUpdate(SpecificSubscription);
+                        theMessage.Answer("Bedingungen entfernt");
+                    }
+                    else
+                    {
+                        theMessage.Answer("Du bist bereits für dieses Plugin eingetragen");
+                    }
                 }
-                return;
+                db.SaveOrUpdate(SpecificSubscription);
             }
         }
 
-        public virtual void ParseSubscriptionSetup(ircMessage theMessage, XElement storage)
+        public virtual void ParseSubscriptionSetup(ircMessage theMessage)
         {
             if (theMessage.CommandArgs.Count < 3)
             {
                 theMessage.Answer("Zu wenig Parameter, probier mal: !subscribe setup <SubscriptionProvider> <Einstellung>");
                 return;
             }
-            XElement UserSettingsForProvider = storage.Elements("Provider").FirstOrDefault(x => x.Attribute("Name") != null && x.Attribute("Name").Value == PluginID);
-            if (UserSettingsForProvider == null)
+            using (DBProvider db = new DBProvider())
             {
-                UserSettingsForProvider = new XElement("Provider", new XAttribute("Name", PluginID));
-                storage.Add(UserSettingsForProvider);
+                SimpleStorage storage = GetSettings(db, theMessage.TheUser);
+                storage.Store(PluginID, theMessage.CommandArgs[2]);
+                db.SaveOrUpdate(storage);
             }
-            UserSettingsForProvider.Value = theMessage.CommandArgs[2];
             theMessage.Answer("Einstellungen erfolgreich gespeichert");
         }
 
-        public virtual XElement GetSettings(User user)
+        public virtual SimpleStorage GetSettings(DBProvider db, User user)
         {
-            XElement settings = user.GetModulUserStorage("subscribe").GetElement("Settings", false);
-            if (settings == null || settings.Elements("Provider").FirstOrDefault(x => x.Attribute("Name") != null && x.Attribute("Name").Value == PluginID) == null)
-            {
-                return null;
-            }
-            return settings.Elements("Provider").FirstOrDefault(x => x.Attribute("Name").Value == PluginID);
+            return db.GetSimpleStorage(user, "SubscriptionSettings");
         }
     }
 }

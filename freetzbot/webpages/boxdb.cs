@@ -1,5 +1,6 @@
 ﻿using FritzBot;
 using FritzBot.Core;
+using FritzBot.Plugins;
 using System;
 using System.Linq;
 
@@ -19,9 +20,12 @@ namespace webpages
             {
                 theresponse.page += "<table border=2px>";
                 theresponse.page += "<tr><td><b>Besitzer</b></td><td><b>Boxen</b></td></tr>";
-                foreach (User theuser in UserManager.GetInstance().Where(x => x.GetModulUserStorage("box").Storage.Elements("box").Count() > 0))
+                using (DBProvider db = new DBProvider())
                 {
-                    theresponse.page += "<tr><td>" + String.Join(", ", theuser.names.ToArray<string>()) + "</td><td>" + String.Join(", ", theuser.GetModulUserStorage("box").Storage.Elements("box").Select(x => x.Value).ToArray<string>()) + "</td></tr>";
+                    foreach (BoxEntry entry in db.Query<BoxEntry>().Where(x => x.Reference != null))
+                    {
+                        theresponse.page += "<tr><td>" + String.Join(", ", entry.Reference.Names) + "</td><td>" + String.Join(", ", entry.GetRawUserBoxen()) + "</td></tr>";
+                    }
                 }
                 theresponse.page += "</table>";
             }

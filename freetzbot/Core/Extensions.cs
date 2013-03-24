@@ -35,6 +35,34 @@ namespace FritzBot.Core
             return list;
         }
 
+        public static IEnumerable<T> HasAttribute<T, A>(this IEnumerable<T> source)
+        {
+            return source.Where(x => toolbox.GetAttribute<A>(x) != null);
+        }
+
+        public static IEnumerable<T> NotNull<T>(this IEnumerable<T> list)
+        {
+            return list.Where(x => x != null);
+        }
+
+        public static IEnumerable<TSource> NotNull<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector)
+        {
+            foreach (TSource item in source)
+            {
+                bool notNull = false;
+                try
+                {
+                    TResult result = selector(item);
+                    notNull = result != null;
+                }
+                catch (NullReferenceException) { }
+                if (notNull)
+                {
+                    yield return item;
+                }
+            }
+        }
+
         public static bool Contains<T>(this IEnumerable<T> list, T item, Func<T, object> bedingung)
         {
             return list.Contains(item, new KeyEqualityComparer<T>(bedingung));
@@ -169,21 +197,6 @@ namespace FritzBot.Core
                 tmp = tmp.NextSibling;
                 yield return tmp;
             }
-        }
-    }
-
-    public static class UserExtensions
-    {
-        /// <summary>
-        /// Gibt die Subscriptions des Users zurück
-        /// </summary>
-        public static IEnumerable<XElement> GetSubscriptions(this User user)
-        {
-            if (user.GetModulUserStorage("subscribe").Storage.Element("Subscriptions") != null)
-            {
-                return user.GetModulUserStorage("subscribe").Storage.Element("Subscriptions").Elements("Plugin");
-            }
-            return new List<XElement>();
         }
     }
 

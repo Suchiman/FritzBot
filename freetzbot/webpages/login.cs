@@ -1,6 +1,8 @@
 ﻿using System;
 using FritzBot;
 using FritzBot.Core;
+using System.Linq;
+using FritzBot.DataModel;
 
 namespace webpages
 {
@@ -17,17 +19,24 @@ namespace webpages
             {
                 string name = request.postdata["name"];
                 string passwort = request.postdata["pw"];
-                if (UserManager.GetInstance().Exists(name))
+                using (DBProvider db = new DBProvider())
                 {
-                    if (UserManager.GetInstance()[name].CheckPassword(passwort))
+                    User u = db.GetUser(name);
+
+                    if (u != null)
                     {
-                        UserManager.GetInstance()[name].GetModulUserStorage("login").SetVariable("authcookiedate", DateTime.Now);
-                        string hash = toolbox.Crypt(name + UserManager.GetInstance()[name].GetModulUserStorage("login").GetVariable("authcookiedate") + request.useradress.ToString());
-                        theresponse.cookies["username"] = name;
-                        theresponse.cookies["logindata"] = hash;
-                        request.cookies.Add(new System.Net.Cookie("username", name));
-                        request.cookies.Add(new System.Net.Cookie("logindata", hash));
-                        LoginSuccesfull = true;
+                        if (u.CheckPassword(passwort))
+                        {
+                            SimpleStorage storage = db.GetSimpleStorage(u, "login");
+                            storage.Store("authcookiedate", DateTime.Now);
+                            db.SaveOrUpdate(storage);
+                            string hash = toolbox.Crypt(name + storage.Get("authcookiedate", DateTime.MinValue) + request.useradress.ToString());
+                            theresponse.cookies["username"] = name;
+                            theresponse.cookies["logindata"] = hash;
+                            request.cookies.Add(new System.Net.Cookie("username", name));
+                            request.cookies.Add(new System.Net.Cookie("logindata", hash));
+                            LoginSuccesfull = true;
+                        }
                     }
                 }
                 theresponse.page += index.GenMenu(request);
@@ -64,12 +73,17 @@ namespace webpages
                 name = request.cookies["username"].Value;
                 hash = request.cookies["logindata"].Value;
             }
-            if (UserManager.GetInstance().Exists(name))
+            using (DBProvider db = new DBProvider())
             {
-                string calchash = toolbox.Crypt(name + UserManager.GetInstance()[name].GetModulUserStorage("login").GetVariable("authcookiedate") + request.useradress.ToString());
-                if (calchash == hash)
+                User u = db.GetUser(name);
+                if (u != null)
                 {
-                    return name;
+                    SimpleStorage storage = db.GetSimpleStorage(u, "login");
+                    string calchash = toolbox.Crypt(name + storage.Get("authcookiedate", DateTime.MinValue) + request.useradress.ToString());
+                    if (calchash == hash)
+                    {
+                        return name;
+                    }
                 }
             }
             return "";

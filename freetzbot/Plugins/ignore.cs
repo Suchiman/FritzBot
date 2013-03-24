@@ -10,10 +10,22 @@ namespace FritzBot.Plugins
     {
         public void Run(ircMessage theMessage)
         {
-            if (theMessage.Source == theMessage.CommandLine || toolbox.IsOp(theMessage.Nickname))
+            if (theMessage.Source == theMessage.CommandLine || toolbox.IsOp(theMessage.TheUser))
             {
-                UserManager.GetInstance()[theMessage.Nickname].ignored = true;
-                theMessage.Answer("Ich werde " + theMessage.CommandLine + " ab sofort keine beachtung mehr schenken");
+                using (DBProvider db = new DBProvider())
+                {
+                    User u = db.GetUser(theMessage.CommandLine);
+                    if (u != null)
+                    {
+                        u.Ignored = true;
+                        db.SaveOrUpdate(u);
+                        theMessage.Answer("Ich werde " + u.LastUsedName + " ab sofort keine beachtung mehr schenken");
+                    }
+                    else
+                    {
+                        theMessage.Answer("Huch den kenne ich nicht :o");
+                    }
+                }
             }
         }
     }

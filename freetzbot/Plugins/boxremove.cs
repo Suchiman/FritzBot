@@ -1,7 +1,6 @@
-﻿using FritzBot.DataModel;
-using System;
+﻿using FritzBot.Core;
+using FritzBot.DataModel;
 using System.Linq;
-using System.Xml.Linq;
 
 namespace FritzBot.Plugins
 {
@@ -12,15 +11,19 @@ namespace FritzBot.Plugins
     {
         public void Run(ircMessage theMessage)
         {
-            string BoxName = BoxDatabase.GetInstance().GetShortName(theMessage.CommandLine);
-            XElement boxToDelete = theMessage.TheUser.GetModulUserStorage("box").Storage.Elements("box").FirstOrDefault(x => x.Value == BoxName);
-            if (boxToDelete != null)
+            using (DBProvider db = new DBProvider())
             {
-                boxToDelete.Remove();
-                theMessage.Answer("Erledigt!");
-                return;
+                BoxEntry entry = db.QueryLinkedData<BoxEntry, User>(theMessage.TheUser).FirstOrDefault();
+                if (entry.RemoveBox(theMessage.CommandLine))
+                {
+                    theMessage.Answer("Erledigt!");
+                    db.SaveOrUpdate(entry);
+                }
+                else
+                {
+                    theMessage.Answer("Der Suchstring wurde nicht gefunden und deshalb nicht gelöscht");
+                }
             }
-            theMessage.Answer("Der Suchstring wurde nicht gefunden und deshalb nicht gelöscht");
         }
     }
 }

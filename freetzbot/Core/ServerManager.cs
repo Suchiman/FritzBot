@@ -1,10 +1,7 @@
-﻿using FritzBot.Core;
-using FritzBot.DataModel.IRC;
+﻿using FritzBot.DataModel.IRC;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
-using System.Xml.Linq;
 
 namespace FritzBot.Core
 {
@@ -12,25 +9,15 @@ namespace FritzBot.Core
     {
         private static ServerManager instance;
         private List<Server> _servers;
-        private XElement _storage;
         public event Action<IRCEvent> MessageReceivedEvent;
 
         public static ServerManager GetInstance()
         {
             if (instance == null)
             {
-                instance = new ServerManager(XMLStorageEngine.GetManager().GetElement("Servers"));
+                instance = new ServerManager();
             }
             return instance;
-        }
-
-        /// <summary>
-        /// Erstellt ein neues ServerCollection Objekt das multiple Server Objekte verwaltet
-        /// </summary>
-        public ServerManager(XElement DataStorage)
-        {
-            _storage = DataStorage;
-            _servers = _storage.Elements("Server").Select(x => new Server(x, ReceivedInterceptor)).ToList<Server>();
         }
 
         public Server this[string Hostname]
@@ -46,23 +33,16 @@ namespace FritzBot.Core
                 }
                 throw new ArgumentException("Unknown Server");
             }
-            set
+        }
+
+        public ServerManager()
+        {
+            using (DBProvider db = new DBProvider())
             {
-                for (int i = 0; i < _servers.Count; i++)
+                _servers = db.Query<Server>().ToList();
+                foreach (Server srv in _servers)
                 {
-                    if (_servers[i].Hostname == Hostname)
-                    {
-                        if (value == null)
-                        {
-                            _servers[i].Disconnect();
-                            _servers[i] = null;
-                            _servers.RemoveAt(i);
-                        }
-                        else
-                        {
-                            _servers[i] = value;
-                        }
-                    }
+                    srv.OnIRCEvent += ReceivedInterceptor;
                 }
             }
         }
@@ -100,28 +80,31 @@ namespace FritzBot.Core
         /// <param name="Channels">Alle Channels die Betreten werden sollen</param>
         public Server NewConnection(string HostName, int Port, string Nickname, string QuitMessage, List<string> Channels)
         {
-            XElement channels = new XElement("Channels");
-            foreach (string channel in Channels)
+            Server server = new Server()
             {
-                channels.Add(new XElement("Channel", channel));
+                Hostname = HostName,
+                Port = Port,
+                Nickname = Nickname,
+                QuitMessage = QuitMessage,
+                Channels = Channels
+            };
+            server.OnIRCEvent += ReceivedInterceptor;
+            _servers.Add(server);
+            using (DBProvider db = new DBProvider())
+            {
+                db.SaveOrUpdate(server);
             }
-            XElement server = new XElement("Server",
-                new XElement("Hostname", HostName),
-                new XElement("Port", Port),
-                new XElement("Nickname", Nickname),
-                new XElement("QuitMessage", QuitMessage),
-                channels
-                );
-            _storage.Add(server);
-            Server theConnection = new Server(server, ReceivedInterceptor);
-            _servers.Add(theConnection);
-            return theConnection;
+            return server;
         }
 
         public void Remove(Server server)
         {
-            server.Remove();
-            this._servers.Remove(server);
+            server.Disconnect();
+            _servers.Remove(server);
+            using (DBProvider db = new DBProvider())
+            {
+                db.Remove(server);
+            }
         }
 
         /// <summary>
@@ -184,79 +167,44 @@ namespace FritzBot.Core
         /// <summary>
         /// Der Hostname des Servers zu dem die Verbindung aufgebaut wird
         /// </summary>
-        public string Hostname
-        {
-            get
-            {
-                return _serverElement.Element("Hostname").Value;
-            }
-            set
-            {
-                _serverElement.Element("Hostname").Value = value;
-            }
-        }
-        public int Port
-        {
-            get
-            {
-                return Convert.ToInt32(_serverElement.Element("Port").Value);
-            }
-            set
-            {
-                _serverElement.Element("Port").Value = value.ToString();
-            }
-        }
-        public string Nickname
-        {
-            get
-            {
-                return _serverElement.Element("Nickname").Value;
-            }
-            set
-            {
-                _serverElement.Element("Nickname").Value = value;
-            }
-        }
+        public string Hostname { get; set; }
+        public int Port { get; set; }
+        public string Nickname { get; set; }
+        private string _QuitMessage;
         public string QuitMessage
         {
             get
             {
-                return _serverElement.Element("QuitMessage").Value;
+                return _QuitMessage;
             }
             set
             {
-        
-                _serverElement.Element("QuitMessage").Value = value;
-                _connection.QuitMessage = value;
+                _QuitMessage = value;
+                if (_connection != null)
+                {
+                    _connection.QuitMessage = value;
+                }
             }
         }
-        public ReadOnlyCollection<string> Channels
-        {
-            get
-            {
-                return _serverElement.Element("Channels").Elements("Channel").Select(x => x.Value).ToList<string>().AsReadOnly();
-            }
-        }
+        public List<string> Channels { get; set; }
         private Irc _connection;
-        private Action<IRCEvent> IRCEventHandler;
+        public event Action<IRCEvent> OnIRCEvent;
         private bool _running;
-        private XElement _serverElement;
 
         /// <summary>
         /// Erstellt ein neues Server Objekt welches die Verbindungsdaten zu einem Server verwaltet
         /// </summary>
-        public Server(XElement serverElement, Action<IRCEvent> theEventHandler)
+        public Server()
         {
-            IRCEventHandler = theEventHandler;
-            _serverElement = serverElement;
+            Channels = new List<string>();
         }
 
         public void JoinChannel(string channel)
         {
-            XElement channels = _serverElement.Element("Channels");
-            if (channels.Elements("Channel").FirstOrDefault(x => x.Value == channel) == null)
+            if (!Channels.Contains(channel))
             {
-                channels.Add(new XElement("Channel", channel));
+                Channels.Add(channel);
+                _connection.JoinChannel(channel);
             }
         }
 
@@ -280,13 +228,26 @@ namespace FritzBot.Core
             _connection = new Irc(Hostname, Port, Nickname);
             _connection.ConnectionLost += new EventHandler(_connection_ConnectionLost);
             _connection.QuitMessage = QuitMessage;
-            _connection.ReceivedEvent += IRCEventHandler;
+            _connection.ReceivedEvent += _connection_ReceivedEvent;
             _connection.Connect();
             foreach (string channel in Channels)
             {
                 _connection.JoinChannel(channel);
             }
             _running = true;
+        }
+
+        void _connection_ReceivedEvent(IRCEvent obj)
+        {
+            Action<IRCEvent> ev = OnIRCEvent;
+            if (ev != null)
+            {
+                ev(obj);
+                if (obj is Quit && Nickname != _connection.Nickname && (obj as Quit).Nickname == Nickname)
+                {
+                    _connection.Nickname = Nickname;
+                }
+            }
         }
 
         /// <summary>
@@ -310,18 +271,6 @@ namespace FritzBot.Core
             _connection = null;
             _running = false;
             toolbox.Logging("Verbindung zu Server " + Hostname + " getrennt");
-        }
-
-        /// <summary>
-        /// Trennt und entfernt diese Verbindung dauerhaft
-        /// </summary>
-        public void Remove()
-        {
-            if (_running)
-            {
-                Disconnect();
-            }
-            _serverElement.Remove();
         }
 
         /// <summary>

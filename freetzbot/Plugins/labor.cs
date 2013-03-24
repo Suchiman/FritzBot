@@ -25,12 +25,7 @@ namespace FritzBot.Plugins
 
         public void Start()
         {
-            laborthread = new Thread(new ThreadStart(this.LaborCheck))
-            {
-                Name = "LaborThread",
-                IsBackground = true
-            };
-            laborthread.Start();
+            laborthread = toolbox.SafeThreadStart(PluginID, true, LaborCheck);
         }
 
         public void Stop()
@@ -38,11 +33,11 @@ namespace FritzBot.Plugins
             laborthread.Abort();
         }
 
-        protected override IEnumerable<User> GetSubscribers(String[] criteria)
+        protected override IQueryable<Subscription> GetSubscribers(string[] criteria)
         {
             if (criteria != null && criteria.Length > 0)
             {
-                return base.GetSubscribers(criteria).Where(x => x.GetSubscriptions().Where(a => a.Value == PluginID).Any(y => y.AttributeValueOrEmpty("Bedingung").Split(';').Any(z => criteria.Contains(z))));
+                return base.GetSubscribers(criteria).Where(x => criteria.Any(c => x.Bedingungen.Contains(c)));
             }
             return base.GetSubscribers(criteria);
         }
@@ -82,6 +77,7 @@ namespace FritzBot.Plugins
 
         private void LaborCheck()
         {
+            SimpleStorage storage = GetPluginStorage(new DBProvider());
             List<Labordaten> alte = null;
             while (!TryGetNewestLabors(out alte))
             {
@@ -89,7 +85,7 @@ namespace FritzBot.Plugins
             }
             while (true)
             {
-                if (PluginStorage.GetVariable("CheckEnabled", "true") == "true")
+                if (storage.Get("CheckEnabled", true))
                 {
                     List<Labordaten> neue = null;
                     while (!TryGetNewestLabors(out neue))
@@ -104,7 +100,7 @@ namespace FritzBot.Plugins
                         NotifySubscribers(labors);
                         alte = neue;
                     }
-                    Thread.Sleep(Convert.ToInt32(PluginStorage.GetVariable("Intervall", "300000")));
+                    Thread.Sleep(storage.Get("Intervall", 300000));
                 }
                 else
                 {

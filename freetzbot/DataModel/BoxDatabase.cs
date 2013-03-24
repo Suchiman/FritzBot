@@ -1,16 +1,15 @@
-﻿using System;
+﻿using FritzBot.Core;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
-using FritzBot.Core;
 
 namespace FritzBot.DataModel
 {
     public class BoxDatabase : PluginBase
     {
         private static BoxDatabase instance;
+        private List<Box> Boxen;
 
         public static BoxDatabase GetInstance()
         {
@@ -21,26 +20,35 @@ namespace FritzBot.DataModel
             return instance;
         }
 
+        public BoxDatabase()
+        {
+            Boxen = new DBProvider().Query<Box>().ToList();
+        }
+
         /// <summary>
         /// Fügt eine neue Box hinzu
         /// </summary>
         /// <param name="ShortName">Der Kurzname der Box, z.B. 7270v2</param>
         /// <param name="FullName">Der vollständige Name</param>
         /// <param name="RegexPattern">Ein oder mehrere Reguläre Ausdrücke um die Box zu erkennen</param>
-        public Box AddBox(string ShortName, string FullName, params String[] RegexPattern)
+        public Box AddBox(string ShortName, string FullName, params string[] RegexPattern)
         {
             if (GetBoxByShortName(ShortName) != null)
             {
                 throw new Exception("Es gibt bereits eine Box mit gleichem ShortName");
             }
-            XElement NewBox = PluginStorage.GetNewElement("Box");
-            NewBox.Add(new XElement("ShortName", ShortName), new XElement("FullName", FullName));
-            XElement regexes = NewBox.AddSingle(new XElement("Regex"));
-            foreach (string pattern in RegexPattern)
+            Box box = new Box()
             {
-                regexes.Add(new XElement("Pattern", pattern));
+                ShortName = ShortName,
+                FullName = FullName,
+                RegexPattern = new List<string>(RegexPattern)
+            };
+            using (DBProvider db = new DBProvider())
+            {
+                db.SaveOrUpdate(box);
             }
-            return new Box(NewBox);
+            Boxen.Add(box);
+            return box;
         }
 
         /// <summary>
@@ -49,8 +57,7 @@ namespace FritzBot.DataModel
         /// <param name="ShortName">Der Kurzname der Box</param>
         public Box GetBoxByShortName(string ShortName)
         {
-            XElement box = PluginStorage.Storage.Elements("Box").FirstOrDefault(x => x.Element("ShortName").Value == ShortName);
-            return box != null ? new Box(box) : null;
+            return GetBoxen().FirstOrDefault(x => x.ShortName == ShortName);
         }
 
         /// <summary>
@@ -110,46 +117,19 @@ namespace FritzBot.DataModel
 
         public IEnumerable<Box> GetBoxen()
         {
-            return PluginStorage.Storage.Elements("Box").Select(x => new Box(x));
+            return Boxen;
         }
     }
 
     public class Box
     {
-        private XElement storage;
-        public string ShortName
-        {
-            get
-            {
-                return storage.Element("ShortName").Value;
-            }
-            set
-            {
-                storage.Element("ShortName").Value = value;
-            }
-        }
-        public string FullName
-        {
-            get
-            {
-                return storage.Element("FullName").Value;
-            }
-            set
-            {
-                storage.Element("FullName").Value = value;
-            }
-        }
-        public IEnumerable<string> RegexPattern
-        {
-            get
-            {
-                return storage.Element("Regex").Elements("Pattern").Select(x => x.Value);
-            }
-        }
+        public string ShortName { get; set; }
+        public string FullName { get; set; }
+        public List<string> RegexPattern { get; set; }
 
-        public Box(XElement box)
+        public Box()
         {
-            storage = box;
+            RegexPattern = new List<string>();
         }
 
         /// <summary>
@@ -165,10 +145,8 @@ namespace FritzBot.DataModel
         /// </summary>
         public void AddRegex(params String[] pattern)
         {
-            pattern.ForEach(x => storage.Element("Regex").Add(new XElement("Pattern", x)));
-            XElement[] patterns = storage.Element("Regex").Elements("Pattern").Distinct(x => x.Value).OrderBy(x => x.Value).ToArray();
-            storage.Element("Regex").Elements().Remove();
-            storage.Element("Regex").Add(patterns);
+            RegexPattern.AddRange(pattern);
+            RegexPattern = RegexPattern.Distinct().ToList();
         }
 
         /// <summary>
@@ -176,15 +154,7 @@ namespace FritzBot.DataModel
         /// </summary>
         public void RemoveRegex(string pattern)
         {
-            storage.Element("Regex").Elements("Pattern").Where(x => x.Value == pattern).Remove();
-        }
-
-        /// <summary>
-        /// Entfernt die Box
-        /// </summary>
-        public void Remove()
-        {
-            storage.Remove();
+            RegexPattern.Remove(pattern);
         }
 
         public override bool Equals(object obj)

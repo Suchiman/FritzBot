@@ -2,6 +2,7 @@
 using FritzBot.DataModel;
 using FritzBot.DataModel.IRC;
 using System;
+using System.Linq;
 
 namespace FritzBot.Plugins
 {
@@ -15,7 +16,6 @@ namespace FritzBot.Plugins
             Program.UserJoined -= joined;
             Program.UserQuit -= gone;
             Program.UserPart -= gone;
-            Program.UserNickChanged -= nick;
             Program.UserMessaged -= message;
         }
 
@@ -24,36 +24,53 @@ namespace FritzBot.Plugins
             Program.UserJoined += joined;
             Program.UserQuit += gone;
             Program.UserPart += gone;
-            Program.UserNickChanged += nick;
             Program.UserMessaged += message;
+        }
+
+        private SeenEntry GetSeenEntry(DBProvider db, string nick)
+        {
+            User u = db.GetUser(nick);
+            SeenEntry entry = db.QueryLinkedData<SeenEntry, User>(u).FirstOrDefault();
+            if (entry == null)
+            {
+                entry = new SeenEntry();
+                entry.Reference = u;
+            }
+            return entry;
         }
 
         private void joined(Join data)
         {
-            UserManager.GetInstance()[data.Nickname].GetModulUserStorage(this).SetVariable("LastSeen", DateTime.MinValue.ToString());
+            using (DBProvider db = new DBProvider())
+            {
+                SeenEntry entry = GetSeenEntry(db, data.Nickname);
+                entry.LastSeen = DateTime.MinValue;
+                db.SaveOrUpdate(entry);
+            }
         }
 
         private void gone(IRCEvent data)
         {
-            UserManager.GetInstance()[data.Nickname].GetModulUserStorage(this).SetVariable("LastSeen", DateTime.Now.ToString());
-            UserManager.GetInstance()[data.Nickname].Authenticated = false;
-        }
-
-        private void nick(Nick data)
-        {
-            if (!UserManager.GetInstance().Exists(data.Nickname))
+            using (DBProvider db = new DBProvider())
             {
-                UserManager.GetInstance()[data.Nickname].AddName(data.NewNickname);
-                UserManager.GetInstance()[data.Nickname].Authenticated = false;
+                SeenEntry entry = GetSeenEntry(db, data.Nickname);
+                entry.LastSeen = DateTime.Now;
+                db.SaveOrUpdate(entry);
             }
         }
 
         private void message(ircMessage theMessage)
         {
-            if (!theMessage.Nickname.Contains(".") && theMessage.Nickname != theMessage.IRC.Nickname)
+            if (theMessage.IsIgnored)
             {
-                theMessage.TheUser.GetModulUserStorage(this).SetVariable("LastMessaged", DateTime.Now.ToString());
-                theMessage.TheUser.GetModulUserStorage(this).SetVariable("LastMessage", theMessage.Message);
+                return;
+            }
+            using (DBProvider db = new DBProvider())
+            {
+                SeenEntry entry = GetSeenEntry(db, theMessage.Nickname);
+                entry.LastMessaged = DateTime.Now;
+                entry.LastMessage = theMessage.Message;
+                db.SaveOrUpdate(entry);
             }
         }
 
@@ -64,36 +81,49 @@ namespace FritzBot.Plugins
                 theMessage.Answer("Ich bin gerade hier und laut meinem Logik System solltest du auch sehen können was ich schreibe");
                 return;
             }
-            if (UserManager.GetInstance().Exists(theMessage.CommandLine))
+            using (DBProvider db = new DBProvider())
             {
-                string output = "";
-                DateTime LastSeen = DateTime.Parse(UserManager.GetInstance()[theMessage.CommandLine].GetModulUserStorage(this).GetVariable("LastSeen", DateTime.MinValue.ToString()));
-                DateTime LastMessaged = DateTime.Parse(UserManager.GetInstance()[theMessage.CommandLine].GetModulUserStorage(this).GetVariable("LastMessaged", DateTime.MinValue.ToString()));
-                if (LastSeen != DateTime.MinValue)
+                User u = db.GetUser(theMessage.CommandLine);
+                if (u != null)
                 {
-                    output = "Den/Die habe ich hier zuletzt am " + LastSeen.ToString("dd.MM.yyyy ") + "um" + LastSeen.ToString(" HH:mm:ss ") + "Uhr gesehen.";
-                }
-                if (LastMessaged != DateTime.MinValue)
-                {
+                    SeenEntry entry = db.QueryLinkedData<SeenEntry, User>(u).FirstOrDefault();
+                    string output = "";
+                    if (entry != null)
+                    {
+                        if (entry.LastSeen != DateTime.MinValue)
+                        {
+                            output = "Den/Die habe ich hier zuletzt am " + entry.LastSeen.ToString("dd.MM.yyyy ") + "um" + entry.LastSeen.ToString(" HH:mm:ss ") + "Uhr gesehen.";
+                        }
+                        if (entry.LastMessaged != DateTime.MinValue)
+                        {
+                            if (!String.IsNullOrEmpty(output))
+                            {
+                                output += " ";
+                            }
+                            output += "Am " + entry.LastMessaged.ToString("dd.MM.yyyy ") + "um" + entry.LastMessaged.ToString(" HH:mm:ss ") + "Uhr sagte er/sie zuletzt: \"" + entry.LastMessage + "\"";
+                        }
+                    }
                     if (!String.IsNullOrEmpty(output))
                     {
-                        output += " ";
+                        theMessage.Answer(output);
                     }
-                    output += "Am " + LastMessaged.ToString("dd.MM.yyyy ") + "um" + LastMessaged.ToString(" HH:mm:ss ") + "Uhr sagte er/sie zuletzt: \"" + UserManager.GetInstance()[theMessage.CommandLine].GetModulUserStorage(this).GetVariable("LastMessage", "") + "\"";
-                }
-                if (!String.IsNullOrEmpty(output))
-                {
-                    theMessage.Answer(output);
+                    else
+                    {
+                        theMessage.Answer("Scheinbar sind meine Datensätze unvollständig, tut mir leid");
+                    }
                 }
                 else
                 {
-                    theMessage.Answer("Scheinbar sind meine Datensätze unvollständig, tut mir leid");
+                    theMessage.Answer("Diesen Benutzer habe ich noch nie gesehen");
                 }
             }
-            else
-            {
-                theMessage.Answer("Diesen Benutzer habe ich noch nie gesehen");
-            }
         }
+    }
+
+    public class SeenEntry : LinkedData<User>
+    {
+        public DateTime LastSeen { get; set; }
+        public DateTime LastMessaged { get; set; }
+        public string LastMessage { get; set; }
     }
 }

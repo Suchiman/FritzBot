@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Web.Script.Serialization;
+﻿using Newtonsoft.Json;
+using System;
 
 namespace FritzBot.Functions
 {
@@ -25,8 +22,7 @@ namespace FritzBot.Functions
             string url = String.Format(APIUrl, "country", ip);
             string response = toolbox.GetWeb(url);
 
-            JavaScriptSerializer serializer = new JavaScriptSerializer();
-            LocationInfo location = serializer.Deserialize<LocationInfo>(response);
+            LocationInfo location = JsonConvert.DeserializeObject<LocationInfo>(response);
             return location;
         }
 
@@ -35,8 +31,7 @@ namespace FritzBot.Functions
             string url = String.Format(APIUrl, "city", ip);
             string response = toolbox.GetWeb(url);
 
-            JavaScriptSerializer serializer = new JavaScriptSerializer();
-            LocationInfoDetailed location = serializer.Deserialize<LocationInfoDetailed>(response);
+            LocationInfoDetailed location = JsonConvert.DeserializeObject<LocationInfoDetailed>(response);
             return location;
         }
     }

@@ -14,9 +14,9 @@ namespace FritzBot.Plugins.SubscriptionProviders
     {
         public override void SendNotification(User user, string message) { } //Anzeige erfolgt über Webinterface, Nothing ToDo here
 
-        public override void ParseSubscriptionSetup(ircMessage theMessage, XElement storage)
+        public override void ParseSubscriptionSetup(ircMessage theMessage)
         {
-            theMessage.Answer(String.Format("Der RSS Subscription Provider benötigt keine Konfiguration. Deinen Personalisierten RSS Feed bekommst du unter {0}rss?user={1} und den allgemein unter {0}rss", webinterface.Address, theMessage.TheUser.names.First()));
+            theMessage.Answer(String.Format("Der RSS Subscription Provider benötigt keine Konfiguration. Deinen Personalisierten RSS Feed bekommst du unter {0}rss?user={1} und den allgemein unter {0}rss", webinterface.Address, theMessage.TheUser.Names.First()));
         }
     }
 }

@@ -12,15 +12,19 @@ namespace FritzBot.Plugins
     {
         public void Run(ircMessage theMessage)
         {
-            string BoxName = BoxDatabase.GetInstance().GetShortName( theMessage.CommandLine);
-            string besitzer = String.Join(", ", UserManager.GetInstance().Where(x => x.GetModulUserStorage("box").Storage.Elements("box").Any(y => y.Value == BoxName)).Select(x => x.names.FirstOrDefault()).ToArray<string>());
-            if (!String.IsNullOrEmpty(besitzer))
+            string BoxName = BoxDatabase.GetInstance().GetShortName(theMessage.CommandLine);
+            using (DBProvider db = new DBProvider())
             {
-                theMessage.SendPrivateMessage("Folgende Benutzer scheinen diese Box zu besitzen: " + besitzer);
-            }
-            else
-            {
-                theMessage.SendPrivateMessage("Diese Box scheint niemand zu besitzen!");
+                string[] usernames = db.Query<BoxEntry>(x => x.HasBox(theMessage.CommandLine)).Select(x => x.Reference).NotNull().Select(x => x.LastUsedName).ToArray();
+                string besitzer = String.Join(", ", usernames);
+                if (!String.IsNullOrEmpty(besitzer))
+                {
+                    theMessage.SendPrivateMessage("Folgende Benutzer scheinen diese Box zu besitzen: " + besitzer);
+                }
+                else
+                {
+                    theMessage.SendPrivateMessage("Diese Box scheint niemand zu besitzen!");
+                }
             }
         }
     }

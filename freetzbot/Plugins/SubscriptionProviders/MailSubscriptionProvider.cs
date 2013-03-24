@@ -17,12 +17,21 @@ namespace FritzBot.Plugins.SubscriptionProviders
     {
         public override void SendNotification(User user, string message)
         {
-            SmtpClient client = new SmtpClient(PluginStorage.GetVariable("SMTPServer"), Convert.ToInt32(PluginStorage.GetVariable("SMTPPort")));
-            client.EnableSsl = Boolean.Parse(PluginStorage.GetVariable("SMTPSSL", "false"));
-            client.Credentials = new NetworkCredential(PluginStorage.GetVariable("SMTPAccount"), PluginStorage.GetVariable("SMTPPasswort"));
-            MailAddress from = new MailAddress(PluginStorage.GetVariable("SMTPFrom"), "FritzBot");
+            SimpleStorage settings = GetSettings(new DBProvider(), user);
+            string receiver = settings.Get<string>(PluginID, null);
+            if (receiver == null)
+            {
+                return;
+            }
 
-            MailAddress to = new MailAddress(GetSettings(user).Value);
+            SimpleStorage storage = GetPluginStorage(new DBProvider());
+            SmtpClient client = new SmtpClient(storage.Get("SMTPServer", "localhost"), storage.Get("SMTPPort", 25));
+            client.EnableSsl = storage.Get("SMTPSSL", false);
+            client.Credentials = new NetworkCredential(storage.Get("SMTPAccount", ""), storage.Get("SMTPPasswort", ""));
+            MailAddress from = new MailAddress(storage.Get("SMTPFrom", ""), "FritzBot");
+
+
+            MailAddress to = new MailAddress(receiver);
             MailMessage mailMessage = new MailMessage(from, to);
             mailMessage.Subject = "FritzBot Notification";
             mailMessage.Body = message;
@@ -30,15 +39,15 @@ namespace FritzBot.Plugins.SubscriptionProviders
             client.Send(mailMessage);
         }
 
-        public override void AddSubscription(ircMessage theMessage, PluginBase plugin, XElement storage)
+        public override void AddSubscription(ircMessage theMessage, PluginBase plugin)
         {
-            if (GetSettings(theMessage.TheUser) == null)
+            if (GetSettings(new DBProvider(), theMessage.TheUser).Get<string>(PluginID, null) == null)
             {
                 theMessage.Answer("Du musst diesen SubscriptionProvider zuerst Konfigurieren (!subscribe setup)");
             }
             else
             {
-                base.AddSubscription(theMessage, plugin, storage);
+                base.AddSubscription(theMessage, plugin);
             }
         }
     }

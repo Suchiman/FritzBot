@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Linq;
 using System.Net;
 using System.Text;
-using System.Web.Script.Serialization;
 
 namespace FritzBot.Functions
 {
@@ -25,8 +25,7 @@ namespace FritzBot.Functions
             dl.Encoding = Encoding.UTF8;
             string response = dl.DownloadString(url);
 
-            JavaScriptSerializer serializer = new JavaScriptSerializer();
-            Translation translation = serializer.Deserialize<Translation>(response);
+            Translation translation = JsonConvert.DeserializeObject<Translation>(response);
             return translation;
         }
 

@@ -11,14 +11,17 @@ namespace FritzBot.Plugins
     {
         public void Run(ircMessage theMessage)
         {
-            if (UserManager.GetInstance().Exists(theMessage.CommandLine))
+            using (DBProvider db = new DBProvider())
             {
-                UserManager.GetInstance()[theMessage.CommandLine].IsOp = true;
+                User u = db.GetUser(theMessage.CommandLine);
+                if (u == null)
+                {
+                    theMessage.Answer("Den Benutzer kenne ich nicht");
+                    return;
+                }
+                u.Admin = true;
+                db.SaveOrUpdate(u);
                 theMessage.Answer("Okay");
-            }
-            else
-            {
-                theMessage.Answer("Den Benutzer kenne ich nicht");
             }
         }
     }

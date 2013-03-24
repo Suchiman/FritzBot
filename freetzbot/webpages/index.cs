@@ -15,10 +15,6 @@ namespace webpages
             menu += "<td><a href=\"boxdb\">BoxDB</a></td>";
             menu += "<td><a href=\"aliasdb\">Aliase</a></td>";
             menu += "<td><a href=\"/helpdb\">Hilfe</a></td>";
-            if (UserManager.GetInstance()[login.CheckLogin(request)].IsOp)
-            {
-                menu += "<td><a href=\"/settings\">Einstellungen</a></td>";
-            }
             if (String.IsNullOrEmpty(login.CheckLogin(request)))
             {
                 menu += "<td><a href=\"/login\">Login</a></td>";

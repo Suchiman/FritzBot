@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Linq;
 using FritzBot;
 using FritzBot.Core;
+using FritzBot.DataModel;
 
 namespace webpages
 {
@@ -18,16 +20,22 @@ namespace webpages
             {
                 name = request.cookies["username"].Value;
             }
-            if (UserManager.GetInstance().Exists(name))
+            using (DBProvider db = new DBProvider())
             {
-                UserManager.GetInstance()[name].GetModulUserStorage("login").SetVariable("authcookiedate", DateTime.MinValue);
-                theresponse.cookies["username"] = "";
-                theresponse.cookies["logindata"] = "";
-                theresponse.page += "Du bist jetzt ausgeloggt";
-            }
-            else
-            {
-                theresponse.page += "Du bist gar nicht eingeloggt";
+                User u = db.GetUser(name);
+                if (u != null)
+                {
+                    SimpleStorage storage = db.GetSimpleStorage(u, "login");
+                    storage.Store("authcookiedate", DateTime.MinValue);
+                    db.SaveOrUpdate(storage);
+                    theresponse.cookies["username"] = "";
+                    theresponse.cookies["logindata"] = "";
+                    theresponse.page += "Du bist jetzt ausgeloggt";
+                }
+                else
+                {
+                    theresponse.page += "Du bist gar nicht eingeloggt";
+                }
             }
             theresponse.page += "</div></body></html>";
             theresponse.status_code = 200;

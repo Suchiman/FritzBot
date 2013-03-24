@@ -2,7 +2,6 @@
 using FritzBot.DataModel;
 using FritzBot.DataModel.IRC;
 using System;
-using System.Linq;
 
 namespace FritzBot.Plugins
 {
@@ -23,7 +22,8 @@ namespace FritzBot.Plugins
 
         private void joined(Join data)
         {
-            if (toolbox.IsIgnored(data.Nickname)) return;
+            User u = new DBProvider().GetUser(data.Nickname);
+            if (u == null || u.Ignored) return;
             boxfrage(data.IRC, data.Nickname, data.Nickname);
         }
 
@@ -36,14 +36,22 @@ namespace FritzBot.Plugins
         {
             try
             {
-                if (check_db)
+                using (DBProvider db = new DBProvider())
                 {
-                    if ((PluginStorage.GetVariable("BoxFrage", "false") == "false") || UserManager.GetInstance()[sender].GetModulUserStorage("frag").GetVariable("asked", "false") == "true" || UserManager.GetInstance()[sender].GetModulUserStorage("box").Storage.Elements("box").Count() > 0) return;
-                    System.Threading.Thread.Sleep(10000);
+                    User u = db.GetUser(sender);
+                    SimpleStorage pluginStorage = GetPluginStorage(db);
+                    SimpleStorage userStorage = db.GetSimpleStorage(u, PluginID);
+
+                    if (check_db)
+                    {
+                        if (pluginStorage.Get("BoxFrage", false) || userStorage.Get("asked", false)) return;
+                        System.Threading.Thread.Sleep(10000);
+                    }
+                    connection.Sendmsg("Hallo " + sender + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !boxadd deine box, mitteilen, falls du dies nicht bereits getan hast :).", receiver);
+                    connection.Sendmsg("Pro !boxadd bitte nur eine Box nennen (nur die Boxversion) z.b. !boxadd 7270v1 oder !boxadd 7170. Um die anderen im Channel nicht zu stören, sende es mir doch bitte per query/private Nachricht (z.b. /msg FritzBot !boxadd 7270)", receiver);
+                    userStorage.Store("asked", true);
+                    db.SaveOrUpdate(userStorage);
                 }
-                connection.Sendmsg("Hallo " + sender + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !boxadd deine box, mitteilen, falls du dies nicht bereits getan hast :).", receiver);
-                connection.Sendmsg("Pro !boxadd bitte nur eine Box nennen (nur die Boxversion) z.b. !boxadd 7270v1 oder !boxadd 7170. Um die anderen im Channel nicht zu stören, sende es mir doch bitte per query/private Nachricht (z.b. /msg FritzBot !boxadd 7270)", receiver);
-                UserManager.GetInstance()[sender].GetModulUserStorage("frag").SetVariable("asked", "true");
             }
             catch (Exception ex)
             {

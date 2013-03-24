@@ -1,10 +1,7 @@
 ﻿using FritzBot.Core;
 using FritzBot.Plugins.SubscriptionProviders;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Xml.Linq;
 
 namespace FritzBot.DataModel
 {
@@ -19,10 +16,10 @@ namespace FritzBot.DataModel
 
         protected virtual void NotifySubscribers(string message)
         {
-            NotifySubscribers(message, new String[0]);
+            NotifySubscribers(message, new string[0]);
         }
 
-        protected virtual void NotifySubscribers(string message, String[] criteria)
+        protected virtual void NotifySubscribers(string message, string[] criteria)
         {
             SaveNotification(message);
             GetSubscribers(criteria).ForEach(x => DoNotification(x, message));
@@ -30,35 +27,38 @@ namespace FritzBot.DataModel
 
         protected virtual void SaveNotification(string message)
         {
-            ModulDataStorage mds = XMLStorageEngine.GetManager().GetGlobalSettingsStorage("NotificationHistory");
-            mds.Storage.Add(new XElement("Notification", message, new XAttribute("Created", DateTime.Now), new XAttribute("Plugin", PluginID)));
-        }
-
-        protected virtual void DoNotification(User user, string message)
-        {
-            IEnumerable<XElement> subscription = user.GetSubscriptions().Where(x => x.Value == PluginID);
-            IEnumerable<SubscriptionProvider> providers = PluginManager.GetInstance().Get<SubscriptionProvider>();
-            foreach (XElement sub in subscription)
+            using (DBProvider db = new DBProvider())
             {
-                SubscriptionProvider provider = providers.FirstOrDefault(x => x.PluginID == sub.Attribute("Provider").Value);
-                if (provider != null)
+                NotificationHistory h = new NotificationHistory()
                 {
-                    provider.SendNotification(user, message);
-                }
+                    Created = DateTime.Now,
+                    Notification = message,
+                    Plugin = PluginID
+                };
+                db.SaveOrUpdate(h);
             }
         }
 
-        protected virtual IEnumerable<User> GetSubscribers(String[] criteria)
+        protected virtual void DoNotification(Subscription subscription, string message)
         {
-            return UserManager.GetInstance().Where(x => x.GetSubscriptions().Any(y => y.Value == PluginID));
-        }
-
-        protected virtual ModulDataStorage PluginStorage
-        {
-            get
+            SubscriptionProvider provider = PluginManager.GetInstance().Get<SubscriptionProvider>(x => x.PluginID == subscription.Provider);
+            if (provider != null)
             {
-                return XMLStorageEngine.GetManager().GetGlobalSettingsStorage(PluginID);
+                provider.SendNotification(subscription.Reference, message);
             }
+        }
+
+        protected virtual IQueryable<Subscription> GetSubscribers(string[] criteria)
+        {
+            using (DBProvider db = new DBProvider())
+            {
+                return db.Query<Subscription>(x => x.Plugin == PluginID);
+            }
+        }
+
+        protected virtual SimpleStorage GetPluginStorage(DBProvider db)
+        {
+            return db.GetSimpleStorage(PluginID);
         }
     }
 }

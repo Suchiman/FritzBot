@@ -17,14 +17,22 @@ namespace FritzBot.Plugins
             {
                 UserToUse = theMessage.Nickname;
             }
-            if (UserManager.GetInstance().Exists(UserToUse))
+            using (DBProvider db = new DBProvider())
             {
-                output += String.Join(", ", UserManager.GetInstance()[UserToUse].GetModulUserStorage("box").Storage.Elements("box").Select(x => x.Value).ToArray<string>());
-            }
-            else
-            {
-                theMessage.Answer("Der Benutzer ist mir nicht bekannt");
-                return;
+                User u = db.GetUser(UserToUse);
+                if (u != null)
+                {
+                    BoxEntry boxen = db.QueryLinkedData<BoxEntry, User>(u).FirstOrDefault();
+                    if (boxen != null)
+                    {
+                        output += String.Join(", ", boxen.GetRawUserBoxen().ToArray());
+                    }
+                }
+                else
+                {
+                    theMessage.Answer("Der Benutzer ist mir nicht bekannt");
+                    return;
+                }
             }
             if (String.IsNullOrEmpty(output))
             {

@@ -2,9 +2,6 @@
 using FritzBot.DataModel;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Xml.Linq;
 
 namespace FritzBot.Plugins.SubscriptionProviders
 {
@@ -15,12 +12,16 @@ namespace FritzBot.Plugins.SubscriptionProviders
     {
         public override void SendNotification(User user, string message)
         {
-            XElement settings = GetSettings(user);
-            if (settings == null)
+            string userToken;
+            using (DBProvider db = new DBProvider())
+            {
+                SimpleStorage storage = GetSettings(db, user);
+                userToken = storage.Get<string>("token", null);
+            }
+            if (String.IsNullOrEmpty(userToken))
             {
                 return;
             }
-            string userToken = settings.Value;
             Dictionary<String, String> Parameter = new Dictionary<String, String>()
             {
                 {"token", "b6p6augH1KDpxcRxyo4I35Yxl9XP5x"},
@@ -34,15 +35,19 @@ namespace FritzBot.Plugins.SubscriptionProviders
             //</hash>
         }
 
-        public override void AddSubscription(ircMessage theMessage, PluginBase plugin, XElement storage)
+        public override void AddSubscription(ircMessage theMessage, PluginBase plugin)
         {
-            if (GetSettings(theMessage.TheUser) == null)
+            using (DBProvider db = new DBProvider())
             {
-                theMessage.Answer("Du musst diesen SubscriptionProvider zuerst Konfigurieren (!subscribe setup)");
-            }
-            else
-            {
-                base.AddSubscription(theMessage, plugin, storage);
+                SimpleStorage storage = GetSettings(db, theMessage.TheUser);
+                if (String.IsNullOrEmpty(storage.Get<string>("token", null)))
+                {
+                    theMessage.Answer("Du musst diesen SubscriptionProvider zuerst Konfigurieren (!subscribe setup)");
+                }
+                else
+                {
+                    base.AddSubscription(theMessage, plugin);
+                }
             }
         }
     }

@@ -1,10 +1,8 @@
 ﻿using FritzBot.Core;
 using FritzBot.DataModel;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
 
 namespace FritzBot.Plugins
 {
@@ -19,67 +17,18 @@ namespace FritzBot.Plugins
             switch (theMessage.CommandArgs[0])
             {
                 case "box-recheck":
-                    IEnumerable<IGrouping<XElement, XElement>> boxen = XMLStorageEngine.GetManager().GetElement("Users").Descendants("box").GroupBy(x => x.Parent);
-                    BoxDatabase db = BoxDatabase.GetInstance();
-                    foreach (IGrouping<XElement, XElement> boxstorage in boxen)
+                    using (DBProvider db = new DBProvider())
                     {
-                        foreach (XElement box in boxstorage)
-                        {
-                            IEnumerable<Box> found = db.FindBoxes(box.Value);
-                            if (found.Count() == 1)
-                            {
-                                box.Value = found.First().ShortName;
-                            }
-                        }
-                        boxstorage.Key.RemoveNodes();
-                        boxstorage.Key.Add(boxstorage.Distinct(x => x.Value).OrderBy(x => x.Value));
+                        db.Query<BoxEntry>().ForEach(x => { x.ReAssociateBoxes(); db.SaveOrUpdate(x); });
                     }
                     theMessage.Answer("Done");
                     return;
                 case "boxdb":
                     BoxDB(theMessage);
                     return;
-                case "storage":
-                    Storage(theMessage);
-                    return;
-                case "flush":
-                    XMLStorageEngine.GetManager().Save();
-                    theMessage.Answer("Erledigt");
-                    return;
                 default:
                     theMessage.Answer("Das habe ich nicht verstanden: Unterbefehle: box-recheck, boxdb (add, remove, regex, list)");
                     return;
-            }
-        }
-
-        private static void Storage(ircMessage theMessage)
-        {
-            Match m = Regex.Match(theMessage.CommandLine, "storage (?<mode>[^ ]*) (?<plugin>[^ ]*) (?<key>[^ ]*)( \"(?<value>[^\"]*)\")?");
-            if (m.Success)
-            {
-                ModulDataStorage storage = null;
-                if (m.Groups["mode"].Value == "global")
-                {
-                    storage = XMLStorageEngine.GetManager().GetGlobalSettingsStorage(m.Groups["plugin"].Value);
-                }
-                else if (UserManager.GetInstance().Exists(m.Groups["mode"].Value))
-                {
-                    storage = UserManager.GetInstance()[m.Groups["mode"].Value].GetModulUserStorage(m.Groups["plugin"].Value);
-                }
-                else
-                {
-                    theMessage.Answer("Falscher Modus: global oder username");
-                    return;
-                }
-                if (m.Groups["value"].Success)
-                {
-                    storage.SetVariable(m.Groups["key"].Value, m.Groups["value"].Value);
-                    theMessage.Answer("Wert erfolgreich gesetzt");
-                }
-                else
-                {
-                    theMessage.Answer(storage.GetVariable(m.Groups["key"].Value, "Eintrag nicht vorhanden"));
-                }
             }
         }
 
@@ -117,14 +66,17 @@ namespace FritzBot.Plugins
             if (theMessage.CommandArgs[1] == "remove")
             {
                 Box box = BoxDatabase.GetInstance().GetBoxByShortName(String.Join(" ", theMessage.CommandArgs.Skip(2).ToArray()));
-                if (box != null)
+                using (DBProvider db = new DBProvider())
                 {
-                    box.Remove();
-                    theMessage.Answer("Box entfernt");
-                }
-                else
-                {
-                    theMessage.Answer("So eine Box habe ich nicht gefunden");
+                    if (box != null)
+                    {
+                        db.Remove(box);
+                        theMessage.Answer("Box entfernt");
+                    }
+                    else
+                    {
+                        theMessage.Answer("So eine Box habe ich nicht gefunden");
+                    }
                 }
             }
             if (theMessage.CommandArgs[1] == "regex")

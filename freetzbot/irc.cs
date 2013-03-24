@@ -333,7 +333,6 @@ namespace FritzBot
                     }
                     if (String.IsNullOrEmpty(Daten))
                     {
-                        //return; //Connection Lost
                         continue;
                     }
                     if (Daten.StartsWith("PING"))
@@ -357,7 +356,10 @@ namespace FritzBot
             {
                 if (i == 600)
                 {
-                    Sendraw("PING :" + _server);
+                    if (!Sendraw("PING :" + _server))
+                    {
+                        throw new TimeoutException("IRC Server timed out");
+                    }
                 }
                 if (i > 1200)
                 {
@@ -382,11 +384,11 @@ namespace FritzBot
             Action<IRCEvent> received = ReceivedEvent;
             if (received != null)
             {
-                received.BeginInvoke(Daten, null, null);
+                ThreadPool.QueueUserWorkItem(new WaitCallback(x => received((IRCEvent)x)), Daten);
             }
         }
 
-        Regex MessageRegex = new Regex(@"^:(?<nick>[A-Za-z0-9<\-_\|\[\]\\\^{}]{2,15})!~?(?<realname>[^ ]*)@(?<host>[^ ]*) (?<action>[A-z]+) (?<origin>[^ :]*) :(?<message>.*)", RegexOptions.Compiled);
+        Regex MessageRegex = new Regex(@"^:(?<nick>[A-Za-z0-9<\-_\|\[\]\\\^{}]{2,15})!~?(?<realname>[^ ]*)@(?<host>[^ ]*) (?<action>[A-z]+) (?<origin>[^ :]*)? ?:(?<message>.*)", RegexOptions.Compiled);
         Regex GenericIRCAction = new Regex(@"^:(?<sender>[^ :]*) (?<action>\d\d\d)( \*)? (?<nick>[A-Za-z0-9<\-_\|\[\]\\\^{}]{2,15}) :?(?<message>.*)", RegexOptions.Compiled);
 
         private void ProcessRespond(string message)
@@ -421,7 +423,7 @@ namespace FritzBot
                         MOTD = String.Empty;
                         return;
                     case "372": //MOTD
-                        MOTD += messie.Substring(messie.IndexOf('-') + 2) + Environment.NewLine;
+                        MOTD += messie.TrimStart('-', ' ').TrimEnd(' ') + Environment.NewLine;
                         return;
                     case "376": //MOTD Ende
                         Ready = true;
@@ -433,8 +435,8 @@ namespace FritzBot
                             return;
                         }
                         Channel M352chan = GetChannel(M352.Groups["channel"].Value);
-                        User M352User = UserManager.GetInstance()[M352.Groups["nick"].Value];
-                        M352User.LastUsedNick = M352.Groups["nick"].Value;
+                        User M352User = GetUserOrCreate(M352.Groups["nick"].Value);
+                        M352User.LastUsedName = M352.Groups["nick"].Value;
                         if (M352chan.EndOfWho)
                         {
                             M352chan.User.Clear();
@@ -513,7 +515,7 @@ namespace FritzBot
                         return;
                     case "JOIN":
                         Channel Jchan = GetChannel(origin);
-                        Jchan.User.Add(UserManager.GetInstance()[nick]);
+                        Jchan.User.Add(GetUserOrCreate(nick));
                         RaiseReceived(new Join(this)
                         {
                             Channel = Jchan,
@@ -521,7 +523,7 @@ namespace FritzBot
                         });
                         return;
                     case "QUIT":
-                        User usr = UserManager.GetInstance()[nick];
+                        User usr = GetUserOrCreate(nick);
                         Channels.ForEach(x => x.User.Remove(usr));
                         RaiseReceived(new Quit(this)
                         {
@@ -530,7 +532,7 @@ namespace FritzBot
                         return;
                     case "PART":
                         Channel Pchan = GetChannel(origin);
-                        Pchan.User.Remove(UserManager.GetInstance()[nick]);
+                        Pchan.User.Remove(GetUserOrCreate(nick));
                         RaiseReceived(new Part(this)
                         {
                             Channel = Pchan,
@@ -538,6 +540,16 @@ namespace FritzBot
                         });
                         return;
                     case "NICK":
+                        using (DBProvider db = new DBProvider())
+                        {
+                            User u = db.GetUser(nick);
+                            if (!u.Names.Contains(messie))
+                            {
+                                u.Names.Add(messie);
+                            }
+                            u.LastUsedName = messie;
+                            db.SaveOrUpdate(u);
+                        }
                         RaiseReceived(new Nick(this)
                         {
                             NewNickname = messie,
@@ -546,7 +558,7 @@ namespace FritzBot
                         return;
                     case "KICK":
                         Channel Kchan = GetChannel(origin);
-                        Kchan.User.Remove(UserManager.GetInstance()[messie]);
+                        Kchan.User.Remove(GetUserOrCreate(messie));
                         RaiseReceived(new Kick(this)
                         {
                             Channel = Kchan,
@@ -555,6 +567,26 @@ namespace FritzBot
                         });
                         return;
                 }
+            }
+        }
+
+        public User GetUserOrCreate(string Name)
+        {
+            using (DBProvider db = new DBProvider())
+            {
+                User u = db.GetUser(Name);
+                if (u == null)
+                {
+                    u = new User();
+                }
+                if (!u.Names.Contains(Name))
+                {
+                    u.Names.Add(Name);
+                    u.Names = u.Names.Distinct().OrderBy(x => x).ToList();
+                }
+                u.LastUsedName = Name;
+                db.SaveOrUpdate(u);
+                return u;
             }
         }
     }

@@ -37,10 +37,7 @@ namespace FritzBot.Plugins
                         pages.Add((IWebInterface)Activator.CreateInstance(t));
                     }
                 }
-                ListenerThread = new Thread(new ThreadStart(this.httplistener));
-                ListenerThread.Name = "WebinterfaceThread";
-                ListenerThread.IsBackground = true;
-                ListenerThread.Start();
+                ListenerThread = toolbox.SafeThreadStart(PluginID, true, httplistener);
             }
             catch
             {

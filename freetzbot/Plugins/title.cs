@@ -1,6 +1,5 @@
 ﻿using FritzBot.Core;
 using FritzBot.DataModel;
-using FritzBot.Functions;
 using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
@@ -20,7 +19,7 @@ namespace FritzBot.Plugins
         {
             try
             {
-                List<string> links = theMessage.CommandArgs.Where(x => x.StartsWith("http")).ToList();
+                List<string> links = theMessage.CommandArgs.Where(x => x.StartsWith("http://") || x.StartsWith("https://")).Distinct().ToList();
                 foreach (string link in links)
                 {
                     WebClient dl = new WebClient();

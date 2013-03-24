@@ -60,6 +60,10 @@ namespace FritzBot
 
         public static void Logging(Exception ex)
         {
+            if (ex is ThreadAbortException)
+            {
+                return;
+            }
             Logging(String.Format("Es ist eine Exception aufgetreten: {0} \r\n {1}", ex.Message, ex.StackTrace));
         }
 
@@ -71,10 +75,7 @@ namespace FritzBot
                 {
                     if (!LoggingThread.IsAlive)
                     {
-                        LoggingThread = new Thread(new ThreadStart(LogThread));
-                        LoggingThread.Name = "LoggingThread";
-                        LoggingThread.IsBackground = true;
-                        LoggingThread.Start();
+                        LoggingThread = SafeThreadStart("LoggingThread", true, LogThread);
                     }
                     LoggingList.Enqueue(DateTime.Now.ToString("dd.MM HH:mm:ss ") + toLog);
                     Monitor.Pulse(_LogThreadLocker);
@@ -197,21 +198,13 @@ namespace FritzBot
             return System.Web.HttpUtility.UrlEncode(url, Encoding.UTF8);
         }
 
-        public static bool IsOp(string Nickname)
+        public static bool IsOp(User user)
         {
-            if (UserManager.GetInstance().Exists(Nickname))
+            if (user.Admin && (user.Authenticated || String.IsNullOrEmpty(user.Password)))
             {
-                if (UserManager.GetInstance()[Nickname].IsOp && (UserManager.GetInstance()[Nickname].Authenticated || String.IsNullOrEmpty(UserManager.GetInstance()[Nickname].password)))
-                {
-                    return true;
-                }
+                return true;
             }
             return false;
-        }
-
-        public static bool IsIgnored(string Nickname)
-        {
-            return UserManager.GetInstance()[Nickname].ignored;
         }
 
         public static T GetAttribute<T>(object obj)
@@ -227,6 +220,30 @@ namespace FritzBot
                 return default(T);
             }
             return (T)(Attr as object);
+        }
+
+        public static Thread SafeThreadStart(string name, bool restartOnException, Action method)
+        {
+            Thread t = new Thread(new ThreadStart(() =>
+            {
+                do
+                {
+                    try
+                    {
+                        method();
+                    }
+                    catch (Exception ex)
+                    {
+                        Logging(ex);
+                    }
+                } while (restartOnException);
+            }))
+            {
+                IsBackground = true,
+                Name = name
+            };
+            t.Start();
+            return t;
         }
     }
 }

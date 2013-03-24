@@ -2,9 +2,7 @@ using FritzBot.Core;
 using FritzBot.DataModel;
 using FritzBot.DataModel.IRC;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Xml.Linq;
 
 namespace FritzBot.Plugins
 {
@@ -26,7 +24,7 @@ namespace FritzBot.Plugins
 
         private void SendJoin(Join data)
         {
-            SendIt(UserManager.GetInstance()[data.Nickname], x => data.IRC.Sendmsg(x, data.Nickname));
+            SendIt(new DBProvider().GetUser(data.Nickname), x => data.IRC.Sendmsg(x, data.Nickname));
         }
 
         public void SendMessaged(ircMessage theMessage)
@@ -36,11 +34,13 @@ namespace FritzBot.Plugins
 
         private void SendIt(User theUser, Action<string> SendAction)
         {
-            List<XElement> AllUnread = theUser.GetModulUserStorage(this).Storage.Elements("reminder").ToList<XElement>();
-            foreach (XElement OneUnread in AllUnread)
+            using (DBProvider db = new DBProvider())
             {
-                SendAction(OneUnread.Element("RememberNick").Value + " hat für dich am " + String.Format(DateTime.Parse(OneUnread.Element("RememberTime").Value).ToString("dd.MM.yyyy {0} HH:mm:ss"), "um") + " eine Nachricht hinterlassen: " + OneUnread.Element("RememberMessage").Value);
-                OneUnread.Remove();
+                foreach (ReminderEntry item in db.QueryLinkedData<ReminderEntry, User>(theUser).ToList())
+                {
+                    SendAction(item.Creator.LastUsedName + " hat für dich am " + item.Created.ToString("dd.MM.yyyy 'um' HH:mm:ss") + " eine Nachricht hinterlassen: " + item.Message);
+                    db.Remove(item);
+                }
             }
         }
 
@@ -48,18 +48,23 @@ namespace FritzBot.Plugins
         {
             if (theMessage.CommandArgs.Count > 1)
             {
-                if (UserManager.GetInstance().Exists(theMessage.CommandArgs[0]))
+                using (DBProvider db = new DBProvider())
                 {
-                    UserManager.GetInstance()[theMessage.CommandArgs[0]].GetModulUserStorage(this).Storage.Add(new XElement("reminder",
-                                new XElement("RememberNick", theMessage.Nickname),
-                                new XElement("RememberMessage", theMessage.CommandLine.Substring(theMessage.CommandLine.IndexOf(' ') + 1)),
-                                new XElement("RememberTime", DateTime.Now),
-                                new XElement("Remembered", false)));
-                    theMessage.Answer("Okay ich werde es sobald wie möglich zustellen");
-                }
-                else
-                {
-                    theMessage.Answer("Den Benutzer habe ich aber noch nie gesehen");
+                    User u = db.GetUser(theMessage.CommandArgs[0]);
+                    if (u != null)
+                    {
+                        ReminderEntry r = new ReminderEntry();
+                        r.Created = DateTime.Now;
+                        r.Creator = theMessage.TheUser;
+                        r.Message = String.Join(" ", theMessage.CommandArgs.Skip(1));
+                        r.Reference = u;
+                        db.SaveOrUpdate(r);
+                        theMessage.Answer("Okay ich werde es sobald wie möglich zustellen");
+                    }
+                    else
+                    {
+                        theMessage.Answer("Den Benutzer habe ich aber noch nie gesehen");
+                    }
                 }
             }
             else
@@ -67,5 +72,12 @@ namespace FritzBot.Plugins
                 theMessage.Answer("Die Eingabe war nicht korrekt: !remind <Benutzer> <Nachricht>");
             }
         }
+    }
+
+    public class ReminderEntry : LinkedData<User>
+    {
+        public User Creator { get; set; }
+        public string Message { get; set; }
+        public DateTime Created { get; set; }
     }
 }

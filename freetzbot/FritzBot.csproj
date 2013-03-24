@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>FritzBot</RootNamespace>
     <AssemblyName>FritzBot</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <PublishUrl>publish\</PublishUrl>
@@ -42,6 +42,7 @@
     <WarningLevel>4</WarningLevel>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <CodeAnalysisRuleSet>FritzBot.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -55,6 +56,7 @@
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <CodeAnalysisRuleSet>FritzBot.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
     <SignManifests>false</SignManifests>
@@ -79,6 +81,7 @@
     <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
     <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <OutputPath>bin\Release\</OutputPath>
@@ -93,20 +96,38 @@
     <CodeAnalysisRuleSet>FritzBot.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRuleSetDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\\Rule Sets</CodeAnalysisRuleSetDirectories>
     <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="HtmlAgilityPack">
-      <HintPath>..\packages\HtmlAgilityPack.1.4.6\lib\Net20\HtmlAgilityPack.dll</HintPath>
+    <Reference Include="Db4objects.Db4o">
+      <HintPath>..\..\..\Documents\Visual Studio 2012\Projects\Testprojekte\Schulorganizer\db4o\Db4objects.Db4o.dll</HintPath>
+    </Reference>
+    <Reference Include="Db4objects.Db4o.Linq">
+      <HintPath>..\..\..\Documents\Visual Studio 2012\Projects\Testprojekte\Schulorganizer\db4o\Db4objects.Db4o.Linq.dll</HintPath>
+    </Reference>
+    <Reference Include="HtmlAgilityPack, Version=1.4.6.0, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\HtmlAgilityPack.1.4.6\lib\Net45\HtmlAgilityPack.dll</HintPath>
+    </Reference>
+    <Reference Include="Mono.Reflection">
+      <HintPath>..\..\..\Documents\Visual Studio 2012\Projects\Testprojekte\Schulorganizer\db4o\Mono.Reflection.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Newtonsoft.Json.4.5.11\lib\net40\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
-    <Reference Include="System.Data" />
     <Reference Include="System.Web" />
-    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Core\DBProvider.cs" />
     <Compile Include="DataModel\Attribute.cs" />
+    <Compile Include="DataModel\LinkedData.cs" />
+    <Compile Include="DataModel\NotificationHistory.cs" />
+    <Compile Include="DataModel\SimpleStorage.cs" />
+    <Compile Include="DataModel\Subscription.cs" />
     <Compile Include="Functions\Geolocation.cs" />
     <Compile Include="Functions\GoogleTranslator.cs" />
     <Compile Include="Functions\UTF8Checker.cs" />
@@ -121,11 +142,9 @@
     <Compile Include="Plugins\taskcontrol.cs" />
     <Compile Include="Core\Extensions.cs" />
     <Compile Include="Core\PluginManager.cs" />
-    <Compile Include="Core\XMLStorageEngine.cs" />
     <Compile Include="DataModel\BoxDatabase.cs" />
     <Compile Include="DataModel\IRC\Channel.cs" />
     <Compile Include="DataModel\IRC\IRCEvent.cs" />
-    <Compile Include="DataModel\ModulDataStorage.cs" />
     <Compile Include="DataModel\PluginBase.cs" />
     <Compile Include="Functions\DataCache.cs" />
     <Compile Include="Functions\StringSimilarity.cs" />
@@ -145,7 +164,7 @@
     <Compile Include="Plugins\freetz.cs" />
     <Compile Include="Plugins\fw.cs" />
     <Compile Include="Plugins\google.cs" />
-    <Compile Include="Plugins\group.cs" />
+    <None Include="Plugins\group.cs" />
     <Compile Include="Plugins\hilfe.cs" />
     <Compile Include="Plugins\ignore.cs" />
     <Compile Include="Plugins\join.cs" />
@@ -182,13 +201,12 @@
     <Compile Include="Core\ServerManager.cs" />
     <Compile Include="toolbox.cs" />
     <Compile Include="Plugins\whmf.cs" />
-    <Compile Include="Core\UserManager.cs" />
+    <Compile Include="Core\User.cs" />
     <Compile Include="webpages\aliasdb.cs" />
     <Compile Include="webpages\boxdb.cs" />
     <Compile Include="webpages\helpdb.cs" />
     <Compile Include="webpages\index.cs" />
     <Compile Include="webpages\rss.cs" />
-    <Compile Include="webpages\settings.cs" />
     <Compile Include="webpages\login.cs" />
     <Compile Include="webpages\logout.cs" />
     <Compile Include="webpages\pageinterface.cs" />

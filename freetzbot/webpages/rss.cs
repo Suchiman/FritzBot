@@ -34,27 +34,31 @@ namespace FritzBot.webpages
                     )
                 )
             );
-            IEnumerable<XElement> notifications = XMLStorageEngine.GetManager().GetGlobalSettingsStorage("NotificationHistory").Storage.Elements("Notification");
-            if (request.getdata.ContainsKey("user") && UserManager.GetInstance().Exists(request.getdata["user"]))
+            using (DBProvider db = new DBProvider())
             {
-                XElement Subscriptions = UserManager.GetInstance()[request.getdata["user"]].GetModulUserStorage("subscribe").GetElement("Subscriptions", false);
-                if (Subscriptions != null)
+                IQueryable<NotificationHistory> notifications = db.Query<NotificationHistory>().Take(20);
+
+                if (request.getdata.ContainsKey("user"))
                 {
-                    List<string> plugins = Subscriptions.Elements("Plugin").Where(x => x.Attribute("Provider") != null && x.Attribute("Provider").Value == "RSSSubscriptionProvider").Select(x => x.Value).ToList();
-                    notifications = notifications.Where(x => x.Attribute("Plugin") != null && plugins.Contains(x.Attribute("Plugin").Value));
+                    User u = db.GetUser(request.getdata["user"]);
+                    if (u != null)
+                    {
+                        List<string> plugins = db.QueryLinkedData<Subscription, User>(u).Where(x => x.Provider == "RSSSubscriptionProvider").Select(x => x.Plugin).ToList();
+                        notifications = notifications.Where(x => plugins.Contains(x.Plugin));
+                    }
                 }
-            }
-            foreach (XElement notification in notifications)
-            {
-                XElement channel = doc.Descendants("channel").First();
-                channel.Add(
-                    new XElement("item",
-                        new XElement("title", notification.Attribute("Plugin").Value),
-                        new XElement("description", notification.Value),
-                        new XElement("author", "FritzBot"),
-                        new XElement("pubDate", DateTime.Parse(notification.Attribute("Created").Value).ToLocalTime().ToString(RFC822Format))
-                    )
-                );
+                foreach (NotificationHistory notification in notifications)
+                {
+                    XElement channel = doc.Descendants("channel").First();
+                    channel.Add(
+                        new XElement("item",
+                            new XElement("title", notification.Plugin),
+                            new XElement("description", notification.Notification),
+                            new XElement("author", "FritzBot"),
+                            new XElement("pubDate", notification.Created.ToLocalTime().ToString(RFC822Format))
+                        )
+                    );
+                }
             }
             resp.page = doc.ToStringWithDeclaration();
             Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture("de-DE");

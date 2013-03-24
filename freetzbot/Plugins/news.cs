@@ -17,10 +17,7 @@ namespace FritzBot.Plugins
 
         public void Start()
         {
-            newsthread = new Thread(new ThreadStart(NewsThread));
-            newsthread.Name = "NewsThread";
-            newsthread.IsBackground = true;
-            newsthread.Start();
+            newsthread = toolbox.SafeThreadStart("NewsThread", true, NewsThread);
         }
 
         public void Stop()
@@ -30,13 +27,14 @@ namespace FritzBot.Plugins
 
         private void NewsThread()
         {
+            SimpleStorage storage = GetPluginStorage(new DBProvider());
             const string baseurl = "http://webgw.avm.de/download/UpdateNews.jsp";
             string output = string.Empty;
             List<NewsEntry> NewsDE = GetNews(baseurl + "?lang=de").ToList();
             List<NewsEntry> NewsEN = GetNews(baseurl + "?lang=en").ToList();
             while (true)
             {
-                Thread.Sleep(Convert.ToInt32(PluginStorage.GetVariable("Intervall", "300")) * 1000);
+                Thread.Sleep(storage.Get("Intervall", 300) * 1000);
                 List<NewsEntry> NewsDENew = GetNews(baseurl + "?lang=de").ToList();
                 List<NewsEntry> NewsENNew = GetNews(baseurl + "?lang=en").ToList();
                 string[] DiffDE = NewsDENew.Where(x => !NewsDE.Contains(x)).Select(x => x.Titel).Distinct().ToArray();
@@ -59,7 +57,7 @@ namespace FritzBot.Plugins
                         {
                             output += ", ";
                         }
-                        output += "Neue Englische News: " + DiffENstring + String.Format(" Auf zu den EN-News: {0}?lang=en", baseurl); ;;
+                        output += "Neue Englische News: " + DiffENstring + String.Format(" Auf zu den EN-News: {0}?lang=en", baseurl); ; ;
                     }
                 }
                 if (output != String.Empty)

@@ -1,8 +1,13 @@
 ﻿using FritzBot.Core;
+using FritzBot.DataModel;
 using FritzBot.DataModel.IRC;
+using FritzBot.Plugins;
 using System;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Xml.Linq;
 
 namespace FritzBot
 {
@@ -19,16 +24,16 @@ namespace FritzBot
 
         public static bool restart;
 
-        private static Thread AntiFloodingThread;
+        public static SimpleStorage BotSettings;
         private static int AntiFloodingCount;
         private static bool FloodingNotificated;
 
         private static void HandleCommand(ircMessage theMessage)
         {
             #region Antiflooding checks
-            if (!toolbox.IsOp(theMessage.Nickname))
+            if (!toolbox.IsOp(theMessage.TheUser))
             {
-                if (AntiFloodingCount >= Convert.ToInt32(XMLStorageEngine.GetManager().GetGlobalSettingsStorage("Bot").GetVariable("FloodingCount", "10")))
+                if (AntiFloodingCount >= BotSettings.Get("FloodingCount", 10))
                 {
                     if (FloodingNotificated == false)
                     {
@@ -72,7 +77,7 @@ namespace FritzBot
                         }
                     }
 
-                    if (!OPNeeded || toolbox.IsOp(theMessage.Nickname))
+                    if (!OPNeeded || toolbox.IsOp(theMessage.TheUser))
                     {
                         if (ParameterNeeded == 0 || (ParameterNeeded == 1 && theMessage.HasArgs) || (ParameterNeeded == 2 && !theMessage.HasArgs))
                         {
@@ -91,7 +96,7 @@ namespace FritzBot
                             theMessage.Answer("Ungültiger Aufruf: " + toolbox.GetAttribute<Module.HelpAttribute>(theCommand).Help);
                         }
                     }
-                    else if (theMessage.TheUser.IsOp)
+                    else if (theMessage.TheUser.Admin)
                     {
                         theMessage.Answer("Du musst dich erst authentifizieren, " + theMessage.Nickname);
                     }
@@ -243,7 +248,7 @@ namespace FritzBot
         {
             while (true)
             {
-                Thread.Sleep(Convert.ToInt32(XMLStorageEngine.GetManager().GetGlobalSettingsStorage("Bot").GetVariable("FloodingCountReduction", "1000")));
+                Thread.Sleep(BotSettings.Get("FloodingCountReduction", 1000));
                 if (AntiFloodingCount > 0)
                 {
                     AntiFloodingCount--;
@@ -264,36 +269,35 @@ namespace FritzBot
                 switch (ConsoleSplitted[0])
                 {
                     case "op":
-                        User nutzer = null;
-                        if (UserManager.GetInstance().Exists(ConsoleSplitted[1]))
+                        using (DBProvider db = new DBProvider())
                         {
-                            nutzer = UserManager.GetInstance()[ConsoleSplitted[1]];
-                            if (nutzer.IsOp)
+                            User nutzer = db.GetUser(ConsoleSplitted[1]);
+                            if (nutzer != null)
                             {
-                                Console.WriteLine(nutzer.names.ElementAt(0) + " ist bereits OP");
-                                break;
+                                if (nutzer.Admin)
+                                {
+                                    Console.WriteLine(nutzer.Names.ElementAt(0) + " ist bereits OP");
+                                    break;
+                                }
+                                nutzer.Admin = true;
+                                db.SaveOrUpdate(nutzer);
+                                Console.WriteLine(nutzer.Names.ElementAt(0) + " zum OP befördert");
                             }
-                            nutzer.IsOp = true;
-                            Console.WriteLine(nutzer.names.ElementAt(0) + " zum OP befördert");
-                        }
-                        else
-                        {
-                            Console.WriteLine("Benutzer " + ConsoleSplitted[1] + " nicht gefunden");
+                            else
+                            {
+                                Console.WriteLine("Benutzer " + ConsoleSplitted[1] + " nicht gefunden");
+                            }
                         }
                         break;
                     case "exit":
                         ServerManager.GetInstance().DisconnectAll();
-                        XMLStorageEngine.GetManager().Save();
                         Environment.Exit(0);
-                        break;
-                    case "flush":
-                        XMLStorageEngine.GetManager().Save();
                         break;
                     case "connect":
                         AskConnection();
                         break;
                     case "leave":
-                        ServerManager.GetInstance()[ConsoleSplitted[1]] = null;
+                        ServerManager.GetInstance().Remove(ServerManager.GetInstance()[ConsoleSplitted[1]]);
                         break;
                 }
             }
@@ -318,13 +322,181 @@ namespace FritzBot
             toolbox.InstantiateConnection(Hostname, port, nickname, QuitMessage, channel);
         }
 
+        private static void ConvertXMLToDB4o()
+        {
+            XDocument doc = XDocument.Load("database.xml");
+            using (DBProvider db = new DBProvider())
+            {
+                XElement globalSettings = doc.Element("Fritzbot").Element("GlobalSettings");
+                XElement boxdb = globalSettings.Elements("Storage").FirstOrDefault(x => x.Attribute("id").Value == "BoxDatabase");
+                foreach (XElement xmlbox in boxdb.Elements("Box"))
+                {
+                    Box b = new Box();
+                    b.ShortName = xmlbox.Element("ShortName").Value;
+                    b.FullName = xmlbox.Element("FullName").Value;
+                    foreach (XElement regexp in xmlbox.Element("Regex").Elements("Pattern"))
+                    {
+                        b.AddRegex(regexp.Value);
+                    }
+                    db.SaveOrUpdate(b);
+                }
+
+                XElement users = doc.Element("Fritzbot").Element("Users");
+                foreach (XElement xmluser in users.Elements("User"))
+                {
+                    User u = new User();
+                    foreach (XElement xmlname in xmluser.Element("names").Elements("name"))
+                    {
+                        if (xmlname.Attribute("LastUsed") != null)
+                        {
+                            u.LastUsedName = xmlname.Value;
+                        }
+                        u.AddName(xmlname.Value);
+                    }
+                    if (String.IsNullOrEmpty(u.LastUsedName))
+                    {
+                        u.LastUsedName = u.Names.FirstOrDefault();
+                    }
+                    u.Ignored = xmluser.Element("ignored").Value == "true";
+                    u.Admin = xmluser.Element("IsOp").Value == "true";
+                    u.Password = xmluser.Element("password") != null ? xmluser.Element("password").Value : String.Empty;
+                    db.SaveOrUpdate(u);
+
+                    foreach (XElement xmlstorage in xmluser.Element("UserModulStorages").Elements("Storage").Where(x => x.HasElements && x.Attribute("id") != null))
+                    {
+                        switch (xmlstorage.Attribute("id").Value)
+                        {
+                            case "seen":
+                                {
+                                    SeenEntry entry = new SeenEntry();
+                                    entry.Reference = u;
+                                    XElement LastMessaged = xmlstorage.Element("LastMessaged");
+                                    if (LastMessaged != null)
+                                    {
+                                        entry.LastMessaged = DateTime.Parse(LastMessaged.Value);
+                                    }
+                                    XElement LastMessage = xmlstorage.Element("LastMessage");
+                                    if (LastMessage != null)
+                                    {
+                                        entry.LastMessage = LastMessage.Value;
+                                    }
+                                    XElement LastSeen = xmlstorage.Element("LastSeen");
+                                    if (LastSeen != null)
+                                    {
+                                        entry.LastSeen = DateTime.Parse(LastSeen.Value);
+                                    }
+                                    db.SaveOrUpdate(entry);
+                                }
+                                break;
+                            case "frag":
+                                {
+                                    SimpleStorage fragstorage = db.GetSimpleStorage(u, "frag");
+                                    fragstorage.Store("asked", xmlstorage.Element("asked").Value == "true");
+                                    db.SaveOrUpdate(fragstorage);
+                                }
+                                break;
+                            case "alias":
+                                {
+                                    foreach (XElement xmlalias in xmlstorage.Elements("alias"))
+                                    {
+                                        AliasEntry entry = new AliasEntry();
+                                        entry.Creator = u;
+                                        entry.Key = xmlalias.Element("name").Value;
+                                        entry.Text = xmlalias.Element("beschreibung").Value;
+                                        db.SaveOrUpdate(entry);
+                                    }
+                                }
+                                break;
+                            case "box":
+                                {
+                                    BoxEntry entry = new BoxEntry();
+                                    entry.Reference = u;
+                                    foreach (string xmlbox in xmlstorage.Elements("box").Where(x => !String.IsNullOrEmpty(x.Value)).Select(x => x.Value))
+                                    {
+                                        entry.AddBox(xmlbox);
+                                    }
+                                    db.SaveOrUpdate(entry);
+                                }
+                                break;
+                            case "subscribe":
+                                {
+                                    if (xmlstorage.Element("Subscriptions") != null && xmlstorage.Element("Subscriptions").HasElements)
+                                    {
+                                        foreach (XElement xmlsub in xmlstorage.Element("Subscriptions").Elements("Plugin"))
+                                        {
+                                            Subscription entry = new Subscription();
+                                            entry.Reference = u;
+                                            entry.Plugin = xmlsub.Value;
+                                            entry.Provider = xmlsub.Attribute("Provider").Value;
+                                            if (xmlsub.Attribute("Bedingung") != null)
+                                            {
+                                                string bedingungen = xmlsub.Attribute("Bedingung").Value;
+                                                if (bedingungen.Contains(";"))
+                                                {
+                                                    entry.Bedingungen.AddRange(bedingungen.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
+                                                }
+                                                else
+                                                {
+                                                    entry.Bedingungen.Add(bedingungen);
+                                                }
+                                            }
+                                            db.SaveOrUpdate(entry);
+                                        }
+                                    }
+                                    if (xmlstorage.Element("Settings") != null && xmlstorage.Element("Settings").HasElements)
+                                    {
+                                        foreach (XElement xmlset in xmlstorage.Element("Settings").Elements("Provider"))
+                                        {
+                                            SimpleStorage settings = db.GetSimpleStorage(u, "SubscriptionSettings");
+                                            settings.Store(xmlset.Attribute("Name").Value, xmlset.Value);
+                                            db.SaveOrUpdate(settings);
+                                        }
+                                    }
+                                }
+                                break;
+                            case "witz":
+                                {
+                                    foreach (string xmlwitz in xmlstorage.Elements("witz").Where(x => !String.IsNullOrEmpty(x.Value)).Select(x => x.Value))
+                                    {
+                                        WitzEntry entry = new WitzEntry();
+                                        entry.Reference = u;
+                                        entry.Witz = xmlwitz;
+                                        db.SaveOrUpdate(entry);
+                                    }
+                                }
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+
         private static void Init()
         {
             restart = false;
 
+            if (File.Exists("database.xml"))
+            {
+                Stopwatch sw = Stopwatch.StartNew();
+                ConvertXMLToDB4o();
+                sw.Stop();
+                toolbox.Logging(String.Format("Datenbank konvertiert in {0} Millisekunden", sw.ElapsedMilliseconds));
+                File.Move("database.xml", "backup_database.xml");
+            }
+
+            if (File.Exists("datenbank.db.backup"))
+            {
+                File.Delete("datenbank.db.backup");
+            }
+
+            DBProvider.Defragmentieren();
+
+            BotSettings = new DBProvider().GetSimpleStorage("Bot");
+
             PluginManager.GetInstance().BeginInit(true);
 
-            toolbox.Logging(UserManager.GetInstance().Count + " Benutzer geladen!");
+            int count = new DBProvider().Query<User>().Count();
+            toolbox.Logging(count + " Benutzer geladen!");
 
             ServerManager Servers = ServerManager.GetInstance();
             Servers.MessageReceivedEvent += HandleIncomming;
@@ -335,21 +507,15 @@ namespace FritzBot
             }
             Servers.ConnectAll();
 
-            Thread ConsolenThread = new Thread(new ThreadStart(HandleConsoleInput));
-            ConsolenThread.Name = "ConsolenThread";
-            ConsolenThread.IsBackground = true;
-            ConsolenThread.Start();
+            toolbox.SafeThreadStart("ConsolenThread", true, HandleConsoleInput);
             AntiFloodingCount = 0;
-            AntiFloodingThread = new Thread(new ThreadStart(AntiFlooding));
-            AntiFloodingThread.Name = "AntifloodingThread";
-            AntiFloodingThread.IsBackground = true;
-            AntiFloodingThread.Start();
+            toolbox.SafeThreadStart("AntifloodingThread", true, AntiFlooding);
         }
 
         private static void Deinit()
         {
             PluginManager.Shutdown();
-            XMLStorageEngine.Shutdown();
+            DBProvider.Shutdown();
         }
 
         private static void Main()

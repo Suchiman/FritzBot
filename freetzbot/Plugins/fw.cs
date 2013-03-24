@@ -2,7 +2,6 @@
 using FritzBot.DataModel;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -22,18 +21,7 @@ namespace FritzBot.Plugins
 
         public void Start()
         {
-            //return;
-            //try
-            //{
-            //    worker = new Thread(new ThreadStart(WorkerThread));
-            //    worker.IsBackground = true;
-            //    worker.Name = PluginID;
-            //    worker.Start();
-            //}
-            //catch (Exception ex)
-            //{
-            //    toolbox.Logging(ex);
-            //}
+            worker = toolbox.SafeThreadStart(PluginID, true, WorkerThread);
         }
 
         public void Stop()
@@ -53,14 +41,13 @@ namespace FritzBot.Plugins
 
         public void WorkerThread()
         {
-            Stopwatch sw = Stopwatch.StartNew();
             List<string> alte = FTPGrabber.Scan(BaseDirectory, 1);
-            sw.Stop();
+            SimpleStorage storage = GetPluginStorage(new DBProvider());
             while (true)
             {
-                if (PluginStorage.GetVariable("CheckEnabled", "true") == "true")
+                if (storage.Get("CheckEnabled", true))
                 {
-                    List<string> neue = FTPGrabber.Scan(BaseDirectory, 4);
+                    List<string> neue = FTPGrabber.Scan(BaseDirectory, 1);
                     List<string> unEquals = neue.Where(x => !alte.Contains(x)).ToList();
                     if (unEquals.Count > 0)
                     {
@@ -69,7 +56,7 @@ namespace FritzBot.Plugins
                         NotifySubscribers(labors, unEquals.Select(x => BoxDatabase.GetInstance().GetShortName(x)).ToArray());
                         alte = neue;
                     }
-                    Thread.Sleep(Convert.ToInt32(PluginStorage.GetVariable("Intervall", "600000")));
+                    Thread.Sleep(storage.Get("Intervall", 600000));
                 }
                 else
                 {
@@ -97,11 +84,11 @@ namespace FritzBot.Plugins
             return output;
         }
 
-        protected override IEnumerable<User> GetSubscribers(string[] criteria)
+        protected override IQueryable<Subscription> GetSubscribers(string[] criteria)
         {
             if (criteria != null && criteria.Length > 0)
             {
-                return base.GetSubscribers(criteria).Where(x => x.GetSubscriptions().Where(a => a.Value == PluginID).Any(y => y.AttributeValueOrEmpty("Bedingung").Split(';').Any(z => criteria.Contains(z))));
+                return base.GetSubscribers(criteria).Where(x => criteria.Any(c => x.Bedingungen.Contains(c)));
             }
             return base.GetSubscribers(criteria);
         }

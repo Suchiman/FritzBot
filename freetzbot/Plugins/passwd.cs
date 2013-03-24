@@ -1,4 +1,5 @@
-﻿using FritzBot.DataModel;
+﻿using FritzBot.Core;
+using FritzBot.DataModel;
 using System;
 using System.Collections.Generic;
 
@@ -40,7 +41,11 @@ namespace FritzBot.Plugins
                 return;
             }
             theMessage.Hidden = true;
-            theMessage.TheUser.SetPassword(theMessage.Message);
+            using (DBProvider db = new DBProvider())
+            {
+                theMessage.TheUser.SetPassword(theMessage.Message);
+                db.SaveOrUpdate(theMessage.TheUser);
+            }
             theMessage.SendPrivateMessage("Passwort wurde geändert!");
             SetUserInProgress.Remove(theMessage.Nickname);
         }
@@ -67,7 +72,7 @@ namespace FritzBot.Plugins
             }
             else
             {
-                if (!String.IsNullOrEmpty(theMessage.TheUser.password))
+                if (!String.IsNullOrEmpty(theMessage.TheUser.Password))
                 {
                     theMessage.SendPrivateMessage("Bitte gib zuerst dein altes Passwort ein:");
                     CheckUserInProgress.Add(theMessage.Nickname);

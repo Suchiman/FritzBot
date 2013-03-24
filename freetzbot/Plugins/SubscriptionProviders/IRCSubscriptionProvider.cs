@@ -18,18 +18,19 @@ namespace FritzBot.Plugins.SubscriptionProviders
             Irc UserConnection = ServerManager.GetInstance().GetAllConnections().FirstOrDefault(x => x.Channels.Any(y => y.User.Contains(user)));
             if (UserConnection != null)
             {
-                if (GetSettings(user) == null || GetSettings(user).Value == "PRIVMSG")
+                SimpleStorage storage = GetSettings(new DBProvider(), user);
+                if (storage.Get(PluginID, "PRIVMSG") == "PRIVMSG")
                 {
-                    UserConnection.Sendmsg(message, user.LastUsedNick);
+                    UserConnection.Sendmsg(message, user.LastUsedName);
                 }
                 else
                 {
-                    UserConnection.Sendnotice(message, user.LastUsedNick);
+                    UserConnection.Sendnotice(message, user.LastUsedName);
                 }
             }
         }
 
-        public override void ParseSubscriptionSetup(ircMessage theMessage, XElement storage)
+        public override void ParseSubscriptionSetup(ircMessage theMessage)
         {
             if (theMessage.CommandArgs.Count < 3)
             {
@@ -38,7 +39,7 @@ namespace FritzBot.Plugins.SubscriptionProviders
             }
             if (theMessage.CommandArgs[2] == "NOTICE" || theMessage.CommandArgs[2] == "PRIVMSG")
             {
-                base.ParseSubscriptionSetup(theMessage, storage);
+                base.ParseSubscriptionSetup(theMessage);
             }
             else
             {

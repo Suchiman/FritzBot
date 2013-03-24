@@ -19,10 +19,13 @@ namespace webpages
             theresponse.page += index.GenMenu(request);
             theresponse.page += "<table border=2px>";
             theresponse.page += "<tr><td><b>Alias</b></td><td><b>Beschreibung</b></td></tr>";
-            IEnumerable<XElement> thealiases = UserManager.GetInstance().SelectMany(x => x.GetModulUserStorage("alias").Storage.Elements("alias"));
-            foreach (XElement alias in thealiases.Where(x => x.HasElements))
+            using (DBProvider db = new DBProvider())
             {
-                theresponse.page += "<tr><td>" + alias.Element("name").Value + "</td><td>" + alias.Element("beschreibung").Value + "</td></tr>";
+                List<AliasEntry> aliase = db.Query<AliasEntry>().ToList();
+                foreach (AliasEntry alias in aliase)
+                {
+                    theresponse.page += "<tr><td>" + alias.Key + "</td><td>" + alias.Text + "</td></tr>";
+                }
             }
             theresponse.page += "</table>";
             theresponse.page += "</body></html>";
