@@ -1,7 +1,6 @@
 ﻿using FritzBot.DataModel;
 using Newtonsoft.Json;
 using System;
-using System.Net;
 
 namespace FritzBot.Plugins
 {
@@ -12,9 +11,7 @@ namespace FritzBot.Plugins
     {
         public void Run(ircMessage theMessage)
         {
-            WebClient dl = new WebClient();
-            string url = String.Format("http://www.google.com/ig/calculator?q={0}", toolbox.UrlEncode(theMessage.CommandLine));
-            string result = dl.DownloadString(url);
+            string result = toolbox.GetWeb(String.Format("http://www.google.com/ig/calculator?q={0}", toolbox.UrlEncode(theMessage.CommandLine)));
 
             CalculationResult cr = JsonConvert.DeserializeObject<CalculationResult>(result);
             if (String.IsNullOrEmpty(cr.error))

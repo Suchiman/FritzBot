@@ -85,7 +85,7 @@ namespace FritzBot.Plugins
                 if (m.Success)
                 {
                     Box box = BoxDatabase.GetInstance().GetBoxByShortName(m.Groups["short"].Value);
-                    String[] regexes = Regex.Matches(m.Groups["regex"].Value, "\"(?<value>[^\"]*)\"").Cast<Match>().Select(x => x.Groups["value"].Value).ToArray();
+                    string[] regexes = Regex.Matches(m.Groups["regex"].Value, "\"(?<value>[^\"]*)\"").Cast<Match>().Select(x => x.Groups["value"].Value).ToArray();
                     if (box == null)
                     {
                         theMessage.Answer("Für diesen ShortName konnte ich keine Box ermitteln");

@@ -143,7 +143,7 @@ namespace FritzBot.DataModel
         /// <summary>
         /// Fügt einen Regulären Ausdruck zu den Erkennungsmustern hinzu. Doppelte Einträge werden automatisch entfernt
         /// </summary>
-        public void AddRegex(params String[] pattern)
+        public void AddRegex(params string[] pattern)
         {
             RegexPattern.AddRange(pattern);
             RegexPattern = RegexPattern.Distinct().ToList();

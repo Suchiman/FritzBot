@@ -86,7 +86,7 @@ namespace FritzBot.Plugins
         public NewsEntry(HtmlNode node)
         {
             Titel = HtmlEntity.DeEntitize(node.SelectSingleNode(".//span[@class='uberschriftblau']").InnerText).Trim();
-            String[] SuperInfos = node.SelectNodes(".//table[@width='100%'][@cellpadding='10'][@cellspacing='0'][@bgcolor='#FFFFFF']//table//tr[3]//td[@nowrap=''][@class='newsfont']").Select(x => x.InnerText.Trim()).Where(x => !String.IsNullOrEmpty(x)).ToArray();
+            string[] SuperInfos = node.SelectNodes(".//table[@width='100%'][@cellpadding='10'][@cellspacing='0'][@bgcolor='#FFFFFF']//table//tr[3]//td[@nowrap=''][@class='newsfont']").Select(x => x.InnerText.Trim()).Where(x => !String.IsNullOrEmpty(x)).ToArray();
             Version = SuperInfos[0];
             Datum = DateTime.Parse(SuperInfos[1]);
         }

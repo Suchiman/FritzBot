@@ -44,6 +44,7 @@ namespace FritzBot.Core
                     {
                         "mscorlib.dll",
                         "System.dll",
+                        "System.Core.dll",
                         "System.Web.dll",
                         "System.Xml.dll",
                         "System.Xml.Linq.dll",
@@ -175,7 +176,7 @@ namespace FritzBot.Core
         /// <returns>Das aus den Quellcode erstellte Assembly</returns>
         public Assembly LoadSource(params string[] fileName)
         {
-            CSharpCodeProvider compiler = new CSharpCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v3.5" } }); //Default ist sonst .NET 2.0
+            CSharpCodeProvider compiler = new CSharpCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v4.0" } }); //Default ist sonst .NET 2.0
             CompilerParameters compilerParams = new CompilerParameters();
             compilerParams.CompilerOptions = "/target:library /optimize";
             compilerParams.GenerateExecutable = false;

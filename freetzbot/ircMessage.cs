@@ -53,7 +53,7 @@ namespace FritzBot
             _isprivate = Nickname == _origin;
             if (_message.Length > 0)
             {
-                _iscommand = _message.ToCharArray()[0] == '!';
+                _iscommand = _message[0] == '!';
             }
             else
             {
@@ -207,7 +207,7 @@ namespace FritzBot
             {
                 if (_args == null)
                 {
-                    _args = new List<string>(_commandline.Split(' '));
+                    _args = new List<string>(_commandline.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
                 }
                 return _args;
             }

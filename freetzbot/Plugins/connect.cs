@@ -12,7 +12,7 @@ namespace FritzBot.Plugins
     {
         public void Run(ircMessage theMessage)
         {
-            String[] parameter = theMessage.CommandLine.Split(new String[] { "," }, 5, StringSplitOptions.None);
+            string[] parameter = theMessage.CommandLine.Split(new string[] { "," }, 5, StringSplitOptions.None);
             if (parameter.Length < 5)
             {
                 theMessage.Answer("Zu wenig Parameter! schau mal in die Hilfe");

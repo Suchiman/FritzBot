@@ -65,6 +65,12 @@ namespace FritzBot
                 return;
             }
             Logging(String.Format("Es ist eine Exception aufgetreten: {0} \r\n {1}", ex.Message, ex.StackTrace));
+            Exception inner = ex.InnerException;
+            while (inner != null)
+            {
+                Logging(String.Format("    InnerException: {0} \r\n {1}", inner.Message, inner.StackTrace));
+                inner = inner.InnerException;
+            }
         }
 
         public static void Logging(string toLog)

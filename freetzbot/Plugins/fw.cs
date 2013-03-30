@@ -159,7 +159,7 @@ namespace FritzBot.Plugins
             List<string> firmwares = new List<string>();
             foreach (string datei in FtpRecursiv(ftp))
             {
-                String[] slashsplit = datei.Split(new String[] { "/" }, 2, StringSplitOptions.None);
+                string[] slashsplit = datei.Split(new string[] { "/" }, 2, StringSplitOptions.None);
                 string final = slashsplit[0] + "/";
                 if (slashsplit[1].EndsWith(".image"))
                 {
@@ -215,7 +215,7 @@ namespace FritzBot.Plugins
         /// <returns>Eine Liste die alle Namen beinhaltet</returns>
         public static IEnumerable<string> GetListingNames(string Listing)
         {
-            string[] Entries = Listing.Split(new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+            string[] Entries = Listing.Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
             foreach (string Entry in Entries)
             {
                 yield return Entry.Split(new string[] { " " }, 9, StringSplitOptions.RemoveEmptyEntries)[8];
@@ -228,12 +228,12 @@ namespace FritzBot.Plugins
         /// <returns>Eine Liste mit den gefundenen Dateinamen inklusive relativen Pfad angaben</returns>
         public static IEnumerable<string> FtpRecursiv(string ftp)
         {
-            String[] lines = FtpDirectory(ftp).Split(new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+            string[] lines = FtpDirectory(ftp).Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
             foreach (string daten in lines)
             {
                 if (daten.ToCharArray()[0] == 'd')
                 {
-                    string pfad = daten.Split(new String[] { " " }, 9, StringSplitOptions.RemoveEmptyEntries)[8];
+                    string pfad = daten.Split(new string[] { " " }, 9, StringSplitOptions.RemoveEmptyEntries)[8];
                     foreach (string recursiv in FtpRecursiv(ftp + pfad + "/"))
                     {
                         yield return recursiv;
@@ -241,8 +241,8 @@ namespace FritzBot.Plugins
                 }
                 else if (daten.ToCharArray()[0] == '-' && (daten.EndsWith(".image") || daten.EndsWith(".recover-image.exe") || daten.EndsWith(".tar.gz")))
                 {
-                    string file = daten.Split(new String[] { " " }, 9, StringSplitOptions.RemoveEmptyEntries)[8];
-                    String[] FtpSplitted = ftp.Split(new String[] { "/" }, StringSplitOptions.RemoveEmptyEntries);
+                    string file = daten.Split(new string[] { " " }, 9, StringSplitOptions.RemoveEmptyEntries)[8];
+                    string[] FtpSplitted = ftp.Split(new string[] { "/" }, StringSplitOptions.RemoveEmptyEntries);
                     yield return FtpSplitted.Last() + "/" + file;
                 }
             }
@@ -310,9 +310,9 @@ namespace FritzBot.Plugins
             }
             public void FtpRecursiv(string ftp)
             {
-                String[] lines = FtpDirectory(ftp).Split(new String[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+                string[] lines = FtpDirectory(ftp).Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
                 result.AddRange(lines.Where(x => x.StartsWith("-")).Select(x => ftp + x));
-                lines.Where(x => x.StartsWith("d")).Select(x => x.Split(new String[] { " " }, 9, StringSplitOptions.RemoveEmptyEntries)[8]).ForEach(x => FtpRecursiv(ftp + "/" + x));
+                lines.Where(x => x.StartsWith("d")).Select(x => x.Split(new string[] { " " }, 9, StringSplitOptions.RemoveEmptyEntries)[8]).ForEach(x => FtpRecursiv(ftp + "/" + x));
             }
             public static string FtpDirectory(string ftp)
             {
