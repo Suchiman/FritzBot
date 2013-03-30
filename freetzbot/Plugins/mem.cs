@@ -20,7 +20,7 @@ namespace FritzBot.Plugins
                 MethodInfo displayName = t.GetMethod("GetDisplayName", BindingFlags.NonPublic | BindingFlags.Static);
                 if (displayName != null)
                 {
-                    version = (String)displayName.Invoke(null, null);
+                    version = (string)displayName.Invoke(null, null);
                     version = "Mono " + version.Substring(0, version.IndexOf('('));
                 }
                 try
@@ -38,12 +38,7 @@ namespace FritzBot.Plugins
                     toolbox.Logging(ex);
                 }
             }
-            theMessage.Answer(String.Format("Betriebssystem: {0}, RuntimeVersion: {2} {1}, CPU's: {3}, RAM Verbrauch (Programm / +Runtime): {4}MB / {5}MB", os, IntPtr.Size == 8 ? "x64" : "x86", version, Environment.ProcessorCount, ToMB(GC.GetTotalMemory(true)), ToMB(System.Diagnostics.Process.GetCurrentProcess().WorkingSet64)));
-        }
-
-        void p_OutputDataReceived(object sender, DataReceivedEventArgs e)
-        {
-            throw new NotImplementedException();
+            theMessage.Answer(String.Format("Betriebssystem: {0}, RuntimeVersion: {1} {2}, CPU's: {3}, RAM Verbrauch (Programm / +Runtime): {4}MB / {5}MB", os, version.Trim(), IntPtr.Size == 8 ? "x64" : "x86", Environment.ProcessorCount, ToMB(GC.GetTotalMemory(true)), ToMB(System.Diagnostics.Process.GetCurrentProcess().WorkingSet64)));
         }
 
         private string ToMB(long value)

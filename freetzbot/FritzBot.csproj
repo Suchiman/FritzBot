@@ -13,6 +13,9 @@
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <IsWebBootstrapper>false</IsWebBootstrapper>
+    <TargetFrameworkProfile />
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -27,9 +30,6 @@
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <TargetFrameworkProfile />
-    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
-    <RestorePackages>true</RestorePackages>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -41,7 +41,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <CodeAnalysisRuleSet>FritzBot.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
@@ -123,11 +123,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Core\DBProvider.cs" />
+    <Compile Include="DataModel\AliasEntry.cs" />
     <Compile Include="DataModel\Attribute.cs" />
+    <Compile Include="DataModel\BoxEntry.cs" />
     <Compile Include="DataModel\LinkedData.cs" />
     <Compile Include="DataModel\NotificationHistory.cs" />
+    <Compile Include="DataModel\ReminderEntry.cs" />
+    <Compile Include="DataModel\SeenEntry.cs" />
     <Compile Include="DataModel\SimpleStorage.cs" />
     <Compile Include="DataModel\Subscription.cs" />
+    <Compile Include="DataModel\WitzEntry.cs" />
     <Compile Include="Functions\Geolocation.cs" />
     <Compile Include="Functions\GoogleTranslator.cs" />
     <Compile Include="Functions\UTF8Checker.cs" />

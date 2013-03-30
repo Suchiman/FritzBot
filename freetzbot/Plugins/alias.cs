@@ -120,6 +120,19 @@ namespace FritzBot.Plugins
                         }
                         theMessage.Answer("Diesen Alias gibt es nicht");
                         return false;
+                    case "info":
+                    case "details":
+                        AliasEntry info = db.Query<AliasEntry>(x => x.Key == theMessage.CommandArgs[1]).FirstOrDefault();
+                        if (info != null)
+                        {
+                            theMessage.Answer(String.Format("Erstellt von {0}. Definition: {1}", info.Creator.LastUsedName, info.Text));
+                            return true;
+                        }
+                        else
+                        {
+                            theMessage.Answer("Wups, diesen Alias kenne ich nicht");
+                            return false;
+                        }
                     default:
                         string theAlias = GetAlias(theMessage);
                         if (!String.IsNullOrEmpty(theAlias))
@@ -132,15 +145,5 @@ namespace FritzBot.Plugins
                 }
             }
         }
-    }
-
-    public class AliasEntry
-    {
-        public string Key { get; set; }
-        public string Text { get; set; }
-        public User Creator { get; set; }
-        public DateTime Created { get; set; }
-        public User Updater { get; set; }
-        public DateTime Updated { get; set; }
     }
 }

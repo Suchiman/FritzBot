@@ -14,7 +14,7 @@ namespace FritzBot.Plugins
     [Module.Help("Sucht auf dem AVM FTP nach der Version des angegbenen Modells, z.b. \"!fw 7390\", \"!fw 7270_v1\", \"!fw 7390 source\", \"!fw 7390 recovery\" \"!fw 7390 all\"")]
     [Module.ParameterRequired]
     [Module.Subscribeable]
-    class fw : PluginBase, ICommand, IBackgroundTask
+    class fw : PluginBase, ICommand//, IBackgroundTask
     {
         const string BaseDirectory = "ftp://ftp.avm.de/fritz.box/";
         Thread worker;

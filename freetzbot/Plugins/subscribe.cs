@@ -13,7 +13,7 @@ namespace FritzBot.Plugins
     {
         public void Run(ircMessage theMessage)
         {
-            switch (theMessage.CommandArgs[0])
+            switch (theMessage.CommandArgs.FirstOrDefault())
             {
                 case "add":
                     SubscriptionAdd(theMessage);
@@ -32,6 +32,10 @@ namespace FritzBot.Plugins
                     return;
                 case "help":
                     HelpSubscription(theMessage);
+                    return;
+                default:
+                    theMessage.Answer("Das kommt mir nicht bekannt vor...");
+                    theMessage.AnswerHelp(this);
                     return;
             }
         }
@@ -112,7 +116,7 @@ namespace FritzBot.Plugins
         {
             string[] names = PluginManager.GetInstance().Get<SubscriptionProvider>().Select(x => toolbox.GetAttribute<Module.NameAttribute>(x)).NotNull(x => x.Names).Where(x => x.Names.Length > 0).Select(x => x.Names[0]).ToArray();
             theMessage.Answer("Es sind folgende SubscriptionProvider verfügbar: " + String.Join(", ", names));
-            string[] plugins = PluginManager.GetInstance().Get<PluginBase>().HasAttribute<PluginBase,Module.SubscribeableAttribute>().Select(x => toolbox.GetAttribute<Module.NameAttribute>(x)).NotNull(x => x.Names).Where(x => x.Names.Length > 0).Select(x => x.Names[0]).ToArray();
+            string[] plugins = PluginManager.GetInstance().Get<PluginBase>().HasAttribute<PluginBase, Module.SubscribeableAttribute>().Select(x => toolbox.GetAttribute<Module.NameAttribute>(x)).NotNull(x => x.Names).Where(x => x.Names.Length > 0).Select(x => x.Names[0]).ToArray();
             theMessage.Answer("Folgende Plugins werden unterstützt: " + String.Join(", ", plugins));
         }
 

@@ -1,9 +1,7 @@
 ﻿using FritzBot.DataModel;
 using FritzBot.Functions;
 using System;
-using System.Globalization;
 using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace FritzBot.Plugins
 {

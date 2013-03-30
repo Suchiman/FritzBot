@@ -12,8 +12,15 @@ namespace FritzBot.Plugins
     {
         public void Run(ircMessage theMessage)
         {
-            ServerManager.GetInstance().Remove(ServerManager.GetInstance()[theMessage.CommandLine]);
-            theMessage.Answer(String.Format("Server {0} verlassen", theMessage.CommandLine));
+            try
+            {
+                ServerManager.GetInstance().Remove(ServerManager.GetInstance()[theMessage.CommandLine]);
+                theMessage.Answer(String.Format("Server {0} verlassen", theMessage.CommandLine));
+            }
+            catch
+            {
+                theMessage.Answer("Den Server kenne ich nicht");
+            }
         }
     }
 }

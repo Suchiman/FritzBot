@@ -17,7 +17,7 @@ namespace FritzBot.Plugins
                 List<string> befehle = new List<string>();
                 foreach (ICommand theCommand in PluginManager.GetInstance().Get<ICommand>().Where(x => !Module.HiddenAttribute.CheckHidden(x) && toolbox.GetAttribute<Module.NameAttribute>(x) != null))
                 {
-                    Module.AuthorizeAttribute Authorization = toolbox.GetAttribute<Module.AuthorizeAttribute>(theCommand); 
+                    Module.AuthorizeAttribute Authorization = toolbox.GetAttribute<Module.AuthorizeAttribute>(theCommand);
                     Module.NameAttribute Namen = toolbox.GetAttribute<Module.NameAttribute>(theCommand);
                     if (Authorization == null || toolbox.IsOp(theMessage.TheUser))
                     {

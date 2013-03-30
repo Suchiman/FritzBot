@@ -1,6 +1,7 @@
 ﻿using FritzBot.Core;
 using FritzBot.DataModel;
 using System;
+using System.Linq;
 
 namespace FritzBot.Plugins
 {
@@ -14,7 +15,7 @@ namespace FritzBot.Plugins
         {
             using (DBProvider db = new DBProvider())
             {
-                User u = db.GetUser(theMessage.CommandArgs[0]);
+                User u = db.GetUser(theMessage.CommandArgs.FirstOrDefault());
                 if (u != null)
                 {
                     u.Ignored = false;

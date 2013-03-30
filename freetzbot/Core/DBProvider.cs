@@ -1,4 +1,5 @@
 ﻿using Db4objects.Db4o;
+using Db4objects.Db4o.Config;
 using Db4objects.Db4o.Defragment;
 using Db4objects.Db4o.Linq;
 using FritzBot.DataModel;
@@ -18,7 +19,7 @@ namespace FritzBot.Core
             {
                 if (_db == null)
                 {
-                    _db = Db4oEmbedded.OpenFile(DBPath);
+                    _db = Db4oEmbedded.OpenFile(GetConfiguration(), DBPath);
                 }
                 return _db;
             }
@@ -32,10 +33,25 @@ namespace FritzBot.Core
             }
         }
 
+        private static IEmbeddedConfiguration GetConfiguration()
+        {
+            IEmbeddedConfiguration conf = Db4oEmbedded.NewConfiguration();
+            conf.Common.ExceptionsOnNotStorable = true;
+            conf.Common.ObjectClass("FritzBot.Plugins.AliasEntry, FritzBot").Rename("FritzBot.DataModel.AliasEntry, FritzBot");
+            conf.Common.ObjectClass("FritzBot.Plugins.BoxEntry, FritzBot").Rename("FritzBot.DataModel.BoxEntry, FritzBot");
+            conf.Common.ObjectClass("FritzBot.Plugins.ReminderEntry, FritzBot").Rename("FritzBot.DataModel.ReminderEntry, FritzBot");
+            conf.Common.ObjectClass("FritzBot.Plugins.SeenEntry, FritzBot").Rename("FritzBot.DataModel.SeenEntry, FritzBot");
+            conf.Common.ObjectClass("FritzBot.Plugins.WitzEntry, FritzBot").Rename("FritzBot.DataModel.WitzEntry, FritzBot");
+            return conf;
+        }
+
         public static void Defragmentieren()
         {
-            Shutdown();
-            Defragment.Defrag(DBPath);
+            if (File.Exists(DBPath))
+            {
+                Shutdown();
+                Defragment.Defrag(DBPath);
+            }
         }
 
         public static void Shutdown()

@@ -89,9 +89,4 @@ namespace FritzBot.Plugins
             return witz.Witz;
         }
     }
-
-    public class WitzEntry : LinkedData<User>
-    {
-        public string Witz { get; set; }
-    }
 }

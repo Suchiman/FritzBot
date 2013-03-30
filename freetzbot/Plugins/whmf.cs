@@ -1,6 +1,4 @@
 ﻿using FritzBot.DataModel;
-using System;
-using System.Net;
 
 namespace FritzBot.Plugins
 {
