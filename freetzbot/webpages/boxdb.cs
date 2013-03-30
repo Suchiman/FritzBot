@@ -1,6 +1,6 @@
 ﻿using FritzBot;
 using FritzBot.Core;
-using FritzBot.Plugins;
+using FritzBot.DataModel;
 using System;
 using System.Linq;
 

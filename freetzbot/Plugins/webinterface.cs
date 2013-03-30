@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Text;
@@ -57,6 +58,29 @@ namespace FritzBot.Plugins
             }
         }
 
+        private KeyValuePair<string, string> GetPair(string input, Encoding encoding)
+        {
+            string[] split = input.Split('=');
+            string[] ToAdd = new String[2];
+            if (split.Length > 0)
+            {
+                ToAdd[0] = System.Web.HttpUtility.UrlDecode(split[0], encoding);
+            }
+            else
+            {
+                ToAdd[0] = "";
+            }
+            if (split.Length > 1)
+            {
+                ToAdd[1] = System.Web.HttpUtility.UrlDecode(split[1], encoding);
+            }
+            else
+            {
+                ToAdd[1] = "";
+            }
+            return new KeyValuePair<string, string>(ToAdd[0], ToAdd[1]);
+        }
+
         private void httplistener()
         {
             int ErrorCount = 0;
@@ -86,74 +110,14 @@ namespace FritzBot.Plugins
                         {
                             StreamReader stream = new StreamReader(Request.InputStream, Request.ContentEncoding);
                             string streamdata = stream.ReadToEnd();
-                            List<string> post = new List<string>();
-                            if (streamdata.Contains("&"))
-                            {
-                                post = new List<string>(streamdata.Split('&'));
-                            }
-                            else
-                            {
-                                post.Add(streamdata);
-                            }
-                            foreach (string data in post)
-                            {
-                                String[] split = data.Split('=');
-                                String[] ToAdd = new String[2];
-                                if (split.Length > 0)
-                                {
-                                    ToAdd[0] = System.Web.HttpUtility.UrlDecode(split[0], Request.ContentEncoding);
-                                }
-                                else
-                                {
-                                    ToAdd[0] = "";
-                                }
-                                if (split.Length > 1)
-                                {
-                                    ToAdd[1] = System.Web.HttpUtility.UrlDecode(split[1], Request.ContentEncoding);
-                                }
-                                else
-                                {
-                                    ToAdd[1] = "";
-                                }
-                                TheRequest.postdata.Add(ToAdd[0], ToAdd[1]);
-                            }
+                            TheRequest.postdata = streamdata.Split('&').Select(x => GetPair(x, Request.ContentEncoding)).ToDictionary(x => x.Key, x => x.Value);
                             stream.Close();
                         }
                         if (url.Contains("?"))
                         {
-                            String[] UrlSub = url.Split('?');
+                            string[] UrlSub = url.Split('?');
                             url = UrlSub[0];
-                            List<string> GetData = new List<string>();
-                            if (UrlSub[1].Contains("&"))
-                            {
-                                GetData = new List<string>(UrlSub[1].Split('&'));
-                            }
-                            else
-                            {
-                                GetData.Add(UrlSub[1]);
-                            }
-                            foreach (string data in GetData)
-                            {
-                                String[] split = data.Split('=');
-                                String[] ToAdd = new String[2];
-                                if (split.Length > 0)
-                                {
-                                    ToAdd[0] = System.Web.HttpUtility.UrlDecode(split[0], Request.ContentEncoding);
-                                }
-                                else
-                                {
-                                    ToAdd[0] = "";
-                                }
-                                if (split.Length > 1)
-                                {
-                                    ToAdd[1] = System.Web.HttpUtility.UrlDecode(split[1], Request.ContentEncoding);
-                                }
-                                else
-                                {
-                                    ToAdd[1] = "";
-                                }
-                                TheRequest.getdata.Add(ToAdd[0], ToAdd[1]);
-                            }
+                            TheRequest.getdata = UrlSub[1].Split('&').Select(x => GetPair(x, Request.ContentEncoding)).ToDictionary(x => x.Key, x => x.Value);
                         }
                         foreach (IWebInterface thepage in pages)
                         {
