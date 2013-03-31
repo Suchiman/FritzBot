@@ -3,6 +3,7 @@ using FritzBot.DataModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace FritzBot.Plugins
 {
@@ -125,7 +126,33 @@ namespace FritzBot.Plugins
                         AliasEntry info = db.Query<AliasEntry>(x => x.Key == theMessage.CommandArgs[1]).FirstOrDefault();
                         if (info != null)
                         {
-                            theMessage.Answer(String.Format("Erstellt von {0}. Definition: {1}", info.Creator.LastUsedName, info.Text));
+                            StringBuilder sb = new StringBuilder();
+                            if (info.Creator != null)
+                            {
+                                sb.Append("Erstellt von " + info.Creator.LastUsedName);
+                                if (info.Created > DateTime.MinValue)
+                                {
+                                    sb.Append(" am " + info.Created.ToShortDateString() + " um " + info.Created.ToShortTimeString() + ". ");
+                                }
+                                else
+                                {
+                                    sb.Append(". ");
+                                }
+                            }
+                            if (info.Updater != null)
+                            {
+                                sb.Append("Geändert von " + info.Updater.LastUsedName);
+                                if (info.Updated > DateTime.MinValue)
+                                {
+                                    sb.Append(" am " + info.Updated.ToShortDateString() + " um " + info.Updated.ToShortTimeString() + ". ");
+                                }
+                                else
+                                {
+                                    sb.Append(". ");
+                                }
+                            }
+                            sb.Append("Definition: " + info.Text);
+                            theMessage.Answer(sb.ToString());
                             return true;
                         }
                         else
