@@ -243,7 +243,7 @@ namespace FritzBot
 
         public bool Sendaction(string message, string receiver)
         {
-            return Sendmsg(GetCTCPString(message), receiver);
+            return Sendmsg(GetCTCPString("ACTION " + message), receiver);
         }
 
         public bool Sendnotice(string message, string receiver)
@@ -388,7 +388,7 @@ namespace FritzBot
             }
         }
 
-        Regex MessageRegex = new Regex(@"^:(?<nick>[A-Za-z0-9<\-_\|\[\]\\\^{}]{2,15})!~?(?<realname>[^ ]*)@(?<host>[^ ]*) (?<action>[A-z]+) (?<origin>[^ :]*)? ?:(?<message>.*)", RegexOptions.Compiled);
+        Regex MessageRegex = new Regex(@"^:(?<nick>[A-Za-z0-9<\-_\|\[\]\\\^{}]{2,15})!~?(?<realname>[^ ]*)@(?<host>[^ ]*) (?<action>[A-z]+) (?<origin>[^ :]*)( :(?<message>.*))?", RegexOptions.Compiled);
         Regex GenericIRCAction = new Regex(@"^:(?<sender>[^ :]*) (?<action>\d\d\d)( \*)? (?<nick>[A-Za-z0-9<\-_\|\[\]\\\^{}]{2,15}) :?(?<message>.*)", RegexOptions.Compiled);
 
         private void ProcessRespond(string message)
@@ -540,30 +540,33 @@ namespace FritzBot
                         });
                         return;
                     case "NICK":
+                        string newNick = message.Split(':').LastOrDefault();
                         using (DBProvider db = new DBProvider())
                         {
                             User u = db.GetUser(nick);
-                            if (!u.Names.Contains(messie))
+                            if (!u.Names.Contains(newNick))
                             {
-                                u.Names.Add(messie);
+                                u.Names.Add(newNick);
                             }
-                            u.LastUsedName = messie;
+                            u.LastUsedName = newNick;
                             db.SaveOrUpdate(u);
                         }
                         RaiseReceived(new Nick(this)
                         {
-                            NewNickname = messie,
+                            NewNickname = newNick,
                             Nickname = nick
                         });
                         return;
                     case "KICK":
                         Channel Kchan = GetChannel(origin);
                         Kchan.User.Remove(GetUserOrCreate(messie));
+                        string[] KickInfos = message.Substring(regex.ToString().Length).Split(new[] { ':' }, 2);
                         RaiseReceived(new Kick(this)
                         {
                             Channel = Kchan,
                             KickedBy = nick,
-                            Nickname = messie
+                            Nickname = KickInfos[0].Trim(),
+                            Reason = KickInfos[1].Trim()
                         });
                         return;
                 }

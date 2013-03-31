@@ -47,6 +47,7 @@ namespace FritzBot.DataModel.IRC
     public class Kick : IRCEvent
     {
         public string KickedBy { get; set; }
+        public string Reason { get; set; }
         public Channel Channel { get; set; }
         public Kick(Irc obj) : base(obj) { }
         public override string ToString()
