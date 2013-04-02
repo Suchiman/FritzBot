@@ -24,7 +24,7 @@ namespace FritzBot.Plugins
         {
             User u = new DBProvider().GetUser(data.Nickname);
             if (u == null || u.Ignored) return;
-            boxfrage(data.IRC, data.Nickname, data.Nickname);
+            boxfrage(data.IRC, data.Nickname, data.Nickname, true);
         }
 
         public void Run(ircMessage theMessage)
@@ -44,7 +44,7 @@ namespace FritzBot.Plugins
 
                     if (check_db)
                     {
-                        if (pluginStorage.Get("BoxFrage", false) || userStorage.Get("asked", false)) return;
+                        if (!pluginStorage.Get("BoxFrage", false) || userStorage.Get("asked", false)) return;
                         System.Threading.Thread.Sleep(10000);
                     }
                     connection.Sendmsg("Hallo " + sender + " , ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !boxadd deine box, mitteilen, falls du dies nicht bereits getan hast :).", receiver);
