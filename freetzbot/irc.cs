@@ -544,12 +544,16 @@ namespace FritzBot
                         using (DBProvider db = new DBProvider())
                         {
                             User u = db.GetUser(nick);
-                            if (!u.Names.Contains(newNick))
+                            User newU = db.GetUser(newNick);
+                            if (newU == null)
                             {
-                                u.Names.Add(newNick);
+                                if (!u.Names.Contains(newNick))
+                                {
+                                    u.Names.Add(newNick);
+                                }
+                                u.LastUsedName = newNick;
+                                db.SaveOrUpdate(u);
                             }
-                            u.LastUsedName = newNick;
-                            db.SaveOrUpdate(u);
                         }
                         RaiseReceived(new Nick(this)
                         {

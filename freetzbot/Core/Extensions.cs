@@ -1,5 +1,6 @@
 ﻿using HtmlAgilityPack;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,7 +9,7 @@ using System.Xml.Linq;
 
 namespace FritzBot.Core
 {
-    public static class LinqExtensions
+    public static class Linq
     {
         public static IEnumerable<T> TryLogEach<T>(this IEnumerable<T> list, Action<T> action)
         {
@@ -91,6 +92,17 @@ namespace FritzBot.Core
                 }
             }
             return extracted;
+        }
+
+        public static IEnumerable<T> JoinMany<T>(params IEnumerable<T>[] items)
+        {
+            foreach (IEnumerable<T> item in items)
+            {
+                foreach (T subitem in item)
+                {
+                    yield return subitem;
+                }
+            }
         }
     }
 
