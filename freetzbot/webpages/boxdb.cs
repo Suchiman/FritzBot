@@ -22,9 +22,9 @@ namespace webpages
                 theresponse.page += "<tr><td><b>Besitzer</b></td><td><b>Boxen</b></td></tr>";
                 using (DBProvider db = new DBProvider())
                 {
-                    foreach (BoxEntry entry in db.Query<BoxEntry>().Where(x => x.Reference != null))
+                    foreach (BoxEntry entry in db.Query<BoxEntry>().Where(x => x.Reference != null).OrderBy(x => x.Reference.LastUsedName))
                     {
-                        theresponse.page += "<tr><td>" + String.Join(", ", entry.Reference.Names) + "</td><td>" + String.Join(", ", entry.GetRawUserBoxen()) + "</td></tr>";
+                        theresponse.page += "<tr><td>" + String.Join(", ", entry.Reference.Names.OrderBy(x => x)) + "</td><td>" + String.Join(", ", entry.GetRawUserBoxen().OrderBy(x => x)) + "</td></tr>";
                     }
                 }
                 theresponse.page += "</table>";

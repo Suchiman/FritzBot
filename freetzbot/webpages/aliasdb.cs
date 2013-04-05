@@ -1,11 +1,9 @@
 ﻿using FritzBot;
-using FritzBot.Plugins;
 using FritzBot.Core;
-using System;
+using FritzBot.DataModel;
+using FritzBot.Plugins;
 using System.Collections.Generic;
 using System.Linq;
-using System.Xml.Linq;
-using FritzBot.DataModel;
 
 namespace webpages
 {
@@ -22,7 +20,7 @@ namespace webpages
             theresponse.page += "<tr><td><b>Alias</b></td><td><b>Beschreibung</b></td></tr>";
             using (DBProvider db = new DBProvider())
             {
-                List<AliasEntry> aliase = db.Query<AliasEntry>().ToList();
+                List<AliasEntry> aliase = db.Query<AliasEntry>().OrderBy(x => x.Key).ToList();
                 foreach (AliasEntry alias in aliase)
                 {
                     theresponse.page += "<tr><td>" + alias.Key + "</td><td>" + alias.Text + "</td></tr>";

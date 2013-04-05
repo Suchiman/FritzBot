@@ -1,6 +1,7 @@
-﻿using System;
-using FritzBot;
+﻿using FritzBot;
 using FritzBot.Core;
+using FritzBot.Module;
+using System;
 using System.Linq;
 
 namespace webpages
@@ -27,18 +28,12 @@ namespace webpages
                 }
             }
 
-            foreach (ICommand theCommand in PluginManager.GetInstance().Get<ICommand>().HasAttribute<ICommand, FritzBot.Module.NameAttribute>())
+            foreach (ICommand theCommand in PluginManager.GetInstance().Get<ICommand>().HasAttribute<ICommand, FritzBot.Module.NameAttribute>().OrderBy(x => x.GetType().Name))
             {
-                bool OPNeeded = toolbox.GetAttribute<FritzBot.Module.AuthorizeAttribute>(theCommand) != null;
-                if (Admin || !OPNeeded)
+                bool OPNeeded = toolbox.GetAttribute<AuthorizeAttribute>(theCommand) != null;
+                if (!OPNeeded || Admin)
                 {
-                    string names = "";
-                    foreach (string name in toolbox.GetAttribute<FritzBot.Module.NameAttribute>(theCommand).Names)
-                    {
-                        names += ", " + name;
-                    }
-                    names = names.Remove(0, 2);
-                    theresponse.page += "<tr><td>" + names + "</td><td>" + toolbox.GetAttribute<FritzBot.Module.HelpAttribute>(theCommand).Help + "</td></tr>";
+                    theresponse.page += "<tr><td>" + String.Join(", ", toolbox.GetAttribute<NameAttribute>(theCommand).Names) + "</td><td>" + toolbox.GetAttribute<HelpAttribute>(theCommand).Help + "</td></tr>";
                 }
             }
             theresponse.page += "</table>";

@@ -160,6 +160,18 @@ namespace FritzBot.Plugins
                             theMessage.Answer("Wups, diesen Alias kenne ich nicht");
                             return false;
                         }
+                    case "find":
+                    case "search":
+                        {
+                            List<AliasEntry> search = db.Query<AliasEntry>(x => x.Key.ToLower().Contains(theMessage.CommandArgs[1].ToLower())).ToList();
+                            if (search.Count == 0)
+                            {
+                                theMessage.Answer("Nichts gefunden :(");
+                                return false;
+                            }
+                            theMessage.Answer("Mögliche Aliase: " + String.Join(", ", search.Select(x => x.Key)));
+                            return true;
+                        }
                     default:
                         string theAlias = GetAlias(theMessage);
                         if (!String.IsNullOrEmpty(theAlias))
