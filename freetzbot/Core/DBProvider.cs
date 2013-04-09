@@ -4,6 +4,7 @@ using Db4objects.Db4o.Defragment;
 using Db4objects.Db4o.Linq;
 using FritzBot.DataModel;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -37,11 +38,6 @@ namespace FritzBot.Core
         {
             IEmbeddedConfiguration conf = Db4oEmbedded.NewConfiguration();
             conf.Common.ExceptionsOnNotStorable = true;
-            conf.Common.ObjectClass("FritzBot.Plugins.AliasEntry, FritzBot").Rename("FritzBot.DataModel.AliasEntry, FritzBot");
-            conf.Common.ObjectClass("FritzBot.Plugins.BoxEntry, FritzBot").Rename("FritzBot.DataModel.BoxEntry, FritzBot");
-            conf.Common.ObjectClass("FritzBot.Plugins.ReminderEntry, FritzBot").Rename("FritzBot.DataModel.ReminderEntry, FritzBot");
-            conf.Common.ObjectClass("FritzBot.Plugins.SeenEntry, FritzBot").Rename("FritzBot.DataModel.SeenEntry, FritzBot");
-            conf.Common.ObjectClass("FritzBot.Plugins.WitzEntry, FritzBot").Rename("FritzBot.DataModel.WitzEntry, FritzBot");
             return conf;
         }
 
@@ -50,7 +46,27 @@ namespace FritzBot.Core
             if (File.Exists(DBPath))
             {
                 Shutdown();
-                Defragment.Defrag(DBPath);
+                DefragmentConfig config = new DefragmentConfig(DBPath);
+                config.Db4oConfig(GetConfiguration());
+                Defragment.Defrag(config);
+            }
+        }
+
+        public static void ReCreate()
+        {
+            List<object> allObjects;
+            using (DBProvider db = new DBProvider())
+            {
+                allObjects = db.Query<object>().ToList();
+            }
+            Shutdown();
+            File.Move(DBPath, DBPath + ".old");
+            using (DBProvider db = new DBProvider())
+            {
+                foreach (object item in allObjects)
+                {
+                    db.SaveOrUpdate(item);
+                }
             }
         }
 
