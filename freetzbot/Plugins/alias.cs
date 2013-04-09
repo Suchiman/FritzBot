@@ -2,6 +2,7 @@
 using FritzBot.DataModel;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -73,6 +74,20 @@ namespace FritzBot.Plugins
                 second = second.Replace("%23", "#").Replace("%3a", ":").Replace("%2f", "/").Replace("%3f", "?");
 
                 thealias = thealias.Substring(0, start) + second + thealias.Substring(end);
+            }
+            if (thealias[0] == '!')
+            {
+                StackTrace trace = new StackTrace();
+                StackFrame[] frames = trace.GetFrames();
+                int recursion = frames.Count(x => x.GetMethod() == frames[0].GetMethod());
+                if (recursion > 4)
+                {
+                    theMessage.Answer("Einen moment mal... das scheint rekursiv zu sein. Ich beende das mal");
+                    return String.Empty;
+                }
+                ircMessage fake = new ircMessage(theMessage.Nickname, theMessage.Source, thealias, theMessage.IRC);
+                Program.HandleCommand(fake);
+                return String.Empty;
             }
             return thealias;
         }

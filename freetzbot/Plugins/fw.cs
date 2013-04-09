@@ -231,7 +231,7 @@ namespace FritzBot.Plugins
             string[] lines = FtpDirectory(ftp).Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
             foreach (string daten in lines)
             {
-                if (daten.ToCharArray()[0] == 'd')
+                if (daten[0] == 'd')
                 {
                     string pfad = daten.Split(new string[] { " " }, 9, StringSplitOptions.RemoveEmptyEntries)[8];
                     foreach (string recursiv in FtpRecursiv(ftp + pfad + "/"))
@@ -239,7 +239,7 @@ namespace FritzBot.Plugins
                         yield return recursiv;
                     }
                 }
-                else if (daten.ToCharArray()[0] == '-' && (daten.EndsWith(".image") || daten.EndsWith(".recover-image.exe") || daten.EndsWith(".tar.gz")))
+                else if (daten[0] == '-' && (daten.EndsWith(".image") || daten.EndsWith(".recover-image.exe") || daten.EndsWith(".tar.gz")))
                 {
                     string file = daten.Split(new string[] { " " }, 9, StringSplitOptions.RemoveEmptyEntries)[8];
                     string[] FtpSplitted = ftp.Split(new string[] { "/" }, StringSplitOptions.RemoveEmptyEntries);
