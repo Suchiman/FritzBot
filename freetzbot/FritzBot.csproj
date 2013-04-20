@@ -126,6 +126,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Core\DBProvider.cs" />
+    <Compile Include="Core\SODAQuery.cs" />
     <Compile Include="DataModel\AliasEntry.cs" />
     <Compile Include="DataModel\Attribute.cs" />
     <Compile Include="DataModel\BoxEntry.cs" />

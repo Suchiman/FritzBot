@@ -42,6 +42,7 @@ namespace FritzBot.Plugins
                             entry.AddBox(String.Join(" ", theMessage.CommandArgs.Skip(2)));
                             db.SaveOrUpdate(entry);
                             theMessage.Answer("Hinzugefügt");
+                            return;
                         }
                         theMessage.Answer("User gibbet nicht");
                     }

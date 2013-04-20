@@ -326,11 +326,6 @@ namespace FritzBot
         {
             restart = false;
 
-            if (File.Exists("datenbank.db.backup"))
-            {
-                File.Delete("datenbank.db.backup");
-            }
-
             DBProvider.Defragmentieren();
 
             BotSettings = new DBProvider().GetSimpleStorage("Bot");

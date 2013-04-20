@@ -178,7 +178,9 @@ namespace FritzBot.Plugins
                     case "find":
                     case "search":
                         {
-                            List<AliasEntry> search = db.Query<AliasEntry>(x => x.Key.ToLower().Contains(theMessage.CommandArgs[1].ToLower())).ToList();
+                            SODAQuery<AliasEntry> query = db.SODAQuery<AliasEntry>();
+                            query.Member(x => x.Key).Constrain(theMessage.CommandArgs[1]).Like();
+                            List<AliasEntry> search = query.Execute().ToList();
                             if (search.Count == 0)
                             {
                                 theMessage.Answer("Nichts gefunden :(");

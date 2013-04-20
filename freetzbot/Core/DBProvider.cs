@@ -1,5 +1,6 @@
 ﻿using Db4objects.Db4o;
 using Db4objects.Db4o.Config;
+using Db4objects.Db4o.Constraints;
 using Db4objects.Db4o.Defragment;
 using Db4objects.Db4o.Linq;
 using FritzBot.DataModel;
@@ -7,20 +8,25 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace FritzBot.Core
 {
     public class DBProvider : IDisposable
     {
+        private static object _lock = new object();
         private static IEmbeddedObjectContainer _db;
         private static IEmbeddedObjectContainer Datenbank
         {
             get
             {
-                if (_db == null)
+                lock (_lock)
                 {
-                    _db = Db4oEmbedded.OpenFile(GetConfiguration(), DBPath);
+                    if (_db == null)
+                    {
+                        _db = Db4oEmbedded.OpenFile(GetConfiguration(), DBPath);
+                    }
                 }
                 return _db;
             }
@@ -38,7 +44,23 @@ namespace FritzBot.Core
         {
             IEmbeddedConfiguration conf = Db4oEmbedded.NewConfiguration();
             conf.Common.ExceptionsOnNotStorable = true;
+
+            EnsureIndex<AliasEntry>(conf.Common, "Key");
+            conf.Common.Add(new UniqueFieldValueConstraint(typeof(AliasEntry), AutoProperty("Key")));
+
+            EnsureIndex<User>(conf.Common, "Names");
+
             return conf;
+        }
+
+        private static void EnsureIndex<T>(ICommonConfiguration conf, string property)
+        {
+            conf.ObjectClass(typeof(T)).ObjectField(AutoProperty(property)).Indexed(true);
+        }
+
+        public static string AutoProperty(string name)
+        {
+            return String.Format("<{0}>k__BackingField", name);
         }
 
         public static void Defragmentieren()
@@ -48,6 +70,7 @@ namespace FritzBot.Core
                 Shutdown();
                 DefragmentConfig config = new DefragmentConfig(DBPath);
                 config.Db4oConfig(GetConfiguration());
+                config.ForceBackupDelete(true);
                 Defragment.Defrag(config);
             }
         }
@@ -60,7 +83,7 @@ namespace FritzBot.Core
                 allObjects = db.Query<object>().ToList();
             }
             Shutdown();
-            File.Move(DBPath, DBPath + ".old");
+            File.Move(DBPath, DBPath + "." + DateTime.Now.ToString().Replace(".", "").Replace(" ", "").Replace(":", ""));
             using (DBProvider db = new DBProvider())
             {
                 foreach (object item in allObjects)
@@ -79,14 +102,19 @@ namespace FritzBot.Core
             }
         }
 
+        public SODAQuery<T> SODAQuery<T>()
+        {
+            return new SODAQuery<T>(Datenbank.Query());
+        }
+
         public IQueryable<T> Query<T>()
         {
             return Datenbank.AsQueryable<T>();
         }
 
-        public IQueryable<T> Query<T>(Func<T, bool> match)
+        public IQueryable<T> Query<T>(Expression<Func<T, bool>> match)
         {
-            return Datenbank.AsQueryable<T>().Where(match).AsQueryable();
+            return Datenbank.AsQueryable<T>().Where(match);
         }
 
         public IQueryable<T> QueryLinkedData<T, L>(L instance)
