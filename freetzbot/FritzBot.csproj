@@ -101,11 +101,11 @@
   <ItemGroup>
     <Reference Include="Db4objects.Db4o, Version=8.1.287.16150, Culture=neutral, PublicKeyToken=6199cd4f203aa8eb, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\db4o\Db4objects.Db4o.dll</HintPath>
+      <HintPath>..\dlls\Db4objects.Db4o.dll</HintPath>
     </Reference>
     <Reference Include="Db4objects.Db4o.Linq, Version=8.1.287.16150, Culture=neutral, PublicKeyToken=6199cd4f203aa8eb, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\db4o\Db4objects.Db4o.Linq.dll</HintPath>
+      <HintPath>..\dlls\Db4objects.Db4o.Linq.dll</HintPath>
     </Reference>
     <Reference Include="HtmlAgilityPack, Version=1.4.6.0, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -113,7 +113,7 @@
     </Reference>
     <Reference Include="Mono.Reflection, Version=1.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\db4o\Mono.Reflection.dll</HintPath>
+      <HintPath>..\dlls\Mono.Reflection.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
