@@ -11,7 +11,7 @@ namespace FritzBot.Plugins
         public void Run(ircMessage theMessage)
         {
             theMessage.AnswerAction("verlässt den channel " + theMessage.CommandLine);
-            theMessage.IRC.Leave(theMessage.CommandLine);
+            theMessage.Server.PartChannel(theMessage.CommandLine);
         }
     }
 }

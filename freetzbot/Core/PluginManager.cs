@@ -2,6 +2,7 @@
 using Microsoft.CSharp;
 using System;
 using System.CodeDom.Compiler;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,7 +11,7 @@ using System.Threading;
 
 namespace FritzBot.Core
 {
-    public class PluginManager
+    public class PluginManager : IEnumerable<PluginBase>
     {
         private static PluginManager instance;
         private List<PluginBase> Plugins = new List<PluginBase>();
@@ -210,6 +211,16 @@ namespace FritzBot.Core
                 throw new Exception("Compilation failed");
             }
             return results.CompiledAssembly;
+        }
+
+        public IEnumerator<PluginBase> GetEnumerator()
+        {
+            return Plugins.GetEnumerator();
+        }
+
+        IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        {
+            return Plugins.GetEnumerator();
         }
     }
 }

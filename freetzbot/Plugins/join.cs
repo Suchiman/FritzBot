@@ -11,7 +11,7 @@ namespace FritzBot.Plugins
         public void Run(ircMessage theMessage)
         {
             theMessage.AnswerAction("rennt los zum channel " + theMessage.CommandLine);
-            theMessage.IRC.JoinChannel(theMessage.CommandLine);
+            theMessage.Server.JoinChannel(theMessage.CommandLine);
         }
     }
 }

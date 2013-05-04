@@ -1,5 +1,6 @@
 ﻿using FritzBot.Core;
 using FritzBot.DataModel;
+using Meebey.SmartIrc4net;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,8 +12,30 @@ namespace FritzBot.Plugins
     [Module.Name("alias", "a")]
     [Module.Help("Legt einen Alias für einen Begriff fest, Beispiele, \"!a add freetz Eine Modifikation für...\", \"!a edit freetz DIE Modifikation\", \"!a remove freetz\", \"!a freetz\", Variablen: $1 ... $99 für Leerzeichen getrennte Argumente und $X für alle Argumente. encode(url) für URL Konforme Zeichencodierung")]
     [Module.ParameterRequired]
-    class alias : PluginBase, ICommand
+    class alias : PluginBase, ICommand, IBackgroundTask
     {
+        public void Start()
+        {
+            Server.OnPostProcessingMessage += Server_OnPostProcessingMessage;
+        }
+
+        public void Stop()
+        {
+            Server.OnPostProcessingMessage -= Server_OnPostProcessingMessage;
+        }
+
+        void Server_OnPostProcessingMessage(object sender, ircMessage theMessage)
+        {
+            if (!theMessage.Answered && !theMessage.ProcessedByCommand)
+            {
+                string alias = GetAlias(theMessage);
+                if (!String.IsNullOrEmpty(alias))
+                {
+                    theMessage.Answer(alias);
+                }
+            }
+        }
+
         public void Run(ircMessage theMessage)
         {
             AliasCommand(theMessage);
@@ -85,25 +108,31 @@ namespace FritzBot.Plugins
                     theMessage.Answer("Einen moment mal... das scheint rekursiv zu sein. Ich beende das mal");
                     return String.Empty;
                 }
-                ircMessage fake = new ircMessage(theMessage.Nickname, theMessage.Source, thealias, theMessage.IRC);
+                IrcMessageData data = new IrcMessageData(theMessage.Data.Irc, theMessage.Data.From, theMessage.Data.Nick, theMessage.Data.Ident, theMessage.Data.Host, theMessage.Data.Channel, thealias, null, theMessage.Data.Type, theMessage.Data.ReplyCode);
+                ircMessage fake = new ircMessage(data, theMessage.Server, theMessage.TheUser);
                 Program.HandleCommand(fake);
                 return String.Empty;
             }
             return thealias;
         }
 
-        public static bool AliasCommand(ircMessage theMessage)
+        public static void AliasCommand(ircMessage theMessage)
         {
             using (DBProvider db = new DBProvider())
             {
                 switch (theMessage.CommandArgs[0].ToLower())
                 {
                     case "add":
+                        if (theMessage.CommandArgs.Count < 3)
+                        {
+                            theMessage.Answer("Unzureichend viele Argumente: add <key> <text ...>");
+                            return;
+                        }
                         AliasEntry add = db.Query<AliasEntry>(x => x.Key == theMessage.CommandArgs[1]).FirstOrDefault();
                         if (add != null)
                         {
                             theMessage.Answer("Diesen Alias gibt es bereits");
-                            return false;
+                            return;
                         }
                         add = new AliasEntry();
                         add.Key = theMessage.CommandArgs[1];
@@ -112,8 +141,13 @@ namespace FritzBot.Plugins
                         add.Created = DateTime.Now;
                         db.SaveOrUpdate(add);
                         theMessage.Answer("Der Alias wurde erfolgreich hinzugefügt");
-                        return true;
+                        return;
                     case "edit":
+                        if (theMessage.CommandArgs.Count < 3)
+                        {
+                            theMessage.Answer("Unzureichend viele Argumente: edit <key> <neuer text>");
+                            return;
+                        }
                         AliasEntry edit = db.Query<AliasEntry>(x => x.Key == theMessage.CommandArgs[1]).FirstOrDefault();
                         if (edit != null)
                         {
@@ -122,22 +156,32 @@ namespace FritzBot.Plugins
                             edit.Updated = DateTime.Now;
                             db.SaveOrUpdate(edit);
                             theMessage.Answer("Der Alias wurde erfolgreich bearbeitet");
-                            return true;
+                            return;
                         }
                         theMessage.Answer("So ein Alias wurde noch nicht definiert");
-                        return false;
+                        return;
                     case "remove":
+                        if (theMessage.CommandArgs.Count < 2)
+                        {
+                            theMessage.Answer("Unzureichend viele Argumente: remove <key>");
+                            return;
+                        }
                         AliasEntry remove = db.Query<AliasEntry>(x => x.Key == theMessage.CommandArgs[1]).FirstOrDefault();
                         if (remove != null)
                         {
                             db.Remove(remove);
                             theMessage.Answer("Alias wurde gelöscht");
-                            return true;
+                            return;
                         }
                         theMessage.Answer("Diesen Alias gibt es nicht");
-                        return false;
+                        return;
                     case "info":
                     case "details":
+                        if (theMessage.CommandArgs.Count < 2)
+                        {
+                            theMessage.Answer("Unzureichend viele Argumente: info <key>");
+                            return;
+                        }
                         AliasEntry info = db.Query<AliasEntry>(x => x.Key == theMessage.CommandArgs[1]).FirstOrDefault();
                         if (info != null)
                         {
@@ -168,36 +212,41 @@ namespace FritzBot.Plugins
                             }
                             sb.Append("Definition: " + info.Text);
                             theMessage.Answer(sb.ToString());
-                            return true;
+                            return;
                         }
                         else
                         {
                             theMessage.Answer("Wups, diesen Alias kenne ich nicht");
-                            return false;
+                            return;
                         }
                     case "find":
                     case "search":
                         {
+                            if (theMessage.CommandArgs.Count < 2)
+                            {
+                                theMessage.Answer("Wonach soll ich denn Suchen wenn du nichts angibst ?: search <key>");
+                                return;
+                            }
                             SODAQuery<AliasEntry> query = db.SODAQuery<AliasEntry>();
                             query.Member(x => x.Key).Constrain(theMessage.CommandArgs[1]).Like();
                             List<AliasEntry> search = query.Execute().ToList();
                             if (search.Count == 0)
                             {
                                 theMessage.Answer("Nichts gefunden :(");
-                                return false;
+                                return;
                             }
                             theMessage.Answer("Mögliche Aliase: " + String.Join(", ", search.Select(x => x.Key)));
-                            return true;
+                            return;
                         }
                     default:
                         string theAlias = GetAlias(theMessage);
                         if (!String.IsNullOrEmpty(theAlias))
                         {
                             theMessage.Answer(theAlias);
-                            return true;
+                            return;
                         }
                         theMessage.Answer("Wups, diesen Alias gibt es nicht");
-                        return false;
+                        return;
                 }
             }
         }

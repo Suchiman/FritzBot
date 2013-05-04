@@ -1,6 +1,6 @@
 ﻿using FritzBot.Core;
 using FritzBot.DataModel;
-using FritzBot.DataModel.IRC;
+using Meebey.SmartIrc4net;
 using System;
 
 namespace FritzBot.Plugins
@@ -12,21 +12,21 @@ namespace FritzBot.Plugins
     {
         public void Start()
         {
-            Program.UserPart += LogoutUser;
-            Program.UserQuit += LogoutUser;
+            Server.OnPart += LogoutUser;
+            Server.OnQuit += LogoutUser;
         }
 
         public void Stop()
         {
-            Program.UserPart -= LogoutUser;
-            Program.UserQuit -= LogoutUser;
+            Server.OnPart -= LogoutUser;
+            Server.OnQuit -= LogoutUser;
         }
 
-        void LogoutUser(IRCEvent obj)
+        void LogoutUser(object sender, IrcEventArgs e)
         {
             using (DBProvider db = new DBProvider())
             {
-                User u = db.GetUser(obj.Nickname);
+                User u = db.GetUser(e.Data.Nick);
                 if (u != null)
                 {
                     u.Authentication = DateTime.MinValue;

@@ -10,6 +10,22 @@ namespace FritzBot.Plugins
     [Module.ParameterRequired(false)]
     class passwd : PluginBase, ICommand, IBackgroundTask
     {
+        public void Start()
+        {
+            Server.OnPreProcessingMessage += Server_OnPreProcessingMessage;
+        }
+
+        public void Stop()
+        {
+            Server.OnPreProcessingMessage -= Server_OnPreProcessingMessage;
+        }
+
+        private void Server_OnPreProcessingMessage(object sender, ircMessage theMessage)
+        {
+            SetNewPW(theMessage);
+            CheckOldPW(theMessage);
+        }
+
         private List<string> CheckUserInProgress = new List<string>();
 
         private void CheckOldPW(ircMessage theMessage)
@@ -48,18 +64,6 @@ namespace FritzBot.Plugins
             }
             theMessage.SendPrivateMessage("Passwort wurde geändert!");
             SetUserInProgress.Remove(theMessage.Nickname);
-        }
-
-        public void Stop()
-        {
-            Program.UserMessaged -= SetNewPW;
-            Program.UserMessaged -= CheckOldPW;
-        }
-
-        public void Start()
-        {
-            Program.UserMessaged += SetNewPW;//Vorsicht: Reihenfolge wichtig
-            Program.UserMessaged += CheckOldPW;
         }
 
         public void Run(ircMessage theMessage)

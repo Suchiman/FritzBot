@@ -1,145 +1,105 @@
 ﻿using FritzBot.Core;
-using FritzBot.DataModel.IRC;
+using Meebey.SmartIrc4net;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace FritzBot
 {
-    public class ircMessage : IRCEvent
+    /// <summary>
+    /// Representiert eine einzelne IRC Nachricht
+    /// </summary>
+    public class ircMessage
     {
-        private string _origin;
-        private string _message;
-        private bool _isprivate;
-        private bool _iscommand;
-        private bool _answered;
-        private bool _hasargs;
-        private bool _handled;
-        private bool _preprocessed;
-        private bool _hidden;
-        private bool _ignored;
-        private string _commandline;
-        private string _commandname;
-        private List<string> _args;
-        private Queue<string> _loggingQueue;
-
         /// <summary>
         /// Erstellt ein neues ircMessage Objekt um eine IRC Nachricht dazustellen
         /// </summary>
-        /// <param name="sender">Der Sender der Nachricht</param>
-        /// <param name="source">Die Quelle (entweder der Channel oder der Nickname)</param>
-        /// <param name="message">Die Nachricht</param>
-        /// <param name="AllUsers">Die Benutzerdatenbank</param>
-        /// <param name="connection">Die Zugrunde liegende IRC Verbindung</param>
-        public ircMessage(string sender, string source, string message, Irc connection)
-            : base(connection)
+        /// <param name="data">Die Ausgangsdaten</param>
+        /// <param name="server">Der Server von dem die Nachricht kommt</param>
+        /// <param name="user">Der der Nachricht zugeordnete User</param>
+        public ircMessage(IrcMessageData data, Server server, User user)
         {
-            Nickname = sender;
-            if (source == IRC.Nickname)
+            Data = data;
+            Server = server;
+            TheUser = user;
+            Nickname = Data.Nick;
+            Source = Data.Channel ?? Data.Nick;
+            Answered = false;
+            UnloggedMessages = new Queue<string>(3);
+            List<string> MessageTmp = Data.MessageArray.Where(x => !String.IsNullOrEmpty(x)).ToList();
+            Message = String.Join(" ", MessageTmp);
+            if (TheUser == null || (Nickname.Contains("#") || Nickname.Contains(".") || Server.IrcClient.IsMe(Nickname) || Nickname.ToLower().Contains("nickserv") || TheUser.Ignored || Data.Message.Contains("[Global Notice]")) && !TheUser.Admin)
             {
-                source = Nickname;
-            }
-            _origin = source;
-            _message = message.Trim();
-            _answered = false;
-            _loggingQueue = new Queue<string>(3);
-            if ((Nickname.Contains("#") || Nickname.Contains(".") || Nickname.Contains(this.IRC.Nickname) || Nickname.ToLower().Contains("nickserv") || TheUser.Ignored || _message.Contains("[Global Notice]")) && !TheUser.Admin)
-            {
-                _ignored = true;
-            }
-            else
-            {
-                _ignored = false;
-            }
-            _isprivate = Nickname == _origin;
-            if (_message.Length > 0)
-            {
-                _iscommand = _message[0] == '!';
+                IsIgnored = true;
             }
             else
             {
-                _iscommand = false;
+                IsIgnored = false;
             }
-            if (_iscommand)
+            IsPrivate = data.Type.In(ReceiveType.QueryAction, ReceiveType.QueryMessage, ReceiveType.QueryNotice);
+            if (Message.Length > 0)
             {
-                int index = _message.IndexOf(' ');
-                if (index == -1)
-                {
-                    index = _message.Length;
-                }
-                _commandline = _message.Remove(0, index).Trim();
-                _commandname = _message.Substring(1, index - 1).Trim();
+                IsCommand = Message[0] == '!';
             }
             else
             {
-                _commandline = _message;
-                _commandname = "";
+                IsCommand = false;
             }
-            _hasargs = !String.IsNullOrEmpty(_commandline);
+            if (IsCommand)
+            {
+                CommandArgs = MessageTmp.Skip(1).ToList();
+                CommandLine = String.Join(" ", CommandArgs);
+                CommandName = MessageTmp.First().TrimStart('!');
+            }
+            else
+            {
+                CommandArgs = MessageTmp;
+                CommandLine = Message;
+                CommandName = "";
+            }
+            HasArgs = CommandArgs.Count > 0;
         }
+
+        /// <summary>
+        /// Der Nickname von dem diese Nachricht stammt
+        /// </summary>
+        public string Nickname { get; protected set; }
+
+        /// <summary>
+        /// Die SmartIrc4net ausgangsdaten
+        /// </summary>
+        public IrcMessageData Data { get; protected set; }
+
+        /// <summary>
+        /// Der Server von dem diese Nachricht stammt
+        /// </summary>
+        public Server Server { get; protected set; }
+
         /// <summary>
         /// Gibt an, ob die Nachricht per QUERY gesandt wurde
         /// </summary>
-        public bool IsPrivate
-        {
-            get
-            {
-                return _isprivate;
-            }
-        }
+        public bool IsPrivate { get; protected set; }
+
         /// <summary>
         /// Gibt an ob diese Nachricht zu ignorieren ist
         /// </summary>
-        public bool IsIgnored
-        {
-            get
-            {
-                return _ignored;
-            }
-        }
+        public bool IsIgnored { get; protected set; }
+
         /// <summary>
         /// Gibt an ob die Nachricht ein Befehl ist ( ! Befehlprefix )
         /// </summary>
-        public bool IsCommand
-        {
-            get
-            {
-                return _iscommand;
-            }
-        }
+        public bool IsCommand { get; protected set; }
+
         /// <summary>
-        /// Gibt an, wenn es sich um einen Befehl handelt, ob weitere Argumente mitgeschickt wurden
+        /// Gibt an, ob es weitere CommandArgs gibt
         /// </summary>
-        public bool HasArgs
-        {
-            get
-            {
-                return _hasargs;
-            }
-        }
+        public bool HasArgs { get; protected set; }
+
         /// <summary>
-        /// Gibt an ob dem Benutzer im IRC geantwortet wurde
+        /// Gibt an ob dem Benutzer im IRC bereits geantwortet wurde
         /// </summary>
-        public bool Answered
-        {
-            get
-            {
-                return _answered;
-            }
-        }
-        /// <summary>
-        /// Gibt an, ob die Nachricht durch ein Event verarbeitet wurde und von der Restlichen Verarbeitung ausgeschlossen wird
-        /// </summary>
-        public bool Handled
-        {
-            get
-            {
-                return _handled;
-            }
-            set
-            {
-                _handled = value;
-            }
-        }
+        public bool Answered { get; protected set; }
+
         /// <summary>
         /// Gibt an, ob die Nachricht unabhängig vom Ursprung Privat gesendet wird
         /// </summary>
@@ -150,108 +110,68 @@ namespace FritzBot
                 return Program.BotSettings.Get("Silence", false);
             }
         }
+
         /// <summary>
-        /// Gibt an ob die Nachricht das MessageEvent durchlaufen hat
+        /// Gibt an, ob diese Nachricht von einem Command behandelt wurde
         /// </summary>
-        public bool PreProcessed
-        {
-            get
-            {
-                return _preprocessed;
-            }
-            set
-            {
-                _preprocessed = value;
-            }
-        }
+        public bool ProcessedByCommand { get; set; }
+
         /// <summary>
-        /// Gibt an ob die Nachricht nicht geloggt werden soll
+        /// Gibt an, ob die Nachricht von einem Event verarbeitet wurde und nicht mit einem Command bearbeitet werden soll
         /// </summary>
-        public bool Hidden
-        {
-            get
-            {
-                return _hidden;
-            }
-            set
-            {
-                _hidden = value;
-            }
-        }
+        public bool HandledByEvent { get; set; }
+
+        /// <summary>
+        /// Gibt an, ob die Nachricht nicht geloggt werden soll
+        /// </summary>
+        public bool Hidden { get; set; }
+
         /// <summary>
         /// Wenn es sich um einen Befehl handelt, stellt dies den Befehlsnamen (!befehlsname) da
         /// </summary>
-        public string CommandName
-        {
-            get
-            {
-                return _commandname;
-            }
-        }
+        public string CommandName { get; protected set; }
+
         /// <summary>
         /// Gibt alles zurück, was hinter dem Befehlsnamen steht
         /// </summary>
-        public string CommandLine
-        {
-            get
-            {
-                return _commandline;
-            }
-        }
+        public string CommandLine { get; protected set; }
+
         /// <summary>
         /// Enthält die Leerzeichen getrennte Befehlsargumente
         /// </summary>
-        public List<string> CommandArgs
-        {
-            get
-            {
-                if (_args == null)
-                {
-                    _args = new List<string>(_commandline.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
-                }
-                return _args;
-            }
-        }
+        public List<string> CommandArgs { get; protected set; }
+
         /// <summary>
         /// Gibt den User von dem die Nachricht stammt zurück
         /// </summary>
-        public User TheUser
-        {
-            get
-            {
-                return new DBProvider().GetUser(Nickname);
-            }
-        }
+        public User TheUser { get; protected set; }
+
+        /// <summary>
+        /// Die bereinigte IRC Nachricht
+        /// </summary>
+        public string Message { get; protected set; }
+
         /// <summary>
         /// Die ursprüngliche IRC Nachricht
         /// </summary>
-        public string Message
+        public string MessageRaw
         {
             get
             {
-                return _message;
+                return Data.Message;
             }
         }
+
         /// <summary>
         /// Bisher ungeloggte IRC Nachrichten
         /// </summary>
-        public Queue<string> UnloggedMessages
-        {
-            get
-            {
-                return _loggingQueue;
-            }
-        }
+        public Queue<string> UnloggedMessages { get; protected set; }
+
         /// <summary>
         /// Die Quelle der Nachricht (#channel oder Nickname)
         /// </summary>
-        public string Source
-        {
-            get
-            {
-                return _origin;
-            }
-        }
+        public string Source { get; protected set; }
+
         /// <summary>
         /// Sendet dem Nutzer die Hilfe
         /// </summary>
@@ -260,50 +180,54 @@ namespace FritzBot
             Module.HelpAttribute help = toolbox.GetAttribute<Module.HelpAttribute>(plugin);
             Answer(help.Help);
         }
+
         /// <summary>
         /// Antwortet dem Benutzer dort wo er den Befehl aufgerufen hat
         /// </summary>
         /// <param name="Message">Den zu Antwortenden Text</param>
         public void Answer(string Message)
         {
-            _answered = true;
-            IRC.Sendmsg(Message, _origin);
-            _loggingQueue.Enqueue(String.Format("An {0}: {1}", ForcedPrivat ? Nickname : _origin, Message));
+            Answered = true;
+            Server.IrcClient.SendMessage(SendType.Message, Source, Message);
+            UnloggedMessages.Enqueue(String.Format("An {0}: {1}", ForcedPrivat ? Nickname : Source, Message));
         }
+
         /// <summary>
         /// Sendet dem Benutzer dort wo er den Befehl aufgerufen eine Aktion hat
         /// </summary>
         /// <param name="Message">Den zu Antwortenden Text</param>
         public void AnswerAction(string Message)
         {
-            _answered = true;
-            IRC.Sendaction(Message, _origin);
-            _loggingQueue.Enqueue(String.Format("An {0}: ***{1}***", ForcedPrivat ? Nickname : _origin, Message));
+            Answered = true;
+            Server.IrcClient.SendMessage(SendType.Action, Source, Message);
+            UnloggedMessages.Enqueue(String.Format("An {0}: ***{1}***", ForcedPrivat ? Nickname : Source, Message));
         }
+
         /// <summary>
         /// Schickt dem Benutzer eine Nachricht im QUERY, unabhängig davon wo er geschrieben hat
         /// </summary>
         /// <param name="Message">Den zu Antwortenden Text</param>
         public void SendPrivateMessage(string Message)
         {
-            _answered = true;
-            IRC.Sendmsg(Message, Nickname);
-            _loggingQueue.Enqueue(String.Format("An {0}: {1}", Nickname, Message));
+            Answered = true;
+            Server.IrcClient.SendMessage(SendType.Message, Nickname, Message);
+            UnloggedMessages.Enqueue(String.Format("An {0}: {1}", Nickname, Message));
         }
+
         /// <summary>
         /// Schickt dem Benutzer eine Aktion im QUERY, unabhängig davon wo er geschrieben hat
         /// </summary>
         /// <param name="Message">Den zu Antwortenden Text</param>
         public void SendPrivateAction(string Message)
         {
-            _answered = true;
-            IRC.Sendaction(Message, Nickname);
-            _loggingQueue.Enqueue(String.Format("An {0}: {1}", Nickname, Message));
+            Answered = true;
+            Server.IrcClient.SendMessage(SendType.Action, Nickname, Message);
+            UnloggedMessages.Enqueue(String.Format("An {0}: {1}", Nickname, Message));
         }
 
         public override string ToString()
         {
-            return _message;
+            return Message;
         }
     }
 }

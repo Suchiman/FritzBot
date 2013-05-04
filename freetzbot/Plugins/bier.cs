@@ -1,4 +1,5 @@
-﻿using FritzBot.DataModel;
+﻿using FritzBot.Core;
+using FritzBot.DataModel;
 using System;
 
 namespace FritzBot.Plugins
@@ -8,15 +9,15 @@ namespace FritzBot.Plugins
     {
         public void Start()
         {
-            Program.UserMessaged += Run;
+            Server.OnPostProcessingMessage += Server_OnPostProcessingMessage;
         }
 
         public void Stop()
         {
-            Program.UserMessaged -= Run;
+            Server.OnPostProcessingMessage += Server_OnPostProcessingMessage;
         }
 
-        public void Run(ircMessage theMessage)
+        public void Server_OnPostProcessingMessage(object sender, ircMessage theMessage)
         {
             if (theMessage.Message.Contains("#96*6*") && !theMessage.IsIgnored)
             {

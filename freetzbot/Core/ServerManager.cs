@@ -1,16 +1,26 @@
-﻿using FritzBot.DataModel.IRC;
+﻿using Db4objects.Db4o;
+using Meebey.SmartIrc4net;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Threading;
 
 namespace FritzBot.Core
 {
-    public class ServerManager
+    /// <summary>
+    /// Der ServerManger verwaltet die Server
+    /// </summary>
+    public class ServerManager : IEnumerable<Server>
     {
         private static ServerManager instance;
         private List<Server> _servers;
-        public event Action<IRCEvent> MessageReceivedEvent;
 
+        /// <summary>
+        /// Gibt die Singleton Instanz des ServerManagers zurück
+        /// </summary>
+        /// <returns></returns>
         public static ServerManager GetInstance()
         {
             if (instance == null)
@@ -20,6 +30,10 @@ namespace FritzBot.Core
             return instance;
         }
 
+        /// <summary>
+        /// Gibt den Server mit dem angegebenen Hostname zurück
+        /// </summary>
+        /// <param name="Hostname">Der Hostname des IRC Servers</param>
         public Server this[string Hostname]
         {
             get
@@ -35,27 +49,14 @@ namespace FritzBot.Core
             }
         }
 
-        public ServerManager()
+        /// <summary>
+        /// Erstellt eine neue Instanz des ServerManagers und lädt die Server aus der Datenbank
+        /// </summary>
+        private ServerManager()
         {
             using (DBProvider db = new DBProvider())
             {
                 _servers = db.Query<Server>().ToList();
-                foreach (Server srv in _servers)
-                {
-                    srv.OnIRCEvent += ReceivedInterceptor;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Zwischenmann der alle Events übernimmt und das dem Manager zugewiesene Event aufruft.
-        /// </summary>
-        private void ReceivedInterceptor(IRCEvent Daten)
-        {
-            Action<IRCEvent> handler = MessageReceivedEvent;
-            if (handler != null)
-            {
-                handler(Daten);
             }
         }
 
@@ -88,7 +89,6 @@ namespace FritzBot.Core
                 QuitMessage = QuitMessage,
                 Channels = Channels
             };
-            server.OnIRCEvent += ReceivedInterceptor;
             _servers.Add(server);
             using (DBProvider db = new DBProvider())
             {
@@ -97,6 +97,10 @@ namespace FritzBot.Core
             return server;
         }
 
+        /// <summary>
+        /// Trennt die Verbindung zu diesem Server und entfernt ihn aus der Datenbank
+        /// </summary>
+        /// <param name="server"></param>
         public void Remove(Server server)
         {
             server.Disconnect();
@@ -141,15 +145,6 @@ namespace FritzBot.Core
         }
 
         /// <summary>
-        /// Gibt alle IRC Objekte der Verwalteten Server zurück
-        /// </summary>
-        /// <returns>Eine Liste aller IRC Objekte</returns>
-        public IEnumerable<Irc> GetAllConnections()
-        {
-            return _servers.Select(x => x.GetConnection);
-        }
-
-        /// <summary>
         /// Gibt eine Nachricht in allen Channels auf allen Servern bekannt
         /// </summary>
         /// <param name="message">Die Nachricht</param>
@@ -160,51 +155,131 @@ namespace FritzBot.Core
                 theServer.Announce(message);
             }
         }
+
+        public IEnumerator<Server> GetEnumerator()
+        {
+            return _servers.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return _servers.GetEnumerator();
+        }
     }
 
+    /// <summary>
+    /// Ein Server kapselt die Verbindung zu einem IRC Server und speichert die Verbindungsdaten
+    /// </summary>
     public class Server
     {
         /// <summary>
-        /// Der Hostname des Servers zu dem die Verbindung aufgebaut wird
+        /// Wird ausgelöst, wenn ein User einen Channel betritt
         /// </summary>
-        public string Hostname { get; set; }
-        public int Port { get; set; }
-        public string Nickname { get; set; }
-        private string _QuitMessage;
-        public string QuitMessage
-        {
-            get
-            {
-                return _QuitMessage;
-            }
-            set
-            {
-                _QuitMessage = value;
-                if (_connection != null)
-                {
-                    _connection.QuitMessage = value;
-                }
-            }
-        }
-        public List<string> Channels { get; set; }
-        private Irc _connection;
-        public event Action<IRCEvent> OnIRCEvent;
-        private bool _running;
+        public static event JoinEventHandler OnJoin;
 
         /// <summary>
-        /// Erstellt ein neues Server Objekt welches die Verbindungsdaten zu einem Server verwaltet
+        /// Wird ausgelöst, wenn ein User einen Channel verlässt
+        /// </summary>
+        public static event PartEventHandler OnPart;
+
+        /// <summary>
+        /// Wird ausgelöst, wenn ein User den IRC Server verlässt
+        /// </summary>
+        public static event QuitEventHandler OnQuit;
+
+        /// <summary>
+        /// Wird ausgelöst, wenn ein User seinen Nickname ändert
+        /// </summary>
+        public static event NickChangeEventHandler OnNickChange;
+
+        /// <summary>
+        /// Wird ausgelöst, wenn ein User gekickt wird
+        /// </summary>
+        public static event KickEventHandler OnKick;
+
+        /// <summary>
+        /// Wird ausgelöst, bevor versucht wird, die Nachricht mit einem Command zu behandeln
+        /// </summary>
+        public static event IrcMessageEventHandler OnPreProcessingMessage;
+
+        /// <summary>
+        /// Wird ausgelöst, nachdem die Nachricht die Verarbeitung durchlaufen hat aber noch vor dem Logging
+        /// </summary>
+        public static event IrcMessageEventHandler OnPostProcessingMessage;
+
+        public delegate void IrcMessageEventHandler(object sender, ircMessage theMessage);
+
+        /// <summary>
+        /// Der Hostname des IRC Servers zu dem die Verbindung aufgebaut wird
+        /// </summary>
+        public string Hostname { get; set; }
+
+        /// <summary>
+        /// Der Port des IRC Servers, üblicherweise 6667
+        /// </summary>
+        public int Port { get; set; }
+
+        /// <summary>
+        /// Der zu verwendende Nickname
+        /// </summary>
+        public string Nickname { get; set; }
+        
+        /// <summary>
+        /// Die Nachricht die beim als Grund für das Verlassen des Servers angegeben wird
+        /// </summary>
+        public string QuitMessage { get; set; }
+
+        /// <summary>
+        /// Die Channels, in dem sich der Bot aufhält
+        /// </summary>
+        public List<string> Channels { get; set; }
+
+        [Transient]
+        private IrcFeatures _connection;
+        [Transient]
+        private Thread _listener = null;
+
+        /// <summary>
+        /// Erstellt ein neues Server Objekt welches die Verbindung zu einem IRC Server kapselt
         /// </summary>
         public Server()
         {
             Channels = new List<string>();
         }
 
+        /// <summary>
+        /// Betritt den gewünschten Channel und speichert ihn in der Datenbank
+        /// </summary>
+        /// <param name="channel">Der #channel</param>
         public void JoinChannel(string channel)
         {
             if (!Channels.Contains(channel))
             {
                 Channels.Add(channel);
-                _connection.JoinChannel(channel);
+                _connection.RfcJoin(channel);
+
+                using (DBProvider db = new DBProvider())
+                {
+                    db.SaveOrUpdate(this);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Verlässt den Channel und löscht ihn aus der Datenbank
+        /// </summary>
+        /// <param name="channel">Der #Channel</param>
+        public void PartChannel(string channel)
+        {
+            if (Channels.Contains(channel))
+            {
+                Channels.Remove(channel);
+                _connection.RfcPart(channel);
+
+                using (DBProvider db = new DBProvider())
+                {
+                    db.SaveOrUpdate(this);
+                }
             }
         }
 
@@ -215,51 +290,245 @@ namespace FritzBot.Core
         {
             get
             {
-                return _running;
+                return _connection != null ? _connection.IsConnected : false;
             }
         }
 
         /// <summary>
         /// Baut eine Verbindung mit den angegebenen Daten auf
         /// </summary>
-        /// <param name="theEventHandler">Die Methode für das ReceivedEvent</param>
         public void Connect()
         {
-            _connection = new Irc(Hostname, Port, Nickname);
-            _connection.ConnectionLost += new EventHandler(_connection_ConnectionLost);
-            _connection.QuitMessage = QuitMessage;
-            _connection.ReceivedEvent += _connection_ReceivedEvent;
-            _connection.Connect();
+            _connection = new IrcFeatures();
+
+            _connection.AutoReconnect = true;
+            _connection.AutoRejoin = true;
+            _connection.AutoRelogin = true;
+            _connection.AutoRetry = true;
+            _connection.ActiveChannelSyncing = true;
+
+            _connection.CtcpSource = "http://suchiman.selfip.org/fritzbot/";
+            _connection.CtcpUrl = _connection.CtcpSource;
+            _connection.CtcpUserInfo = "Ich bin ein automatisch denkendes Wesen auch bekannt als Bot";
+            _connection.CtcpVersion = "FritzBot:v3:" + Environment.OSVersion.Platform.ToString();
+            _connection.Encoding = Encoding.UTF8;
+
+            _connection.OnChannelAction += _connection_OnMessage;
+            _connection.OnChannelMessage += _connection_OnMessage;
+            _connection.OnChannelNotice += _connection_OnMessage;
+
+            _connection.OnQueryAction += _connection_OnMessage;
+            _connection.OnQueryMessage += _connection_OnMessage;
+            _connection.OnQueryNotice += _connection_OnMessage;
+
+            _connection.OnNickChange += _connection_OnNickChange;
+            _connection.OnJoin += _connection_OnJoin;
+            _connection.OnKick += _connection_OnKick;
+            _connection.OnPart += _connection_OnPart;
+            _connection.OnQuit += _connection_OnQuit;
+
+            _connection.Connect(Hostname, Port);
+            _connection.Login(Nickname, Nickname, 0, Nickname);
+
             foreach (string channel in Channels)
             {
-                _connection.JoinChannel(channel);
+                _connection.RfcJoin(channel);
             }
-            _running = true;
+
+            _connection.OnConnectionError += (x, y) => toolbox.Logging("Verbindung zu Server " + Hostname + " verloren");
+
+            _listener = toolbox.SafeThreadStart("ListenThread " + Hostname, true, () => _connection.Listen());
         }
 
-        void _connection_ReceivedEvent(IRCEvent obj)
+        /// <summary>
+        /// Stellt sicher, dass der User in der Datenbank für die Anforderung existiert und mit den richtigen Namen ausgestattet ist
+        /// </summary>
+        /// <param name="Name">Der Nickname des Users</param>
+        private User MaintainUser(string Name)
         {
-            Action<IRCEvent> ev = OnIRCEvent;
-            if (ev != null)
+            using (DBProvider db = new DBProvider())
             {
-                ev(obj);
-                if (obj is Quit && Nickname != _connection.Nickname && (obj as Quit).Nickname == Nickname)
+                User u = db.GetUser(Name);
+                if (u == null)
                 {
-                    _connection.Nickname = Nickname;
+                    u = new User();
+                    u.Names.Add(Name);
                 }
+                else if (!u.Names.Contains(Name))
+                {
+                    u.Names.Add(Name);
+                }
+                u.LastUsedName = Name;
+                db.SaveOrUpdate(u);
+                return u;
             }
         }
 
         /// <summary>
-        /// Verarbeitet das ConnectionLost event und baut eine neue Verbindung auf
+        /// Verarbeitet das Betreten eines Users eines Channels
         /// </summary>
-        /// <param name="sender">Das Objekt, welches das Event aufgerufen hat</param>
-        /// <param name="e">EventArgs</param>
-        void _connection_ConnectionLost(object sender, EventArgs e)
+        /// <seealso cref="OnJoin"/>
+        private void _connection_OnJoin(object sender, JoinEventArgs e)
         {
-            toolbox.Logging("Verbindung zu Server " + Hostname + " verloren");
-            _connection.Dispose();
-            Connect();
+            toolbox.Logging(String.Format("{0} hat den Raum {1} betreten", e.Who, e.Channel));
+            MaintainUser(e.Who);
+
+            var ev = OnJoin;
+            if (ev != null)
+            {
+                ev(this, e);
+            }
+        }
+
+        /// <summary>
+        /// Verarbeitet das Verlassen eines Users des Servers
+        /// </summary>
+        /// <seealso cref="OnQuit"/>
+        private void _connection_OnQuit(object sender, QuitEventArgs e)
+        {
+            toolbox.Logging(String.Format("{0} hat den Server verlassen ({1})", e.Who, e.QuitMessage));
+            MaintainUser(e.Who);
+
+            var ev = OnQuit;
+            if (ev != null)
+            {
+                ev(this, e);
+            }
+        }
+
+        /// <summary>
+        /// Verarbeitet das Verlassen eines Users eines Channels
+        /// </summary>
+        /// <seealso cref="OnPart"/>
+        private void _connection_OnPart(object sender, PartEventArgs e)
+        {
+            toolbox.Logging(String.Format("{0} hat den Raum {1} verlassen", e.Who, e.Channel));
+            MaintainUser(e.Who);
+
+            var ev = OnPart;
+            if (ev != null)
+            {
+                ev(this, e);
+            }
+        }
+
+        /// <summary>
+        /// Verarbeitet einen Nickname wechsel
+        /// </summary>
+        /// <seealso cref="OnNickChange"/>
+        private void _connection_OnNickChange(object sender, NickChangeEventArgs e)
+        {
+            toolbox.Logging(String.Format("{0} heißt jetzt {1}", e.OldNickname, e.NewNickname));
+            using (DBProvider db = new DBProvider())
+            {
+                User oldNick = db.GetUser(e.OldNickname);
+                User newNick = db.GetUser(e.NewNickname);
+                if (oldNick != null && newNick == null)
+                {
+                    oldNick.Names.Add(e.NewNickname);
+                    oldNick.LastUsedName = e.NewNickname;
+                    db.SaveOrUpdate(oldNick);
+                }
+                else if (oldNick == null && newNick != null)
+                {
+                    newNick.Names.Add(e.OldNickname);
+                    newNick.LastUsedName = e.NewNickname;
+                    db.SaveOrUpdate(newNick);
+                }
+            }
+
+            var ev = OnNickChange;
+            if (ev != null)
+            {
+                ev(this, e);
+            }
+        }
+
+        /// <summary>
+        /// Verarbeitet einen Kick
+        /// </summary>
+        /// <seealso cref="OnKick"/>
+        private void _connection_OnKick(object sender, KickEventArgs e)
+        {
+            toolbox.Logging(String.Format("{0} wurde von {1} aus dem Raum {2} geworfen", e.Who, e.Whom, e.Channel));
+            MaintainUser(e.Who);
+
+            var ev = OnKick;
+            if (ev != null)
+            {
+                ev(this, e);
+            }
+        }
+
+        /// <summary>
+        /// Verarbeitet eine IRC Nachricht
+        /// </summary>
+        /// <seealso cref="OnPreProcessingMessage"/>
+        /// <seealso cref="OnPostProcessingMessage"/>
+        private void _connection_OnMessage(object sender, IrcEventArgs e)
+        {
+            if (String.IsNullOrEmpty(e.Data.Nick))
+            {
+                return;
+            }
+
+            User user = MaintainUser(e.Data.Nick);
+            ircMessage message = new ircMessage(e.Data, this, user);
+
+            if (!message.IsIgnored)
+            {
+                var ev = OnPreProcessingMessage;
+                if (ev != null)
+                {
+                    ev(this, message);
+                }
+
+                if (message.IsCommand && !message.HandledByEvent)
+                {
+                    try
+                    {
+                        Program.HandleCommand(message);
+                    }
+                    catch (Exception ex)
+                    {
+                        toolbox.Logging(ex);
+                    }
+                }
+
+                ev = OnPostProcessingMessage;
+                if (ev != null)
+                {
+                    ev(this, message);
+                }
+
+                if (message.IsPrivate && !message.Answered)
+                {
+                    if (message.IsCommand)
+                    {
+                        message.Answer("Dieser Befehl kommt mir nicht bekannt vor... Probiers doch mal mit !hilfe");
+                    }
+                    else
+                    {
+                        message.Answer("Hallo du da, ich bin nicht so menschlich wie ich aussehe");
+                    }
+                }
+
+                if (!message.Hidden)
+                {
+                    if (message.IsPrivate)
+                    {
+                        toolbox.Logging("Von " + message.Source + ": " + message.Message);
+                    }
+                    else
+                    {
+                        toolbox.Logging(message.Source + " " + message.Nickname + ": " + message.Message);
+                    }
+                    foreach (string OneMessage in message.UnloggedMessages)
+                    {
+                        toolbox.Logging(OneMessage);
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -267,16 +536,20 @@ namespace FritzBot.Core
         /// </summary>
         public void Disconnect()
         {
-            _connection.Disconnect();
-            _connection = null;
-            _running = false;
-            toolbox.Logging("Verbindung zu Server " + Hostname + " getrennt");
+            if (_connection != null)
+            {
+                _connection.RfcQuit(QuitMessage);
+                _listener.Abort();
+                _connection.Disconnect();
+                _connection = null;
+                toolbox.Logging("Verbindung zu Server " + Hostname + " getrennt");
+            }
         }
 
         /// <summary>
         /// Gibt das der Verbindung zugrunde liegende IRC Objekt zurück
         /// </summary>
-        public Irc GetConnection
+        public IrcFeatures IrcClient
         {
             get
             {
@@ -292,7 +565,7 @@ namespace FritzBot.Core
         {
             foreach (string channel in Channels)
             {
-                _connection.Sendmsg(message, channel);
+                _connection.SendMessage(SendType.Message, channel, message);
             }
         }
     }

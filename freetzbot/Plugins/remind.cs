@@ -1,6 +1,6 @@
 using FritzBot.Core;
 using FritzBot.DataModel;
-using FritzBot.DataModel.IRC;
+using Meebey.SmartIrc4net;
 using System;
 using System.Linq;
 
@@ -10,26 +10,26 @@ namespace FritzBot.Plugins
     [Module.Help("Hinterlasse einem Benutzer eine Nachricht. Sobald er wiederkommt oder etwas schreibt werde ich sie ihm Zustellen. !remind <Benutzer> <Nachricht>")]
     class remind : PluginBase, ICommand, IBackgroundTask
     {
-        public void Stop()
-        {
-            Program.UserJoined -= SendJoin;
-            Program.UserMessaged -= SendMessaged;
-        }
-
         public void Start()
         {
-            Program.UserJoined += SendJoin;
-            Program.UserMessaged += SendMessaged;
+            Server.OnJoin += Server_OnJoin;
+            Server.OnPostProcessingMessage += Server_OnPostProcessingMessage;
         }
 
-        private void SendJoin(Join data)
+        public void Stop()
         {
-            SendIt(new DBProvider().GetUser(data.Nickname), x => data.IRC.Sendmsg(x, data.Nickname));
+            Server.OnJoin -= Server_OnJoin;
+            Server.OnPostProcessingMessage -= Server_OnPostProcessingMessage;
         }
 
-        public void SendMessaged(ircMessage theMessage)
+        private void Server_OnPostProcessingMessage(object sender, ircMessage theMessage)
         {
             SendIt(theMessage.TheUser, theMessage.SendPrivateMessage);
+        }
+
+        private void Server_OnJoin(object sender, JoinEventArgs e)
+        {
+            SendIt(new DBProvider().GetUser(e.Who), x => e.Data.Irc.SendMessage(SendType.Message, e.Who, x));
         }
 
         private void SendIt(User theUser, Action<string> SendAction)

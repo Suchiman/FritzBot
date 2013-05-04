@@ -18,8 +18,7 @@ namespace FritzBot.Plugins
         public void Run(ircMessage theMessage)
         {
             TimeSpan laufzeit = DateTime.Now.Subtract(startzeit);
-            TimeSpan connecttime = theMessage.IRC.Uptime;
-            theMessage.Answer("Meine Laufzeit beträgt " + laufzeit.Days + " Tage, " + laufzeit.Hours + " Stunden, " + laufzeit.Minutes + " Minuten und " + laufzeit.Seconds + " Sekunden und bin mit diesem Server seit " + connecttime.Days + " Tage, " + connecttime.Hours + " Stunden, " + connecttime.Minutes + " Minuten und " + connecttime.Seconds + " Sekunden verbunden");
+            theMessage.Answer(String.Format("Meine Laufzeit beträgt {0} Tage, {1} Stunden, {2} Minuten und {3} Sekunden", laufzeit.Days, laufzeit.Hours, laufzeit.Minutes, laufzeit.Seconds));
         }
     }
 }

@@ -240,6 +240,10 @@ namespace FritzBot
                     }
                     catch (Exception ex)
                     {
+                        if (ex is ThreadAbortException)
+                        {
+                            return;
+                        }
                         Logging(ex);
                     }
                 } while (restartOnException);

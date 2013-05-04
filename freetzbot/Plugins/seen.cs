@@ -1,6 +1,6 @@
 ﻿using FritzBot.Core;
 using FritzBot.DataModel;
-using FritzBot.DataModel.IRC;
+using Meebey.SmartIrc4net;
 using System;
 using System.Linq;
 
@@ -11,55 +11,23 @@ namespace FritzBot.Plugins
     [Module.ParameterRequired]
     class seen : PluginBase, ICommand, IBackgroundTask
     {
-        public void Stop()
-        {
-            Program.UserJoined -= joined;
-            Program.UserQuit -= gone;
-            Program.UserPart -= gone;
-            Program.UserMessaged -= message;
-        }
-
         public void Start()
         {
-            Program.UserJoined += joined;
-            Program.UserQuit += gone;
-            Program.UserPart += gone;
-            Program.UserMessaged += message;
+            Server.OnJoin += Server_OnJoin;
+            Server.OnQuit += Server_OnQuit;
+            Server.OnPart += Server_OnQuit;
+            Server.OnPreProcessingMessage += Server_OnPreProcessingMessage;
         }
 
-        private SeenEntry GetSeenEntry(DBProvider db, string nick)
+        public void Stop()
         {
-            User u = db.GetUser(nick);
-            SeenEntry entry = db.QueryLinkedData<SeenEntry, User>(u).FirstOrDefault();
-            if (entry == null)
-            {
-                entry = new SeenEntry();
-                entry.Reference = u;
-            }
-            return entry;
+            Server.OnJoin -= Server_OnJoin;
+            Server.OnQuit -= Server_OnQuit;
+            Server.OnPart -= Server_OnQuit;
+            Server.OnPreProcessingMessage -= Server_OnPreProcessingMessage;
         }
 
-        private void joined(Join data)
-        {
-            using (DBProvider db = new DBProvider())
-            {
-                SeenEntry entry = GetSeenEntry(db, data.Nickname);
-                entry.LastSeen = DateTime.MinValue;
-                db.SaveOrUpdate(entry);
-            }
-        }
-
-        private void gone(IRCEvent data)
-        {
-            using (DBProvider db = new DBProvider())
-            {
-                SeenEntry entry = GetSeenEntry(db, data.Nickname);
-                entry.LastSeen = DateTime.Now;
-                db.SaveOrUpdate(entry);
-            }
-        }
-
-        private void message(ircMessage theMessage)
+        private void Server_OnPreProcessingMessage(object sender, ircMessage theMessage)
         {
             if (theMessage.IsIgnored)
             {
@@ -74,9 +42,41 @@ namespace FritzBot.Plugins
             }
         }
 
+        private void Server_OnQuit(object sender, IrcEventArgs e)
+        {
+            using (DBProvider db = new DBProvider())
+            {
+                SeenEntry entry = GetSeenEntry(db, e.Data.Nick);
+                entry.LastSeen = DateTime.Now;
+                db.SaveOrUpdate(entry);
+            }
+        }
+
+        private void Server_OnJoin(object sender, JoinEventArgs e)
+        {
+            using (DBProvider db = new DBProvider())
+            {
+                SeenEntry entry = GetSeenEntry(db, e.Who);
+                entry.LastSeen = DateTime.MinValue;
+                db.SaveOrUpdate(entry);
+            }
+        }
+
+        private SeenEntry GetSeenEntry(DBProvider db, string nick)
+        {
+            User u = db.GetUser(nick);
+            SeenEntry entry = db.QueryLinkedData<SeenEntry, User>(u).FirstOrDefault();
+            if (entry == null)
+            {
+                entry = new SeenEntry();
+                entry.Reference = u;
+            }
+            return entry;
+        }
+
         public void Run(ircMessage theMessage)
         {
-            if (theMessage.CommandLine.ToLower() == theMessage.IRC.Nickname.ToLower())
+            if (theMessage.CommandLine.ToLower() == theMessage.Server.IrcClient.Nickname.ToLower())
             {
                 theMessage.Answer("Ich bin gerade hier und laut meinem Logik System solltest du auch sehen können was ich schreibe");
                 return;

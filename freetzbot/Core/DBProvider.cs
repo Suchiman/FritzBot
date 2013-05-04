@@ -32,7 +32,7 @@ namespace FritzBot.Core
             }
         }
 
-        private static string DBPath
+        public static string DBPath
         {
             get
             {

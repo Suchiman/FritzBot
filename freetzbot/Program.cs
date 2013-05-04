@@ -1,33 +1,25 @@
-﻿using FritzBot.Core;
+﻿using Db4objects.Db4o.Ext;
+using FritzBot.Core;
 using FritzBot.DataModel;
-using FritzBot.DataModel.IRC;
-using FritzBot.Plugins;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using System.Xml.Linq;
 
 namespace FritzBot
 {
     public class Program
     {
-        #region Events
-        public static event Action<Join> UserJoined;
-        public static event Action<Part> UserPart;
-        public static event Action<Quit> UserQuit;
-        public static event Action<Nick> UserNickChanged;
-        public static event Action<Kick> BotKicked;
-        public static event Action<ircMessage> UserMessaged;
-        #endregion
-
         public static bool restart;
 
         public static SimpleStorage BotSettings;
         private static int AntiFloodingCount;
         private static bool FloodingNotificated;
 
+        /// <summary>
+        /// Verarbeitet eine ircMessage mit einem Command und stellt sicher, dass die dem Command zugeordneten Attribute eingehalten werden
+        /// </summary>
+        /// <param name="theMessage">Di zu verarbeitende ircMessage</param>
         public static void HandleCommand(ircMessage theMessage)
         {
             #region Antiflooding checks
@@ -52,15 +44,8 @@ namespace FritzBot
             try
             {
                 ICommand theCommand = PluginManager.GetInstance().Get<ICommand>(theMessage.CommandName);
-                if (theCommand == null)
-                {
-                    string theAlias = FritzBot.Plugins.alias.GetAlias(theMessage);
-                    if (!String.IsNullOrEmpty(theAlias))
-                    {
-                        theMessage.Answer(theAlias);
-                    }
-                }
-                else
+
+                if (theCommand != null)
                 {
                     bool OPNeeded = toolbox.GetAttribute<Module.AuthorizeAttribute>(theCommand) != null;
                     short ParameterNeeded = 0;
@@ -90,6 +75,7 @@ namespace FritzBot
                                 toolbox.Logging("Das Plugin " + toolbox.GetAttribute<Module.NameAttribute>(theCommand).Names[0] + " hat eine nicht abgefangene Exception ausgelöst: " + ex.Message + "\r\n" + ex.StackTrace);
                                 theMessage.Answer("Oh... tut mir leid. Das Plugin hat einen internen Ausnahmefehler ausgelöst");
                             }
+                            theMessage.ProcessedByCommand = true;
                         }
                         else
                         {
@@ -109,138 +95,6 @@ namespace FritzBot
             catch (Exception ex)
             {
                 toolbox.Logging("Eine Exception ist beim Ausführen eines Befehles abgefangen worden: " + ex.Message);
-            }
-
-            if (!theMessage.Answered && theMessage.IsPrivate)
-            {
-                theMessage.Answer("Hallo, kann ich dir helfen ? Probiers doch mal mit !hilfe");
-            }
-        }
-
-        public static void HandleIncomming(IRCEvent Daten)
-        {
-            if (Daten is ircMessage)
-            {
-                ircMessage message = Daten as ircMessage;
-                if (!message.IsIgnored)
-                {
-                    RaiseUserMessaged(message);
-                    if (message.IsCommand && !message.Handled)
-                    {
-                        try
-                        {
-                            HandleCommand(message);
-                        }
-                        catch (Exception ex)
-                        {
-                            toolbox.Logging(ex);
-                        }
-                    }
-                    if (!message.Hidden)
-                    {
-                        if (message.IsPrivate)
-                        {
-                            toolbox.Logging("Von " + message.Source + ": " + message.Message);
-                        }
-                        else
-                        {
-                            toolbox.Logging(message.Source + " " + message.Nickname + ": " + message.Message);
-                        }
-                        foreach (string OneMessage in message.UnloggedMessages)
-                        {
-                            toolbox.Logging(OneMessage);
-                        }
-                    }
-                    if (message.IsPrivate && !message.Answered)
-                    {
-                        if (message.IsCommand)
-                        {
-                            message.Answer("Den Befehl kenn ich nicht, schau dir doch mal die \"!help\" an");
-                        }
-                        else
-                        {
-                            message.Answer("Hallo du da, ich bin nicht so menschlich wie ich aussehe");
-                        }
-                    }
-                }
-            }
-            else
-            {
-                toolbox.Logging(Daten.ToString());
-                if (Daten is Join)
-                {
-                    RaiseUserJoined(Daten as Join);
-                }
-                if (Daten is Kick)
-                {
-                    RaiseBotKicked(Daten as Kick);
-                }
-                if (Daten is Nick)
-                {
-                    RaiseUserNickChanged(Daten as Nick);
-                }
-                if (Daten is Part)
-                {
-                    RaiseUserPart(Daten as Part);
-                }
-                if (Daten is Quit)
-                {
-                    RaiseUserQuit(Daten as Quit);
-                }
-            }
-        }
-
-        private static void RaiseUserMessaged(ircMessage theMessage)
-        {
-            Action<ircMessage> usermessaged = UserMessaged;
-            if (usermessaged != null)
-            {
-                usermessaged(theMessage);
-            }
-        }
-
-        private static void RaiseBotKicked(Kick data)
-        {
-            Action<Kick> kicked = BotKicked;
-            if (kicked != null)
-            {
-                kicked(data);
-            }
-        }
-
-        private static void RaiseUserNickChanged(Nick data)
-        {
-            Action<Nick> usernick = UserNickChanged;
-            if (usernick != null)
-            {
-                usernick(data);
-            }
-        }
-
-        private static void RaiseUserPart(Part data)
-        {
-            Action<Part> userpart = UserPart;
-            if (userpart != null)
-            {
-                userpart(data);
-            }
-        }
-
-        private static void RaiseUserQuit(Quit data)
-        {
-            Action<Quit> quitted = UserQuit;
-            if (quitted != null)
-            {
-                quitted(data);
-            }
-        }
-
-        private static void RaiseUserJoined(Join data)
-        {
-            Action<Join> userjoin = UserJoined;
-            if (userjoin != null)
-            {
-                userjoin(data);
             }
         }
 
@@ -326,7 +180,19 @@ namespace FritzBot
         {
             restart = false;
 
-            DBProvider.Defragmentieren();
+            try
+            {
+                DBProvider.Defragmentieren();
+            }
+            catch (Db4oIOException)
+            {
+                toolbox.Logging("Defragmentierung fehlgeschlagen, starte Workaround");
+                DBProvider.Shutdown();
+                File.Delete(DBProvider.DBPath);
+                File.Move(DBProvider.DBPath + ".backup", DBProvider.DBPath);
+                DBProvider.ReCreate();
+                DBProvider.Defragmentieren();
+            }
 
             BotSettings = new DBProvider().GetSimpleStorage("Bot");
 
@@ -336,7 +202,6 @@ namespace FritzBot
             toolbox.Logging(count + " Benutzer geladen!");
 
             ServerManager Servers = ServerManager.GetInstance();
-            Servers.MessageReceivedEvent += HandleIncomming;
             if (Servers.ConnectionCount == 0)
             {
                 Console.WriteLine("Keine Verbindungen bekannt, starte Verbindungsassistent");

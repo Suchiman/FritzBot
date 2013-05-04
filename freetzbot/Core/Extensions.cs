@@ -212,6 +212,14 @@ namespace FritzBot.Core
         }
     }
 
+    public static class OtherExtensions
+    {
+        public static bool In<T>(this T source, params T[] values)
+        {
+            return values.Contains(source);
+        }
+    }
+
     public class KeyEqualityComparer<T> : IEqualityComparer<T>
     {
         private readonly Func<T, T, bool> comparer;

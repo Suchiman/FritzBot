@@ -1,5 +1,6 @@
 ﻿using FritzBot.Core;
 using FritzBot.DataModel;
+using Meebey.SmartIrc4net;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,17 +16,17 @@ namespace FritzBot.Plugins.SubscriptionProviders
     {
         public override void SendNotification(User user, string message)
         {
-            Irc UserConnection = ServerManager.GetInstance().GetAllConnections().FirstOrDefault(x => x.Channels.Any(y => y.User.Contains(user)));
+            Server UserConnection = ServerManager.GetInstance().FirstOrDefault(x => x.IrcClient.GetChannels().Select(c => x.IrcClient.GetChannel(c)).Any(c => c.Users.Keys.OfType<string>().Any(cn => user.Names.Contains(cn))));
             if (UserConnection != null)
             {
                 SimpleStorage storage = GetSettings(new DBProvider(), user);
                 if (storage.Get(PluginID, "PRIVMSG") == "PRIVMSG")
                 {
-                    UserConnection.Sendmsg(message, user.LastUsedName);
+                    UserConnection.IrcClient.SendMessage(SendType.Message, user.LastUsedName, message);
                 }
                 else
                 {
-                    UserConnection.Sendnotice(message, user.LastUsedName);
+                    UserConnection.IrcClient.SendMessage(SendType.Notice, user.LastUsedName, message);
                 }
             }
         }
