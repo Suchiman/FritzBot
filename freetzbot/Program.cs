@@ -2,6 +2,7 @@
 using FritzBot.Core;
 using FritzBot.DataModel;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -13,19 +14,20 @@ namespace FritzBot
         public static bool restart;
 
         public static SimpleStorage BotSettings;
-        private static int AntiFloodingCount;
         private static bool FloodingNotificated;
+        private static List<DateTime> Floodings = new List<DateTime>();
 
         /// <summary>
         /// Verarbeitet eine ircMessage mit einem Command und stellt sicher, dass die dem Command zugeordneten Attribute eingehalten werden
         /// </summary>
-        /// <param name="theMessage">Di zu verarbeitende ircMessage</param>
+        /// <param name="theMessage">Die zu verarbeitende ircMessage</param>
         public static void HandleCommand(ircMessage theMessage)
         {
             #region Antiflooding checks
             if (!toolbox.IsOp(theMessage.TheUser))
             {
-                if (AntiFloodingCount >= BotSettings.Get("FloodingCount", 10))
+                Floodings.RemoveAll(x => x < DateTime.Now.AddSeconds(-30));
+                if (Floodings.Count >= BotSettings.Get("FloodingCount", 10))
                 {
                     if (FloodingNotificated == false)
                     {
@@ -34,10 +36,11 @@ namespace FritzBot
                     }
                     return;
                 }
-                else
+                if (Floodings.Count == 0)
                 {
-                    AntiFloodingCount++;
+                    FloodingNotificated = false;
                 }
+                Floodings.Add(DateTime.Now);
             }
             #endregion
 
@@ -95,22 +98,6 @@ namespace FritzBot
             catch (Exception ex)
             {
                 toolbox.Logging("Eine Exception ist beim Ausführen eines Befehles abgefangen worden: " + ex.Message);
-            }
-        }
-
-        private static void AntiFlooding()
-        {
-            while (true)
-            {
-                Thread.Sleep(BotSettings.Get("FloodingCountReduction", 1000));
-                if (AntiFloodingCount > 0)
-                {
-                    AntiFloodingCount--;
-                }
-                if (AntiFloodingCount == 0)
-                {
-                    FloodingNotificated = false;
-                }
             }
         }
 
@@ -210,8 +197,6 @@ namespace FritzBot
             Servers.ConnectAll();
 
             toolbox.SafeThreadStart("ConsolenThread", true, HandleConsoleInput);
-            AntiFloodingCount = 0;
-            toolbox.SafeThreadStart("AntifloodingThread", true, AntiFlooding);
         }
 
         private static void Deinit()

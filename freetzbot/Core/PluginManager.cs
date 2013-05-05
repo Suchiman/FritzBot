@@ -118,7 +118,7 @@ namespace FritzBot.Core
         /// </summary>
         public void BeginInit(bool AutostartTask)
         {
-            new Thread(delegate() { Init(AutostartTask); }).Start();
+            ThreadPool.QueueUserWorkItem(new WaitCallback(x => { Init(AutostartTask); }));
         }
 
         /// <summary>

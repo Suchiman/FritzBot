@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("geolocator")]
+    [Module.Name("geolocator", "geolocation")]
     [Module.Help("Findet die Geolocation einer IP Adresse !geolocator <ip-address>")]
     [Module.ParameterRequired]
     public class geolocator : PluginBase, ICommand
