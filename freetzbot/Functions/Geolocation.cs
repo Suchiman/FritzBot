@@ -42,7 +42,7 @@ namespace FritzBot.Functions
         {
             get
             {
-                return statusCode == "OK" && !String.IsNullOrEmpty(countryCode);
+                return statusCode == "OK" && !String.IsNullOrEmpty(countryCode) && countryCode != "-";
             }
         }
         public string statusCode { get; set; }
