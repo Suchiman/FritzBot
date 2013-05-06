@@ -26,7 +26,7 @@ namespace FritzBot.Plugins
 
         void Server_OnPostProcessingMessage(object sender, ircMessage theMessage)
         {
-            if (!theMessage.Answered && !theMessage.ProcessedByCommand)
+            if (theMessage.IsCommand && !theMessage.Answered && !theMessage.ProcessedByCommand)
             {
                 string alias = GetAlias(theMessage);
                 if (!String.IsNullOrEmpty(alias))
