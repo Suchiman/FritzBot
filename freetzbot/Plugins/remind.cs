@@ -50,6 +50,11 @@ namespace FritzBot.Plugins
             {
                 using (DBProvider db = new DBProvider())
                 {
+                    if (theMessage.Server.IrcClient.IsMe(theMessage.CommandArgs[0]))
+                    {
+                        theMessage.Answer("Wieso sollte ich mich selbst an etwas erinnern ;) ?");
+                        return;
+                    }
                     User u = db.GetUser(theMessage.CommandArgs[0]);
                     if (u != null)
                     {
