@@ -30,13 +30,13 @@ namespace FritzBot.Plugins
             SimpleStorage storage = GetPluginStorage(new DBProvider());
             const string baseurl = "http://webgw.avm.de/download/UpdateNews.jsp";
             string output = string.Empty;
-            List<NewsEntry> NewsDE = GetNews(baseurl + "?lang=de").ToList();
-            List<NewsEntry> NewsEN = GetNews(baseurl + "?lang=en").ToList();
+            List<NewsEntry> NewsDE = GetNews(baseurl + "?lang=de");
+            List<NewsEntry> NewsEN = GetNews(baseurl + "?lang=en");
             while (true)
             {
                 Thread.Sleep(storage.Get("Intervall", 300) * 1000);
-                List<NewsEntry> NewsDENew = GetNews(baseurl + "?lang=de").ToList();
-                List<NewsEntry> NewsENNew = GetNews(baseurl + "?lang=en").ToList();
+                List<NewsEntry> NewsDENew = GetNews(baseurl + "?lang=de");
+                List<NewsEntry> NewsENNew = GetNews(baseurl + "?lang=en");
                 string[] DiffDE = NewsDENew.Where(x => !NewsDE.Contains(x)).Select(x => x.Titel).Distinct().ToArray();
                 string[] DiffEN = NewsENNew.Where(x => !NewsEN.Contains(x)).Select(x => x.Titel).Distinct().ToArray();
                 string DiffDEstring = String.Join(", ", DiffDE);
@@ -71,9 +71,9 @@ namespace FritzBot.Plugins
             }
         }
 
-        private IEnumerable<NewsEntry> GetNews(string Url)
+        private List<NewsEntry> GetNews(string Url)
         {
-            return new HtmlDocument().LoadUrl(Url).DocumentNode.StripComments().SelectNodes("//table[@width='100%'][@border='0'][@cellpadding='0'][@cellspacing='0'][@bgcolor='F6F6F6']").Select(x => new NewsEntry(x));
+            return new HtmlDocument().LoadUrl(Url).DocumentNode.StripComments().SelectNodes("//table[@width='100%'][@border='0'][@cellpadding='0'][@cellspacing='0'][@bgcolor='F6F6F6']").Select(x => new NewsEntry(x)).ToList();
         }
     }
 
