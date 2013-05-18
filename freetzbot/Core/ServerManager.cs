@@ -223,7 +223,7 @@ namespace FritzBot.Core
         /// Der zu verwendende Nickname
         /// </summary>
         public string Nickname { get; set; }
-        
+
         /// <summary>
         /// Die Nachricht die beim als Grund für das Verlassen des Servers angegeben wird
         /// </summary>
@@ -234,8 +234,14 @@ namespace FritzBot.Core
         /// </summary>
         public List<string> Channels { get; set; }
 
+        /// <summary>
+        /// Gibt an ob eine Verbindung mit dem Server herrgestellt ist
+        /// </summary>
+        public bool Connected { get; protected set; }
+
         [Transient]
         private IrcFeatures _connection;
+
         [Transient]
         private Thread _listener = null;
 
@@ -245,6 +251,7 @@ namespace FritzBot.Core
         public Server()
         {
             Channels = new List<string>();
+            Connected = false;
         }
 
         /// <summary>
@@ -280,17 +287,6 @@ namespace FritzBot.Core
                 {
                     db.SaveOrUpdate(this);
                 }
-            }
-        }
-
-        /// <summary>
-        /// Gibt an ob eine Verbindung mit dem Server herrgestellt ist
-        /// </summary>
-        public bool Connected
-        {
-            get
-            {
-                return _connection != null ? _connection.IsConnected : false;
             }
         }
 
@@ -338,6 +334,8 @@ namespace FritzBot.Core
             _connection.OnConnectionError += (x, y) => toolbox.Logging("Verbindung zu Server " + Hostname + " verloren");
 
             _listener = toolbox.SafeThreadStart("ListenThread " + Hostname, true, () => _connection.Listen());
+
+            Connected = true;
         }
 
         /// <summary>
@@ -542,6 +540,7 @@ namespace FritzBot.Core
                 _listener.Abort();
                 _connection.Disconnect();
                 _connection = null;
+                Connected = false;
                 toolbox.Logging("Verbindung zu Server " + Hostname + " getrennt");
             }
         }

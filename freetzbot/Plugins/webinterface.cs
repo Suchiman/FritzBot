@@ -168,6 +168,10 @@ namespace FritzBot.Plugins
                 }
                 catch (Exception ex)
                 {
+                    if (ex is ThreadAbortException)
+                    {
+                        return;
+                    }
                     toolbox.Logging("Exception im Webinterface Arbeiter Thread " + ex.Message + "\r\n" + ex.StackTrace);
                     Thread.Sleep(1000);
                     ErrorCount++;
