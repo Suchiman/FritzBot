@@ -30,13 +30,14 @@
 using System;
 using System.Collections;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Reflection;
-using System.Text;
-using System.Security.Cryptography.X509Certificates;
 using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Threading;
 
 namespace Meebey.SmartIrc4net
@@ -577,7 +578,7 @@ namespace Meebey.SmartIrc4net
                 OnConnecting(this, EventArgs.Empty);
             }
             try {
-                _TcpClient = new TcpClient();
+                _TcpClient = new TcpClient(Address, port);
                 _TcpClient.NoDelay = true;
                 _TcpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, 1);
                 // set timeout, after this the connection will be aborted
@@ -611,11 +612,8 @@ namespace Meebey.SmartIrc4net
                     _TcpClient.Connect(_ProxyHost, _ProxyPort);
                     proxyClient.TcpClient = _TcpClient;
                     proxyClient.CreateConnection(Address, port);
-                } else
-                #endif
-                {
-                    _TcpClient.Connect(Address, port);
                 }
+                #endif
                 
                 Stream stream = _TcpClient.GetStream();
                 if (_UseSsl) {
