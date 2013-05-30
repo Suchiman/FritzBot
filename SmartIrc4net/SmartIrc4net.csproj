@@ -91,6 +91,7 @@
     <Compile Include="src\IrcFeatures\IrcConstants.cs" />
     <Compile Include="src\IrcFeatures\IrcFeatures.cs" />
     <Compile Include="src\IrcConnection\ProxyType.cs" />
+    <Compile Include="src\IrcConnection\PrimaryOrFallbackEncoding.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

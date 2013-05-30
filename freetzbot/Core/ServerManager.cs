@@ -307,7 +307,8 @@ namespace FritzBot.Core
             _connection.CtcpUrl = _connection.CtcpSource;
             _connection.CtcpUserInfo = "Ich bin ein automatisch denkendes Wesen auch bekannt als Bot";
             _connection.CtcpVersion = "FritzBot:v3:" + Environment.OSVersion.Platform.ToString();
-            _connection.Encoding = Encoding.UTF8;
+            _connection.Encoding = Encoding.GetEncoding("iso-8859-1");
+            _connection.EnableUTF8Recode = true;
 
             _connection.OnChannelAction += _connection_OnMessage;
             _connection.OnChannelMessage += _connection_OnMessage;
@@ -371,11 +372,14 @@ namespace FritzBot.Core
             toolbox.Logging(String.Format("{0} hat den Raum {1} betreten", e.Who, e.Channel));
             MaintainUser(e.Who);
 
-            var ev = OnJoin;
-            if (ev != null)
+            ThreadPool.QueueUserWorkItem(new WaitCallback(x =>
             {
-                ev(this, e);
-            }
+                var ev = OnJoin;
+                if (ev != null)
+                {
+                    ev(this, e);
+                }
+            }));
         }
 
         /// <summary>
@@ -387,11 +391,14 @@ namespace FritzBot.Core
             toolbox.Logging(String.Format("{0} hat den Server verlassen ({1})", e.Who, e.QuitMessage));
             MaintainUser(e.Who);
 
-            var ev = OnQuit;
-            if (ev != null)
+            ThreadPool.QueueUserWorkItem(new WaitCallback(x =>
             {
-                ev(this, e);
-            }
+                var ev = OnQuit;
+                if (ev != null)
+                {
+                    ev(this, e);
+                }
+            }));
         }
 
         /// <summary>
@@ -403,11 +410,14 @@ namespace FritzBot.Core
             toolbox.Logging(String.Format("{0} hat den Raum {1} verlassen", e.Who, e.Channel));
             MaintainUser(e.Who);
 
-            var ev = OnPart;
-            if (ev != null)
+            ThreadPool.QueueUserWorkItem(new WaitCallback(x =>
             {
-                ev(this, e);
-            }
+                var ev = OnPart;
+                if (ev != null)
+                {
+                    ev(this, e);
+                }
+            }));
         }
 
         /// <summary>
@@ -435,11 +445,14 @@ namespace FritzBot.Core
                 }
             }
 
-            var ev = OnNickChange;
-            if (ev != null)
+            ThreadPool.QueueUserWorkItem(new WaitCallback(x =>
             {
-                ev(this, e);
-            }
+                var ev = OnNickChange;
+                if (ev != null)
+                {
+                    ev(this, e);
+                }
+            }));
         }
 
         /// <summary>
@@ -451,11 +464,14 @@ namespace FritzBot.Core
             toolbox.Logging(String.Format("{0} wurde von {1} aus dem Raum {2} geworfen", e.Who, e.Whom, e.Channel));
             MaintainUser(e.Who);
 
-            var ev = OnKick;
-            if (ev != null)
+            ThreadPool.QueueUserWorkItem(new WaitCallback(x =>
             {
-                ev(this, e);
-            }
+                var ev = OnKick;
+                if (ev != null)
+                {
+                    ev(this, e);
+                }
+            }));
         }
 
         /// <summary>
@@ -470,63 +486,66 @@ namespace FritzBot.Core
                 return;
             }
 
-            User user = MaintainUser(e.Data.Nick);
-            ircMessage message = new ircMessage(e.Data, this, user);
-
-            if (!message.IsIgnored)
+            ThreadPool.QueueUserWorkItem(new WaitCallback(x =>
             {
-                var ev = OnPreProcessingMessage;
-                if (ev != null)
-                {
-                    ev(this, message);
-                }
+                User user = MaintainUser(e.Data.Nick);
+                ircMessage message = new ircMessage(e.Data, this, user);
 
-                if (message.IsCommand && !message.HandledByEvent)
+                if (!message.IsIgnored)
                 {
-                    try
+                    var ev = OnPreProcessingMessage;
+                    if (ev != null)
                     {
-                        Program.HandleCommand(message);
+                        ev(this, message);
                     }
-                    catch (Exception ex)
-                    {
-                        toolbox.Logging(ex);
-                    }
-                }
 
-                ev = OnPostProcessingMessage;
-                if (ev != null)
-                {
-                    ev(this, message);
-                }
+                    if (message.IsCommand && !message.HandledByEvent)
+                    {
+                        try
+                        {
+                            Program.HandleCommand(message);
+                        }
+                        catch (Exception ex)
+                        {
+                            toolbox.Logging(ex);
+                        }
+                    }
 
-                if (message.IsPrivate && !message.Answered)
-                {
-                    if (message.IsCommand)
+                    ev = OnPostProcessingMessage;
+                    if (ev != null)
                     {
-                        message.Answer("Dieser Befehl kommt mir nicht bekannt vor... Probiers doch mal mit !hilfe");
+                        ev(this, message);
                     }
-                    else
-                    {
-                        message.Answer("Hallo du da, ich bin nicht so menschlich wie ich aussehe");
-                    }
-                }
 
-                if (!message.Hidden)
-                {
-                    if (message.IsPrivate)
+                    if (message.IsPrivate && !message.ProcessedByCommand)
                     {
-                        toolbox.Logging("Von " + message.Source + ": " + message.Message);
+                        if (message.IsCommand)
+                        {
+                            message.Answer("Dieser Befehl kommt mir nicht bekannt vor... Probiers doch mal mit !hilfe");
+                        }
+                        else
+                        {
+                            message.Answer("Hallo du da, ich bin nicht so menschlich wie ich aussehe");
+                        }
                     }
-                    else
+
+                    if (!message.Hidden)
                     {
-                        toolbox.Logging(message.Source + " " + message.Nickname + ": " + message.Message);
-                    }
-                    foreach (string OneMessage in message.UnloggedMessages)
-                    {
-                        toolbox.Logging(OneMessage);
+                        if (message.IsPrivate)
+                        {
+                            toolbox.Logging("Von " + message.Source + ": " + message.Message);
+                        }
+                        else
+                        {
+                            toolbox.Logging(message.Source + " " + message.Nickname + ": " + message.Message);
+                        }
+                        foreach (string OneMessage in message.UnloggedMessages)
+                        {
+                            toolbox.Logging(OneMessage);
+                        }
                     }
                 }
-            }
+            }));
         }
 
         /// <summary>

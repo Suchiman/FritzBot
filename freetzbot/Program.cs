@@ -160,7 +160,15 @@ namespace FritzBot
             string QuitMessage = Console.ReadLine();
             Console.Write("InitialChannel: ");
             string channel = Console.ReadLine();
-            toolbox.InstantiateConnection(Hostname, port, nickname, QuitMessage, channel);
+            try
+            {
+                toolbox.InstantiateConnection(Hostname, port, nickname, QuitMessage, channel);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Das war nicht erfolgreich: ");
+                toolbox.Logging(ex);
+            }
         }
 
         private static void Init()
