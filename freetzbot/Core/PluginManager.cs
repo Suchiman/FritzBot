@@ -1,4 +1,5 @@
 ﻿using FritzBot.DataModel;
+using FritzBot.Module;
 using Microsoft.CSharp;
 using System;
 using System.CodeDom.Compiler;
@@ -15,6 +16,7 @@ namespace FritzBot.Core
     {
         private static PluginManager instance;
         private List<PluginBase> Plugins = new List<PluginBase>();
+        private Dictionary<string, PluginBase> LookupDictionary = new Dictionary<string, PluginBase>();
 
         public static PluginManager GetInstance()
         {
@@ -110,7 +112,12 @@ namespace FritzBot.Core
         /// </summary>
         public T Get<T>(string name) where T : class
         {
-            return Plugins.OfType<T>().Where(x => Module.NameAttribute.IsNamed(x, name)).FirstOrDefault();
+            PluginBase plugin;
+            if (LookupDictionary.TryGetValue(name.ToLower(), out plugin))
+            {
+                return plugin as T;
+            }
+            return default(T);
         }
 
         /// <summary>
@@ -148,6 +155,18 @@ namespace FritzBot.Core
             }
             allTypes.AddRange(Bot.GetTypes().Where(x => !allTypes.Contains(x, y => y.FullName)));
             AddDistinct(AutostartTask, allTypes.ToArray<Type>()); //Die Methode verwirft alle Typen die nicht von PluginBase abgeleitet sind
+            
+            foreach (PluginBase plugin in Plugins)
+            {
+                NameAttribute att = toolbox.GetAttribute<NameAttribute>(plugin);
+                if (att != null)
+                {
+                    foreach (string name in att.Names)
+                    {
+                        LookupDictionary[name.ToLower()] = plugin;
+                    }
+                }
+            }
         }
 
         /// <summary>
