@@ -517,7 +517,7 @@ namespace FritzBot.Core
                         ev(this, message);
                     }
 
-                    if (message.IsPrivate && !message.ProcessedByCommand)
+                    if (message.IsPrivate && !(message.ProcessedByCommand || message.Answered))
                     {
                         if (message.IsCommand)
                         {

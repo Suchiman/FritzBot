@@ -69,14 +69,27 @@ namespace FritzBot.Core
         public int AddDistinct(bool AutostartTask, params Type[] Types)
         {
             IEnumerable<Type> FilteredTypes = Types.Where(x => !x.IsAbstract && !x.IsInterface && !typeof(Attribute).IsAssignableFrom(x)).Where(x => typeof(PluginBase).IsAssignableFrom(x));
-            Plugins.OfType<IBackgroundTask>().Where(x => FilteredTypes.Select(y => y.FullName).Contains(x.GetType().FullName)).TryLogEach(x => x.Stop());
-            Plugins.RemoveAll(x => FilteredTypes.Select(y => y.FullName).Contains(x.GetType().FullName));
+            Remove(x => FilteredTypes.Select(y => y.FullName).Contains(x.GetType().FullName));
+
             List<PluginBase> NewPlugins = FilteredTypes.Select(x => Activator.CreateInstance(x)).Cast<PluginBase>().ToList<PluginBase>();
             if (AutostartTask)
             {
                 NewPlugins.OfType<IBackgroundTask>().TryLogEach(x => x.Start());
             }
             Plugins.AddRange(NewPlugins);
+
+            foreach (PluginBase plugin in NewPlugins)
+            {
+                NameAttribute att = toolbox.GetAttribute<NameAttribute>(plugin);
+                if (att != null)
+                {
+                    foreach (string name in att.Names)
+                    {
+                        LookupDictionary[name.ToLower()] = plugin;
+                    }
+                }
+            }
+
             return NewPlugins.Count;
         }
 
@@ -88,6 +101,11 @@ namespace FritzBot.Core
             List<PluginBase> toremove = Plugins.Where(bedingung).ToList();
             toremove.OfType<IBackgroundTask>().TryLogEach(x => x.Stop());
             Plugins.RemoveAll(x => toremove.Contains(x));
+            List<string> alleNamen = toremove.Select(x => toolbox.GetAttribute<NameAttribute>(x)).Where(x => x != null).SelectMany(x => x.Names).ToList();
+            foreach (string Name in alleNamen)
+            {
+                LookupDictionary.Remove(Name);
+            }
             return toremove.Count;
         }
 
@@ -155,18 +173,6 @@ namespace FritzBot.Core
             }
             allTypes.AddRange(Bot.GetTypes().Where(x => !allTypes.Contains(x, y => y.FullName)));
             AddDistinct(AutostartTask, allTypes.ToArray<Type>()); //Die Methode verwirft alle Typen die nicht von PluginBase abgeleitet sind
-            
-            foreach (PluginBase plugin in Plugins)
-            {
-                NameAttribute att = toolbox.GetAttribute<NameAttribute>(plugin);
-                if (att != null)
-                {
-                    foreach (string name in att.Names)
-                    {
-                        LookupDictionary[name.ToLower()] = plugin;
-                    }
-                }
-            }
         }
 
         /// <summary>
