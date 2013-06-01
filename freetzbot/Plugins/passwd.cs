@@ -1,70 +1,16 @@
 ﻿using FritzBot.Core;
 using FritzBot.DataModel;
 using System;
-using System.Collections.Generic;
 
 namespace FritzBot.Plugins
 {
     [Module.Name("passwd")]
     [Module.Help("Ändert dein Passwort. Denk dran dass du das im Query machen solltest. Nach der Eingabe von !passwd wirst du nach weiteren Details gefragt")]
+    [Module.Scope(Scope.User)]
     [Module.ParameterRequired(false)]
-    class passwd : PluginBase, ICommand, IBackgroundTask
+    class passwd : PluginBase, ICommand
     {
-        public void Start()
-        {
-            Server.OnPreProcessingMessage += Server_OnPreProcessingMessage;
-        }
-
-        public void Stop()
-        {
-            Server.OnPreProcessingMessage -= Server_OnPreProcessingMessage;
-        }
-
-        private void Server_OnPreProcessingMessage(object sender, ircMessage theMessage)
-        {
-            SetNewPW(theMessage);
-            CheckOldPW(theMessage);
-        }
-
-        private List<string> CheckUserInProgress = new List<string>();
-
-        private void CheckOldPW(ircMessage theMessage)
-        {
-            if (!(theMessage.IsPrivate && CheckUserInProgress.Contains(theMessage.Nickname)))
-            {
-                return;
-            }
-            theMessage.Hidden = true;
-            if (theMessage.TheUser.CheckPassword(theMessage.Message))
-            {
-                theMessage.SendPrivateMessage("Passwort korrekt, gib nun dein neues Passwort ein:");
-                SetUserInProgress.Add(theMessage.Nickname);
-                CheckUserInProgress.Remove(theMessage.Nickname);
-            }
-            else
-            {
-                theMessage.SendPrivateMessage("Passwort inkorrekt, abbruch!");
-                CheckUserInProgress.Remove(theMessage.Nickname);
-            }
-        }
-
-        private List<string> SetUserInProgress = new List<string>();
-
-        void SetNewPW(ircMessage theMessage)
-        {
-            if (!(theMessage.IsPrivate && SetUserInProgress.Contains(theMessage.Nickname)))
-            {
-                return;
-            }
-            theMessage.Hidden = true;
-            using (DBProvider db = new DBProvider())
-            {
-                theMessage.TheUser.SetPassword(theMessage.Message);
-                db.SaveOrUpdate(theMessage.TheUser);
-            }
-            theMessage.SendPrivateMessage("Passwort wurde geändert!");
-            SetUserInProgress.Remove(theMessage.Nickname);
-        }
+        private User Requested;
 
         public void Run(ircMessage theMessage)
         {
@@ -76,17 +22,55 @@ namespace FritzBot.Plugins
             }
             else
             {
+                Requested = theMessage.TheUser;
                 if (!String.IsNullOrEmpty(theMessage.TheUser.Password))
                 {
                     theMessage.SendPrivateMessage("Bitte gib zuerst dein altes Passwort ein:");
-                    CheckUserInProgress.Add(theMessage.Nickname);
+                    Server.OnPreProcessingMessage += CheckOldPW;
                 }
                 else
                 {
                     theMessage.SendPrivateMessage("Okay bitte gib nun dein Passwort ein");
-                    SetUserInProgress.Add(theMessage.Nickname);
+                    Server.OnPreProcessingMessage += SetNewPW;
                 }
             }
+        }
+
+        private void CheckOldPW(object sender, ircMessage theMessage)
+        {
+            if (!theMessage.IsPrivate || Requested != theMessage.TheUser)
+            {
+                return;
+            }
+            theMessage.Hidden = true;
+            if (theMessage.TheUser.CheckPassword(theMessage.Message))
+            {
+                theMessage.SendPrivateMessage("Passwort korrekt, gib nun dein neues Passwort ein:");
+                Server.OnPreProcessingMessage += SetNewPW;
+            }
+            else
+            {
+                theMessage.SendPrivateMessage("Passwort inkorrekt, abbruch!");
+                PluginManager.GetInstance().RecycleScoped(this);
+            }
+            Server.OnPreProcessingMessage -= CheckOldPW;
+        }
+
+        void SetNewPW(object sender, ircMessage theMessage)
+        {
+            if (!theMessage.IsPrivate || Requested != theMessage.TheUser)
+            {
+                return;
+            }
+            theMessage.Hidden = true;
+            using (DBProvider db = new DBProvider())
+            {
+                theMessage.TheUser.SetPassword(theMessage.Message);
+                db.SaveOrUpdate(theMessage.TheUser);
+            }
+            theMessage.SendPrivateMessage("Passwort wurde geändert!");
+            Server.OnPreProcessingMessage -= SetNewPW;
+            PluginManager.GetInstance().RecycleScoped(this);
         }
     }
 }

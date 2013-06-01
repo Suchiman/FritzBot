@@ -15,27 +15,26 @@ namespace FritzBot.Plugins
             if (!theMessage.HasArgs)
             {
                 List<string> befehle = new List<string>();
-                foreach (ICommand theCommand in PluginManager.GetInstance().Get<ICommand>().Where(x => !Module.HiddenAttribute.CheckHidden(x) && toolbox.GetAttribute<Module.NameAttribute>(x) != null))
+
+                foreach (PluginInfo theCommand in PluginManager.GetInstance().Where(x => !x.IsHidden && x.Names.Count > 0))
                 {
-                    Module.AuthorizeAttribute Authorization = toolbox.GetAttribute<Module.AuthorizeAttribute>(theCommand);
-                    Module.NameAttribute Namen = toolbox.GetAttribute<Module.NameAttribute>(theCommand);
-                    if (Authorization == null || toolbox.IsOp(theMessage.TheUser))
+                    if (!theCommand.AuthenticationRequired || toolbox.IsOp(theMessage.TheUser))
                     {
-                        befehle.Add(Namen.Names[0]);
+                        befehle.Add(theCommand.Names[0]);
                     }
                 }
                 befehle.Sort();
-                theMessage.Answer("Derzeit verfügbare Befehle: " + String.Join(", ", befehle.ToArray()));
+                theMessage.Answer("Derzeit verfügbare Befehle: " + String.Join(", ", befehle));
                 theMessage.Answer("Hilfe zu jedem Befehl mit \"!help befehl\". Um die anderen nicht zu belästigen kannst du mich auch per PM (query) anfragen");
             }
             else
             {
-                try
+                PluginInfo info = PluginManager.GetInstance().Get(theMessage.CommandArgs[0]);
+                if (info != null && !String.IsNullOrEmpty(info.HelpText))
                 {
-                    Module.HelpAttribute Hilfe = toolbox.GetAttribute<Module.HelpAttribute>(PluginManager.GetInstance().Get<ICommand>(theMessage.CommandArgs[0]));
-                    theMessage.Answer(Hilfe.Help);
+                    theMessage.Answer(info.HelpText);
                 }
-                catch
+                else
                 {
                     theMessage.Answer("Ich konnte keinen Befehl finden der so heißt");
                 }

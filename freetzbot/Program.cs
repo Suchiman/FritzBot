@@ -46,43 +46,29 @@ namespace FritzBot
 
             try
             {
-                ICommand theCommand = PluginManager.GetInstance().Get<ICommand>(theMessage.CommandName);
+                PluginInfo info = PluginManager.GetInstance().Get(theMessage.CommandName);
 
-                if (theCommand != null)
+                if (info != null)
                 {
-                    bool OPNeeded = toolbox.GetAttribute<Module.AuthorizeAttribute>(theCommand) != null;
-                    short ParameterNeeded = 0;
-                    Module.ParameterRequiredAttribute ParameterAttri = toolbox.GetAttribute<Module.ParameterRequiredAttribute>(theCommand);
-                    if (ParameterAttri != null)
+                    if (!info.AuthenticationRequired || toolbox.IsOp(theMessage.TheUser))
                     {
-                        if (ParameterAttri.Required)
-                        {
-                            ParameterNeeded = 1;
-                        }
-                        else
-                        {
-                            ParameterNeeded = 2;
-                        }
-                    }
-
-                    if (!OPNeeded || toolbox.IsOp(theMessage.TheUser))
-                    {
-                        if (ParameterNeeded == 0 || (ParameterNeeded == 1 && theMessage.HasArgs) || (ParameterNeeded == 2 && !theMessage.HasArgs))
+                        if (!info.ParameterRequiredSpecified || (info.ParameterRequired && theMessage.HasArgs) || (!info.ParameterRequired && !theMessage.HasArgs))
                         {
                             try
                             {
-                                theCommand.Run(theMessage);
+                                ICommand command = info.GetScoped<ICommand>(theMessage.Data.Channel, theMessage.TheUser);
+                                command.Run(theMessage);
                             }
                             catch (Exception ex)
                             {
-                                toolbox.Logging("Das Plugin " + toolbox.GetAttribute<Module.NameAttribute>(theCommand).Names[0] + " hat eine nicht abgefangene Exception ausgelöst: " + ex.Message + "\r\n" + ex.StackTrace);
+                                toolbox.Logging("Das Plugin " + info.Names.FirstOrDefault() + " hat eine nicht abgefangene Exception ausgelöst: " + ex.Message + "\r\n" + ex.StackTrace);
                                 theMessage.Answer("Oh... tut mir leid. Das Plugin hat einen internen Ausnahmefehler ausgelöst");
                             }
                             theMessage.ProcessedByCommand = true;
                         }
                         else
                         {
-                            theMessage.Answer("Ungültiger Aufruf: " + toolbox.GetAttribute<Module.HelpAttribute>(theCommand).Help);
+                            theMessage.Answer("Ungültiger Aufruf: " + info.HelpText);
                         }
                     }
                     else if (theMessage.TheUser.Admin)

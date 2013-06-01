@@ -15,7 +15,7 @@ namespace FritzBot.Plugins
             try
             {
                 string UnloadModuleName = theMessage.CommandArgs[0];
-                int unloaded = PluginManager.GetInstance().Remove(x => Module.NameAttribute.IsNamed(x, UnloadModuleName));
+                int unloaded = PluginManager.GetInstance().Remove(x => x.Names.Contains(UnloadModuleName));
                 theMessage.Answer(String.Format("{0} Plugin{1} entladen", unloaded, (unloaded == 0 || unloaded > 1) ? "s" : ""));
             }
             catch (Exception ex)

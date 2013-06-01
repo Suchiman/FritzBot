@@ -12,11 +12,11 @@ using System.Threading;
 
 namespace FritzBot.Core
 {
-    public class PluginManager : IEnumerable<PluginBase>
+    public class PluginManager : IEnumerable<PluginInfo>
     {
         private static PluginManager instance;
-        private List<PluginBase> Plugins = new List<PluginBase>();
-        private Dictionary<string, PluginBase> LookupDictionary = new Dictionary<string, PluginBase>();
+        private List<PluginInfo> Plugins = new List<PluginInfo>();
+        private Dictionary<string, PluginInfo> LookupDictionary = new Dictionary<string, PluginInfo>();
 
         public static PluginManager GetInstance()
         {
@@ -32,7 +32,7 @@ namespace FritzBot.Core
         /// </summary>
         public static void Shutdown()
         {
-            GetInstance().Get<IBackgroundTask>().TryLogEach(x => x.Stop());
+            GetInstance().Where(x => x.IsBackgroundTask).TryLogEach(x => x.Stop());
         }
 
         public PluginManager()
@@ -68,25 +68,21 @@ namespace FritzBot.Core
         /// </summary>
         public int AddDistinct(bool AutostartTask, params Type[] Types)
         {
-            IEnumerable<Type> FilteredTypes = Types.Where(x => !x.IsAbstract && !x.IsInterface && !typeof(Attribute).IsAssignableFrom(x)).Where(x => typeof(PluginBase).IsAssignableFrom(x));
+            IEnumerable<Type> FilteredTypes = Types.Where(x => !x.IsAbstract && !x.IsInterface && typeof(PluginBase).IsAssignableFrom(x));
             Remove(x => FilteredTypes.Select(y => y.FullName).Contains(x.GetType().FullName));
 
-            List<PluginBase> NewPlugins = FilteredTypes.Select(x => Activator.CreateInstance(x)).Cast<PluginBase>().ToList<PluginBase>();
+            List<PluginInfo> NewPlugins = FilteredTypes.Select(x => new PluginInfo(x)).Cast<PluginInfo>().ToList();
             if (AutostartTask)
             {
-                NewPlugins.OfType<IBackgroundTask>().TryLogEach(x => x.Start());
+                NewPlugins.Where(x => x.IsBackgroundTask).TryLogEach(x => x.Start());
             }
             Plugins.AddRange(NewPlugins);
 
-            foreach (PluginBase plugin in NewPlugins)
+            foreach (PluginInfo plugin in NewPlugins)
             {
-                NameAttribute att = toolbox.GetAttribute<NameAttribute>(plugin);
-                if (att != null)
+                foreach (string name in plugin.Names)
                 {
-                    foreach (string name in att.Names)
-                    {
-                        LookupDictionary[name.ToLower()] = plugin;
-                    }
+                    LookupDictionary[name.ToLower()] = plugin;
                 }
             }
 
@@ -96,46 +92,39 @@ namespace FritzBot.Core
         /// <summary>
         /// Entfernt alle ICommands und IBackgroundTasks auf die die Bedingung zutrifft.
         /// </summary>
-        public int Remove(Func<PluginBase, bool> bedingung)
+        public int Remove(Func<PluginInfo, bool> bedingung)
         {
-            List<PluginBase> toremove = Plugins.Where(bedingung).ToList();
-            toremove.OfType<IBackgroundTask>().TryLogEach(x => x.Stop());
+            List<PluginInfo> toremove = Plugins.Where(bedingung).ToList();
+            toremove.Where(x => x.IsBackgroundTask).TryLogEach(x => x.Stop());
             Plugins.RemoveAll(x => toremove.Contains(x));
-            List<string> alleNamen = toremove.Select(x => toolbox.GetAttribute<NameAttribute>(x)).Where(x => x != null).SelectMany(x => x.Names).ToList();
-            foreach (string Name in alleNamen)
+
+            foreach (string Name in toremove.SelectMany(x => x.Names))
             {
                 LookupDictionary.Remove(Name);
             }
+
             return toremove.Count;
         }
 
         /// <summary>
-        /// Gibt alle Instanzen von ICommand oder IBackgroundTask zurück
+        /// Gibt das erste PluginInfo zurück mit dem angegebenen Namen
         /// </summary>
-        public IEnumerable<T> Get<T>() where T : class
+        public PluginInfo Get(string name)
         {
-            return Plugins.OfType<T>();
-        }
-
-        /// <summary>
-        /// Gibt das erste ICommand oder IBackgroundTask zurück auf das die Bedingung zutrifft
-        /// </summary>
-        public T Get<T>(Func<T, bool> bedingung) where T : class
-        {
-            return Plugins.OfType<T>().FirstOrDefault(bedingung);
-        }
-
-        /// <summary>
-        /// Gibt das erste ICommand oder IBackgroundTask zurück mit dem angegebenen Namen
-        /// </summary>
-        public T Get<T>(string name) where T : class
-        {
-            PluginBase plugin;
+            PluginInfo plugin;
             if (LookupDictionary.TryGetValue(name.ToLower(), out plugin))
             {
-                return plugin as T;
+                return plugin;
             }
-            return default(T);
+            return null;
+        }
+
+        /// <summary>
+        /// Gibt die PluginInfos zurück mit dem angegebenen Plugin Typ
+        /// </summary>
+        public IEnumerable<PluginInfo> GetOfType<T>()
+        {
+            return Plugins.Where(x => x.Plugin is T);
         }
 
         /// <summary>
@@ -175,6 +164,12 @@ namespace FritzBot.Core
             AddDistinct(AutostartTask, allTypes.ToArray<Type>()); //Die Methode verwirft alle Typen die nicht von PluginBase abgeleitet sind
         }
 
+        public void RecycleScoped(PluginBase plugin)
+        {
+            PluginInfo info = Plugins.FirstOrDefault(x => x.ID == plugin.PluginID);
+            info.Recycle(plugin);
+        }
+
         /// <summary>
         /// Lädt ein oder mehrere Plugins aus den gegebenen Dateien und initialisiert sie
         /// </summary>
@@ -192,7 +187,19 @@ namespace FritzBot.Core
         /// <param name="name">Der Name des Types</param>
         public int LoadPluginByName(Assembly assembly, string name)
         {
-            return AddDistinct(true, assembly.GetTypes().Where(x => Module.NameAttribute.IsNamed(x, name)).ToArray());
+            name = name.ToLower();
+            foreach (Type t in assembly.GetTypes())
+            {
+                NameAttribute att = toolbox.GetAttribute<NameAttribute>(t);
+                if (att != null && att.Names != null)
+                {
+                    if (att.Names.Any(x => x.ToLower() == name))
+                    {
+                        return AddDistinct(true, t);
+                    }
+                }
+            }
+            return 0;
         }
 
         /// <summary>
@@ -209,6 +216,7 @@ namespace FritzBot.Core
             compilerParams.GenerateInMemory = true;
             compilerParams.IncludeDebugInformation = false;
             compilerParams.WarningLevel = 0;
+            compilerParams.OutputAssembly = "FritzBot";
             using (DBProvider db = new DBProvider())
             {
                 SimpleStorage storage = db.GetSimpleStorage("PluginManager");
@@ -238,7 +246,7 @@ namespace FritzBot.Core
             return results.CompiledAssembly;
         }
 
-        public IEnumerator<PluginBase> GetEnumerator()
+        public IEnumerator<PluginInfo> GetEnumerator()
         {
             return Plugins.GetEnumerator();
         }
@@ -246,6 +254,187 @@ namespace FritzBot.Core
         IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
             return Plugins.GetEnumerator();
+        }
+    }
+
+    public class PluginInfo : IBackgroundTask, ICommand
+    {
+        public Type PluginType { get; protected set; }
+        public PluginBase Plugin { get; protected set; }
+
+        private Dictionary<User, PluginBase> UserScoped = new Dictionary<User, PluginBase>();
+        private Dictionary<string, PluginBase> ChannelScoped = new Dictionary<string, PluginBase>();
+        private Dictionary<KeyValuePair<User, string>, PluginBase> UserChannelScoped = new Dictionary<KeyValuePair<User, string>, PluginBase>();
+
+        public string ID { get; protected set; }
+        public List<string> Names { get; protected set; }
+
+        public bool AuthenticationRequired { get; protected set; }
+        public bool ParameterRequired { get; protected set; }
+        public bool ParameterRequiredSpecified { get; protected set; }
+
+        public bool IsHidden { get; protected set; }
+        public bool IsCommand { get; protected set; }
+        public bool IsSubscribeable { get; protected set; }
+        public bool IsBackgroundTask { get; protected set; }
+
+        public string HelpText { get; protected set; }
+        public Scope InstanceScope { get; protected set; }
+
+        public PluginInfo(Type plugin)
+        {
+            PluginType = plugin;
+            Plugin = Activator.CreateInstance(PluginType) as PluginBase;
+            ID = Plugin.PluginID;
+
+            IsCommand = Plugin is ICommand;
+            IsBackgroundTask = Plugin is IBackgroundTask;
+
+            AuthorizeAttribute authAtt = toolbox.GetAttribute<AuthorizeAttribute>(Plugin);
+            AuthenticationRequired = authAtt != null;
+
+            HelpAttribute helpAtt = toolbox.GetAttribute<HelpAttribute>(Plugin);
+            if (helpAtt != null)
+            {
+                HelpText = helpAtt.Help;
+            }
+
+            HiddenAttribute hidenAtt = toolbox.GetAttribute<HiddenAttribute>(Plugin);
+            IsHidden = hidenAtt != null;
+
+            NameAttribute nameAtt = toolbox.GetAttribute<NameAttribute>(Plugin);
+            if (nameAtt != null)
+            {
+                Names = nameAtt.Names.Select(x => x.ToLower()).ToList();
+            }
+            else
+            {
+                Names = new List<string>();
+            }
+
+            ParameterRequiredAttribute paramAtt = toolbox.GetAttribute<ParameterRequiredAttribute>(Plugin);
+            if (paramAtt != null)
+            {
+                ParameterRequiredSpecified = true;
+                ParameterRequired = paramAtt.Required;
+            }
+
+            ScopeAttribute scopeAtt = toolbox.GetAttribute<ScopeAttribute>(Plugin);
+            if (scopeAtt != null)
+            {
+                InstanceScope = scopeAtt.Scope;
+            }
+            else
+            {
+                InstanceScope = Scope.Global;
+            }
+
+            SubscribeableAttribute subAtt = toolbox.GetAttribute<SubscribeableAttribute>(Plugin);
+            IsSubscribeable = subAtt != null;
+        }
+
+        public T GetScoped<T>(string channel, User user) where T : class
+        {
+            PluginBase plugin;
+            switch (InstanceScope)
+            {
+                case Scope.Channel:
+                    plugin = GetChannelScoped(channel);
+                    break;
+                case Scope.User:
+                    plugin = GetUserScoped(user);
+                    break;
+                case Scope.UserChannel:
+                    plugin = GetUserChannelScoped(user, channel);
+                    break;
+                case Scope.Global:
+                default:
+                    plugin = Plugin;
+                    break;
+            }
+            return plugin as T;
+        }
+
+        public PluginBase GetUserScoped(User user)
+        {
+            PluginBase pluginBase;
+            if (!UserScoped.TryGetValue(user, out pluginBase))
+            {
+                pluginBase = Activator.CreateInstance(PluginType) as PluginBase;
+                UserScoped[user] = pluginBase;
+            }
+            return pluginBase;
+        }
+
+        public PluginBase GetUserChannelScoped(User user, string channel)
+        {
+            KeyValuePair<User, string> key = new KeyValuePair<User, string>(user, channel);
+            PluginBase pluginBase;
+            if (!UserChannelScoped.TryGetValue(key, out pluginBase))
+            {
+                pluginBase = Activator.CreateInstance(PluginType) as PluginBase;
+                UserChannelScoped[key] = pluginBase;
+            }
+            return pluginBase;
+        }
+
+        public PluginBase GetChannelScoped(string channel)
+        {
+            PluginBase pluginBase;
+            if (!ChannelScoped.TryGetValue(channel, out pluginBase))
+            {
+                pluginBase = Activator.CreateInstance(PluginType) as PluginBase;
+                ChannelScoped[channel] = pluginBase;
+            }
+            return pluginBase;
+        }
+
+        public bool IsNamed(string name)
+        {
+            return Names.Contains(name.ToLower());
+        }
+
+        public void Start()
+        {
+            if (!IsBackgroundTask)
+            {
+                throw new NotSupportedException();
+            }
+            (Plugin as IBackgroundTask).Start();
+        }
+
+        public void Stop()
+        {
+            if (!IsBackgroundTask)
+            {
+                throw new NotSupportedException();
+            }
+            (Plugin as IBackgroundTask).Stop();
+        }
+
+        public void Run(ircMessage theMessage)
+        {
+            if (!IsCommand)
+            {
+                throw new NotSupportedException();
+            }
+            (Plugin as ICommand).Run(theMessage);
+        }
+
+        public void Recycle(PluginBase plugin)
+        {
+            foreach (KeyValuePair<string, PluginBase> instance in ChannelScoped.Where(x => x.Value == plugin).ToList())
+            {
+                ChannelScoped.Remove(instance.Key);
+            }
+            foreach (KeyValuePair<User, PluginBase> instance in UserScoped.Where(x => x.Value == plugin).ToList())
+            {
+                UserScoped.Remove(instance.Key);
+            }
+            foreach (KeyValuePair<KeyValuePair<User, string>, PluginBase> instance in UserChannelScoped.Where(x => x.Value == plugin).ToList())
+            {
+                UserChannelScoped.Remove(instance.Key);
+            }
         }
     }
 }

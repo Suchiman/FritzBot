@@ -1,20 +1,17 @@
-﻿using System;
-using System.CodeDom.Compiler;
+﻿using FritzBot.Core;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
-using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Web;
-using Microsoft.CSharp;
-using FritzBot.Core;
 
 namespace FritzBot
 {
     public static class toolbox
     {
-        private static Thread LoggingThread = new Thread(new ThreadStart(LogThread));
+        private static Thread LoggingThread = new Thread(LogThread);
         private static Queue<string> LoggingList = new Queue<string>();
         private static readonly object _LogThreadLocker = new object();
         private static readonly object _LoggingLocker = new object();
@@ -230,7 +227,7 @@ namespace FritzBot
 
         public static Thread SafeThreadStart(string name, bool restartOnException, Action method)
         {
-            Thread t = new Thread(new ThreadStart(() =>
+            Thread t = new Thread(() =>
             {
                 do
                 {
@@ -247,7 +244,7 @@ namespace FritzBot
                         Logging(ex);
                     }
                 } while (restartOnException);
-            }))
+            })
             {
                 IsBackground = true,
                 Name = name

@@ -1,8 +1,10 @@
 ﻿using System;
-using System.Linq;
 
 namespace FritzBot.Module
 {
+    /// <summary>
+    /// Definiert die Namen / Shortcuts über das das Plugin angesprochen wird
+    /// </summary>
     [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
     public class NameAttribute : Attribute
     {
@@ -29,19 +31,11 @@ namespace FritzBot.Module
             }
             return true;
         }
-
-        public bool IsNamed(string name)
-        {
-            return Names.Any(x => x.ToLower() == name.ToLower());
-        }
-
-        public static bool IsNamed(object obj, string name)
-        {
-            NameAttribute na = toolbox.GetAttribute<NameAttribute>(obj);
-            return na != null && na.IsNamed(name);
-        }
     }
 
+    /// <summary>
+    /// Gibt einen Hilfetext für dieses Plugin an
+    /// </summary>
     [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
     public class HelpAttribute : Attribute
     {
@@ -53,6 +47,10 @@ namespace FritzBot.Module
         }
     }
 
+    /// <summary>
+    /// Wenn gesetzt, bestimmt sein Wert ob ein gültiger Aufruf Attribute haben muss oder nicht.
+    /// Andernfalls wird nicht geprüft ob Werte übergeben werden müssen oder nicht
+    /// </summary>
     [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
     public class ParameterRequiredAttribute : Attribute
     {
@@ -69,12 +67,18 @@ namespace FritzBot.Module
         }
     }
 
+    /// <summary>
+    /// Gibt an, dass der Benutzer über Admin berechtigungen verfügen muss
+    /// </summary>
     [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
     public class AuthorizeAttribute : Attribute
     {
         public AuthorizeAttribute() { }
     }
 
+    /// <summary>
+    /// Gibt an, dass dieses Plugin vor der Hilfe und anderen listenden Funktionen versteckt werden soll
+    /// </summary>
     [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
     public class HiddenAttribute : Attribute
     {
@@ -86,9 +90,49 @@ namespace FritzBot.Module
         }
     }
 
+    /// <summary>
+    /// Gibt an, dass dieses Plugin benachrichtigungen für Subscriber unterstützt
+    /// </summary>
     [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
     public class SubscribeableAttribute : Attribute
     {
         public SubscribeableAttribute() { }
+    }
+
+    /// <summary>
+    /// Definiert den Scope einer Instanz dieses Plugins. Wenn nicht oder nicht anders gesetzt, ist der Standardwert Global
+    /// </summary>
+    [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
+    public class ScopeAttribute : Attribute
+    {
+        public Scope Scope { get; set; }
+
+        public ScopeAttribute(Scope scope)
+        {
+            Scope = scope;
+        }
+    }
+}
+
+namespace FritzBot
+{
+    public enum Scope
+    {
+        /// <summary>
+        /// Eine Instanz gilt für alle User in jedem Channel
+        /// </summary>
+        Global,
+        /// <summary>
+        /// Eine Instanz gilt nur für einen User
+        /// </summary>
+        User,
+        /// <summary>
+        /// Eine Instanz gilt nur pro Channel
+        /// </summary>
+        Channel,
+        /// <summary>
+        /// Eine Instanz gilt für einen User pro Channel
+        /// </summary>
+        UserChannel
     }
 }

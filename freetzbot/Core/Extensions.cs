@@ -212,6 +212,18 @@ namespace FritzBot.Core
         }
     }
 
+    public static class PluginExtensions
+    {
+        public static T As<T>(this PluginInfo info) where T : class
+        {
+            if (info == null)
+            {
+                return null;
+            }
+            return info.Plugin as T;
+        }
+    }
+
     public static class OtherExtensions
     {
         public static bool In<T>(this T source, params T[] values)

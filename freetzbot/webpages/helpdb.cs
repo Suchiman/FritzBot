@@ -1,6 +1,5 @@
 ﻿using FritzBot;
 using FritzBot.Core;
-using FritzBot.Module;
 using System;
 using System.Linq;
 
@@ -28,12 +27,11 @@ namespace webpages
                 }
             }
 
-            foreach (ICommand theCommand in PluginManager.GetInstance().Get<ICommand>().HasAttribute<ICommand, FritzBot.Module.NameAttribute>().OrderBy(x => x.GetType().Name))
+            foreach (PluginInfo info in PluginManager.GetInstance().Where(x => x.Names.Count > 0).OrderBy(x => x.Names[0]))
             {
-                bool OPNeeded = toolbox.GetAttribute<AuthorizeAttribute>(theCommand) != null;
-                if (!OPNeeded || Admin)
+                if (!info.AuthenticationRequired || Admin)
                 {
-                    theresponse.page += "<tr><td>" + String.Join(", ", toolbox.GetAttribute<NameAttribute>(theCommand).Names) + "</td><td>" + toolbox.GetAttribute<HelpAttribute>(theCommand).Help + "</td></tr>";
+                    theresponse.page += "<tr><td>" + String.Join(", ", info.Names) + "</td><td>" + info.HelpText + "</td></tr>";
                 }
             }
             theresponse.page += "</table>";
