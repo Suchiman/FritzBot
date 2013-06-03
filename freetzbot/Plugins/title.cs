@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Security;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace FritzBot.Plugins
@@ -34,10 +35,10 @@ namespace FritzBot.Plugins
                 foreach (string link in links)
                 {
                     WebClient dl = new WebClient();
-                    dl.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.15 (KHTML, like Gecko) Chrome/24.0.1295.0 Safari/537.15");
+                    dl.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1468.0 Safari/537.36");
                     dl.DownloadProgressChanged += dl_DownloadProgressChanged;
-                    dl.DownloadStringCompleted += dl_DownloadStringCompleted;
-                    dl.DownloadStringAsync(new Uri(link), theMessage);
+                    dl.DownloadDataCompleted += dl_DownloadDataCompleted;
+                    dl.DownloadDataAsync(new Uri(link), theMessage);
                 }
             }
             catch (Exception ex)
@@ -46,7 +47,7 @@ namespace FritzBot.Plugins
             }
         }
 
-        private void dl_DownloadStringCompleted(object sender, DownloadStringCompletedEventArgs e)
+        void dl_DownloadDataCompleted(object sender, DownloadDataCompletedEventArgs e)
         {
             if (e.Cancelled || e.Error != null || e.Result == null)
             {
@@ -54,7 +55,16 @@ namespace FritzBot.Plugins
             }
             try
             {
-                HtmlNode doc = HtmlDocumentExtensions.GetHtmlNode(e.Result);
+                string html;
+                if (FritzBot.Functions.UTF8Checker.IsUtf8(e.Result))
+                {
+                    html = Encoding.UTF8.GetString(e.Result);
+                }
+                else
+                {
+                    html = Encoding.GetEncoding("iso-8859-1").GetString(e.Result);
+                }
+                HtmlNode doc = HtmlDocumentExtensions.GetHtmlNode(html);
                 HtmlNode titleNode = doc.SelectSingleNode("//head/title");
                 if (titleNode == null)
                 {
