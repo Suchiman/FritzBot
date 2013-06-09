@@ -74,7 +74,7 @@
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Newtonsoft.Json.5.0.5\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\packages\Newtonsoft.Json.5.0.6\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Web" />
@@ -96,6 +96,7 @@
     <Compile Include="DataModel\WitzEntry.cs" />
     <Compile Include="Functions\Geolocation.cs" />
     <Compile Include="Functions\GoogleTranslator.cs" />
+    <Compile Include="Functions\Url.cs" />
     <Compile Include="Functions\UTF8Checker.cs" />
     <Compile Include="Plugins\admin.cs" />
     <Compile Include="Plugins\geolocator.cs" />

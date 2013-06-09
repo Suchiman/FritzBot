@@ -51,7 +51,7 @@ namespace FritzBot.Functions
         {
             get
             {
-                return String.Concat(sentences.Select(x => x.trans).ToArray());
+                return String.Concat(sentences.Select(x => x.trans));
             }
         }
     }
