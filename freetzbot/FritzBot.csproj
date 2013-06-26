@@ -77,11 +77,13 @@
       <HintPath>..\packages\Newtonsoft.Json.5.0.6\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Web" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Core\ConfigHelper.cs" />
     <Compile Include="Core\DBProvider.cs" />
     <Compile Include="Core\SODAQuery.cs" />
     <Compile Include="DataModel\AliasEntry.cs" />
@@ -129,6 +131,9 @@
     <Compile Include="Plugins\freetz.cs" />
     <Compile Include="Plugins\fw.cs" />
     <Compile Include="Plugins\google.cs" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Plugins\group.cs" />
     <Compile Include="Plugins\hilfe.cs" />
     <Compile Include="Plugins\ignore.cs" />

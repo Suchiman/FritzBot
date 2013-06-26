@@ -42,10 +42,9 @@ namespace FritzBot.Plugins
         public void WorkerThread()
         {
             List<string> alte = FTPGrabber.Scan(BaseDirectory, 1);
-            SimpleStorage storage = GetPluginStorage(new DBProvider());
             while (true)
             {
-                if (storage.Get("CheckEnabled", true))
+                if (ConfigHelper.GetBoolean("FWCheckEnabled", true))
                 {
                     List<string> neue = FTPGrabber.Scan(BaseDirectory, 1);
                     List<string> unEquals = neue.Where(x => !alte.Contains(x)).ToList();
@@ -56,7 +55,7 @@ namespace FritzBot.Plugins
                         NotifySubscribers(labors, unEquals.Select(x => BoxDatabase.GetInstance().GetShortName(x)).ToArray());
                         alte = neue;
                     }
-                    Thread.Sleep(storage.Get("Intervall", 600000));
+                    Thread.Sleep(ConfigHelper.GetInt("FWCheckIntervall", 600000));
                 }
                 else
                 {

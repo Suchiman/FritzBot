@@ -1,6 +1,5 @@
 ﻿using Db4objects.Db4o.Ext;
 using FritzBot.Core;
-using FritzBot.DataModel;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,11 +8,10 @@ using System.Threading;
 
 namespace FritzBot
 {
-    public class Program
+    public static class Program
     {
         public static bool restart;
 
-        public static SimpleStorage BotSettings;
         private static bool FloodingNotificated;
         private static List<DateTime> Floodings = new List<DateTime>();
 
@@ -27,9 +25,9 @@ namespace FritzBot
             if (!toolbox.IsOp(theMessage.TheUser))
             {
                 Floodings.RemoveAll(x => x < DateTime.Now.AddSeconds(-30));
-                if (Floodings.Count >= BotSettings.Get("FloodingCount", 10))
+                if (Floodings.Count >= ConfigHelper.GetInt("FloodingCount", 10))
                 {
-                    if (FloodingNotificated == false)
+                    if (!FloodingNotificated)
                     {
                         FloodingNotificated = true;
                         theMessage.Answer("Flooding Protection aktiviert");
@@ -103,12 +101,12 @@ namespace FritzBot
                             {
                                 if (nutzer.Admin)
                                 {
-                                    Console.WriteLine(nutzer.Names.ElementAt(0) + " ist bereits OP");
+                                    Console.WriteLine(nutzer.LastUsedName + " ist bereits OP");
                                     break;
                                 }
                                 nutzer.Admin = true;
                                 db.SaveOrUpdate(nutzer);
-                                Console.WriteLine(nutzer.Names.ElementAt(0) + " zum OP befördert");
+                                Console.WriteLine(nutzer.LastUsedName + " zum OP befördert");
                             }
                             else
                             {
@@ -174,8 +172,6 @@ namespace FritzBot
                 DBProvider.ReCreate();
                 DBProvider.Defragmentieren();
             }
-
-            BotSettings = new DBProvider().GetSimpleStorage("Bot");
 
             PluginManager.GetInstance().BeginInit(true);
 

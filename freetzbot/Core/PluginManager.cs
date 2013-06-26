@@ -35,34 +35,6 @@ namespace FritzBot.Core
             GetInstance().Where(x => x.IsBackgroundTask).TryLogEach(x => x.Stop());
         }
 
-        public PluginManager()
-        {
-            using (DBProvider db = new DBProvider())
-            {
-                SimpleStorage storage = db.GetSimpleStorage("PluginManager");
-                string[] ReferencedAssemblies = storage.Get<string[]>("ReferencedAssemblies", null);
-                if (ReferencedAssemblies == null)
-                {
-                    ReferencedAssemblies = new string[]
-                    {
-                        "mscorlib.dll",
-                        "System.dll",
-                        "System.Core.dll",
-                        "System.Web.dll",
-                        "System.Xml.dll",
-                        "System.Xml.Linq.dll",
-                        "Db4objects.Db4o.dll",
-                        "Db4objects.Db4o.Linq.dll",
-                        "HtmlAgilityPack.dll",
-                        "Mono.Reflection.dll",
-                        "Newtonsoft.Json.dll"
-                    };
-                    storage.Store("ReferencedAssemblies", ReferencedAssemblies);
-                    db.SaveOrUpdate(storage);
-                }
-            }
-        }
-
         /// <summary>
         /// Instanziert die Typen, entfernt bereits vorhandene Typen mit gleichem FullName und fügt die neuen hinzu.
         /// </summary>
@@ -216,16 +188,14 @@ namespace FritzBot.Core
             compilerParams.GenerateInMemory = true;
             compilerParams.IncludeDebugInformation = false;
             compilerParams.WarningLevel = 0;
-            compilerParams.OutputAssembly = "FritzBot";
-            using (DBProvider db = new DBProvider())
-            {
-                SimpleStorage storage = db.GetSimpleStorage("PluginManager");
-                if (storage != null)
-                {
-                    compilerParams.ReferencedAssemblies.AddRange(storage.Get<string[]>("ReferencedAssemblies"));
-                }
-            }
+
+            //Darf für Mono nicht den selben Namen wie die FritzBot.exe Assembly haben, liefert als CompiledAssembly sonst die FritzBot.exe Assembly
+            compilerParams.OutputAssembly = "FritzBotDynamic"; 
+
+            string assemblies = ConfigHelper.GetString("ReferencedAssemblies", "mscorlib.dll,System.dll,System.Core.dll,System.Web.dll,System.Xml.dll,System.Xml.Linq.dll,Db4objects.Db4o.dll,Db4objects.Db4o.Linq.dll,HtmlAgilityPack.dll,Mono.Reflection.dll,Newtonsoft.Json.dll,SmartIrc4net.dll");
+            compilerParams.ReferencedAssemblies.AddRange(assemblies.Split(','));
             compilerParams.ReferencedAssemblies.Add(Path.GetFileName(Assembly.GetExecutingAssembly().Location));
+
             CompilerResults results = null;
             try
             {

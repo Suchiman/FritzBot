@@ -1,5 +1,6 @@
 ﻿using FritzBot.DataModel;
 using FritzBot.Functions;
+using Meebey.SmartIrc4net;
 using System;
 using System.Linq;
 
@@ -12,10 +13,26 @@ namespace FritzBot.Plugins
     {
         public void Run(ircMessage theMessage)
         {
-            LocationInfoDetailed details = Geolocation.GetLocationInfoDetailed(theMessage.CommandArgs.FirstOrDefault());
+            string address = theMessage.CommandArgs.FirstOrDefault();
+            try
+            {
+                IrcUser user = theMessage.Data.Irc.GetIrcUser(address);
+                address = user.Host;
+            }
+            catch { }
+            Console.WriteLine("Führe ortung durch für: " + address);
+
+            LocationInfoDetailed details = Geolocation.GetLocationInfoDetailed(address);
             if (details.Success)
             {
-                theMessage.Answer(String.Format("Die IP {0} befindet sich im Land {1} ({2}), vermutlich in der Stadt {3}. Dort ist es gerade {4} Uhr", details.ipAddress, details.countryName, details.countryCode, details.cityName, details.LocalTime.ToString()));
+                if (String.IsNullOrEmpty(details.timeZone))
+                {
+                    theMessage.Answer(String.Format("Die IP {0} befindet sich im Land {1} ({2})", details.ipAddress, details.countryName, details.countryCode));
+                }
+                else
+                {
+                    theMessage.Answer(String.Format("Die IP {0} befindet sich im Land {1} ({2}), vermutlich in der Stadt {3}. Dort ist es gerade {4} Uhr", details.ipAddress, details.countryName, details.countryCode, details.cityName, details.LocalTime.ToString()));
+                }
             }
             else
             {

@@ -107,7 +107,7 @@ namespace FritzBot
         {
             get
             {
-                return Program.BotSettings.Get("Silence", false);
+                return ConfigHelper.GetBoolean("Silence", false);
             }
         }
 

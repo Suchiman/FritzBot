@@ -26,9 +26,38 @@ namespace FritzBot.Plugins
                 case "boxdb":
                     BoxDB(theMessage);
                     return;
-                default:
-                    theMessage.Answer("Das habe ich nicht verstanden: Unterbefehle: box-recheck, boxdb (add, remove, regex, list)");
+                case "config":
+                    Config(theMessage);
                     return;
+                default:
+                    theMessage.Answer("Das habe ich nicht verstanden: Unterbefehle: box-recheck, boxdb (add, remove, regex, list), config");
+                    return;
+            }
+        }
+
+        private void Config(ircMessage theMessage)
+        {
+            if (!theMessage.CommandArgs.Count.In(2, 3))
+            {
+                theMessage.Answer("Syntax: !admin config <key> <value>");
+                return;
+            }
+            string key = theMessage.CommandArgs[1];
+            if (theMessage.CommandArgs.Count == 2)
+            {
+                if (ConfigHelper.KeyExists(key))
+                {
+                    theMessage.Answer(ConfigHelper.GetString(key));
+                }
+                else
+                {
+                    theMessage.Answer("Der Schlüssel " + key + " existiert nicht");
+                }
+            }
+            if (theMessage.CommandArgs.Count == 3)
+            {
+                ConfigHelper.SetValue(key, theMessage.CommandArgs[2]);
+                theMessage.Answer("Okay");
             }
         }
 

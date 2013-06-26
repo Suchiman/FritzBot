@@ -77,7 +77,6 @@ namespace FritzBot.Plugins
 
         private void LaborCheck()
         {
-            SimpleStorage storage = GetPluginStorage(new DBProvider());
             List<Labordaten> alte = null;
             while (!TryGetNewestLabors(out alte))
             {
@@ -85,7 +84,7 @@ namespace FritzBot.Plugins
             }
             while (true)
             {
-                if (storage.Get("CheckEnabled", true))
+                if (ConfigHelper.GetBoolean("LaborCheckEnabled", true))
                 {
                     List<Labordaten> neue = null;
                     while (!TryGetNewestLabors(out neue))
@@ -100,7 +99,7 @@ namespace FritzBot.Plugins
                         NotifySubscribers(labors);
                         alte = neue;
                     }
-                    Thread.Sleep(storage.Get("Intervall", 300000));
+                    Thread.Sleep(ConfigHelper.GetInt("LaborCheckIntervall", 300000));
                 }
                 else
                 {

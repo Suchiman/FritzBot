@@ -234,6 +234,7 @@ namespace FritzBot
                     try
                     {
                         method();
+                        return;
                     }
                     catch (Exception ex)
                     {

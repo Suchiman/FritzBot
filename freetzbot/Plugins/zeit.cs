@@ -1,5 +1,6 @@
 ﻿using FritzBot.DataModel;
 using System;
+using System.Globalization;
 
 namespace FritzBot.Plugins
 {
@@ -12,12 +13,19 @@ namespace FritzBot.Plugins
         {
             try
             {
-                theMessage.Answer("Laut meiner Uhr ist es gerade " + DateTime.Now.ToString("HH:mm:ss") + " am " + DateTime.Now.ToShortDateString());
+                DateTime now = DateTime.Now;
+                theMessage.Answer("Laut meiner Uhr ist es gerade " + now.ToString("HH:mm:ss") + " am " + now.ToShortDateString() + " in der Kalenderwoche " + GetKalenderwoche(now));
             }
             catch
             {
                 theMessage.Answer("Scheinbar ist meine Uhr kaputt, statt der Zeit habe ich nur eine Exception bekommen :(");
             }
+        }
+
+        public int GetKalenderwoche(DateTime day)
+        {
+            CultureInfo CUI = CultureInfo.CurrentCulture;
+            return CUI.Calendar.GetWeekOfYear(day, CUI.DateTimeFormat.CalendarWeekRule, CUI.DateTimeFormat.FirstDayOfWeek);
         }
     }
 }

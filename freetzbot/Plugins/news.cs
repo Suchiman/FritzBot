@@ -27,14 +27,13 @@ namespace FritzBot.Plugins
 
         private void NewsThread()
         {
-            SimpleStorage storage = GetPluginStorage(new DBProvider());
             const string baseurl = "http://webgw.avm.de/download/UpdateNews.jsp";
             string output = string.Empty;
             List<NewsEntry> NewsDE = GetNews(baseurl + "?lang=de");
             List<NewsEntry> NewsEN = GetNews(baseurl + "?lang=en");
             while (true)
             {
-                Thread.Sleep(storage.Get("Intervall", 300) * 1000);
+                Thread.Sleep(ConfigHelper.GetInt("NewsCheckIntervall", 300) * 1000);
                 List<NewsEntry> NewsDENew = GetNews(baseurl + "?lang=de");
                 List<NewsEntry> NewsENNew = GetNews(baseurl + "?lang=en");
                 string[] DiffDE = NewsDENew.Where(x => !NewsDE.Contains(x)).Select(x => x.Titel).Distinct().ToArray();

@@ -1,11 +1,12 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Net;
 
 namespace FritzBot.Functions
 {
     public static class Geolocation
     {
-        private const string APIUrl = "http://api.ipinfodb.com/v3/ip-{0}/?key=a97de1a8f890097cc2e32558555d836957229706b9b3ac264ef3cfe10e54ea69&ip={1}&format=json";
+        private const string APIUrl = "http://api.ipinfodb.com/v3/ip-{0}/?format=json&key=a97de1a8f890097cc2e32558555d836957229706b9b3ac264ef3cfe10e54ea69&ip={1}";
 
         public static string GetCountryCode(string ip)
         {
@@ -17,22 +18,53 @@ namespace FritzBot.Functions
             return String.Empty;
         }
 
-        public static LocationInfo GetLocationInfoSimple(string ip)
+        private static string SafeGet(string ip, string preferedMode)
         {
-            string url = String.Format(APIUrl, "country", ip);
+            IPAddress ad;
+            if (IPAddress.TryParse(ip, out ad))
+            {
+                if (ad.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+                {
+                    preferedMode = "country"; //IPv6 Lokalisierung scheint nur im Country Mode zu funktionieren
+                }
+            }
+            else
+            {
+                try
+                {
+                    IPHostEntry entry = Dns.GetHostEntry(ip);
+                    if (entry != null && entry.AddressList.Length > 0)
+                    {
+                        ad = entry.AddressList[0];
+                        if (ad.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+                        {
+                            preferedMode = "country"; //IPv6 Lokalisierung scheint nur im Country Mode zu funktionieren
+                        }
+                        ip = ad.ToString();
+                    }
+                }
+                catch { }
+            }
+
+            string url = String.Format(APIUrl, preferedMode, ip);
             string response = toolbox.GetWeb(url);
 
-            LocationInfo location = JsonConvert.DeserializeObject<LocationInfo>(response);
-            return location;
+            if (String.IsNullOrEmpty(response) || response.Contains("ERROR"))
+            {
+                response = "{\"statusCode\":\"NOK\"}";
+            }
+
+            return response;
+        }
+
+        public static LocationInfo GetLocationInfoSimple(string ip)
+        {
+            return JsonConvert.DeserializeObject<LocationInfo>(SafeGet(ip, "country"));
         }
 
         public static LocationInfoDetailed GetLocationInfoDetailed(string ip)
         {
-            string url = String.Format(APIUrl, "city", ip);
-            string response = toolbox.GetWeb(url);
-
-            LocationInfoDetailed location = JsonConvert.DeserializeObject<LocationInfoDetailed>(response);
-            return location;
+            return JsonConvert.DeserializeObject<LocationInfoDetailed>(SafeGet(ip, "city"));
         }
     }
 

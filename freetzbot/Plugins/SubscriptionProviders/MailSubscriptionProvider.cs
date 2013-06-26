@@ -24,12 +24,8 @@ namespace FritzBot.Plugins.SubscriptionProviders
                 return;
             }
 
-            SimpleStorage storage = GetPluginStorage(new DBProvider());
-            SmtpClient client = new SmtpClient(storage.Get("SMTPServer", "localhost"), storage.Get("SMTPPort", 25));
-            client.EnableSsl = storage.Get("SMTPSSL", false);
-            client.Credentials = new NetworkCredential(storage.Get("SMTPAccount", ""), storage.Get("SMTPPasswort", ""));
-            MailAddress from = new MailAddress(storage.Get("SMTPFrom", ""), "FritzBot");
-
+            SmtpClient client = new SmtpClient();
+            MailAddress from = new MailAddress(ConfigHelper.GetString("SMTPFrom", ""), "FritzBot");
 
             MailAddress to = new MailAddress(receiver);
             MailMessage mailMessage = new MailMessage(from, to);

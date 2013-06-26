@@ -39,12 +39,11 @@ namespace FritzBot.Plugins
                 using (DBProvider db = new DBProvider())
                 {
                     User u = db.GetUser(nick);
-                    SimpleStorage pluginStorage = GetPluginStorage(db);
                     SimpleStorage userStorage = db.GetSimpleStorage(u, PluginID);
 
                     if (check_db)
                     {
-                        if (!pluginStorage.Get("BoxFrage", false) || userStorage.Get("asked", false)) return;
+                        if (!ConfigHelper.GetBoolean("BoxFrage", false) || userStorage.Get("asked", false)) return;
                         System.Threading.Thread.Sleep(10000);
                     }
                     connection.SendMessage(SendType.Message, nick, String.Format("Hallo {0}, ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !boxadd deine box, mitteilen, falls du dies nicht bereits getan hast :).", nick));
