@@ -10,7 +10,8 @@ namespace FritzBot
 {
     public static class Program
     {
-        public static bool restart;
+        private static AutoResetEvent ShutdownSignal;
+        private static bool RestartFlag;
 
         private static bool FloodingNotificated;
         private static List<DateTime> Floodings = new List<DateTime>();
@@ -115,8 +116,7 @@ namespace FritzBot
                         }
                         break;
                     case "exit":
-                        ServerManager.GetInstance().DisconnectAll();
-                        Environment.Exit(0);
+                        Shutdown();
                         break;
                     case "connect":
                         AskConnection();
@@ -126,6 +126,12 @@ namespace FritzBot
                         break;
                 }
             }
+        }
+
+        public static void Shutdown(bool restart = false)
+        {
+            RestartFlag = restart;
+            ShutdownSignal.Set();
         }
 
         private static void AskConnection()
@@ -157,7 +163,8 @@ namespace FritzBot
 
         private static void Init()
         {
-            restart = false;
+            RestartFlag = false;
+            ShutdownSignal = new AutoResetEvent(false);
 
             try
             {
@@ -191,6 +198,7 @@ namespace FritzBot
 
         private static void Deinit()
         {
+            ServerManager.GetInstance().DisconnectAll();
             PluginManager.Shutdown();
             DBProvider.Shutdown();
         }
@@ -198,19 +206,9 @@ namespace FritzBot
         private static void Main()
         {
             Init();
-            while (ServerManager.GetInstance().Connected)
-            {
-                Thread.Sleep(2000);
-            }
+            ShutdownSignal.WaitOne();
             Deinit();
-            if (restart == true)
-            {
-                Environment.Exit(99);
-            }
-            else
-            {
-                Environment.Exit(0);
-            }
+            Environment.Exit(RestartFlag ? 99 : 0);
         }
     }
 }

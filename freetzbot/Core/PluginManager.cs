@@ -16,7 +16,7 @@ namespace FritzBot.Core
     {
         private static PluginManager instance;
         private List<PluginInfo> Plugins = new List<PluginInfo>();
-        private Dictionary<string, PluginInfo> LookupDictionary = new Dictionary<string, PluginInfo>();
+        private Dictionary<string, PluginInfo> LookupDictionary = new Dictionary<string, PluginInfo>(StringComparer.OrdinalIgnoreCase);
 
         public static PluginManager GetInstance()
         {
@@ -54,7 +54,7 @@ namespace FritzBot.Core
             {
                 foreach (string name in plugin.Names)
                 {
-                    LookupDictionary[name.ToLower()] = plugin;
+                    LookupDictionary[name] = plugin;
                 }
             }
 
@@ -84,7 +84,7 @@ namespace FritzBot.Core
         public PluginInfo Get(string name)
         {
             PluginInfo plugin;
-            if (LookupDictionary.TryGetValue(name.ToLower(), out plugin))
+            if (LookupDictionary.TryGetValue(name, out plugin))
             {
                 return plugin;
             }
@@ -190,7 +190,7 @@ namespace FritzBot.Core
             compilerParams.WarningLevel = 0;
 
             //Darf für Mono nicht den selben Namen wie die FritzBot.exe Assembly haben, liefert als CompiledAssembly sonst die FritzBot.exe Assembly
-            compilerParams.OutputAssembly = "FritzBotDynamic"; 
+            compilerParams.OutputAssembly = "FritzBotDynamic";
 
             string assemblies = ConfigHelper.GetString("ReferencedAssemblies", "mscorlib.dll,System.dll,System.Core.dll,System.Web.dll,System.Xml.dll,System.Xml.Linq.dll,Db4objects.Db4o.dll,Db4objects.Db4o.Linq.dll,HtmlAgilityPack.dll,Mono.Reflection.dll,Newtonsoft.Json.dll,SmartIrc4net.dll");
             compilerParams.ReferencedAssemblies.AddRange(assemblies.Split(','));

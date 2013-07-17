@@ -118,7 +118,15 @@ namespace FritzBot.Core
         {
             foreach (Server theServer in _servers.Where(x => !x.Connected))
             {
-                theServer.Connect();
+                try
+                {
+                    theServer.Connect();
+                }
+                catch (Exception ex)
+                {
+                    toolbox.Logging("Herstellen der Verbindung zu Server " + theServer.Hostname + " fehlgeschlagen");
+                    toolbox.Logging(ex);
+                }
             }
         }
 
@@ -556,8 +564,14 @@ namespace FritzBot.Core
             if (_connection != null)
             {
                 _connection.RfcQuit(QuitMessage);
-                _listener.Abort();
-                _connection.Disconnect();
+                if (_listener != null)
+                {
+                    _listener.Abort();
+                }
+                if (_connection.IsConnected)
+                {
+                    _connection.Disconnect();
+                }
                 _connection = null;
                 Connected = false;
                 toolbox.Logging("Verbindung zu Server " + Hostname + " getrennt");

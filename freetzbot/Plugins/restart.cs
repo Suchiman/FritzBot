@@ -11,8 +11,7 @@ namespace FritzBot.Plugins
     {
         public void Run(ircMessage theMessage)
         {
-            Program.restart = true;
-            ServerManager.GetInstance().DisconnectAll();
+            Program.Shutdown(true);
         }
     }
 }
