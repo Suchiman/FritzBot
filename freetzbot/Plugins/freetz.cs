@@ -8,17 +8,17 @@ using System.Linq;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("freetz", "f", "fp")]
-    [Module.Help("Das erzeugt einen Link zu einem Freetz Packet, Beispiel: !fp dnsmasq")]
+    [Module.Name("fp")]
+    [Module.Help("Das erzeugt einen Link zu einem Freetz Paket, Beispiel: !fp dnsmasq")]
     class freetz : PluginBase, ICommand
     {
-        private DataCache<List<KeyValuePair<string, string>?>> PackagesCache = new DataCache<List<KeyValuePair<string, string>?>>(GetPackages, 30);
+        private DataCache<Dictionary<string, string>> PackagesCache = new DataCache<Dictionary<string, string>>(GetPackages, 30);
 
         public void Run(ircMessage theMessage)
         {
             if (!theMessage.HasArgs)
             {
-                theMessage.Answer("http://freetz.org/");
+                theMessage.Answer("http://freetz.org/wiki/packages");
                 return;
             }
 
@@ -27,44 +27,44 @@ namespace FritzBot.Plugins
             string sharpSplit = String.Empty;
             if (input.Contains('#'))
             {
-                string[] split = input.Split('#');
+                string[] split = input.Split(new[] { '#' }, 2);
                 sharpSplit = "#" + split[1];
                 input = split[0];
             }
             int inputLength = input.Length;
-            List<KeyValuePair<string, string>?> packages = PackagesCache.GetItem(true).Where(x => x.HasValue).ToList(); //PackagesCache.GetItem(true).Where(x => x.HasValue && (x.Value.Key.Length < (inputLength + 2) && x.Value.Key.Length > (inputLength - 2))).ToList();
-            KeyValuePair<string, string>? TheChoosenOne = packages.FirstOrDefault(x => x.Value.Key.Equals(input, StringComparison.OrdinalIgnoreCase));
-            if (TheChoosenOne == null)
+            string PackageUrl = null, PackageName = input;
+
+            Dictionary<string, string> packages = PackagesCache.GetItem(true);
+            if (packages != null)
             {
-                TheChoosenOne = packages.Where(x => x.HasValue).FirstOrDefault(x => x.Value.Key.ToLower().StartsWith(input));
-                if (TheChoosenOne != null)
+                if (!packages.TryGetValue(input, out PackageUrl) || String.IsNullOrEmpty(PackageUrl))
                 {
-                    lowestDifference = Math.Abs(TheChoosenOne.Value.Key.Length - inputLength);
-                }
-            }
-            if (TheChoosenOne == null)
-            {
-                lowestDifference = 1000;
-                foreach (KeyValuePair<string, string> one in packages)
-                {
-                    int result = StringSimilarity.Compare(input, one.Key, true);
-                    if (result < lowestDifference)
+                    string likelyKey = packages.Keys.FirstOrDefault(x => x.StartsWith(input, StringComparison.OrdinalIgnoreCase));
+                    if (likelyKey != null)
                     {
-                        TheChoosenOne = one;
-                        lowestDifference = result;
+                        PackageUrl = packages[likelyKey];
+                        PackageName = likelyKey;
+                        lowestDifference = Math.Abs(likelyKey.Length - inputLength);
+                    }
+                    else
+                    {
+                        lowestDifference = 1000;
+                        foreach (KeyValuePair<string, string> one in packages)
+                        {
+                            int result = StringSimilarity.Compare(input, one.Key, true);
+                            if (result < lowestDifference)
+                            {
+                                PackageUrl = one.Value;
+                                PackageName = one.Key;
+                                lowestDifference = result;
+                            }
+                        }
                     }
                 }
             }
-            if (TheChoosenOne.HasValue)
+            if (!String.IsNullOrEmpty(PackageUrl))
             {
-                if (lowestDifference > 1)
-                {
-                    theMessage.Answer(String.Format("Meinten Sie? {0}: http://freetz.org{1}{2}", TheChoosenOne.Value.Key, TheChoosenOne.Value.Value, sharpSplit));
-                }
-                else
-                {
-                    theMessage.Answer(String.Format("Freetz Packet {0}: http://freetz.org{1}{2}", TheChoosenOne.Value.Key, TheChoosenOne.Value.Value, sharpSplit));
-                }
+                theMessage.Answer(String.Format("{0} {1}: http://freetz.org{2}{3}", lowestDifference > 1 ? "Meinten Sie?" : "Freetz Paket", PackageName, PackageUrl, sharpSplit));
             }
             else
             {
@@ -72,12 +72,12 @@ namespace FritzBot.Plugins
             }
         }
 
-        private static List<KeyValuePair<string, string>?> GetPackages(List<KeyValuePair<string, string>?> Alte)
+        private static Dictionary<string, string> GetPackages(Dictionary<string, string> Alte)
         {
             try
             {
                 HtmlNode document = new HtmlDocument().LoadUrl("http://freetz.org/wiki/packages").DocumentNode;
-                return document.SelectNodes("//table[@class='wiki']/tr/td/a[@class='wiki']").Select(x => new KeyValuePair<string, string>?(new KeyValuePair<string, string>(x.InnerText, x.GetAttributeValue("href", "")))).ToList();
+                return document.SelectNodes("//table[@class='wiki']/tr/td/a[@class='wiki']").ToDictionary(k => k.InnerText, v => v.GetAttributeValue("href", ""), StringComparer.OrdinalIgnoreCase);
             }
             catch
             {
