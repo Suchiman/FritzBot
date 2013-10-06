@@ -148,7 +148,7 @@ namespace FritzBot.Plugins
         {
             HtmlNode LaborStartSeite = new HtmlDocument().LoadUrl("http://www.avm.de/de/Service/Service-Portale/Labor/index.php").DocumentNode.StripComments();
 
-            List<Labordaten> NeueLaborDaten = LaborStartSeite.Descendants("h2").First().Siblings().SelectMany(x => x.Descendants("a")).Where(x => x.ChildAttributes("href").Count() == 1).Where(x => x.ChildAttributes("style").Count() == 0 && !x.ChildAttributes("href").First().Value.StartsWith("..")).SelectMany(x => Labordaten.GetDaten(x.ChildAttributes("href").First().Value.Trim())).ToList();
+            List<Labordaten> NeueLaborDaten = LaborStartSeite.Descendants("h2").First().Siblings().SelectMany(x => x.Descendants("a")).Where(x => x.ChildAttributes("href").Count() == 1).Where(x => x.ChildAttributes("style").Count() == 0).Select(x => x.ChildAttributes("href").First().Value.Trim()).Where(x => !x.StartsWith("..") && !x.Contains("feedback")).SelectMany(x => Labordaten.GetDaten(x)).ToList();
 
             if (NeueLaborDaten.Count > 0)
             {
