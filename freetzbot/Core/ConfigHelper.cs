@@ -28,7 +28,7 @@ namespace FritzBot.Core
             KeyValueConfigurationElement entry = conf.AppSettings.Settings[key];
             if (entry == null)
             {
-                throw new ConfigurationException();
+                throw new ConfigurationErrorsException();
             }
             return entry.Value;
         }
