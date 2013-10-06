@@ -77,7 +77,7 @@ namespace FritzBot.Plugins
             try
             {
                 HtmlNode document = new HtmlDocument().LoadUrl("http://freetz.org/wiki/packages").DocumentNode;
-                return document.SelectNodes("//table[@class='wiki']/tr/td/a[@class='wiki']").ToDictionary(k => k.InnerText, v => v.GetAttributeValue("href", ""), StringComparer.OrdinalIgnoreCase);
+                return document.SelectNodes("//table[@class='wiki']/tr/td/a[@class='wiki']").Distinct(x => x.InnerText).ToDictionary(k => k.InnerText, v => v.GetAttributeValue("href", ""), StringComparer.OrdinalIgnoreCase);
             }
             catch
             {
