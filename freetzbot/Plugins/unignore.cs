@@ -19,7 +19,8 @@ namespace FritzBot.Plugins
                 if (u != null)
                 {
                     u.Ignored = false;
-                    theMessage.Answer(String.Format("Ingoranz für {0} aufgehoben", u.LastUsedName));
+                    theMessage.Answer(String.Format("Ignoranz für {0} aufgehoben", u.LastUsedName));
+                    return;
                 }
                 theMessage.Answer("Oh... Dieser User ist mir nicht bekannt");
             }
