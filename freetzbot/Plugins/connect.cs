@@ -16,6 +16,7 @@ namespace FritzBot.Plugins
             if (parameter.Length < 5)
             {
                 theMessage.Answer("Zu wenig Parameter! schau mal in die Hilfe");
+                return;
             }
             if (parameter[2].Length > 9)
             {
