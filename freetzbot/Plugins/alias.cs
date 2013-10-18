@@ -108,7 +108,7 @@ namespace FritzBot.Plugins
                     theMessage.Answer("Einen moment mal... das scheint rekursiv zu sein. Ich beende das mal");
                     return String.Empty;
                 }
-                IrcMessageData data = new IrcMessageData(theMessage.Data.Irc, theMessage.Data.From, theMessage.Data.Nick, theMessage.Data.Ident, theMessage.Data.Host, theMessage.Data.Channel, thealias, null, theMessage.Data.Type, theMessage.Data.ReplyCode);
+                IrcMessageData data = new IrcMessageData(theMessage.Data.Irc, theMessage.Data.From, theMessage.Data.Nick, theMessage.Data.Ident, theMessage.Data.Host, theMessage.Data.Channel, thealias, thealias, theMessage.Data.Type, theMessage.Data.ReplyCode);
                 ircMessage fake = new ircMessage(data, theMessage.Server, theMessage.TheUser);
                 Program.HandleCommand(fake);
                 return String.Empty;
