@@ -158,7 +158,7 @@ namespace FritzBot.Plugins
             List<string> firmwares = new List<string>();
             foreach (string datei in FtpRecursiv(ftp))
             {
-                string[] slashsplit = datei.Split(new string[] { "/" }, 2, StringSplitOptions.None);
+                string[] slashsplit = datei.Split(new[] { '/' }, 2);
                 string final = slashsplit[0] + "/";
                 if (slashsplit[1].EndsWith(".image"))
                 {

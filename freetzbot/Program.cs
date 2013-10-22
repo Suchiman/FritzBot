@@ -91,7 +91,7 @@ namespace FritzBot
             while (true)
             {
                 string ConsoleInput = Console.ReadLine();
-                string[] ConsoleSplitted = ConsoleInput.Split(new string[] { " " }, 2, StringSplitOptions.None);
+                string[] ConsoleSplitted = ConsoleInput.Split(new[] { ' ' }, 2);
                 switch (ConsoleSplitted[0])
                 {
                     case "op":

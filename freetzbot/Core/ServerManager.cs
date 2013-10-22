@@ -561,6 +561,7 @@ namespace FritzBot.Core
         /// </summary>
         public void Disconnect()
         {
+            Connected = false;
             if (_connection != null)
             {
                 _connection.RfcQuit(QuitMessage);
@@ -571,10 +572,9 @@ namespace FritzBot.Core
                 if (_connection.IsConnected)
                 {
                     _connection.Disconnect();
+                    toolbox.Logging("Verbindung zu Server " + Hostname + " getrennt");
                 }
                 _connection = null;
-                Connected = false;
-                toolbox.Logging("Verbindung zu Server " + Hostname + " getrennt");
             }
         }
 

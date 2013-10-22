@@ -125,23 +125,7 @@ namespace FritzBot.Plugins
 
         private List<Labordaten> GetDifferentLabors(List<Labordaten> alte, List<Labordaten> neue)
         {
-            List<Labordaten> veränderte = new List<Labordaten>();
-            foreach (Labordaten neu in neue)
-            {
-                bool matching = false;
-                foreach (Labordaten alt in alte)
-                {
-                    if (alt == neu)
-                    {
-                        matching = true;
-                    }
-                }
-                if (!matching)
-                {
-                    veränderte.Add(neu);
-                }
-            }
-            return veränderte;
+            return neue.Where(neu => !alte.Any(alt => alt == neu)).ToList();
         }
 
         private List<Labordaten> UpdateLaborCache(List<Labordaten> AlteLaborDaten)

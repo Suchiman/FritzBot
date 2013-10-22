@@ -1,11 +1,7 @@
 ﻿using FritzBot.Core;
 using FritzBot.DataModel;
 using Meebey.SmartIrc4net;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Xml.Linq;
 
 namespace FritzBot.Plugins.SubscriptionProviders
 {

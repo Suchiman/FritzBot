@@ -47,7 +47,7 @@ namespace FritzBot.Plugins
                 theMessage.Answer("Die Funktion benötigt 2 Parameter: !subscribe help <SubscriptionProvider>");
                 return;
             }
-            SubscriptionProvider provider = PluginManager.GetInstance().Where(x => x.Names.Contains(theMessage.CommandArgs[1].ToLower())).SingleOrDefault().As<SubscriptionProvider>();
+            SubscriptionProvider provider = PluginManager.GetInstance().Where(x => x.Names.Contains(theMessage.CommandArgs[1], StringComparer.OrdinalIgnoreCase)).SingleOrDefault().As<SubscriptionProvider>();
             if (provider == null)
             {
                 theMessage.Answer("Es gibt keinen solchen SubscriptionProvider");

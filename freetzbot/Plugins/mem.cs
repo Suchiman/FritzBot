@@ -38,7 +38,7 @@ namespace FritzBot.Plugins
                     toolbox.Logging(ex);
                 }
             }
-            theMessage.Answer(String.Format("Betriebssystem: {0}, RuntimeVersion: {1} {2}, CPU's: {3}, RAM Verbrauch (Programm / +Runtime): {4}MB / {5}MB", os, version.Trim(), IntPtr.Size == 8 ? "x64" : "x86", Environment.ProcessorCount, ToMB(GC.GetTotalMemory(true)), ToMB(System.Diagnostics.Process.GetCurrentProcess().WorkingSet64)));
+            theMessage.Answer(String.Format("Betriebssystem: {0}, RuntimeVersion: {1} {2}bit, CPU's: {3}, RAM Verbrauch (Programm / +Runtime): {4}MB / {5}MB", os, version.Trim(), IntPtr.Size * 8, Environment.ProcessorCount, ToMB(GC.GetTotalMemory(true)), ToMB(System.Diagnostics.Process.GetCurrentProcess().WorkingSet64)));
         }
 
         private string ToMB(long value)

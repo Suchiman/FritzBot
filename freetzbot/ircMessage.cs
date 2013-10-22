@@ -49,7 +49,7 @@ namespace FritzBot
             {
                 CommandArgs = MessageTmp.Skip(1).ToList();
                 CommandLine = String.Join(" ", CommandArgs);
-                CommandName = MessageTmp.First().TrimStart('!');
+                CommandName = MessageTmp[0].TrimStart('!');
             }
             else
             {
@@ -178,6 +178,10 @@ namespace FritzBot
         public void AnswerHelp(object plugin)
         {
             Module.HelpAttribute help = toolbox.GetAttribute<Module.HelpAttribute>(plugin);
+            if (help == null)
+            {
+                throw new ArgumentException("Das Plugin verfügt über keine Hilfe");
+            }
             Answer(help.Help);
         }
 
