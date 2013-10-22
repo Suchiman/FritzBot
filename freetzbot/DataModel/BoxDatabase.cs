@@ -1,6 +1,7 @@
 ﻿using FritzBot.Core;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -13,6 +14,8 @@ namespace FritzBot.DataModel
 
         public static BoxDatabase GetInstance()
         {
+            Contract.Ensures(Contract.Result<BoxDatabase>() != null);
+
             if (instance == null)
             {
                 instance = new BoxDatabase();
@@ -33,6 +36,8 @@ namespace FritzBot.DataModel
         /// <param name="RegexPattern">Ein oder mehrere Reguläre Ausdrücke um die Box zu erkennen</param>
         public Box AddBox(string ShortName, string FullName, params string[] RegexPattern)
         {
+            Contract.Ensures(Contract.Result<Box>() != null);
+
             if (GetBoxByShortName(ShortName) != null)
             {
                 throw new Exception("Es gibt bereits eine Box mit gleichem ShortName");

@@ -2,6 +2,7 @@
 using Meebey.SmartIrc4net;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 
 namespace FritzBot
@@ -19,6 +20,8 @@ namespace FritzBot
         /// <param name="user">Der der Nachricht zugeordnete User</param>
         public ircMessage(IrcMessageData data, Server server, User user)
         {
+            Contract.Requires(data != null && server != null && user != null);
+
             Data = data;
             Server = server;
             TheUser = user;
@@ -177,6 +180,8 @@ namespace FritzBot
         /// </summary>
         public void AnswerHelp(object plugin)
         {
+            Contract.Requires(plugin != null);
+
             Module.HelpAttribute help = toolbox.GetAttribute<Module.HelpAttribute>(plugin);
             if (help == null)
             {

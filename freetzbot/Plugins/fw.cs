@@ -2,6 +2,7 @@
 using FritzBot.DataModel;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -200,6 +201,9 @@ namespace FritzBot.Plugins
         /// <exception cref="ArgumentException">Tritt ein wenn kein korrektes Versionsformat übergeben wurde</exception>
         public static string ExtractVersion(string toExtract)
         {
+            Contract.Requires(toExtract != null);
+            Contract.Ensures(Contract.Result<string>() != null);
+
             Match regex = Regex.Match(toExtract, @"((\d{2,3}\.)?\d\d\.\d\d-?\d?\d?)\.\D"); //@"\d{2,3}\.\d\d\.\d\d"
             if (regex.Success)
             {

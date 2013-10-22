@@ -6,6 +6,7 @@ using Db4objects.Db4o.Linq;
 using FritzBot.DataModel;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -42,7 +43,10 @@ namespace FritzBot.Core
 
         private static IEmbeddedConfiguration GetConfiguration()
         {
+            Contract.Ensures(Contract.Result<IEmbeddedConfiguration>() != null);
+
             IEmbeddedConfiguration conf = Db4oEmbedded.NewConfiguration();
+
             conf.Common.ExceptionsOnNotStorable = true;
 
             EnsureIndex<AliasEntry>(conf.Common, "Key");
@@ -55,11 +59,17 @@ namespace FritzBot.Core
 
         private static void EnsureIndex<T>(ICommonConfiguration conf, string property)
         {
+            Contract.Requires(conf != null);
+            Contract.Requires(property != null);
+
             conf.ObjectClass(typeof(T)).ObjectField(AutoProperty(property)).Indexed(true);
         }
 
         public static string AutoProperty(string name)
         {
+            Contract.Requires(name != null);
+            Contract.Ensures(Contract.Result<string>() != null);
+
             return String.Format("<{0}>k__BackingField", name);
         }
 
@@ -104,16 +114,23 @@ namespace FritzBot.Core
 
         public SODAQuery<T> SODAQuery<T>()
         {
+            Contract.Ensures(Contract.Result<SODAQuery<T>>() != null);
+
             return new SODAQuery<T>(Datenbank.Query());
         }
 
         public IQueryable<T> Query<T>()
         {
+            Contract.Ensures(Contract.Result<IQueryable<T>>() != null);
+
             return Datenbank.AsQueryable<T>();
         }
 
         public IQueryable<T> Query<T>(Expression<Func<T, bool>> match)
         {
+            Contract.Requires(match != null);
+            Contract.Ensures(Contract.Result<IQueryable<T>>() != null);
+
             return Datenbank.AsQueryable<T>().Where(match);
         }
 
@@ -121,11 +138,15 @@ namespace FritzBot.Core
             where T : LinkedData<L>
             where L : class
         {
+            Contract.Ensures(Contract.Result<IQueryable<T>>() != null);
+
             return Datenbank.AsQueryable<T>().Where(x => x.Reference == instance);
         }
 
         public User GetUser(string name)
         {
+            Contract.Requires(name != null);
+
             return Datenbank.AsQueryable<User>().FirstOrDefault(x => x.Names.Contains(name));
         }
 
@@ -136,6 +157,8 @@ namespace FritzBot.Core
 
         public SimpleStorage GetSimpleStorage(object reference, string ID)
         {
+            Contract.Ensures(Contract.Result<SimpleStorage>() != null);
+
             SimpleStorage storage = Query<SimpleStorage>(x => x.Reference == reference && x.ID == ID).FirstOrDefault();
             if (storage == null)
             {

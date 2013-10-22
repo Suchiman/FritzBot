@@ -1,6 +1,7 @@
 ﻿using FritzBot.Core;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -197,11 +198,15 @@ namespace FritzBot
         /// <returns>Einen URL Encodierten String</returns>
         public static string UrlEncode(string url)
         {
+            Contract.Requires(url != null);
+
             return System.Web.HttpUtility.UrlEncode(url, Encoding.UTF8);
         }
 
         public static bool IsOp(User user)
         {
+            Contract.Requires(user != null);
+
             if (user.Admin && (user.Authenticated || String.IsNullOrEmpty(user.Password)))
             {
                 return true;
@@ -211,11 +216,15 @@ namespace FritzBot
 
         public static T GetAttribute<T>(object obj)
         {
+            Contract.Requires(obj != null);
+
             return GetAttribute<T>(obj.GetType());
         }
 
         public static T GetAttribute<T>(Type type)
         {
+            Contract.Requires(type != null);
+
             Attribute Attr = Attribute.GetCustomAttribute(type, typeof(T));
             if (Attr == null)
             {
@@ -226,6 +235,9 @@ namespace FritzBot
 
         public static Thread SafeThreadStart(string name, bool restartOnException, Action method)
         {
+            Contract.Requires(method != null);
+            Contract.Ensures(Contract.Result<Thread>() != null);
+
             Thread t = new Thread(() =>
             {
                 do
@@ -247,7 +259,7 @@ namespace FritzBot
             })
             {
                 IsBackground = true,
-                Name = name
+                Name = name ?? String.Empty
             };
             t.Start();
             return t;

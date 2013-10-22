@@ -2,6 +2,7 @@
 using FritzBot.DataModel;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 
 namespace FritzBot.Plugins
@@ -67,6 +68,8 @@ namespace FritzBot.Plugins
 
         private string GetRandom(IQueryable<WitzEntry> Jokes)
         {
+            Contract.Requires(Jokes != null && WitzRandoms != null);
+
             int count = Jokes.Count();
             if (!(count > 0))
             {

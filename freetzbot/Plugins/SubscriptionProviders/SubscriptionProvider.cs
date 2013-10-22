@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Xml.Linq;
 using FritzBot.Core;
+using System.Diagnostics.Contracts;
 
 namespace FritzBot.Plugins.SubscriptionProviders
 {
@@ -14,6 +15,8 @@ namespace FritzBot.Plugins.SubscriptionProviders
 
         public virtual void AddSubscription(ircMessage theMessage, PluginBase plugin)
         {
+            Contract.Requires(theMessage != null && plugin != null);
+
             using (DBProvider db = new DBProvider())
             {
                 Subscription SpecificSubscription = db.QueryLinkedData<Subscription, User>(theMessage.TheUser).FirstOrDefault(x => x.Provider == PluginID && x.Plugin == plugin.PluginID);
@@ -57,6 +60,8 @@ namespace FritzBot.Plugins.SubscriptionProviders
 
         public virtual void ParseSubscriptionSetup(ircMessage theMessage)
         {
+            Contract.Requires(theMessage != null);
+
             if (theMessage.CommandArgs.Count < 3)
             {
                 theMessage.Answer("Zu wenig Parameter, probier mal: !subscribe setup <SubscriptionProvider> <Einstellung>");
@@ -73,6 +78,9 @@ namespace FritzBot.Plugins.SubscriptionProviders
 
         public virtual SimpleStorage GetSettings(DBProvider db, User user)
         {
+            Contract.Requires(db != null && user != null);
+            Contract.Ensures(Contract.Result<SimpleStorage>() != null);
+
             return db.GetSimpleStorage(user, "SubscriptionSettings");
         }
     }

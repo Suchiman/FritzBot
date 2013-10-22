@@ -3,6 +3,7 @@ using Meebey.SmartIrc4net;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -23,6 +24,8 @@ namespace FritzBot.Core
         /// <returns></returns>
         public static ServerManager GetInstance()
         {
+            Contract.Ensures(Contract.Result<ServerManager>() != null);
+
             if (instance == null)
             {
                 instance = new ServerManager();
@@ -38,6 +41,8 @@ namespace FritzBot.Core
         {
             get
             {
+                Contract.Ensures(Contract.Result<Server>() != null);
+
                 foreach (Server oneServer in _servers)
                 {
                     if (oneServer.Hostname == Hostname)
@@ -81,6 +86,8 @@ namespace FritzBot.Core
         /// <param name="Channels">Alle Channels die Betreten werden sollen</param>
         public Server NewConnection(string HostName, int Port, string Nickname, string QuitMessage, List<string> Channels)
         {
+            Contract.Ensures(Contract.Result<Server>() != null);
+
             Server server = new Server()
             {
                 Hostname = HostName,
@@ -103,6 +110,8 @@ namespace FritzBot.Core
         /// <param name="server"></param>
         public void Remove(Server server)
         {
+            Contract.Requires(server != null);
+
             server.Disconnect();
             _servers.Remove(server);
             using (DBProvider db = new DBProvider())

@@ -4,6 +4,7 @@ using FritzBot.Functions;
 using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 
 namespace FritzBot.Plugins
@@ -28,6 +29,7 @@ namespace FritzBot.Plugins
             if (input.Contains('#'))
             {
                 string[] split = input.Split(new[] { '#' }, 2);
+                Contract.Assume(split.Length == 2);
                 sharpSplit = "#" + split[1];
                 input = split[0];
             }

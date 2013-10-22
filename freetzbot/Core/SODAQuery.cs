@@ -1,6 +1,7 @@
 ﻿using Db4objects.Db4o.Query;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -13,12 +14,16 @@ namespace FritzBot.Core
 
         public SODAQuery(IQuery query)
         {
+            Contract.Requires(query != null);
+
             _query = query;
             _query.Constrain(typeof(T));
         }
 
         public IQuery Member<P>(Expression<Func<T, P>> selektor)
         {
+            Contract.Requires(selektor != null && selektor.Body is MemberExpression);
+
             MemberInfo info = (selektor.Body as MemberExpression).Member;
             switch (info.MemberType)
             {

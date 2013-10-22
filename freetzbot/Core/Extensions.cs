@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -29,6 +30,8 @@ namespace FritzBot.Core
 
         public static IEnumerable<T> ForEach<T>(this IEnumerable<T> list, Action<T> action)
         {
+            Contract.Requires(list != null);
+
             foreach (T item in list)
             {
                 action(item);
@@ -43,6 +46,8 @@ namespace FritzBot.Core
 
         public static IEnumerable<T> NotNull<T>(this IEnumerable<T> list)
         {
+            Contract.Requires(list != null);
+
             return list.Where(x => x != null);
         }
 
@@ -71,6 +76,8 @@ namespace FritzBot.Core
 
         public static IEnumerable<T> Distinct<T>(this IEnumerable<T> list, Func<T, object> bedingung)
         {
+            Contract.Requires(list != null);
+
             return list.Distinct<T>(new KeyEqualityComparer<T>(bedingung));
         }
 
@@ -146,6 +153,7 @@ namespace FritzBot.Core
 
         public static string ToStringWithDeclaration(this XDocument doc)
         {
+            Contract.Requires(doc != null);
             if (doc == null)
             {
                 throw new ArgumentNullException("doc");
@@ -169,6 +177,9 @@ namespace FritzBot.Core
     {
         public static HtmlDocument LoadUrl(this HtmlDocument doc, string url)
         {
+            Contract.Requires(url != null);
+            Contract.Ensures(Contract.Result<HtmlDocument>() != null);
+
             string page = toolbox.GetWeb(url);
             if (String.IsNullOrEmpty(page))
             {
@@ -180,6 +191,9 @@ namespace FritzBot.Core
 
         public static HtmlNode GetHtmlNode(string html)
         {
+            Contract.Requires(html != null);
+            Contract.Ensures(Contract.Result<HtmlNode>() != null);
+
             HtmlDocument doc = new HtmlDocument();
             doc.LoadHtml(html);
             return doc.DocumentNode;
@@ -187,6 +201,9 @@ namespace FritzBot.Core
 
         public static HtmlNode StripComments(this HtmlNode node)
         {
+            Contract.Requires(node != null);
+            Contract.Ensures(Contract.Result<HtmlNode>() == node);
+
             foreach (HtmlNode item in node.Descendants().OfType<HtmlCommentNode>().ToList())
             {
                 item.Remove();
@@ -196,12 +213,18 @@ namespace FritzBot.Core
 
         public static HtmlDocument StripComments(this HtmlDocument doc)
         {
+            Contract.Requires(doc != null);
+            Contract.Ensures(Contract.Result<HtmlDocument>() == doc);
+
             doc.DocumentNode.StripComments();
             return doc;
         }
 
         public static IEnumerable<HtmlNode> Siblings(this HtmlNode node)
         {
+            Contract.Requires(node != null);
+            Contract.Ensures(Contract.Result<IEnumerable<HtmlNode>>() != null);
+
             HtmlNode tmp = node.NextSibling;
             yield return tmp;
             while (tmp.NextSibling != null)
@@ -228,6 +251,9 @@ namespace FritzBot.Core
     {
         public static bool In<T>(this T source, params T[] values)
         {
+            Contract.Requires(values != null);
+            Contract.Requires(values.Length > 0);
+
             return values.Contains(source);
         }
     }

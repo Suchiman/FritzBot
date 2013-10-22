@@ -3,6 +3,7 @@ using FritzBot.DataModel;
 using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
 
@@ -72,6 +73,9 @@ namespace FritzBot.Plugins
 
         private List<NewsEntry> GetNews(string Url)
         {
+            Contract.Requires(Url != null);
+            Contract.Ensures(Contract.Result<List<NewsEntry>>() != null);
+
             return new HtmlDocument().LoadUrl(Url).DocumentNode.StripComments().SelectNodes("//table[@width='100%'][@border='0'][@cellpadding='0'][@cellspacing='0'][@bgcolor='F6F6F6']").Select(x => new NewsEntry(x)).ToList();
         }
     }
@@ -86,6 +90,10 @@ namespace FritzBot.Plugins
         {
             Titel = HtmlEntity.DeEntitize(node.SelectSingleNode(".//span[@class='uberschriftblau']").InnerText).Trim();
             string[] SuperInfos = node.SelectNodes(".//table[@width='100%'][@cellpadding='10'][@cellspacing='0'][@bgcolor='#FFFFFF']//table//tr[3]//td[@nowrap=''][@class='newsfont']").Select(x => x.InnerText.Trim()).Where(x => !String.IsNullOrEmpty(x)).ToArray();
+            if (SuperInfos.Length < 2)
+            {
+                throw new Exception("Der News Beitrag konnte nicht geparsed werden");
+            }
             Version = SuperInfos[0];
             Datum = DateTime.Parse(SuperInfos[1]);
         }

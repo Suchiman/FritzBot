@@ -3,6 +3,7 @@ using FritzBot.DataModel;
 using FritzBot.Plugins.SubscriptionProviders;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 
 namespace FritzBot.Plugins
@@ -103,6 +104,8 @@ namespace FritzBot.Plugins
 
         private static void SetupSubscription(ircMessage theMessage)
         {
+            Contract.Requires(theMessage != null);
+
             SubscriptionProvider provider = PluginManager.GetInstance().Where(x => x.IsNamed(theMessage.CommandArgs[1])).FirstOrDefault().As<SubscriptionProvider>();
             if (provider == null)
             {

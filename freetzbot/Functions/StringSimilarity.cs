@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 
 namespace FritzBot.Functions
 {
@@ -40,6 +41,8 @@ namespace FritzBot.Functions
         /// <param name="IgnoreCase">Groß / Kleinschreibung ignorieren</param>
         public static int Compare(string str1, string str2, bool IgnoreCase)
         {
+            Contract.Requires(str1 != null && str2 != null);
+
             memo = new Dictionary<String, int>();
             if (IgnoreCase)
             {
@@ -57,6 +60,8 @@ namespace FritzBot.Functions
         /// <param name="IgnoreCase">Groß / Kleinschreibung ignorieren</param>
         public static double ComparePercent(string str1, string str2, bool IgnoreCase)
         {
+            Contract.Requires(str1 != null && str2 != null);
+
             double distance = Compare(str1, str2, IgnoreCase);
             double maxlength = Math.Max(str1.Length, str2.Length);
             return (100d - ((distance / maxlength) * 100d));

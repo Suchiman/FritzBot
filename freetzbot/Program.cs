@@ -2,6 +2,7 @@
 using FritzBot.Core;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -22,6 +23,8 @@ namespace FritzBot
         /// <param name="theMessage">Die zu verarbeitende ircMessage</param>
         public static void HandleCommand(ircMessage theMessage)
         {
+            Contract.Requires(theMessage != null);
+
             #region Antiflooding checks
             if (!toolbox.IsOp(theMessage.TheUser))
             {
@@ -95,6 +98,11 @@ namespace FritzBot
                 switch (ConsoleSplitted[0])
                 {
                     case "op":
+                        if (ConsoleSplitted.Length < 2)
+                        {
+                            Console.WriteLine("Du musst den Benutzernamen angeben");
+                            continue;
+                        }
                         using (DBProvider db = new DBProvider())
                         {
                             User nutzer = db.GetUser(ConsoleSplitted[1]);
@@ -122,6 +130,11 @@ namespace FritzBot
                         AskConnection();
                         break;
                     case "leave":
+                        if (ConsoleSplitted.Length < 2)
+                        {
+                            Console.WriteLine("Du musst den Server angeben");
+                            continue;
+                        }
                         ServerManager.GetInstance().Remove(ServerManager.GetInstance()[ConsoleSplitted[1]]);
                         break;
                 }

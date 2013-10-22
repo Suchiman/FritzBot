@@ -4,6 +4,7 @@ using FritzBot.Functions;
 using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
 
@@ -125,6 +126,9 @@ namespace FritzBot.Plugins
 
         private List<Labordaten> GetDifferentLabors(List<Labordaten> alte, List<Labordaten> neue)
         {
+            Contract.Requires(alte != null && neue != null);
+            Contract.Ensures(Contract.Result<List<Labordaten>>() != null);
+
             return neue.Where(neu => !alte.Any(alt => alt == neu)).ToList();
         }
 
