@@ -159,13 +159,12 @@ namespace FritzBot.Core
         /// <param name="name">Der Name des Types</param>
         public int LoadPluginByName(Assembly assembly, string name)
         {
-            name = name.ToLower();
             foreach (Type t in assembly.GetTypes())
             {
                 NameAttribute att = toolbox.GetAttribute<NameAttribute>(t);
                 if (att != null && att.Names != null)
                 {
-                    if (att.Names.Any(x => x.ToLower() == name))
+                    if (att.Names.Any(x => x.Equals(name, StringComparison.OrdinalIgnoreCase)))
                     {
                         return AddDistinct(true, t);
                     }
@@ -361,7 +360,7 @@ namespace FritzBot.Core
 
         public bool IsNamed(string name)
         {
-            return Names.Contains(name.ToLower());
+            return Names.Contains(name, StringComparer.OrdinalIgnoreCase);
         }
 
         public void Start()
