@@ -137,6 +137,17 @@ namespace FritzBot
                         }
                         ServerManager.GetInstance().Remove(ServerManager.GetInstance()[ConsoleSplitted[1]]);
                         break;
+                    case "list":
+                        Console.WriteLine("Verbunden mit den Servern: {0}", String.Join(", ", ServerManager.GetInstance().Select(x => x.Hostname)));
+                        break;
+                    case "reconnect":
+                        foreach (Server srv in ServerManager.GetInstance())
+                        {
+                            Console.WriteLine("Reconnecte {0}", srv.Hostname);
+                            srv.Disconnect();
+                            srv.Connect();
+                        }
+                        break;
                 }
             }
         }

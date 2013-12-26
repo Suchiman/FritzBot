@@ -13,13 +13,15 @@ namespace FritzBot.Plugins
     [Module.Help("Das erzeugt einen Link zu einem Freetz Paket, Beispiel: !fp dnsmasq")]
     class freetz : PluginBase, ICommand
     {
+        private const string PackagesPage = "http://freetz.org/wiki/packages";
+
         private DataCache<Dictionary<string, string>> PackagesCache = new DataCache<Dictionary<string, string>>(GetPackages, 30);
 
         public void Run(ircMessage theMessage)
         {
             if (!theMessage.HasArgs)
             {
-                theMessage.Answer("http://freetz.org/wiki/packages");
+                theMessage.Answer(PackagesPage);
                 return;
             }
 
@@ -78,7 +80,7 @@ namespace FritzBot.Plugins
         {
             try
             {
-                HtmlNode document = new HtmlDocument().LoadUrl("http://freetz.org/wiki/packages").DocumentNode;
+                HtmlNode document = new HtmlDocument().LoadUrl(PackagesPage).DocumentNode;
                 return document.SelectNodes("//table[@class='wiki']/tr/td/a[@class='wiki']").Distinct(x => x.InnerText).ToDictionary(k => k.InnerText, v => v.GetAttributeValue("href", ""), StringComparer.OrdinalIgnoreCase);
             }
             catch

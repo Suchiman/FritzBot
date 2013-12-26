@@ -43,7 +43,7 @@ namespace FritzBot.Core
             IEnumerable<Type> FilteredTypes = Types.Where(x => !x.IsAbstract && !x.IsInterface && typeof(PluginBase).IsAssignableFrom(x));
             Remove(x => FilteredTypes.Select(y => y.FullName).Contains(x.GetType().FullName));
 
-            List<PluginInfo> NewPlugins = FilteredTypes.Select(x => new PluginInfo(x)).Cast<PluginInfo>().ToList();
+            List<PluginInfo> NewPlugins = FilteredTypes.Select(x => new PluginInfo(x)).ToList();
             if (AutostartTask)
             {
                 NewPlugins.Where(x => x.IsBackgroundTask).TryLogEach(x => x.Start());
