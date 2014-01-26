@@ -320,7 +320,7 @@ namespace FritzBot.Core
             _connection.AutoRetry = true;
             _connection.ActiveChannelSyncing = true;
 
-            _connection.CtcpSource = "http://suchiman.selfip.org/fritzbot/";
+            _connection.CtcpSource = "Frag Suchiman in freenode";
             _connection.CtcpUrl = _connection.CtcpSource;
             _connection.CtcpUserInfo = "Ich bin ein automatisch denkendes Wesen auch bekannt als Bot";
             _connection.CtcpVersion = "FritzBot:v3:" + Environment.OSVersion.Platform.ToString();
