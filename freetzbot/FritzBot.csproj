@@ -136,6 +136,7 @@
     <Compile Include="Functions\Url.cs" />
     <Compile Include="Functions\UTF8Checker.cs" />
     <Compile Include="Plugins\admin.cs" />
+    <Compile Include="Plugins\bots.cs" />
     <Compile Include="Plugins\fm.cs" />
     <Compile Include="Plugins\geolocator.cs" />
     <Compile Include="Plugins\subscribe.cs" />
