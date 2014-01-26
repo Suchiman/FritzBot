@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Diagnostics.Contracts;
 
 namespace FritzBot.DataModel
 {
@@ -26,6 +25,8 @@ namespace FritzBot.DataModel
 
         public T Get<T>(string key, T @default)
         {
+            Contract.Requires(key != null);
+
             if (!_values.ContainsKey(key))
             {
                 return @default;
@@ -35,6 +36,8 @@ namespace FritzBot.DataModel
 
         public void Store(string key, object value)
         {
+            Contract.Requires(key != null);
+
             if (_values.ContainsKey(key))
             {
                 _values[key] = value;
