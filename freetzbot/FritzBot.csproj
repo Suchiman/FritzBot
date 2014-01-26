@@ -51,7 +51,7 @@
     <CodeContractsRuntimeThrowOnFailure>True</CodeContractsRuntimeThrowOnFailure>
     <CodeContractsRuntimeCallSiteRequires>False</CodeContractsRuntimeCallSiteRequires>
     <CodeContractsRuntimeSkipQuantifiers>False</CodeContractsRuntimeSkipQuantifiers>
-    <CodeContractsRunCodeAnalysis>True</CodeContractsRunCodeAnalysis>
+    <CodeContractsRunCodeAnalysis>False</CodeContractsRunCodeAnalysis>
     <CodeContractsNonNullObligations>True</CodeContractsNonNullObligations>
     <CodeContractsBoundsObligations>True</CodeContractsBoundsObligations>
     <CodeContractsArithmeticObligations>True</CodeContractsArithmeticObligations>
@@ -136,6 +136,7 @@
     <Compile Include="Functions\Url.cs" />
     <Compile Include="Functions\UTF8Checker.cs" />
     <Compile Include="Plugins\admin.cs" />
+    <Compile Include="Plugins\fm.cs" />
     <Compile Include="Plugins\geolocator.cs" />
     <Compile Include="Plugins\subscribe.cs" />
     <Compile Include="Plugins\SubscriptionProviders\IRCSubscriptionProvider.cs" />
