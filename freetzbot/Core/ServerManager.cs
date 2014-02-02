@@ -386,17 +386,17 @@ namespace FritzBot.Core
         /// <seealso cref="OnJoin"/>
         private void _connection_OnJoin(object sender, JoinEventArgs e)
         {
-            toolbox.Logging(String.Format("{0} hat den Raum {1} betreten", e.Who, e.Channel));
+            toolbox.LogFormat("{0} hat den Raum {1} betreten", e.Who, e.Channel);
             MaintainUser(e.Who);
 
-            ThreadPool.QueueUserWorkItem(new WaitCallback(x =>
+            ThreadPool.QueueUserWorkItem(x =>
             {
                 var ev = OnJoin;
                 if (ev != null)
                 {
                     ev(this, e);
                 }
-            }));
+            });
         }
 
         /// <summary>
@@ -405,17 +405,17 @@ namespace FritzBot.Core
         /// <seealso cref="OnQuit"/>
         private void _connection_OnQuit(object sender, QuitEventArgs e)
         {
-            toolbox.Logging(String.Format("{0} hat den Server verlassen ({1})", e.Who, e.QuitMessage));
+            toolbox.LogFormat("{0} hat den Server verlassen ({1})", e.Who, e.QuitMessage);
             MaintainUser(e.Who);
 
-            ThreadPool.QueueUserWorkItem(new WaitCallback(x =>
+            ThreadPool.QueueUserWorkItem(x =>
             {
                 var ev = OnQuit;
                 if (ev != null)
                 {
                     ev(this, e);
                 }
-            }));
+            });
         }
 
         /// <summary>
@@ -424,17 +424,17 @@ namespace FritzBot.Core
         /// <seealso cref="OnPart"/>
         private void _connection_OnPart(object sender, PartEventArgs e)
         {
-            toolbox.Logging(String.Format("{0} hat den Raum {1} verlassen", e.Who, e.Channel));
+            toolbox.LogFormat("{0} hat den Raum {1} verlassen", e.Who, e.Channel);
             MaintainUser(e.Who);
 
-            ThreadPool.QueueUserWorkItem(new WaitCallback(x =>
+            ThreadPool.QueueUserWorkItem(x =>
             {
                 var ev = OnPart;
                 if (ev != null)
                 {
                     ev(this, e);
                 }
-            }));
+            });
         }
 
         /// <summary>
@@ -443,7 +443,7 @@ namespace FritzBot.Core
         /// <seealso cref="OnNickChange"/>
         private void _connection_OnNickChange(object sender, NickChangeEventArgs e)
         {
-            toolbox.Logging(String.Format("{0} heißt jetzt {1}", e.OldNickname, e.NewNickname));
+            toolbox.LogFormat("{0} heißt jetzt {1}", e.OldNickname, e.NewNickname);
             using (DBProvider db = new DBProvider())
             {
                 User oldNick = db.GetUser(e.OldNickname);
@@ -462,14 +462,14 @@ namespace FritzBot.Core
                 }
             }
 
-            ThreadPool.QueueUserWorkItem(new WaitCallback(x =>
+            ThreadPool.QueueUserWorkItem(x =>
             {
                 var ev = OnNickChange;
                 if (ev != null)
                 {
                     ev(this, e);
                 }
-            }));
+            });
         }
 
         /// <summary>
@@ -478,17 +478,17 @@ namespace FritzBot.Core
         /// <seealso cref="OnKick"/>
         private void _connection_OnKick(object sender, KickEventArgs e)
         {
-            toolbox.Logging(String.Format("{0} wurde von {1} aus dem Raum {2} geworfen", e.Who, e.Whom, e.Channel));
+            toolbox.LogFormat("{0} wurde von {1} aus dem Raum {2} geworfen", e.Who, e.Whom, e.Channel);
             MaintainUser(e.Who);
 
-            ThreadPool.QueueUserWorkItem(new WaitCallback(x =>
+            ThreadPool.QueueUserWorkItem(x =>
             {
                 var ev = OnKick;
                 if (ev != null)
                 {
                     ev(this, e);
                 }
-            }));
+            });
         }
 
         /// <summary>
@@ -503,7 +503,7 @@ namespace FritzBot.Core
                 return;
             }
 
-            ThreadPool.QueueUserWorkItem(new WaitCallback(x =>
+            ThreadPool.QueueUserWorkItem(x =>
             {
                 User user = MaintainUser(e.Data.Nick);
                 ircMessage message = new ircMessage(e.Data, this, user);
@@ -562,7 +562,7 @@ namespace FritzBot.Core
                         }
                     }
                 }
-            }));
+            });
         }
 
         /// <summary>
