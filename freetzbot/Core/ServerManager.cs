@@ -62,6 +62,12 @@ namespace FritzBot.Core
             using (DBProvider db = new DBProvider())
             {
                 _servers = db.Query<Server>().ToList();
+
+                //Workaround um dem Bug entgegen zu Wirken, dass Connected = true in die Datenbank gespeichert wird und beim Neustart ConnectAll keinen Effekt hat.
+                foreach (Server srv in _servers)
+                {
+                    srv.Disconnect();
+                }
             }
         }
 
@@ -314,10 +320,6 @@ namespace FritzBot.Core
         {
             _connection = new IrcFeatures();
 
-            _connection.AutoReconnect = true;
-            _connection.AutoRejoin = true;
-            _connection.AutoRelogin = true;
-            _connection.AutoRetry = true;
             _connection.ActiveChannelSyncing = true;
 
             _connection.CtcpSource = "Frag Suchiman in freenode";
@@ -341,6 +343,8 @@ namespace FritzBot.Core
             _connection.OnPart += _connection_OnPart;
             _connection.OnQuit += _connection_OnQuit;
 
+            _connection.OnConnectionError += _connection_OnConnectionError;
+
             _connection.Connect(Hostname, Port);
             _connection.Login(Nickname, Nickname, 0, Nickname);
 
@@ -349,11 +353,55 @@ namespace FritzBot.Core
                 _connection.RfcJoin(channel);
             }
 
-            _connection.OnConnectionError += (x, y) => toolbox.Logging("Verbindung zu Server " + Hostname + " verloren");
-
-            _listener = toolbox.SafeThreadStart("ListenThread " + Hostname, true, () => _connection.Listen());
+            _listener = toolbox.SafeThreadStart("ListenThread " + Hostname, true, _connection.Listen);
 
             Connected = true;
+        }
+
+        void _connection_OnConnectionError(object sender, EventArgs e)
+        {
+            toolbox.LogFormat("Verbindung zu Server {0} verloren. Versuche Verbindung wiederherzustellen.", Hostname);
+            DateTime TimeConnectionLost = DateTime.Now;
+
+            //Wenn wir bis hierhin gekommen sind, wurde eine bestehende Verbindung aus einem externen Grund terminiert
+            //Intern wurde bereits Disconnect aufgerufen, das heißt die Threads sind inklusive Listen beendet worden
+            int ConnectionAttempt = 1;
+            do
+            {
+                try
+                {
+                    _connection.Connect(Hostname, Port);
+                    _connection.Login(Nickname, Nickname, 0, Nickname);
+
+                    foreach (string channel in Channels)
+                    {
+                        _connection.RfcJoin(channel);
+                    }
+
+                    _listener = toolbox.SafeThreadStart("ListenThread " + Hostname, true, _connection.Listen);
+                }
+                catch (Exception ex)
+                {
+                    if (ex is CouldNotConnectException && ex.InnerException != null)
+                    {
+                        toolbox.LogFormat("Verbindungsversuch zu {0} gescheitert: {1}", Hostname, ex.InnerException.Message);
+                    }
+                    else
+                    {
+                        toolbox.LogFormat("Verbindungsversuch zu {0} gescheitert: {1}", Hostname, ex.Message);
+                    }
+                }
+
+                if (!_connection.IsConnected)
+                {
+                    ++ConnectionAttempt;
+                    int delay = (ConnectionAttempt - 1) % 3 == 0 ? 30000 : 5000;
+                    toolbox.LogFormat("Nächster Verbindungsversuch ({0}) zu {1}:{2} in {3} Sekunden", ConnectionAttempt, Hostname, Port, delay / 1000);
+                    Thread.Sleep(delay);
+                }
+            }
+            while (!_connection.IsConnected);
+            toolbox.LogFormat("Verbindung mit {0} nach {1} Sekunden ohne Verbindung und {2} Verbindungsversuchen wiederhergestellt.", Hostname, DateTime.Now.Subtract(TimeConnectionLost).TotalSeconds, ConnectionAttempt);
         }
 
         /// <summary>
