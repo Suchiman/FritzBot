@@ -364,7 +364,9 @@ namespace FritzBot.Core
             DateTime TimeConnectionLost = DateTime.Now;
 
             //Wenn wir bis hierhin gekommen sind, wurde eine bestehende Verbindung aus einem externen Grund terminiert
-            //Intern wurde bereits Disconnect aufgerufen, das heißt die Threads sind inklusive Listen beendet worden
+            //Intern wurde bereits Disconnect aufgerufen, das heißt die Write, Read und Idle Threads wurden beendet.
+            //Wir befinden uns in dieser Methode dann im _listener Thread, wenn wir diese Methode verlassen und _connection.IsConnected == true
+            //wird die Listen(bool) Methode weiter loopen
             int ConnectionAttempt = 1;
             do
             {
@@ -377,8 +379,6 @@ namespace FritzBot.Core
                     {
                         _connection.RfcJoin(channel);
                     }
-
-                    _listener = toolbox.SafeThreadStart("ListenThread " + Hostname, true, _connection.Listen);
                 }
                 catch (Exception ex)
                 {
