@@ -5,7 +5,12 @@ using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Net;
+using System.Net.FtpClient;
+using System.Text.RegularExpressions;
 using System.Threading;
 
 namespace FritzBot.Plugins
@@ -67,7 +72,7 @@ namespace FritzBot.Plugins
                 Labordaten first = daten.FirstOrDefault(x => x.typ == BoxName);
                 if (first != null)
                 {
-                    theMessage.Answer(String.Format("Die neueste {0} labor Version ist am {1} erschienen mit der Versionsnummer: {2} - Laborseite: {3}", first.typ, first.datum, first.version, toolbox.ShortUrl("http://www.avm.de/de/Service/Service-Portale/Labor/" + first.url)));
+                    theMessage.Answer(String.Format("Die neueste {0} labor Version ist am {1} erschienen mit der Versionsnummer: {2} - Laborseite: {3}", first.typ, first.datum, first.version, first.url));
                 }
                 else
                 {
@@ -109,6 +114,70 @@ namespace FritzBot.Plugins
             }
         }
 
+        private List<Labordaten> GetFTPBetas()
+        {
+            List<Tuple<Labordaten, string>> ftpBetas = new List<Tuple<Labordaten, string>>();
+
+            if (!Directory.Exists("betaCache"))
+                Directory.CreateDirectory("betaCache");
+
+            using (FtpClient ftp = new FtpClient())
+            {
+                ftp.Host = "ftp.avm.de";
+                ftp.Credentials = new NetworkCredential("anonymous", "");
+                ftp.SetWorkingDirectory("/fritz.box/beta");
+
+                List<FtpListItem> files = ftp.GetListing().Where(x => x.Type == FtpFileSystemObjectType.File).ToList();
+                foreach (FtpListItem file in files)
+                {
+                    Labordaten daten = new Labordaten();
+                    daten.datum = (file.Modified == DateTime.MinValue && ftp.HasFeature(FtpCapability.MDTM) ? ftp.GetModifiedTime(file.FullName) : file.Modified).ToString("dd.MM.yyyy HH:mm:ss");
+                    daten.url = "ftp://ftp.avm.de" + file.FullName;
+
+                    string target = Path.Combine(Environment.CurrentDirectory, "betaCache", file.Name);
+                    if (!File.Exists(target))
+                    {
+                        using (Stream f = ftp.OpenRead(file.Name))
+                        using (FileStream fi = File.Create(target))
+                            f.CopyTo(fi);
+                    }
+
+                    ftpBetas.Add(new Tuple<Labordaten, string>(daten, target));
+                }
+            }
+
+            foreach (Tuple<Labordaten, string> fw in ftpBetas)
+            {
+                using (Stream file = File.OpenRead(fw.Item2))
+                using (ZipArchive archive = new ZipArchive(file, ZipArchiveMode.Read))
+                {
+                    ZipArchiveEntry firmware = archive.Entries.FirstOrDefault(x => x.Name.Contains("_Labor."));
+                    if (firmware == null)
+                    {
+                        toolbox.LogFormat("Firmware {0} hat keine erkannte Labor Firmware", fw.Item2);
+                        continue;
+                    }
+
+                    string RawName = firmware.Name;
+
+                    fw.Item1.version = Regex.Match(RawName, @"_Labor.((\d{2,3}\.)?\d\d\.\d\d(-\d{1,6})?).image$").Groups[1].Value;
+                    if (!BoxDatabase.GetInstance().TryGetShortName(RawName, out fw.Item1.typ))
+                    {
+                        if (RawName.LastIndexOf(' ') != -1)
+                        {
+                            fw.Item1.typ = RawName.Substring(RawName.LastIndexOf(' ')).Trim();
+                        }
+                        else
+                        {
+                            fw.Item1.typ = RawName.Trim();
+                        }
+                    }
+                }
+            }
+
+            return ftpBetas.Select(x => x.Item1).ToList();
+        }
+
         private bool TryGetNewestLabors(out List<Labordaten> Daten)
         {
             Daten = null;
@@ -137,6 +206,7 @@ namespace FritzBot.Plugins
             HtmlNode LaborStartSeite = new HtmlDocument().LoadUrl("http://www.avm.de/de/Service/Service-Portale/Labor/index.php").DocumentNode.StripComments();
 
             List<Labordaten> NeueLaborDaten = LaborStartSeite.Descendants("h2").First().Siblings().SelectMany(x => x.Descendants("a")).Where(x => x.ChildAttributes("href").Count() == 1).Where(x => x.ChildAttributes("style").Count() == 0).Select(x => x.ChildAttributes("href").First().Value.Trim()).Where(x => !x.StartsWith("..") && !x.Contains("feedback")).SelectMany(x => Labordaten.GetDaten(x)).ToList();
+            NeueLaborDaten.AddRange(GetFTPBetas());
 
             if (NeueLaborDaten.Count > 0)
             {
@@ -181,7 +251,7 @@ namespace FritzBot.Plugins
                 }
                 daten.version = table[0].InnerText.Trim();
                 daten.datum = table[2].InnerText.Trim();
-                daten.url = url;
+                daten.url = "http://www.avm.de/de/Service/Service-Portale/Labor/" + url;
                 yield return daten;
             }
         }
