@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace FritzBot
+﻿namespace FritzBot
 {
     public interface IWebInterface
     {

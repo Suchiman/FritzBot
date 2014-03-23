@@ -1,8 +1,7 @@
-﻿using System;
-using FritzBot;
+﻿using FritzBot;
 using FritzBot.Core;
-using System.Linq;
 using FritzBot.DataModel;
+using System;
 
 namespace webpages
 {

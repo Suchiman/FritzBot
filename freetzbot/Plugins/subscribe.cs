@@ -106,7 +106,7 @@ namespace FritzBot.Plugins
         {
             Contract.Requires(theMessage != null);
 
-            SubscriptionProvider provider = PluginManager.GetInstance().Where(x => x.IsNamed(theMessage.CommandArgs[1])).FirstOrDefault().As<SubscriptionProvider>();
+            SubscriptionProvider provider = PluginManager.GetInstance().FirstOrDefault(x => x.IsNamed(theMessage.CommandArgs[1])).As<SubscriptionProvider>();
             if (provider == null)
             {
                 theMessage.Answer("Es gibt keinen SubscriptionProvider namens " + theMessage.CommandArgs[1]);

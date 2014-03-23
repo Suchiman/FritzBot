@@ -2,7 +2,6 @@
 using FritzBot.DataModel;
 using Meebey.SmartIrc4net;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace FritzBot.Plugins

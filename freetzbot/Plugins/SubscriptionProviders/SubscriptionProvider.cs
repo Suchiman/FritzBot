@@ -1,11 +1,8 @@
-﻿using FritzBot.DataModel;
+﻿using FritzBot.Core;
+using FritzBot.DataModel;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Xml.Linq;
-using FritzBot.Core;
 using System.Diagnostics.Contracts;
+using System.Linq;
 
 namespace FritzBot.Plugins.SubscriptionProviders
 {

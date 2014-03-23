@@ -1,5 +1,4 @@
-﻿using System;
-using FritzBot;
+﻿using FritzBot;
 
 namespace webpages
 {

@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("boxremove")]
+    [Module.Name("boxremove", "boxdel")]
     [Module.Help("Entfernt die exakt von dir genannte Box aus deiner Boxinfo, als Beispiel: \"!boxremove 7270v1\".")]
     [Module.ParameterRequired]
     class boxremove : PluginBase, ICommand

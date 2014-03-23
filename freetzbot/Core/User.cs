@@ -23,7 +23,7 @@ namespace FritzBot.Core
         {
             get
             {
-                return ServerManager.GetInstance().Any(x => x.IrcClient.GetChannels().Select(c => x.IrcClient.GetChannel(c)).Any(c => c.Users.Keys.OfType<string>().Any(cn => Names.Contains(cn))));
+                return ServerManager.GetInstance().Any(x => x.IrcClient != null && x.IrcClient.GetChannels().Select(c => x.IrcClient.GetChannel(c)).Any(c => c.Users.Keys.OfType<string>().Any(cn => Names.Contains(cn))));
             }
         }
 
