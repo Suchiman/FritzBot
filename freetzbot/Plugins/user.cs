@@ -47,6 +47,29 @@ namespace FritzBot.Plugins
                         theMessage.Answer("User gibbet nicht");
                     }
                 }
+                if (theMessage.CommandArgs[0] == "boxremove")
+                {
+                    using (DBProvider db = new DBProvider())
+                    {
+                        User u = db.GetUser(theMessage.CommandArgs[1]);
+                        if (u != null)
+                        {
+                            BoxEntry entry = db.QueryLinkedData<BoxEntry, User>(u).FirstOrDefault();
+                            if (entry != null)
+                            {
+                                if (entry.RemoveBox(String.Join(" ", theMessage.CommandArgs.Skip(2))))
+                                {
+                                    theMessage.Answer("Erledigt!");
+                                    db.SaveOrUpdate(entry);
+                                    return;
+                                }
+                            }
+                            theMessage.Answer("Der Suchstring wurde nicht gefunden und deshalb nicht gelöscht");
+                            return;
+                        }
+                        theMessage.Answer("User gibbet nicht");
+                    }
+                }
                 if (theMessage.CommandArgs[0] == "remove")
                 {
                     using (DBProvider db = new DBProvider())
