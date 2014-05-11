@@ -197,8 +197,6 @@ namespace FritzBot
             RestartFlag = false;
             ShutdownSignal = new AutoResetEvent(false);
 
-            //DBConverter.Convert();
-
             PluginManager.GetInstance().BeginInit(true);
 
             //System.Data.Entity.Database.SetInitializer(new MigrateDatabaseToLatestVersion<BotContext, Configuration>());

@@ -144,18 +144,7 @@
     <Compile Include="Database\User.cs" />
     <Compile Include="Database\UserKeyValueEntry.cs" />
     <Compile Include="Database\WitzEntry.cs" />
-    <Compile Include="DataModel\LegacyModels\Box.cs" />
-    <Compile Include="DataModel\LegacyModels\AliasEntry.cs" />
     <Compile Include="DataModel\Attribute.cs" />
-    <Compile Include="DataModel\LegacyModels\BoxEntry.cs" />
-    <Compile Include="DataModel\LegacyModels\LinkedData.cs" />
-    <Compile Include="DataModel\LegacyModels\NotificationHistory.cs" />
-    <Compile Include="DataModel\LegacyModels\ReminderEntry.cs" />
-    <Compile Include="DataModel\LegacyModels\SeenEntry.cs" />
-    <Compile Include="DataModel\LegacyModels\SimpleStorage.cs" />
-    <Compile Include="DataModel\LegacyModels\Subscription.cs" />
-    <Compile Include="DataModel\LegacyModels\WitzEntry.cs" />
-    <Compile Include="DBConverter.cs" />
     <Compile Include="Functions\Geolocation.cs" />
     <Compile Include="Functions\GoogleTranslator.cs" />
     <Compile Include="Functions\Url.cs" />
@@ -233,7 +222,6 @@
     <Compile Include="Core\ServerManager.cs" />
     <Compile Include="toolbox.cs" />
     <Compile Include="Plugins\whmf.cs" />
-    <Compile Include="DataModel\LegacyModels\User.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Plugins\APIsampe.txt" />
