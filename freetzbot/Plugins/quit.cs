@@ -1,12 +1,12 @@
-﻿using FritzBot.Core;
+using FritzBot.Core;
 using FritzBot.DataModel;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("quit")]
-    [Module.Help("Das beendet mich X_x")]
-    [Module.ParameterRequired(false)]
-    [Module.Authorize]
+    [Name("quit")]
+    [Help("Das beendet mich X_x")]
+    [ParameterRequired(false)]
+    [Authorize]
     class quit : PluginBase, ICommand
     {
         public void Run(ircMessage theMessage)

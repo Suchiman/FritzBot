@@ -1,4 +1,5 @@
-﻿using FritzBot.Core;
+using FritzBot.Core;
+using FritzBot.Database;
 using FritzBot.DataModel;
 using FritzBot.Plugins.SubscriptionProviders;
 using System;
@@ -8,8 +9,8 @@ using System.Linq;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("subscribe")]
-    [Module.Help("Unterbefehle: add <PluginName> <SubscriptionProvider> <Bedingung>(optional), available, list, setup <SubscriptionProvider> <Adresse>, remove <PluginName> <SubscriptionProvider>, help <SubscriptionProvider>")]
+    [Name("subscribe")]
+    [Help("Unterbefehle: add <PluginName> <SubscriptionProvider> <Bedingung>(optional), available, list, setup <SubscriptionProvider> <Adresse>, remove <PluginName> <SubscriptionProvider>, help <SubscriptionProvider>")]
     class subscribe : PluginBase, ICommand
     {
         public void Run(ircMessage theMessage)
@@ -54,17 +55,14 @@ namespace FritzBot.Plugins
                 theMessage.Answer("Es gibt keinen solchen SubscriptionProvider");
                 return;
             }
+            HelpAttribute help = toolbox.GetAttribute<HelpAttribute>(provider);
+            if (help != null)
+            {
+                theMessage.Answer(help.Help);
+            }
             else
             {
-                Module.HelpAttribute help = toolbox.GetAttribute<Module.HelpAttribute>(provider);
-                if (help != null)
-                {
-                    theMessage.Answer(help.Help);
-                }
-                else
-                {
-                    theMessage.Answer("Der Subscription Provider bietet keine Hilfe an");
-                }
+                theMessage.Answer("Der Subscription Provider bietet keine Hilfe an");
             }
         }
 
@@ -87,12 +85,12 @@ namespace FritzBot.Plugins
                 theMessage.Answer("Es gibt keinen solchen SubscriptionProvider");
                 return;
             }
-            using (DBProvider db = new DBProvider())
+            using (var context = new BotContext())
             {
-                Subscription sub = db.QueryLinkedData<Subscription, User>(theMessage.TheUser).FirstOrDefault(x => x.Provider == provider.PluginID && x.Plugin == plugin.ID);
+                Subscription sub = context.Subscriptions.FirstOrDefault(x => x.User == context.GetUser(theMessage.Nickname) && x.Provider == provider.PluginID && x.Plugin == plugin.ID);
                 if (sub != null)
                 {
-                    db.Remove(sub);
+                    context.Subscriptions.Remove(sub);
                     theMessage.Answer("Subscription entfernt");
                 }
                 else
@@ -144,7 +142,7 @@ namespace FritzBot.Plugins
                     theMessage.Answer("Ein solches Plugin konnte ich nicht ausfindig machen");
                     return;
                 }
-                if (toolbox.GetAttribute<Module.SubscribeableAttribute>(plugin) == null)
+                if (toolbox.GetAttribute<SubscribeableAttribute>(plugin) == null)
                 {
                     theMessage.Answer("Dieses Plugin unterstützt keine Benachrichtigungen");
                     return;
@@ -163,13 +161,12 @@ namespace FritzBot.Plugins
 
         public void SubscriptionsList(ircMessage theMessage)
         {
-            IEnumerable<IGrouping<string, Subscription>> Subscription;
-            using (DBProvider db = new DBProvider())
+            using (var context = new BotContext())
             {
-                Subscription = db.QueryLinkedData<Subscription, User>(theMessage.TheUser).GroupBy(x => x.Provider);
+                List<IGrouping<string, Subscription>> Subscription = context.Subscriptions.Where(x => x.User == context.Nicknames.FirstOrDefault(n => n.Name == theMessage.Nickname).User).GroupBy(x => x.Provider).ToList();
+                string output = String.Join("; ", Subscription.Select(x => String.Format("{0}: {1}", PluginManager.GetInstance().GetOfType<SubscriptionProvider>().First(z => z.ID == x.Key).Names.First(), String.Join(", ", x.Select(y => y.Plugin)))));
+                theMessage.Answer(output);
             }
-            string output = String.Join("; ", Subscription.Select(x => String.Format("{0}: {1}", PluginManager.GetInstance().GetOfType<SubscriptionProvider>().First(z => z.ID == x.Key).Names.First(), String.Join(", ", x.Select(y => y.Plugin)))));
-            theMessage.Answer(output);
         }
     }
 }

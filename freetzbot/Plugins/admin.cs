@@ -1,4 +1,5 @@
-﻿using FritzBot.Core;
+using FritzBot.Core;
+using FritzBot.Database;
 using FritzBot.DataModel;
 using System;
 using System.Linq;
@@ -6,10 +7,10 @@ using System.Text.RegularExpressions;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("admin")]
-    [Module.Help("Administrativer Befehl zur Verwaltung einiger Funktionen: box-recheck, boxdb (add, remove, regex, list)")]
-    [Module.Authorize]
-    [Module.ParameterRequired]
+    [Name("admin")]
+    [Help("Administrativer Befehl zur Verwaltung einiger Funktionen: box-recheck, boxdb (add, remove, regex, list)")]
+    [Authorize]
+    [ParameterRequired]
     class admin : PluginBase, ICommand
     {
         public void Run(ircMessage theMessage)
@@ -17,9 +18,10 @@ namespace FritzBot.Plugins
             switch (theMessage.CommandArgs[0])
             {
                 case "box-recheck":
-                    using (DBProvider db = new DBProvider())
+                    using (var context = new BotContext())
                     {
-                        db.Query<BoxEntry>().ForEach(x => { x.ReAssociateBoxes(); db.SaveOrUpdate(x); });
+                        throw new NotImplementedException();
+                        //db.Query<BoxEntry>().ForEach(x => { x.ReAssociateBoxes(); db.SaveOrUpdate(x); });
                     }
                     theMessage.Answer("Done");
                     return;
@@ -95,11 +97,11 @@ namespace FritzBot.Plugins
             if (theMessage.CommandArgs[1] == "remove")
             {
                 Box box = BoxDatabase.GetInstance().GetBoxByShortName(String.Join(" ", theMessage.CommandArgs.Skip(2).ToArray()));
-                using (DBProvider db = new DBProvider())
+                using (var context = new BotContext())
                 {
                     if (box != null)
                     {
-                        db.Remove(box);
+                        context.Boxes.Remove(box);
                         theMessage.Answer("Box entfernt");
                     }
                     else
@@ -145,7 +147,7 @@ namespace FritzBot.Plugins
                 Box box = BoxDatabase.GetInstance().GetBoxByShortName(theMessage.CommandArgs[2]);
                 if (box != null)
                 {
-                    theMessage.Answer(String.Format("ShortName: {0}, FullName: {1}, RegexPatterns: {2}", box.ShortName, box.FullName, String.Join(", ", box.RegexPattern.ToArray())));
+                    theMessage.Answer(String.Format("ShortName: {0}, FullName: {1}, RegexPatterns: {2}", box.ShortName, box.FullName, String.Join(", ", box.RegexPattern.Select(x => x.Pattern))));
                 }
                 else
                 {

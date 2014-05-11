@@ -1,4 +1,5 @@
-﻿using FritzBot.Core;
+using FritzBot.Core;
+using FritzBot.Database;
 using FritzBot.DataModel;
 using System;
 using System.Collections.Generic;
@@ -6,24 +7,25 @@ using System.Linq;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("hilfe", "help", "faq", "info", "man", "lsmod")]
-    [Module.Help("Die Hilfe!")]
+    [Name("hilfe", "help", "faq", "info", "man", "lsmod")]
+    [Help("Die Hilfe!")]
     class hilfe : PluginBase, ICommand
     {
         public void Run(ircMessage theMessage)
         {
             if (!theMessage.HasArgs)
             {
-                List<string> befehle = new List<string>();
-
-                foreach (PluginInfo theCommand in PluginManager.GetInstance().Where(x => !x.IsHidden && x.Names.Count > 0))
+                var plugins = PluginManager.GetInstance().Where(x => !x.IsHidden && x.Names.Count > 0);
+                using (var context = new BotContext())
                 {
-                    if (!theCommand.AuthenticationRequired || toolbox.IsOp(theMessage.TheUser))
+                    if (!toolbox.IsOp(context.GetUser(theMessage.Nickname)))
                     {
-                        befehle.Add(theCommand.Names[0]);
+                        plugins = plugins.Where(x => !x.AuthenticationRequired);
                     }
                 }
-                befehle.Sort();
+
+                List<string> befehle = plugins.Select(x => x.Names[0]).OrderBy(x => x).ToList();
+
                 theMessage.Answer("Derzeit verfügbare Befehle: " + String.Join(", ", befehle));
                 theMessage.Answer("Hilfe zu jedem Befehl mit \"!help befehl\". Um die anderen nicht zu belästigen kannst du mich auch per PM (query) anfragen");
             }

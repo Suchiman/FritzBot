@@ -1,4 +1,5 @@
-﻿using FritzBot.Core;
+using FritzBot.Core;
+using FritzBot.Database;
 using FritzBot.DataModel;
 using FritzBot.Functions;
 using HtmlAgilityPack;
@@ -15,9 +16,9 @@ using System.Threading;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("labor")]
-    [Module.Help("Gibt Informationen zu den aktuellen Labor Firmwares aus: !labor <boxnummer>")]
-    [Module.Subscribeable]
+    [Name("labor")]
+    [Help("Gibt Informationen zu den aktuellen Labor Firmwares aus: !labor <boxnummer>")]
+    [Subscribeable]
     class labor : PluginBase, ICommand, IBackgroundTask
     {
         public const string BaseUrl = "http://www.avm.de/de/Service/Service-Portale/Labor/";
@@ -39,13 +40,13 @@ namespace FritzBot.Plugins
             laborthread.Abort();
         }
 
-        protected override IQueryable<Subscription> GetSubscribers(string[] criteria)
+        protected override IQueryable<Subscription> GetSubscribers(BotContext context, string[] criteria)
         {
             if (criteria != null && criteria.Length > 0)
             {
-                return base.GetSubscribers(criteria).Where(x => criteria.Any(c => x.Bedingungen.Contains(c)));
+                return base.GetSubscribers(context, criteria).Where(x => criteria.Any(c => x.Bedingungen.Any(a => a.Bedingung.Contains(c))));
             }
-            return base.GetSubscribers(criteria);
+            return base.GetSubscribers(context, criteria);
         }
 
         public void Run(ircMessage theMessage)
@@ -57,7 +58,7 @@ namespace FritzBot.Plugins
                 theMessage.Answer("Ich konnte leider keine Daten von der Laborwebseite abrufen und mein Cache ist leer");
                 return;
             }
-            else if (!LaborDaten.IsUpToDate)
+            if (!LaborDaten.IsUpToDate)
             {
                 theMessage.Answer("Es war mir nicht möglich den Labor Cache zu erneuern. Grund: " + LaborDaten.LastUpdateFail.Message + ". Verwende Cache vom " + LaborDaten.Renewed.ToString());
             }
@@ -212,10 +213,7 @@ namespace FritzBot.Plugins
             {
                 return NeueLaborDaten;
             }
-            else
-            {
-                return AlteLaborDaten;
-            }
+            return AlteLaborDaten;
         }
     }
 
@@ -225,8 +223,6 @@ namespace FritzBot.Plugins
         public string datum;
         public string version;
         public string url;
-
-        public Labordaten() { }
 
         public static IEnumerable<Labordaten> GetDaten(string url)
         {
@@ -280,7 +276,7 @@ namespace FritzBot.Plugins
             {
                 return labordaten1.Equals(labordaten2);
             }
-            else if ((object)labordaten2 != null)
+            if ((object)labordaten2 != null)
             {
                 return false;
             }
@@ -293,7 +289,7 @@ namespace FritzBot.Plugins
             {
                 return !labordaten1.Equals(labordaten2);
             }
-            else if ((object)labordaten2 != null)
+            if ((object)labordaten2 != null)
             {
                 return true;
             }

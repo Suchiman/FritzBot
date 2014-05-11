@@ -1,4 +1,4 @@
-﻿using Db4objects.Db4o;
+﻿using FritzBot.Database;
 using Meebey.SmartIrc4net;
 using System;
 using System.Collections;
@@ -7,16 +7,17 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Data.Entity;
 
 namespace FritzBot.Core
 {
     /// <summary>
-    /// Der ServerManger verwaltet die Server
+    /// Der ServerManger verwaltet die ServerConnetions
     /// </summary>
-    public class ServerManager : IEnumerable<Server>
+    public class ServerManager : IEnumerable<ServerConnetion>
     {
         private static ServerManager instance;
-        private List<Server> _servers;
+        private List<ServerConnetion> _servers;
 
         /// <summary>
         /// Gibt die Singleton Instanz des ServerManagers zurück
@@ -34,40 +35,34 @@ namespace FritzBot.Core
         }
 
         /// <summary>
-        /// Gibt den Server mit dem angegebenen Hostname zurück
+        /// Gibt die ServerConnetion mit der angegebenen Adresse zurück
         /// </summary>
-        /// <param name="Hostname">Der Hostname des IRC Servers</param>
-        public Server this[string Hostname]
+        /// <param name="Address">Der Hostname des IRC Servers</param>
+        public ServerConnetion this[string Address]
         {
             get
             {
-                Contract.Ensures(Contract.Result<Server>() != null);
+                Contract.Ensures(Contract.Result<ServerConnetion>() != null);
 
-                foreach (Server oneServer in _servers)
+                foreach (ServerConnetion oneServer in _servers)
                 {
-                    if (oneServer.Hostname == Hostname)
+                    if (oneServer.Settings.Address == Address)
                     {
                         return oneServer;
                     }
                 }
-                throw new ArgumentException("Unknown Server");
+                throw new ArgumentException("Unknown ServerConnetion");
             }
         }
 
         /// <summary>
-        /// Erstellt eine neue Instanz des ServerManagers und lädt die Server aus der Datenbank
+        /// Erstellt eine neue Instanz des ServerManagers und lädt die ServerConnetions aus der Datenbank
         /// </summary>
         private ServerManager()
         {
-            using (DBProvider db = new DBProvider())
+            using (var context = new BotContext())
             {
-                _servers = db.Query<Server>().ToList();
-
-                //Workaround um dem Bug entgegen zu Wirken, dass Connected = true in die Datenbank gespeichert wird und beim Neustart ConnectAll keinen Effekt hat.
-                foreach (Server srv in _servers)
-                {
-                    srv.Disconnect();
-                }
+                _servers = context.Servers.Include(x => x.Channels).AsEnumerable().Select(x => new ServerConnetion(x)).ToList();
             }
         }
 
@@ -90,39 +85,45 @@ namespace FritzBot.Core
         /// <param name="Nickname">Der Nickname den der IRCbot für diese Verbindung verwenden soll</param>
         /// <param name="QuitMessage">Legt die Nachricht beim Verlassen des Servers fest</param>
         /// <param name="Channels">Alle Channels die Betreten werden sollen</param>
-        public Server NewConnection(string HostName, int Port, string Nickname, string QuitMessage, List<string> Channels)
+        public ServerConnetion NewConnection(string HostName, int Port, string Nickname, string QuitMessage, List<string> Channels)
         {
-            Contract.Ensures(Contract.Result<Server>() != null);
+            Contract.Ensures(Contract.Result<ServerConnetion>() != null);
 
-            Server server = new Server()
+            Server server = new Server
             {
-                Hostname = HostName,
+                Address = HostName,
                 Port = Port,
                 Nickname = Nickname,
                 QuitMessage = QuitMessage,
-                Channels = Channels
+                Channels = Channels.Select(x => new ServerChannel { Name = x }).ToList()
             };
-            _servers.Add(server);
-            using (DBProvider db = new DBProvider())
+
+            using (var context = new BotContext())
             {
-                db.SaveOrUpdate(server);
+                context.Servers.Add(server);
+                context.SaveChanges();
             }
-            return server;
+
+            ServerConnetion serverConnetion = new ServerConnetion(server);
+            _servers.Add(serverConnetion);
+            return serverConnetion;
         }
 
         /// <summary>
-        /// Trennt die Verbindung zu diesem Server und entfernt ihn aus der Datenbank
+        /// Trennt die Verbindung zu dieser ServerConnetion und entfernt sie aus der Datenbank
         /// </summary>
-        /// <param name="server"></param>
-        public void Remove(Server server)
+        /// <param name="serverConnetion"></param>
+        public void Remove(ServerConnetion serverConnetion)
         {
-            Contract.Requires(server != null);
+            Contract.Requires(serverConnetion != null);
 
-            server.Disconnect();
-            _servers.Remove(server);
-            using (DBProvider db = new DBProvider())
+            serverConnetion.Disconnect();
+            _servers.Remove(serverConnetion);
+            using (var context = new BotContext())
             {
-                db.Remove(server);
+                context.Servers.Attach(serverConnetion.Settings);
+                context.Servers.Remove(serverConnetion.Settings);
+                context.SaveChanges();
             }
         }
 
@@ -131,7 +132,7 @@ namespace FritzBot.Core
         /// </summary>
         public void ConnectAll()
         {
-            foreach (Server theServer in _servers.Where(x => !x.Connected))
+            foreach (ServerConnetion theServer in _servers.Where(x => !x.Connected))
             {
                 try
                 {
@@ -139,14 +140,14 @@ namespace FritzBot.Core
                 }
                 catch (Exception ex)
                 {
-                    toolbox.Logging("Herstellen der Verbindung zu Server " + theServer.Hostname + " fehlgeschlagen");
+                    toolbox.Logging("Herstellen der Verbindung zu Server " + theServer.Settings.Address + " fehlgeschlagen");
                     toolbox.Logging(ex);
                 }
             }
         }
 
         /// <summary>
-        /// Gibt an ob mindestens ein Server verbunden ist
+        /// Gibt an ob mindestens eine ServerConnetion verbunden ist
         /// </summary>
         public bool Connected
         {
@@ -161,7 +162,7 @@ namespace FritzBot.Core
         /// </summary>
         public void DisconnectAll()
         {
-            foreach (Server theServer in _servers.Where(x => x.Connected))
+            foreach (ServerConnetion theServer in _servers.Where(x => x.Connected))
             {
                 theServer.Disconnect();
             }
@@ -173,13 +174,13 @@ namespace FritzBot.Core
         /// <param name="message">Die Nachricht</param>
         public void AnnounceGlobal(string message)
         {
-            foreach (Server theServer in _servers)
+            foreach (ServerConnetion theServer in _servers)
             {
                 theServer.Announce(message);
             }
         }
 
-        public IEnumerator<Server> GetEnumerator()
+        public IEnumerator<ServerConnetion> GetEnumerator()
         {
             return _servers.GetEnumerator();
         }
@@ -191,9 +192,9 @@ namespace FritzBot.Core
     }
 
     /// <summary>
-    /// Ein Server kapselt die Verbindung zu einem IRC Server und speichert die Verbindungsdaten
+    /// Ein ServerConnetion kapselt die Verbindung zu einem IRC Server und speichert die Verbindungsdaten
     /// </summary>
-    public class Server
+    public class ServerConnetion
     {
         /// <summary>
         /// Wird ausgelöst, wenn ein User einen Channel betritt
@@ -232,48 +233,23 @@ namespace FritzBot.Core
 
         public delegate void IrcMessageEventHandler(object sender, ircMessage theMessage);
 
-        /// <summary>
-        /// Der Hostname des IRC Servers zu dem die Verbindung aufgebaut wird
-        /// </summary>
-        public string Hostname { get; set; }
+        public Server Settings { get; set; }
 
         /// <summary>
-        /// Der Port des IRC Servers, üblicherweise 6667
-        /// </summary>
-        public int Port { get; set; }
-
-        /// <summary>
-        /// Der zu verwendende Nickname
-        /// </summary>
-        public string Nickname { get; set; }
-
-        /// <summary>
-        /// Die Nachricht die beim als Grund für das Verlassen des Servers angegeben wird
-        /// </summary>
-        public string QuitMessage { get; set; }
-
-        /// <summary>
-        /// Die Channels, in dem sich der Bot aufhält
-        /// </summary>
-        public List<string> Channels { get; set; }
-
-        /// <summary>
-        /// Gibt an ob eine Verbindung mit dem Server herrgestellt ist
+        /// Gibt an ob eine Verbindung mit dem Server hergestellt ist
         /// </summary>
         public bool Connected { get; protected set; }
 
-        [Transient]
         private IrcFeatures _connection;
 
-        [Transient]
         private Thread _listener = null;
 
         /// <summary>
-        /// Erstellt ein neues Server Objekt welches die Verbindung zu einem IRC Server kapselt
+        /// Erstellt ein neues ServerConnetion Objekt welches die Verbindung zu einem IRC Server kapselt
         /// </summary>
-        public Server()
+        public ServerConnetion(Server srv)
         {
-            Channels = new List<string>();
+            Settings = srv;
             Connected = false;
         }
 
@@ -283,15 +259,18 @@ namespace FritzBot.Core
         /// <param name="channel">Der #channel</param>
         public void JoinChannel(string channel)
         {
-            if (!Channels.Contains(channel))
+            if (Settings.Channels.Any(x => x.Name == channel))
             {
-                Channels.Add(channel);
-                _connection.RfcJoin(channel);
+                return;
+            }
 
-                using (DBProvider db = new DBProvider())
-                {
-                    db.SaveOrUpdate(this);
-                }
+            _connection.RfcJoin(channel);
+
+            using (var context = new BotContext())
+            {
+                context.Servers.Attach(Settings);
+                Settings.Channels.Add(new ServerChannel { Name = channel });
+                context.SaveChanges();
             }
         }
 
@@ -301,15 +280,19 @@ namespace FritzBot.Core
         /// <param name="channel">Der #Channel</param>
         public void PartChannel(string channel)
         {
-            if (Channels.Contains(channel))
+            ServerChannel chan = Settings.Channels.FirstOrDefault(x => x.Name == channel);
+            if (chan == null)
             {
-                Channels.Remove(channel);
-                _connection.RfcPart(channel);
+                return;
+            }
 
-                using (DBProvider db = new DBProvider())
-                {
-                    db.SaveOrUpdate(this);
-                }
+            _connection.RfcPart(channel);
+
+            using (var context = new BotContext())
+            {
+                context.Servers.Attach(Settings);
+                Settings.Channels.Remove(chan);
+                context.SaveChanges();
             }
         }
 
@@ -345,22 +328,22 @@ namespace FritzBot.Core
 
             _connection.OnConnectionError += _connection_OnConnectionError;
 
-            _connection.Connect(Hostname, Port);
-            _connection.Login(Nickname, Nickname, 0, Nickname);
+            _connection.Connect(Settings.Address, Settings.Port);
+            _connection.Login(Settings.Nickname, Settings.Nickname, 0, Settings.Nickname);
 
-            foreach (string channel in Channels)
+            foreach (ServerChannel channel in Settings.Channels)
             {
-                _connection.RfcJoin(channel);
+                _connection.RfcJoin(channel.Name);
             }
 
-            _listener = toolbox.SafeThreadStart("ListenThread " + Hostname, true, _connection.Listen);
+            _listener = toolbox.SafeThreadStart("ListenThread " + Settings.Address, true, _connection.Listen);
 
             Connected = true;
         }
 
         void _connection_OnConnectionError(object sender, EventArgs e)
         {
-            toolbox.LogFormat("Verbindung zu Server {0} verloren. Versuche Verbindung wiederherzustellen.", Hostname);
+            toolbox.LogFormat("Verbindung zu Server {0} verloren. Versuche Verbindung wiederherzustellen.", Settings.Address);
             DateTime TimeConnectionLost = DateTime.Now;
 
             //Wenn wir bis hierhin gekommen sind, wurde eine bestehende Verbindung aus einem externen Grund terminiert
@@ -372,23 +355,23 @@ namespace FritzBot.Core
             {
                 try
                 {
-                    _connection.Connect(Hostname, Port);
-                    _connection.Login(Nickname, Nickname, 0, Nickname);
+                    _connection.Connect(Settings.Address, Settings.Port);
+                    _connection.Login(Settings.Nickname, Settings.Nickname, 0, Settings.Nickname);
 
-                    foreach (string channel in Channels)
+                    foreach (ServerChannel channel in Settings.Channels)
                     {
-                        _connection.RfcJoin(channel);
+                        _connection.RfcJoin(channel.Name);
                     }
                 }
                 catch (Exception ex)
                 {
                     if (ex is CouldNotConnectException && ex.InnerException != null)
                     {
-                        toolbox.LogFormat("Verbindungsversuch zu {0} gescheitert: {1}", Hostname, ex.InnerException.Message);
+                        toolbox.LogFormat("Verbindungsversuch zu {0} gescheitert: {1}", Settings.Address, ex.InnerException.Message);
                     }
                     else
                     {
-                        toolbox.LogFormat("Verbindungsversuch zu {0} gescheitert: {1}", Hostname, ex.Message);
+                        toolbox.LogFormat("Verbindungsversuch zu {0} gescheitert: {1}", Settings.Address, ex.Message);
                     }
                 }
 
@@ -396,12 +379,12 @@ namespace FritzBot.Core
                 {
                     ++ConnectionAttempt;
                     int delay = (ConnectionAttempt - 1) % 3 == 0 ? 30000 : 5000;
-                    toolbox.LogFormat("Nächster Verbindungsversuch ({0}) zu {1}:{2} in {3} Sekunden", ConnectionAttempt, Hostname, Port, delay / 1000);
+                    toolbox.LogFormat("Nächster Verbindungsversuch ({0}) zu {1}:{2} in {3} Sekunden", ConnectionAttempt, Settings.Address, Settings.Port, delay / 1000);
                     Thread.Sleep(delay);
                 }
             }
             while (!_connection.IsConnected);
-            toolbox.LogFormat("Verbindung mit {0} nach {1} Sekunden ohne Verbindung und {2} Verbindungsversuchen wiederhergestellt.", Hostname, DateTime.Now.Subtract(TimeConnectionLost).TotalSeconds, ConnectionAttempt);
+            toolbox.LogFormat("Verbindung mit {0} nach {1} Sekunden ohne Verbindung und {2} Verbindungsversuchen wiederhergestellt.", Settings.Address, DateTime.Now.Subtract(TimeConnectionLost).TotalSeconds, ConnectionAttempt);
         }
 
         /// <summary>
@@ -410,21 +393,19 @@ namespace FritzBot.Core
         /// <param name="Name">Der Nickname des Users</param>
         private User MaintainUser(string Name)
         {
-            using (DBProvider db = new DBProvider())
+            using (var context = new BotContext())
             {
-                User u = db.GetUser(Name);
-                if (u == null)
+                Nickname nick = context.Nicknames.Include(x => x.User).FirstOrDefault(x => x.Name == Name);
+                if (nick == null)
                 {
-                    u = new User();
-                    u.Names.Add(Name);
+                    nick = new Nickname { Name = Name, User = new User() };
+                    context.Nicknames.Add(nick);
+                    context.SaveChanges();
+                    //LastUsedName kann nicht gesetzt werden während ein neuer Benutzer hinzugefügt wird
                 }
-                else if (!u.Names.Contains(Name))
-                {
-                    u.Names.Add(Name);
-                }
-                u.LastUsedName = Name;
-                db.SaveOrUpdate(u);
-                return u;
+                nick.User.LastUsedName = nick;
+                context.SaveChanges();
+                return nick.User;
             }
         }
 
@@ -492,22 +473,21 @@ namespace FritzBot.Core
         private void _connection_OnNickChange(object sender, NickChangeEventArgs e)
         {
             toolbox.LogFormat("{0} heißt jetzt {1}", e.OldNickname, e.NewNickname);
-            using (DBProvider db = new DBProvider())
+            using (var context = new BotContext())
             {
-                User oldNick = db.GetUser(e.OldNickname);
-                User newNick = db.GetUser(e.NewNickname);
+                User oldNick = context.GetUser(e.OldNickname);
+                User newNick = context.GetUser(e.NewNickname);
                 if (oldNick != null && newNick == null)
                 {
-                    oldNick.Names.Add(e.NewNickname);
-                    oldNick.LastUsedName = e.NewNickname;
-                    db.SaveOrUpdate(oldNick);
+                    oldNick.LastUsedName = new Nickname { Name = e.NewNickname, User = oldNick };
+                    context.SaveChanges();
                 }
-                else if (oldNick == null && newNick != null)
-                {
-                    newNick.Names.Add(e.OldNickname);
-                    newNick.LastUsedName = e.NewNickname;
-                    db.SaveOrUpdate(newNick);
-                }
+                //else if (oldNick == null && newNick != null)
+                //{
+                //    newNick.Names.Add(e.OldNickname);
+                //    newNick.LastUsedName = e.NewNickname;
+                //    context.SaveChanges();
+                //}
             }
 
             ThreadPool.QueueUserWorkItem(x =>
@@ -554,7 +534,7 @@ namespace FritzBot.Core
             ThreadPool.QueueUserWorkItem(x =>
             {
                 User user = MaintainUser(e.Data.Nick);
-                ircMessage message = new ircMessage(e.Data, this, user);
+                ircMessage message = new ircMessage(e.Data, this);
 
                 if (!message.IsIgnored)
                 {
@@ -614,14 +594,14 @@ namespace FritzBot.Core
         }
 
         /// <summary>
-        /// Trennt die Verbindung zum Angegebenen Server
+        /// Trennt die Verbindung zum Server
         /// </summary>
         public void Disconnect()
         {
             Connected = false;
             if (_connection != null)
             {
-                _connection.RfcQuit(QuitMessage);
+                _connection.RfcQuit(Settings.QuitMessage);
                 if (_listener != null)
                 {
                     _listener.Abort();
@@ -629,7 +609,7 @@ namespace FritzBot.Core
                 if (_connection.IsConnected)
                 {
                     _connection.Disconnect();
-                    toolbox.Logging("Verbindung zu Server " + Hostname + " getrennt");
+                    toolbox.Logging("Verbindung zu Server " + Settings.Address + " getrennt");
                 }
                 _connection = null;
             }
@@ -652,9 +632,9 @@ namespace FritzBot.Core
         /// <param name="message">Die Nachricht</param>
         public void Announce(string message)
         {
-            foreach (string channel in Channels)
+            foreach (ServerChannel channel in Settings.Channels)
             {
-                _connection.SendMessage(SendType.Message, channel, message);
+                _connection.SendMessage(SendType.Message, channel.Name, message);
             }
         }
     }

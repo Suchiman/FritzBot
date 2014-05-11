@@ -1,12 +1,12 @@
-﻿using FritzBot.DataModel;
+using FritzBot.DataModel;
 using System;
 using System.Globalization;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("zeit")]
-    [Module.Help("Das gibt die aktuelle Uhrzeit aus.")]
-    [Module.ParameterRequired(false)]
+    [Name("zeit")]
+    [Help("Das gibt die aktuelle Uhrzeit aus.")]
+    [ParameterRequired(false)]
     class zeit : PluginBase, ICommand
     {
         public void Run(ircMessage theMessage)

@@ -1,4 +1,5 @@
 ﻿using FritzBot.Core;
+using FritzBot.Database;
 using FritzBot.Plugins.SubscriptionProviders;
 using System;
 using System.Linq;
@@ -11,7 +12,7 @@ namespace FritzBot.DataModel
 
         public PluginBase()
         {
-            PluginID = this.GetType().Name;
+            PluginID = GetType().Name;
         }
 
         protected virtual void NotifySubscribers(string message)
@@ -22,12 +23,15 @@ namespace FritzBot.DataModel
         protected virtual void NotifySubscribers(string message, string[] criteria)
         {
             SaveNotification(message);
-            GetSubscribers(criteria).ForEach(x => DoNotification(x, message));
+            using (var context = new BotContext())
+            {
+                GetSubscribers(context, criteria).ForEach(x => DoNotification(x, message));
+            }
         }
 
         protected virtual void SaveNotification(string message)
         {
-            using (DBProvider db = new DBProvider())
+            using (var context = new BotContext())
             {
                 NotificationHistory h = new NotificationHistory()
                 {
@@ -35,7 +39,8 @@ namespace FritzBot.DataModel
                     Notification = message,
                     Plugin = PluginID
                 };
-                db.SaveOrUpdate(h);
+                context.NotificationHistories.Add(h);
+                context.SaveChanges();
             }
         }
 
@@ -44,21 +49,13 @@ namespace FritzBot.DataModel
             SubscriptionProvider provider = PluginManager.GetInstance().FirstOrDefault(x => x.ID == subscription.Provider).As<SubscriptionProvider>();
             if (provider != null)
             {
-                provider.SendNotification(subscription.Reference, message);
+                provider.SendNotification(subscription.User, message);
             }
         }
 
-        protected virtual IQueryable<Subscription> GetSubscribers(string[] criteria)
+        protected virtual IQueryable<Subscription> GetSubscribers(BotContext context, string[] criteria)
         {
-            using (DBProvider db = new DBProvider())
-            {
-                return db.Query<Subscription>(x => x.Plugin == PluginID);
-            }
-        }
-
-        protected virtual SimpleStorage GetPluginStorage(DBProvider db)
-        {
-            return db.GetSimpleStorage(PluginID);
+            return context.Subscriptions.Where(x => x.Plugin == PluginID);
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using FritzBot.DataModel;
+using FritzBot.DataModel;
 using FritzBot.Functions;
 using Meebey.SmartIrc4net;
 using System;
@@ -6,9 +6,9 @@ using System.Linq;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("geolocator", "geolocation")]
-    [Module.Help("Findet die Geolocation einer IP Adresse !geolocator <ip-address>")]
-    [Module.ParameterRequired]
+    [Name("geolocator", "geolocation")]
+    [Help("Findet die Geolocation einer IP Adresse !geolocator <ip-address>")]
+    [ParameterRequired]
     public class geolocator : PluginBase, ICommand
     {
         public void Run(ircMessage theMessage)
@@ -19,7 +19,9 @@ namespace FritzBot.Plugins
                 IrcUser user = theMessage.Data.Irc.GetIrcUser(address);
                 address = user.Host;
             }
-            catch { }
+            catch
+            {
+            }
             Console.WriteLine("Führe ortung durch für: " + address);
 
             LocationInfoDetailed details = Geolocation.GetLocationInfoDetailed(address);

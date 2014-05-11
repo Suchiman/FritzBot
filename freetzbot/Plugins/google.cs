@@ -1,10 +1,10 @@
-﻿using FritzBot.DataModel;
+using FritzBot.DataModel;
 using System;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("google", "g", "gg")]
-    [Module.Help("Syntax: (!g) !google etwas das du suchen möchtest")]
+    [Name("google", "g", "gg")]
+    [Help("Syntax: (!g) !google etwas das du suchen möchtest")]
     class google : PluginBase, ICommand
     {
         public void Run(ircMessage theMessage)

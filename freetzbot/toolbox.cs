@@ -1,9 +1,11 @@
 ﻿using FritzBot.Core;
+using FritzBot.Database;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Net;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Web;
@@ -105,7 +107,7 @@ namespace FritzBot
         {
             byte[] hash = null;
             byte[] tocode = Encoding.UTF8.GetBytes(toCrypt.ToCharArray());
-            using (System.Security.Cryptography.SHA512 theCrypter = new System.Security.Cryptography.SHA512Managed())
+            using (SHA512 theCrypter = new SHA512Managed())
             {
                 hash = theCrypter.ComputeHash(tocode);
                 theCrypter.Clear();
@@ -123,7 +125,7 @@ namespace FritzBot
         /// <param name="Channels">Eine Liste von Channelnamen die der Bot betreten soll</param>
         public static void InstantiateConnection(string server, int Port, string Nick, string Quit_Message, string Channel)
         {
-            Server Connection = ServerManager.GetInstance().NewConnection(server, Port, Nick, Quit_Message, new List<string>() { Channel });
+            ServerConnetion Connection = ServerManager.GetInstance().NewConnection(server, Port, Nick, Quit_Message, new List<string>() { Channel });
             Connection.Connect();
         }
 
@@ -205,7 +207,7 @@ namespace FritzBot
         {
             Contract.Requires(url != null);
 
-            return System.Web.HttpUtility.UrlEncode(url, Encoding.UTF8);
+            return HttpUtility.UrlEncode(url, Encoding.UTF8);
         }
 
         public static bool IsOp(User user)

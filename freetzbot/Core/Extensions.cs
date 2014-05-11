@@ -1,10 +1,10 @@
-﻿using HtmlAgilityPack;
+using HtmlAgilityPack;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Xml.Linq;
 
@@ -61,7 +61,9 @@ namespace FritzBot.Core
                     TResult result = selector(item);
                     notNull = result != null;
                 }
-                catch (NullReferenceException) { }
+                catch (NullReferenceException)
+                {
+                }
                 if (notNull)
                 {
                     yield return item;
@@ -180,11 +182,9 @@ namespace FritzBot.Core
             Contract.Requires(url != null);
             Contract.Ensures(Contract.Result<HtmlDocument>() != null);
 
-            string page = toolbox.GetWeb(url);
-            if (String.IsNullOrEmpty(page))
-            {
-                throw new InvalidOperationException("Verbindungsfehler");
-            }
+            WebClient dl = new WebClient();
+            string page = dl.DownloadString(url);
+
             doc.LoadHtml(page);
             return doc;
         }
@@ -278,28 +278,22 @@ namespace FritzBot.Core
         {
             if (comparer != null)
                 return comparer(x, y);
-            else
-            {
-                var valX = keyExtractor(x);
-                if (valX is IEnumerable<object>) // The special case where we pass a list of keys
-                    return ((IEnumerable<object>)valX).SequenceEqual((IEnumerable<object>)keyExtractor(y));
+            var valX = keyExtractor(x);
+            if (valX is IEnumerable<object>) // The special case where we pass a list of keys
+                return ((IEnumerable<object>)valX).SequenceEqual((IEnumerable<object>)keyExtractor(y));
 
-                return valX.Equals(keyExtractor(y));
-            }
+            return valX.Equals(keyExtractor(y));
         }
 
         public int GetHashCode(T obj)
         {
             if (keyExtractor == null)
                 return obj.ToString().ToLower().GetHashCode();
-            else
-            {
-                var val = keyExtractor(obj);
-                if (val is IEnumerable<object>) // The special case where we pass a list of keys
-                    return (int)((IEnumerable<object>)val).Aggregate((x, y) => x.GetHashCode() ^ y.GetHashCode());
+            var val = keyExtractor(obj);
+            if (val is IEnumerable<object>) // The special case where we pass a list of keys
+                return (int)((IEnumerable<object>)val).Aggregate((x, y) => x.GetHashCode() ^ y.GetHashCode());
 
-                return val.GetHashCode();
-            }
+            return val.GetHashCode();
         }
     }
 }

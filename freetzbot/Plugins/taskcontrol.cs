@@ -1,13 +1,13 @@
-﻿using FritzBot.Core;
+using FritzBot.Core;
 using FritzBot.DataModel;
 using System;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("taskcontrol")]
-    [Module.Help("Steuert meine Background Tasks: !taskcontrol <taskname> <start/stop>")]
-    [Module.ParameterRequired(true)]
-    [Module.Authorize]
+    [Name("taskcontrol")]
+    [Help("Steuert meine Background Tasks: !taskcontrol <taskname> <start/stop>")]
+    [ParameterRequired(true)]
+    [Authorize]
     class taskcontrol : PluginBase, ICommand
     {
         public void Run(ircMessage theMessage)

@@ -1,9 +1,9 @@
-﻿using FritzBot.Core;
+﻿using FritzBot.Database;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Diagnostics.Contracts;
 using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace FritzBot.DataModel
 {
@@ -25,7 +25,18 @@ namespace FritzBot.DataModel
 
         public BoxDatabase()
         {
-            Boxen = new DBProvider().Query<Box>().ToList();
+            try
+            {
+                using (var context = new BotContext())
+                {
+                    Boxen = context.Boxes.Include(x => x.RegexPattern).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                toolbox.Logging("Fehler beim Laden der BoxDatabase");
+                toolbox.Logging(ex);
+            }
         }
 
         /// <summary>
@@ -46,11 +57,11 @@ namespace FritzBot.DataModel
             {
                 ShortName = ShortName,
                 FullName = FullName,
-                RegexPattern = new List<string>(RegexPattern)
+                RegexPattern = RegexPattern.Select(x => new BoxRegexPattern { Pattern = x }).ToList()
             };
-            using (DBProvider db = new DBProvider())
+            using (var context = new BotContext())
             {
-                db.SaveOrUpdate(box);
+                context.Boxes.Add(box);
             }
             Boxen.Add(box);
             return box;
@@ -123,88 +134,6 @@ namespace FritzBot.DataModel
         public IEnumerable<Box> GetBoxen()
         {
             return Boxen;
-        }
-    }
-
-    public class Box
-    {
-        public string ShortName { get; set; }
-        public string FullName { get; set; }
-        public List<string> RegexPattern { get; set; }
-
-        public Box()
-        {
-            RegexPattern = new List<string>();
-        }
-
-        /// <summary>
-        /// Überprüft mit den gegebenen Daten ob der input dieser Box entspricht
-        /// </summary>
-        public bool Matches(string input)
-        {
-            return ((ShortName == input) || (FullName == input) || RegexPattern.Any(x => Regex.Match(input, x).Success));
-        }
-
-        /// <summary>
-        /// Fügt einen Regulären Ausdruck zu den Erkennungsmustern hinzu. Doppelte Einträge werden automatisch entfernt
-        /// </summary>
-        public void AddRegex(params string[] pattern)
-        {
-            RegexPattern.AddRange(pattern);
-            RegexPattern = RegexPattern.Distinct().ToList();
-        }
-
-        /// <summary>
-        /// Entfernt einen Regulären Ausdruck aus den Erkennungsmustern
-        /// </summary>
-        public void RemoveRegex(string pattern)
-        {
-            RegexPattern.Remove(pattern);
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (obj is Box)
-            {
-                return this.ShortName == ((Box)obj).ShortName;
-            }
-            return false;
-        }
-
-        public override int GetHashCode()
-        {
-            return ShortName.GetHashCode();
-        }
-
-        public override string ToString()
-        {
-            return ShortName;
-        }
-
-        public static bool operator ==(Box daten1, Box daten2)
-        {
-            if ((object)daten1 == null ^ (object)daten2 == null)
-            {
-                return false;
-            }
-            if ((object)daten1 == null && (object)daten2 == null)
-            {
-                return true;
-            }
-            return daten1.Equals(daten2);
-        }
-
-        public static bool operator !=(Box daten1, Box daten2)
-        {
-            if ((object)daten1 == null ^ (object)daten2 == null)
-            {
-                return true;
-            }
-            if ((object)daten1 == null && (object)daten2 == null)
-            {
-                return false;
-            }
-            return daten1.ShortName != daten2.ShortName;
         }
     }
 }

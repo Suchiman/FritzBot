@@ -1,24 +1,25 @@
-﻿using FritzBot.Core;
+using FritzBot.Database;
 using FritzBot.DataModel;
 using System;
 using System.Linq;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("unignore")]
-    [Module.Help("Die betroffene Person wird von der ignore Liste gestrichen, Operator Befehl: z.b. !unignore Testnick")]
-    [Module.ParameterRequired]
-    [Module.Authorize]
+    [Name("unignore")]
+    [Help("Die betroffene Person wird von der ignore Liste gestrichen, Operator Befehl: z.b. !unignore Testnick")]
+    [ParameterRequired]
+    [Authorize]
     class unignore : PluginBase, ICommand
     {
         public void Run(ircMessage theMessage)
         {
-            using (DBProvider db = new DBProvider())
+            using (var context = new BotContext())
             {
-                User u = db.GetUser(theMessage.CommandArgs.FirstOrDefault());
+                User u = context.GetUser(theMessage.CommandArgs.FirstOrDefault());
                 if (u != null)
                 {
                     u.Ignored = false;
+                    context.SaveChanges();
                     theMessage.Answer(String.Format("Ignoranz für {0} aufgehoben", u.LastUsedName));
                     return;
                 }

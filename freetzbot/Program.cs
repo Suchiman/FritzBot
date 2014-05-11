@@ -1,9 +1,8 @@
-﻿using Db4objects.Db4o.Ext;
 using FritzBot.Core;
+using FritzBot.Database;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using System.IO;
 using System.Linq;
 using System.Threading;
 
@@ -24,9 +23,17 @@ namespace FritzBot
         public static void HandleCommand(ircMessage theMessage)
         {
             Contract.Requires(theMessage != null);
+            bool isOp;
+            bool isAdmin;
+            using (var context = new BotContext())
+            {
+                User user = context.GetUser(theMessage.Nickname);
+                isOp = toolbox.IsOp(user);
+                isAdmin = user.Admin;
+            }
 
             #region Antiflooding checks
-            if (!toolbox.IsOp(theMessage.TheUser))
+            if (!isOp)
             {
                 Floodings.RemoveAll(x => x < DateTime.Now.AddSeconds(-30));
                 if (Floodings.Count >= ConfigHelper.GetInt("FloodingCount", 10))
@@ -52,13 +59,13 @@ namespace FritzBot
 
                 if (info != null)
                 {
-                    if (!info.AuthenticationRequired || toolbox.IsOp(theMessage.TheUser))
+                    if (!info.AuthenticationRequired || isOp)
                     {
                         if (!info.ParameterRequiredSpecified || (info.ParameterRequired && theMessage.HasArgs) || (!info.ParameterRequired && !theMessage.HasArgs))
                         {
                             try
                             {
-                                ICommand command = info.GetScoped<ICommand>(theMessage.Data.Channel, theMessage.TheUser);
+                                ICommand command = info.GetScoped<ICommand>(theMessage.Data.Channel, theMessage.Nickname);
                                 command.Run(theMessage);
                             }
                             catch (Exception ex)
@@ -73,7 +80,7 @@ namespace FritzBot
                             theMessage.Answer("Ungültiger Aufruf: " + info.HelpText);
                         }
                     }
-                    else if (theMessage.TheUser.Admin)
+                    else if (isAdmin)
                     {
                         theMessage.Answer("Du musst dich erst authentifizieren, " + theMessage.Nickname);
                     }
@@ -103,9 +110,9 @@ namespace FritzBot
                             Console.WriteLine("Du musst den Benutzernamen angeben");
                             continue;
                         }
-                        using (DBProvider db = new DBProvider())
+                        using (var context = new BotContext())
                         {
-                            User nutzer = db.GetUser(ConsoleSplitted[1]);
+                            User nutzer = context.GetUser(ConsoleSplitted[1]);
                             if (nutzer != null)
                             {
                                 if (nutzer.Admin)
@@ -114,7 +121,7 @@ namespace FritzBot
                                     break;
                                 }
                                 nutzer.Admin = true;
-                                db.SaveOrUpdate(nutzer);
+                                context.SaveChanges();
                                 Console.WriteLine(nutzer.LastUsedName + " zum OP befördert");
                             }
                             else
@@ -138,12 +145,12 @@ namespace FritzBot
                         ServerManager.GetInstance().Remove(ServerManager.GetInstance()[ConsoleSplitted[1]]);
                         break;
                     case "list":
-                        Console.WriteLine("Verbunden mit den Servern: {0}", String.Join(", ", ServerManager.GetInstance().Select(x => x.Hostname)));
+                        Console.WriteLine("Verbunden mit den Servern: {0}", String.Join(", ", ServerManager.GetInstance().Select(x => x.Settings.Address)));
                         break;
                     case "reconnect":
-                        foreach (Server srv in ServerManager.GetInstance())
+                        foreach (ServerConnetion srv in ServerManager.GetInstance())
                         {
-                            Console.WriteLine("Reconnecte {0}", srv.Hostname);
+                            Console.WriteLine("Reconnecte {0}", srv.Settings.Address);
                             srv.Disconnect();
                             srv.Connect();
                         }
@@ -190,24 +197,16 @@ namespace FritzBot
             RestartFlag = false;
             ShutdownSignal = new AutoResetEvent(false);
 
-            try
-            {
-                DBProvider.Defragmentieren();
-            }
-            catch (Db4oIOException)
-            {
-                toolbox.Logging("Defragmentierung fehlgeschlagen, starte Workaround");
-                DBProvider.Shutdown();
-                File.Delete(DBProvider.DBPath);
-                File.Move(DBProvider.DBPath + ".backup", DBProvider.DBPath);
-                DBProvider.ReCreate();
-                DBProvider.Defragmentieren();
-            }
+            //DBConverter.Convert();
 
             PluginManager.GetInstance().BeginInit(true);
 
-            int count = new DBProvider().Query<User>().Count();
-            toolbox.Logging(count + " Benutzer geladen!");
+            //System.Data.Entity.Database.SetInitializer(new MigrateDatabaseToLatestVersion<BotContext, Configuration>());
+            using (var context = new BotContext())
+            {
+                int count = context.Users.Count();
+                toolbox.Logging(count + " Benutzer geladen!");
+            }
 
             ServerManager Servers = ServerManager.GetInstance();
             if (Servers.ConnectionCount == 0)
@@ -224,7 +223,6 @@ namespace FritzBot
         {
             ServerManager.GetInstance().DisconnectAll();
             PluginManager.Shutdown();
-            DBProvider.Shutdown();
         }
 
         private static void Main()

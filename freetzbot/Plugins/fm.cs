@@ -1,4 +1,4 @@
-﻿using FritzBot.Core;
+using FritzBot.Core;
 using FritzBot.DataModel;
 using FritzBot.Functions;
 using HtmlAgilityPack;
@@ -10,8 +10,8 @@ using System.Text;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("fm", "ff")]
-    [Module.Help("Das erzeugt einen Link zu einem FritzBox Freetz Informationsseite, Beispiel: !fm 7270 v1")]
+    [Name("fm", "ff")]
+    [Help("Das erzeugt einen Link zu einem FritzBox Freetz Informationsseite, Beispiel: !fm 7270 v1")]
     class fm : PluginBase, ICommand
     {
         private const string ModelPage = "http://freetz.org/wiki/models";

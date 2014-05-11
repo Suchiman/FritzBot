@@ -1,13 +1,13 @@
-﻿using FritzBot.Core;
+using FritzBot.Core;
 using FritzBot.DataModel;
 using System;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("rmmod", "unloadmodule")]
-    [Module.Help("Deaktiviert einen meiner Befehle")]
-    [Module.ParameterRequired]
-    [Module.Authorize]
+    [Name("rmmod", "unloadmodule")]
+    [Help("Deaktiviert einen meiner Befehle")]
+    [ParameterRequired]
+    [Authorize]
     class unloadmodule : PluginBase, ICommand
     {
         public void Run(ircMessage theMessage)

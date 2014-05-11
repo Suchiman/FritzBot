@@ -1,4 +1,4 @@
-﻿using FritzBot.Core;
+using FritzBot.Core;
 using FritzBot.DataModel;
 using System;
 using System.IO;
@@ -7,10 +7,10 @@ using System.Reflection;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("modprobe", "insmod", "loadmodule")]
-    [Module.Help("Lädt ein Plugin nach")]
-    [Module.ParameterRequired]
-    [Module.Authorize]
+    [Name("modprobe", "insmod", "loadmodule")]
+    [Help("Lädt ein Plugin nach")]
+    [ParameterRequired]
+    [Authorize]
     class loadmodule : PluginBase, ICommand
     {
         public void Run(ircMessage theMessage)

@@ -1,11 +1,11 @@
-﻿using FritzBot.DataModel;
+using FritzBot.DataModel;
 using System;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("uptime", "laufzeit")]
-    [Module.Help("Das zeigt meine aktuelle Laufzeit an und wie lange ich mit diesem Server verbunden bin.")]
-    [Module.ParameterRequired(false)]
+    [Name("uptime", "laufzeit")]
+    [Help("Das zeigt meine aktuelle Laufzeit an und wie lange ich mit diesem ServerConnetion verbunden bin.")]
+    [ParameterRequired(false)]
     class uptime : PluginBase, ICommand
     {
         private DateTime startzeit;

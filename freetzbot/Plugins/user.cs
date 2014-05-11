@@ -1,46 +1,36 @@
-﻿using FritzBot.Core;
+using FritzBot.Core;
+using FritzBot.Database;
 using FritzBot.DataModel;
 using System;
 using System.Linq;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("user")]
-    [Module.Help("Führt Operationen an meiner Benutzerdatenbank aus, Operator Befehl: !user remove, reload, flush, add <name>, box <name> <box>")]
-    [Module.ParameterRequired]
-    [Module.Authorize]
+    [Name("user")]
+    [Help("Führt Operationen an meiner Benutzerdatenbank aus, Operator Befehl: !user remove, reload, flush, add <name>, box <name> <box>")]
+    [ParameterRequired]
+    [Authorize]
     class user : PluginBase, ICommand
     {
         public void Run(ircMessage theMessage)
         {
             try
             {
-                if (theMessage.CommandArgs[0] == "add")
-                {
-                    User u = new User();
-                    u.LastUsedName = theMessage.CommandArgs[1];
-                    u.Names.Add(theMessage.CommandArgs[1]);
-                    using (DBProvider db = new DBProvider())
-                    {
-                        db.SaveOrUpdate(u);
-                    }
-                    theMessage.Answer("User hinzugefügt");
-                }
                 if (theMessage.CommandArgs[0] == "box")
                 {
-                    using (DBProvider db = new DBProvider())
+                    using (var context = new BotContext())
                     {
-                        User u = db.GetUser(theMessage.CommandArgs[1]);
+                        User u = context.GetUser(theMessage.CommandArgs[1]);
                         if (u != null)
                         {
-                            BoxEntry entry = db.QueryLinkedData<BoxEntry, User>(u).FirstOrDefault();
-                            if (entry == null)
+                            BoxManager mgr = new BoxManager(u, context);
+                            string boxtoadd = String.Join(" ", theMessage.CommandArgs.Skip(2));
+                            if (mgr.HasBox(boxtoadd))
                             {
-                                entry = new BoxEntry();
-                                entry.Reference = u;
+                                theMessage.Answer("Diese Box gibt es für diesen User bereits!");
+                                return;
                             }
-                            entry.AddBox(String.Join(" ", theMessage.CommandArgs.Skip(2)));
-                            db.SaveOrUpdate(entry);
+                            mgr.AddBox(boxtoadd);
                             theMessage.Answer("Hinzugefügt");
                             return;
                         }
@@ -49,41 +39,21 @@ namespace FritzBot.Plugins
                 }
                 if (theMessage.CommandArgs[0] == "boxremove")
                 {
-                    using (DBProvider db = new DBProvider())
+                    using (var context = new BotContext())
                     {
-                        User u = db.GetUser(theMessage.CommandArgs[1]);
+                        User u = context.GetUser(theMessage.CommandArgs[1]);
                         if (u != null)
                         {
-                            BoxEntry entry = db.QueryLinkedData<BoxEntry, User>(u).FirstOrDefault();
-                            if (entry != null)
+                            BoxManager mgr = new BoxManager(u, context);
+                            if (mgr.RemoveBox(String.Join(" ", theMessage.CommandArgs.Skip(2))))
                             {
-                                if (entry.RemoveBox(String.Join(" ", theMessage.CommandArgs.Skip(2))))
-                                {
-                                    theMessage.Answer("Erledigt!");
-                                    db.SaveOrUpdate(entry);
-                                    return;
-                                }
+                                theMessage.Answer("Erledigt!");
+                                return;
                             }
                             theMessage.Answer("Der Suchstring wurde nicht gefunden und deshalb nicht gelöscht");
                             return;
                         }
                         theMessage.Answer("User gibbet nicht");
-                    }
-                }
-                if (theMessage.CommandArgs[0] == "remove")
-                {
-                    using (DBProvider db = new DBProvider())
-                    {
-                        User u = db.GetUser(theMessage.CommandArgs[1]);
-                        if (u != null)
-                        {
-                            db.Remove(u);
-                            theMessage.Answer("Entfernt!");
-                        }
-                        else
-                        {
-                            theMessage.Answer("Nicht gefunden");
-                        }
                     }
                 }
             }

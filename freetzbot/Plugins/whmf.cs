@@ -1,9 +1,9 @@
-﻿using FritzBot.DataModel;
+using FritzBot.DataModel;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("whmf", "w")]
-    [Module.Help("Das erzeugt einen Link zu wehavemorefun mit dem angegebenen Suchkriterium, Beispiele: !whmf 7270, !whmf CAPI Treiber")]
+    [Name("whmf", "w")]
+    [Help("Das erzeugt einen Link zu wehavemorefun mit dem angegebenen Suchkriterium, Beispiele: !whmf 7270, !whmf CAPI Treiber")]
     class whmf : PluginBase, ICommand
     {
         public void Run(ircMessage theMessage)

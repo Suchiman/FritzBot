@@ -1,10 +1,10 @@
-﻿using FritzBot.DataModel;
+using FritzBot.DataModel;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("about")]
-    [Module.Help("Ich würde dir dann kurz etwas über mich erzählen.")]
-    [Module.ParameterRequired(false)]
+    [Name("about")]
+    [Help("Ich würde dir dann kurz etwas über mich erzählen.")]
+    [ParameterRequired(false)]
     class about : PluginBase, ICommand
     {
         public void Run(ircMessage theMessage)

@@ -1,6 +1,7 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using System.Net;
+using System.Net.Sockets;
 
 namespace FritzBot.Functions
 {
@@ -23,7 +24,7 @@ namespace FritzBot.Functions
             IPAddress ad;
             if (IPAddress.TryParse(ip, out ad))
             {
-                if (ad.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+                if (ad.AddressFamily == AddressFamily.InterNetworkV6)
                 {
                     preferedMode = "country"; //IPv6 Lokalisierung scheint nur im Country Mode zu funktionieren
                 }
@@ -36,14 +37,16 @@ namespace FritzBot.Functions
                     if (entry != null && entry.AddressList.Length > 0)
                     {
                         ad = entry.AddressList[0];
-                        if (ad.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+                        if (ad.AddressFamily == AddressFamily.InterNetworkV6)
                         {
                             preferedMode = "country"; //IPv6 Lokalisierung scheint nur im Country Mode zu funktionieren
                         }
                         ip = ad.ToString();
                     }
                 }
-                catch { }
+                catch
+                {
+                }
             }
 
             string url = String.Format(APIUrl, preferedMode, ip);

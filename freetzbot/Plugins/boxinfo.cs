@@ -1,12 +1,12 @@
-﻿using FritzBot.Core;
+using FritzBot.Core;
+using FritzBot.Database;
 using FritzBot.DataModel;
 using System;
-using System.Linq;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("boxinfo", "box")]
-    [Module.Help("Zeigt die Box/en des angegebenen Benutzers an.")]
+    [Name("boxinfo", "box")]
+    [Help("Zeigt die Box/en des angegebenen Benutzers an.")]
     class boxinfo : PluginBase, ICommand
     {
         public void Run(ircMessage theMessage)
@@ -17,16 +17,13 @@ namespace FritzBot.Plugins
             {
                 UserToUse = theMessage.Nickname;
             }
-            using (DBProvider db = new DBProvider())
+            using (var context = new BotContext())
             {
-                User u = db.GetUser(UserToUse);
+                User u = context.GetUser(UserToUse);
                 if (u != null)
                 {
-                    BoxEntry boxen = db.QueryLinkedData<BoxEntry, User>(u).FirstOrDefault();
-                    if (boxen != null)
-                    {
-                        output += String.Join(", ", boxen.GetRawUserBoxen().ToArray());
-                    }
+                    BoxManager mgr = new BoxManager(u, context);
+                    output += String.Join(", ", mgr.GetRawUserBoxen());
                 }
                 else
                 {

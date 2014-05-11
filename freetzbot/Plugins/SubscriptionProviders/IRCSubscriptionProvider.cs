@@ -1,28 +1,38 @@
-﻿using FritzBot.Core;
-using FritzBot.DataModel;
+using FritzBot.Core;
+using FritzBot.Database;
 using Meebey.SmartIrc4net;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace FritzBot.Plugins.SubscriptionProviders
 {
-    [Module.Name("IRC")]
-    [Module.Help("Stellt dir die Nachrichten über IRC zu, wahlweise über NOTICE oder PRIVMSG. !subscribe setup IRC NOTICE / PRIVMSG")]
-    [Module.Hidden]
+    [Name("IRC")]
+    [Help("Stellt dir die Nachrichten über IRC zu, wahlweise über NOTICE oder PRIVMSG. !subscribe setup IRC NOTICE / PRIVMSG")]
+    [Hidden]
     public class IRCSubscriptionProvider : SubscriptionProvider
     {
         public override void SendNotification(User user, string message)
         {
-            Server UserConnection = ServerManager.GetInstance().FirstOrDefault(x => x.IrcClient.GetChannels().Select(c => x.IrcClient.GetChannel(c)).Any(c => c.Users.Keys.OfType<string>().Any(cn => user.Names.Contains(cn))));
-            if (UserConnection != null)
+            using (var context = new BotContext())
             {
-                SimpleStorage storage = GetSettings(new DBProvider(), user);
-                if (storage.Get(PluginID, "PRIVMSG") == "PRIVMSG")
+                List<string> names = context.Nicknames.Where(x => x.User.Id == user.Id).Select(x => x.Name).ToList();
+                ServerConnetion UserConnection = ServerManager.GetInstance().FirstOrDefault(x => x.IrcClient.GetChannels().Select(c => x.IrcClient.GetChannel(c)).Any(c => c.Users.Keys.OfType<string>().Any(names.Contains)));
+                if (UserConnection != null)
                 {
-                    UserConnection.IrcClient.SendMessage(SendType.Message, user.LastUsedName, message);
-                }
-                else
-                {
-                    UserConnection.IrcClient.SendMessage(SendType.Notice, user.LastUsedName, message);
+                    string method = "PRIVMSG";
+                    UserKeyValueEntry entry = context.GetStorage(user, PluginID);
+                    if (entry != null)
+                    {
+                        method = entry.Value;
+                    }
+                    if (method == "PRIVMSG")
+                    {
+                        UserConnection.IrcClient.SendMessage(SendType.Message, user.LastUsedName.Name, message);
+                    }
+                    else
+                    {
+                        UserConnection.IrcClient.SendMessage(SendType.Notice, user.LastUsedName.Name, message);
+                    }
                 }
             }
         }

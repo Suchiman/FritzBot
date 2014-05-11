@@ -1,4 +1,5 @@
-﻿using FritzBot.Core;
+using FritzBot.Core;
+using FritzBot.Database;
 using FritzBot.DataModel;
 using System;
 using System.Diagnostics.Contracts;
@@ -14,36 +15,36 @@ namespace FritzBot.Plugins.SubscriptionProviders
         {
             Contract.Requires(theMessage != null && plugin != null);
 
-            using (DBProvider db = new DBProvider())
+            using (var context = new BotContext())
             {
-                Subscription SpecificSubscription = db.QueryLinkedData<Subscription, User>(theMessage.TheUser).FirstOrDefault(x => x.Provider == PluginID && x.Plugin == plugin.PluginID);
-
+                User u = context.GetUser(theMessage.Nickname);
+                Subscription SpecificSubscription = context.Subscriptions.FirstOrDefault(x => x.User == u && x.Provider == PluginID && x.Plugin == plugin.PluginID);
                 if (SpecificSubscription == null)
                 {
                     SpecificSubscription = new Subscription()
                     {
                         Plugin = plugin.PluginID,
                         Provider = PluginID,
-                        Reference = theMessage.TheUser
+                        User = u
                     };
                     if (theMessage.CommandArgs.Count > 3 && !String.IsNullOrEmpty(theMessage.CommandArgs[3]))
                     {
-                        SpecificSubscription.Bedingungen.Add(theMessage.CommandArgs[3]);
+                        SpecificSubscription.Bedingungen.Add(new SubscriptionBedingung { Bedingung = theMessage.CommandArgs[3] });
                     }
-                    theMessage.Answer(String.Format("Du wirst absofort mit {0} für {1} benachrichtigt", toolbox.GetAttribute<Module.NameAttribute>(this).Names[0], toolbox.GetAttribute<Module.NameAttribute>(plugin).Names[0]));
+                    context.Subscriptions.Add(SpecificSubscription);
+                    theMessage.Answer(String.Format("Du wirst absofort mit {0} für {1} benachrichtigt", toolbox.GetAttribute<NameAttribute>(this).Names[0], toolbox.GetAttribute<NameAttribute>(plugin).Names[0]));
                 }
                 else
                 {
                     if (theMessage.CommandArgs.Count > 3 && !String.IsNullOrEmpty(theMessage.CommandArgs[3]) && SpecificSubscription.Bedingungen.Count == 0)
                     {
-                        SpecificSubscription.Bedingungen.Add(theMessage.CommandArgs[3]);
-                        SpecificSubscription.Bedingungen = SpecificSubscription.Bedingungen.Distinct().OrderBy(x => x).ToList();
+                        SpecificSubscription.Bedingungen.Add(new SubscriptionBedingung { Bedingung = theMessage.CommandArgs[3] });
+                        SpecificSubscription.Bedingungen = SpecificSubscription.Bedingungen.Distinct(x => x.Bedingung).OrderBy(x => x.Bedingung).ToList();
                         theMessage.Answer("Bedingung für Subscription hinzugefügt");
                     }
                     else if (SpecificSubscription.Bedingungen.Count > 0)
                     {
                         SpecificSubscription.Bedingungen.Clear();
-                        db.SaveOrUpdate(SpecificSubscription);
                         theMessage.Answer("Bedingungen entfernt");
                     }
                     else
@@ -51,7 +52,7 @@ namespace FritzBot.Plugins.SubscriptionProviders
                         theMessage.Answer("Du bist bereits für dieses Plugin eingetragen");
                     }
                 }
-                db.SaveOrUpdate(SpecificSubscription);
+                context.SaveChanges();
             }
         }
 
@@ -64,21 +65,13 @@ namespace FritzBot.Plugins.SubscriptionProviders
                 theMessage.Answer("Zu wenig Parameter, probier mal: !subscribe setup <SubscriptionProvider> <Einstellung>");
                 return;
             }
-            using (DBProvider db = new DBProvider())
+            using (var context = new BotContext())
             {
-                SimpleStorage storage = GetSettings(db, theMessage.TheUser);
-                storage.Store(PluginID, theMessage.CommandArgs[2]);
-                db.SaveOrUpdate(storage);
+                UserKeyValueEntry entry = context.GetStorageOrCreate(theMessage.Nickname, PluginID);
+                entry.Value = theMessage.CommandArgs[2];
+                context.SaveChanges();
             }
             theMessage.Answer("Einstellungen erfolgreich gespeichert");
-        }
-
-        public virtual SimpleStorage GetSettings(DBProvider db, User user)
-        {
-            Contract.Requires(db != null && user != null);
-            Contract.Ensures(Contract.Result<SimpleStorage>() != null);
-
-            return db.GetSimpleStorage(user, "SubscriptionSettings");
         }
     }
 }

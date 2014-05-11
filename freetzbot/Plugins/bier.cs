@@ -1,20 +1,20 @@
-﻿using FritzBot.Core;
+using FritzBot.Core;
 using FritzBot.DataModel;
 using System;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("bier")]
+    [Name("bier")]
     class bier : PluginBase, IBackgroundTask
     {
         public void Start()
         {
-            Server.OnPostProcessingMessage += Server_OnPostProcessingMessage;
+            ServerConnetion.OnPostProcessingMessage += Server_OnPostProcessingMessage;
         }
 
         public void Stop()
         {
-            Server.OnPostProcessingMessage += Server_OnPostProcessingMessage;
+            ServerConnetion.OnPostProcessingMessage += Server_OnPostProcessingMessage;
         }
 
         public void Server_OnPostProcessingMessage(object sender, ircMessage theMessage)

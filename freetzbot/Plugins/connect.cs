@@ -1,13 +1,13 @@
-﻿using FritzBot.DataModel;
+using FritzBot.DataModel;
 using System;
 using System.Net;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("connect")]
-    [Module.Help("Baut eine Verbindung zu einem anderen IRC Server auf, Syntax: !connect server,port,nick,quit_message,initial_channel")]
-    [Module.ParameterRequired]
-    [Module.Authorize]
+    [Name("connect")]
+    [Help("Baut eine Verbindung zu einem anderen IRC ServerConnetion auf, Syntax: !connect ServerConnetion,port,nick,quit_message,initial_channel")]
+    [ParameterRequired]
+    [Authorize]
     class connect : PluginBase, ICommand
     {
         public void Run(ircMessage theMessage)

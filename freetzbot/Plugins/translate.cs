@@ -1,4 +1,4 @@
-﻿using FritzBot.DataModel;
+using FritzBot.DataModel;
 using FritzBot.Functions;
 using System;
 using System.Linq;
@@ -6,8 +6,8 @@ using System.Text;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("translate", "t")]
-    [Module.Help("Übersetzt zwischen Sprachen ;-), Beispiel: !translate en Guten Morgen")]
+    [Name("translate", "t")]
+    [Help("Übersetzt zwischen Sprachen ;-), Beispiel: !translate en Guten Morgen")]
     class translate : PluginBase, ICommand
     {
         public void Run(ircMessage theMessage)
@@ -27,7 +27,7 @@ namespace FritzBot.Plugins
                 theMessage.Answer("Das hat nicht so geklappt wie erwartet");
                 return;
             }
-            else if (translation.dict != null && theMessage.CommandArgs.Where(x => x != "en").Count() == 1)
+            if (translation.dict != null && theMessage.CommandArgs.Where(x => x != "en").Count() == 1)
             {
                 StringBuilder sb = new StringBuilder(translation.FullTranslation);
                 foreach (Dic item in translation.dict)

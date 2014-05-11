@@ -1,4 +1,4 @@
-﻿using FritzBot.Core;
+using FritzBot.Core;
 using FritzBot.DataModel;
 using FritzBot.Functions;
 using HtmlAgilityPack;
@@ -9,8 +9,8 @@ using System.Linq;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("fp")]
-    [Module.Help("Das erzeugt einen Link zu einem Freetz Paket, Beispiel: !fp dnsmasq")]
+    [Name("fp")]
+    [Help("Das erzeugt einen Link zu einem Freetz Paket, Beispiel: !fp dnsmasq")]
     class freetz : PluginBase, ICommand
     {
         private const string PackagesPage = "http://freetz.org/wiki/packages";

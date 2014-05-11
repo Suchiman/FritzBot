@@ -14,7 +14,7 @@ using System.Reflection;
 
 namespace FritzBot.Core
 {
-    public class DBProvider : IDisposable
+    public class DBProviderDB4o : IDisposable
     {
         private static object _lock = new object();
         private static IEmbeddedObjectContainer _db;

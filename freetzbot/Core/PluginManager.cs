@@ -1,5 +1,5 @@
-﻿using FritzBot.DataModel;
-using FritzBot.Module;
+using FritzBot.DataModel;
+using FritzBot.Plugins;
 using Microsoft.CSharp;
 using System;
 using System.CodeDom.Compiler;
@@ -220,7 +220,7 @@ namespace FritzBot.Core
             return Plugins.GetEnumerator();
         }
 
-        IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        IEnumerator IEnumerable.GetEnumerator()
         {
             return Plugins.GetEnumerator();
         }
@@ -231,9 +231,9 @@ namespace FritzBot.Core
         public Type PluginType { get; protected set; }
         public PluginBase Plugin { get; protected set; }
 
-        private Dictionary<User, PluginBase> UserScoped = new Dictionary<User, PluginBase>();
+        private Dictionary<string, PluginBase> UserScoped = new Dictionary<string, PluginBase>();
         private Dictionary<string, PluginBase> ChannelScoped = new Dictionary<string, PluginBase>();
-        private Dictionary<KeyValuePair<User, string>, PluginBase> UserChannelScoped = new Dictionary<KeyValuePair<User, string>, PluginBase>();
+        private Dictionary<KeyValuePair<string, string>, PluginBase> UserChannelScoped = new Dictionary<KeyValuePair<string, string>, PluginBase>();
 
         public string ID { get; protected set; }
         public List<string> Names { get; protected set; }
@@ -302,7 +302,7 @@ namespace FritzBot.Core
             IsSubscribeable = subAtt != null;
         }
 
-        public T GetScoped<T>(string channel, User user) where T : class
+        public T GetScoped<T>(string channel, string user) where T : class
         {
             PluginBase plugin;
             switch (InstanceScope)
@@ -324,7 +324,7 @@ namespace FritzBot.Core
             return plugin as T;
         }
 
-        public PluginBase GetUserScoped(User user)
+        public PluginBase GetUserScoped(string user)
         {
             PluginBase pluginBase;
             if (!UserScoped.TryGetValue(user, out pluginBase))
@@ -335,9 +335,9 @@ namespace FritzBot.Core
             return pluginBase;
         }
 
-        public PluginBase GetUserChannelScoped(User user, string channel)
+        public PluginBase GetUserChannelScoped(string user, string channel)
         {
-            KeyValuePair<User, string> key = new KeyValuePair<User, string>(user, channel);
+            KeyValuePair<string, string> key = new KeyValuePair<string, string>(user, channel);
             PluginBase pluginBase;
             if (!UserChannelScoped.TryGetValue(key, out pluginBase))
             {
@@ -396,11 +396,11 @@ namespace FritzBot.Core
             {
                 ChannelScoped.Remove(instance.Key);
             }
-            foreach (KeyValuePair<User, PluginBase> instance in UserScoped.Where(x => x.Value == plugin).ToList())
+            foreach (KeyValuePair<string, PluginBase> instance in UserScoped.Where(x => x.Value == plugin).ToList())
             {
                 UserScoped.Remove(instance.Key);
             }
-            foreach (KeyValuePair<KeyValuePair<User, string>, PluginBase> instance in UserChannelScoped.Where(x => x.Value == plugin).ToList())
+            foreach (KeyValuePair<KeyValuePair<string, string>, PluginBase> instance in UserChannelScoped.Where(x => x.Value == plugin).ToList())
             {
                 UserChannelScoped.Remove(instance.Key);
             }

@@ -1,7 +1,6 @@
-﻿using FritzBot.Core;
-using System;
+﻿using System;
 
-namespace FritzBot.DataModel
+namespace FritzBot.DataModel.LegacyModels
 {
     public class SeenEntry : LinkedData<User>
     {

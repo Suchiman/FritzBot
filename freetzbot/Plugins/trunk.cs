@@ -1,4 +1,4 @@
-﻿using FritzBot.Core;
+using FritzBot.Core;
 using FritzBot.DataModel;
 using HtmlAgilityPack;
 using System;
@@ -7,9 +7,9 @@ using System.Text.RegularExpressions;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("trunk")]
-    [Module.Help("Dies zeigt den aktuellsten Changeset an.")]
-    [Module.ParameterRequired(false)]
+    [Name("trunk")]
+    [Help("Dies zeigt den aktuellsten Changeset an.")]
+    [ParameterRequired(false)]
     class trunk : PluginBase, ICommand
     {
         public void Run(ircMessage theMessage)

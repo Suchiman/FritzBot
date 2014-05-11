@@ -1,4 +1,4 @@
-﻿using FritzBot.DataModel;
+using FritzBot.DataModel;
 using HtmlAgilityPack;
 using Newtonsoft.Json;
 using System;
@@ -9,9 +9,9 @@ using System.Text.RegularExpressions;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("calc")]
-    [Module.Help("Ich kann sogar Rechnen :-) !calc 42*13+1 !calc 42*(42-(24+24)+1*3)/2")]
-    [Module.ParameterRequired]
+    [Name("calc")]
+    [Help("Ich kann sogar Rechnen :-) !calc 42*13+1 !calc 42*(42-(24+24)+1*3)/2")]
+    [ParameterRequired]
     class calc : PluginBase, ICommand
     {
         char[] superscripts = { '⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹' };

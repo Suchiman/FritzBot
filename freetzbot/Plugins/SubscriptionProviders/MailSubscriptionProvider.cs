@@ -1,18 +1,27 @@
-﻿using FritzBot.Core;
+using FritzBot.Core;
+using FritzBot.Database;
 using FritzBot.DataModel;
+using System;
 using System.Net.Mail;
 
 namespace FritzBot.Plugins.SubscriptionProviders
 {
-    [Module.Name("Mail")]
-    [Module.Help("Stellt dir die benachrichtigungen via E-Mail zu. !subscribe setup Mail example@web.de")]
-    [Module.Hidden]
+    [Name("Mail")]
+    [Help("Stellt dir die benachrichtigungen via E-Mail zu. !subscribe setup Mail example@web.de")]
+    [Hidden]
     public class MailSubscriptionProvider : SubscriptionProvider
     {
         public override void SendNotification(User user, string message)
         {
-            SimpleStorage settings = GetSettings(new DBProvider(), user);
-            string receiver = settings.Get<string>(PluginID, null);
+            string receiver = null;
+            using (var context = new BotContext())
+            {
+                UserKeyValueEntry entry = context.GetStorage(user, PluginID);
+                if (entry != null)
+                {
+                    receiver = entry.Value;
+                }
+            }
             if (receiver == null)
             {
                 return;
@@ -31,7 +40,12 @@ namespace FritzBot.Plugins.SubscriptionProviders
 
         public override void AddSubscription(ircMessage theMessage, PluginBase plugin)
         {
-            if (GetSettings(new DBProvider(), theMessage.TheUser).Get<string>(PluginID, null) == null)
+            UserKeyValueEntry entry;
+            using (var context = new BotContext())
+            {
+                entry = context.GetStorage(theMessage.Nickname, PluginID);
+            }
+            if (entry == null || String.IsNullOrWhiteSpace(entry.Value))
             {
                 theMessage.Answer("Du musst diesen SubscriptionProvider zuerst Konfigurieren (!subscribe setup)");
             }

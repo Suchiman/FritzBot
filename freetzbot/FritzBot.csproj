@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
@@ -8,7 +8,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>FritzBot</RootNamespace>
     <AssemblyName>FritzBot</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
@@ -91,28 +91,29 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Db4objects.Db4o, Version=8.1.287.16150, Culture=neutral, PublicKeyToken=6199cd4f203aa8eb, processorArchitecture=MSIL">
+    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\dlls\Db4objects.Db4o.dll</HintPath>
-    </Reference>
-    <Reference Include="Db4objects.Db4o.Linq, Version=8.1.287.16150, Culture=neutral, PublicKeyToken=6199cd4f203aa8eb, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\dlls\Db4objects.Db4o.Linq.dll</HintPath>
+      <HintPath>..\packages\EntityFramework.6.1.0\lib\net45\EntityFramework.dll</HintPath>
     </Reference>
     <Reference Include="HtmlAgilityPack, Version=1.4.6.0, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\HtmlAgilityPack.1.4.6\lib\Net45\HtmlAgilityPack.dll</HintPath>
-    </Reference>
-    <Reference Include="Mono.Reflection, Version=1.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\dlls\Mono.Reflection.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Newtonsoft.Json.6.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Configuration" />
+    <Reference Include="System.Data.SQLite, Version=1.0.92.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\System.Data.SQLite.Core.1.0.92.0\lib\net451\System.Data.SQLite.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Data.SQLite.EF6, Version=1.0.92.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\System.Data.Entity.SQLite\System.Data.Entity.SQLite\bin\Debug\System.Data.SQLite.EF6.dll</HintPath>
+    </Reference>
     <Reference Include="System.IO.Compression" />
     <Reference Include="System.Net.FtpClient, Version=1.0.5120.19022, Culture=neutral, PublicKeyToken=fa4be07daa57c2b7, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -124,19 +125,37 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Core\BoxManager.cs" />
     <Compile Include="Core\ConfigHelper.cs" />
-    <Compile Include="Core\DBProvider.cs" />
-    <Compile Include="Core\SODAQuery.cs" />
-    <Compile Include="DataModel\AliasEntry.cs" />
+    <Compile Include="Database\AliasEntry.cs" />
+    <Compile Include="Database\BotContext.cs" />
+    <Compile Include="Database\BotContextExtensions.cs" />
+    <Compile Include="Database\Box.cs" />
+    <Compile Include="Database\BoxEntry.cs" />
+    <Compile Include="Database\BoxRegexPattern.cs" />
+    <Compile Include="Database\Nickname.cs" />
+    <Compile Include="Database\NotificationHistory.cs" />
+    <Compile Include="Database\ReminderEntry.cs" />
+    <Compile Include="Database\SeenEntry.cs" />
+    <Compile Include="Database\Server.cs" />
+    <Compile Include="Database\ServerChannel.cs" />
+    <Compile Include="Database\Subscription.cs" />
+    <Compile Include="Database\SubscriptionBedingung.cs" />
+    <Compile Include="Database\User.cs" />
+    <Compile Include="Database\UserKeyValueEntry.cs" />
+    <Compile Include="Database\WitzEntry.cs" />
+    <Compile Include="DataModel\LegacyModels\Box.cs" />
+    <Compile Include="DataModel\LegacyModels\AliasEntry.cs" />
     <Compile Include="DataModel\Attribute.cs" />
-    <Compile Include="DataModel\BoxEntry.cs" />
-    <Compile Include="DataModel\LinkedData.cs" />
-    <Compile Include="DataModel\NotificationHistory.cs" />
-    <Compile Include="DataModel\ReminderEntry.cs" />
-    <Compile Include="DataModel\SeenEntry.cs" />
-    <Compile Include="DataModel\SimpleStorage.cs" />
-    <Compile Include="DataModel\Subscription.cs" />
-    <Compile Include="DataModel\WitzEntry.cs" />
+    <Compile Include="DataModel\LegacyModels\BoxEntry.cs" />
+    <Compile Include="DataModel\LegacyModels\LinkedData.cs" />
+    <Compile Include="DataModel\LegacyModels\NotificationHistory.cs" />
+    <Compile Include="DataModel\LegacyModels\ReminderEntry.cs" />
+    <Compile Include="DataModel\LegacyModels\SeenEntry.cs" />
+    <Compile Include="DataModel\LegacyModels\SimpleStorage.cs" />
+    <Compile Include="DataModel\LegacyModels\Subscription.cs" />
+    <Compile Include="DataModel\LegacyModels\WitzEntry.cs" />
+    <Compile Include="DBConverter.cs" />
     <Compile Include="Functions\Geolocation.cs" />
     <Compile Include="Functions\GoogleTranslator.cs" />
     <Compile Include="Functions\Url.cs" />
@@ -149,7 +168,6 @@
     <Compile Include="Plugins\SubscriptionProviders\IRCSubscriptionProvider.cs" />
     <Compile Include="Plugins\SubscriptionProviders\MailSubscriptionProvider.cs" />
     <Compile Include="Plugins\SubscriptionProviders\PushoverSubscriptionProvider.cs" />
-    <Compile Include="Plugins\SubscriptionProviders\RSSSubscriptionProvider.cs" />
     <Compile Include="Plugins\SubscriptionProviders\SubscriptionProvider.cs" />
     <Compile Include="Plugins\taskcontrol.cs" />
     <Compile Include="Core\Extensions.cs" />
@@ -175,6 +193,9 @@
     <Compile Include="Plugins\fw.cs" />
     <Compile Include="Plugins\google.cs" />
     <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
     <None Include="Plugins\group.cs" />
@@ -204,7 +225,6 @@
     <Compile Include="Plugins\uptime.cs" />
     <Compile Include="Plugins\user.cs" />
     <Compile Include="Plugins\userlist.cs" />
-    <Compile Include="Plugins\webinterface.cs" />
     <Compile Include="Plugins\witz.cs" />
     <Compile Include="Plugins\zeit.cs" />
     <Compile Include="ircMessage.cs" />
@@ -213,29 +233,24 @@
     <Compile Include="Core\ServerManager.cs" />
     <Compile Include="toolbox.cs" />
     <Compile Include="Plugins\whmf.cs" />
-    <Compile Include="Core\User.cs" />
-    <Compile Include="webpages\aliasdb.cs" />
-    <Compile Include="webpages\boxdb.cs" />
-    <Compile Include="webpages\helpdb.cs" />
-    <Compile Include="webpages\index.cs" />
-    <Compile Include="webpages\rss.cs" />
-    <Compile Include="webpages\login.cs" />
-    <Compile Include="webpages\logout.cs" />
-    <Compile Include="webpages\pageinterface.cs" />
-    <Compile Include="webpages\robots.cs" />
-    <Compile Include="webpages\web_data_struct.cs" />
+    <Compile Include="DataModel\LegacyModels\User.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Plugins\APIsampe.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SmartIrc4net\SmartIrc4net.csproj">
       <Project>{8b969b3b-f0df-4a4b-af59-ff49e9435589}</Project>
       <Name>SmartIrc4net</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="x64\SQLite.Interop.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="x86\SQLite.Interop.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

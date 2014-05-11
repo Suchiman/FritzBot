@@ -1,7 +1,6 @@
-﻿using FritzBot.Core;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace FritzBot.DataModel
+namespace FritzBot.DataModel.LegacyModels
 {
     public class Subscription : LinkedData<User>
     {

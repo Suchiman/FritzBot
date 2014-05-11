@@ -1,20 +1,20 @@
-﻿using FritzBot.Core;
+using FritzBot.Database;
 using FritzBot.DataModel;
 using System;
 using System.Linq;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("userlist")]
-    [Module.Help("Das gibt eine Liste jener Benutzer aus, die mindestens eine Box bei mir registriert haben.")]
-    [Module.ParameterRequired(false)]
+    [Name("userlist")]
+    [Help("Das gibt eine Liste jener Benutzer aus, die mindestens eine Box bei mir registriert haben.")]
+    [ParameterRequired(false)]
     class userlist : PluginBase, ICommand
     {
         public void Run(ircMessage theMessage)
         {
-            using (DBProvider db = new DBProvider())
+            using (var context = new BotContext())
             {
-                string output = String.Join(", ", db.Query<BoxEntry>(x => x.Count > 0).Select(x => x.Reference).NotNull().Select(x => x.LastUsedName).ToArray());
+                string output = String.Join(", ", context.BoxEntries.Select(x => x.User.LastUsedName.Name).Distinct());
                 if (!String.IsNullOrEmpty(output))
                 {
                     theMessage.SendPrivateMessage("Diese Benutzer haben bei mir mindestens eine Box registriert: " + output);

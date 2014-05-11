@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace FritzBot.Module
+namespace FritzBot.Plugins
 {
     /// <summary>
     /// Definiert die Namen / Shortcuts über das das Plugin angesprochen wird
@@ -73,7 +73,6 @@ namespace FritzBot.Module
     [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
     public class AuthorizeAttribute : Attribute
     {
-        public AuthorizeAttribute() { }
     }
 
     /// <summary>
@@ -82,8 +81,6 @@ namespace FritzBot.Module
     [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
     public class HiddenAttribute : Attribute
     {
-        public HiddenAttribute() { }
-
         public static bool CheckHidden(Object obj)
         {
             return toolbox.GetAttribute<HiddenAttribute>(obj) != null;
@@ -96,7 +93,6 @@ namespace FritzBot.Module
     [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
     public class SubscribeableAttribute : Attribute
     {
-        public SubscribeableAttribute() { }
     }
 
     /// <summary>

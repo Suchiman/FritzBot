@@ -1,66 +1,68 @@
-﻿using FritzBot.Core;
+using FritzBot.Core;
+using FritzBot.Database;
 using FritzBot.DataModel;
 using Meebey.SmartIrc4net;
 using System;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("auth")]
-    [Module.Help("Authentifiziert dich wenn du ein Passwort festgelegt hast. z.b. !auth passwort")]
-    [Module.ParameterRequired]
+    [Name("auth")]
+    [Help("Authentifiziert dich wenn du ein Passwort festgelegt hast. z.b. !auth passwort")]
+    [ParameterRequired]
     class auth : PluginBase, ICommand, IBackgroundTask
     {
         public void Start()
         {
-            Server.OnPart += LogoutUser;
-            Server.OnQuit += LogoutUser;
+            ServerConnetion.OnPart += LogoutUser;
+            ServerConnetion.OnQuit += LogoutUser;
         }
 
         public void Stop()
         {
-            Server.OnPart -= LogoutUser;
-            Server.OnQuit -= LogoutUser;
+            ServerConnetion.OnPart -= LogoutUser;
+            ServerConnetion.OnQuit -= LogoutUser;
         }
 
         void LogoutUser(object sender, IrcEventArgs e)
         {
-            using (DBProvider db = new DBProvider())
+            using (var context = new BotContext())
             {
-                User u = db.GetUser(e.Data.Nick);
+                User u = context.GetUser(e.Data.Nick);
                 if (u != null)
                 {
                     u.Authentication = DateTime.MinValue;
-                    db.SaveOrUpdate(u);
+                    context.SaveChanges();
                 }
             }
         }
 
         public void Run(ircMessage theMessage)
         {
-            if (theMessage.TheUser.Authenticated)
+            using (var context = new BotContext())
             {
-                theMessage.Answer("Du bist bereits authentifiziert");
-                return;
-            }
-            if (!theMessage.IsPrivate)
-            {
-                theMessage.Answer("Ohje das solltest du besser im Query tuen");
-                return;
-            }
-            if (theMessage.TheUser.CheckPassword(theMessage.CommandLine))
-            {
-                using (DBProvider db = new DBProvider())
+                User user = context.GetUser(theMessage.Nickname);
+                if (user.Authenticated)
                 {
-                    theMessage.TheUser.Authentication = DateTime.Now;
-                    db.SaveOrUpdate(theMessage.TheUser);
+                    theMessage.Answer("Du bist bereits authentifiziert");
+                    return;
                 }
-                theMessage.SendPrivateMessage("Du bist jetzt authentifiziert");
+                if (!theMessage.IsPrivate)
+                {
+                    theMessage.Answer("Ohje das solltest du besser im Query tuen");
+                    return;
+                }
+                if (user.CheckPassword(theMessage.CommandLine))
+                {
+                    user.Authentication = DateTime.Now;
+                    context.SaveChanges();
+                    theMessage.SendPrivateMessage("Du bist jetzt authentifiziert");
+                }
+                else
+                {
+                    theMessage.SendPrivateMessage("Das Passwort war falsch");
+                }
+                theMessage.Hidden = true;
             }
-            else
-            {
-                theMessage.SendPrivateMessage("Das Passwort war falsch");
-            }
-            theMessage.Hidden = true;
         }
     }
 }

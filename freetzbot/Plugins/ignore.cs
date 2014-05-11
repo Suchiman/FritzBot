@@ -1,24 +1,24 @@
-﻿using FritzBot.Core;
+using FritzBot.Database;
 using FritzBot.DataModel;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("ignore")]
-    [Module.Help("Schließt die angegebene Person von mir aus")]
-    [Module.ParameterRequired]
+    [Name("ignore")]
+    [Help("Schließt die angegebene Person von mir aus")]
+    [ParameterRequired]
     class ignore : PluginBase, ICommand
     {
         public void Run(ircMessage theMessage)
         {
-            if (theMessage.Source == theMessage.CommandLine || toolbox.IsOp(theMessage.TheUser))
+            using (var context = new BotContext())
             {
-                using (DBProvider db = new DBProvider())
+                if (theMessage.Source == theMessage.CommandLine || toolbox.IsOp(context.GetUser(theMessage.Nickname)))
                 {
-                    User u = db.GetUser(theMessage.CommandLine);
+                    User u = context.GetUser(theMessage.CommandLine);
                     if (u != null)
                     {
                         u.Ignored = true;
-                        db.SaveOrUpdate(u);
+                        context.SaveChanges();
                         theMessage.Answer("Ich werde " + u.LastUsedName + " ab sofort keine beachtung mehr schenken");
                     }
                     else
@@ -26,6 +26,7 @@ namespace FritzBot.Plugins
                         theMessage.Answer("Huch den kenne ich nicht :o");
                     }
                 }
+                theMessage.Answer("Du bist dazu nicht berechtigt");
             }
         }
     }

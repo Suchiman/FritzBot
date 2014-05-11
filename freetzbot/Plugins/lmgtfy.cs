@@ -1,10 +1,10 @@
-﻿using FritzBot.DataModel;
+using FritzBot.DataModel;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("lmgtfy")]
-    [Module.Help("Die Funktion benötigt einen Parameter!")]
-    [Module.ParameterRequired]
+    [Name("lmgtfy")]
+    [Help("Die Funktion benötigt einen Parameter!")]
+    [ParameterRequired]
     class lmgtfy : PluginBase, ICommand
     {
         public void Run(ircMessage theMessage)

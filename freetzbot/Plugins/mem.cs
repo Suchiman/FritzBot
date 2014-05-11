@@ -1,13 +1,14 @@
-﻿using FritzBot.DataModel;
+using FritzBot.DataModel;
 using System;
 using System.Diagnostics;
 using System.Reflection;
+using System.Runtime;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("sys", "mem", "ram")]
-    [Module.Help("Ein wenig Systeminfos")]
-    [Module.ParameterRequired(false)]
+    [Name("sys", "mem", "ram")]
+    [Help("Ein wenig Systeminfos")]
+    [ParameterRequired(false)]
     class mem : PluginBase, ICommand
     {
         public void Run(ircMessage theMessage)
@@ -38,7 +39,9 @@ namespace FritzBot.Plugins
                     toolbox.Logging(ex);
                 }
             }
-            theMessage.Answer(String.Format("Betriebssystem: {0}, RuntimeVersion: {1} {2}bit, CPU's: {3}, RAM Verbrauch (Programm / +Runtime): {4}MB / {5}MB", os, version.Trim(), IntPtr.Size * 8, Environment.ProcessorCount, ToMB(GC.GetTotalMemory(true)), ToMB(System.Diagnostics.Process.GetCurrentProcess().WorkingSet64)));
+            GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true);
+            theMessage.Answer(String.Format("Betriebssystem: {0}, RuntimeVersion: {1} {2}bit, CPU's: {3}, RAM Verbrauch (Programm / +Runtime): {4}MB / {5}MB", os, version.Trim(), IntPtr.Size * 8, Environment.ProcessorCount, ToMB(GC.GetTotalMemory(true)), ToMB(Process.GetCurrentProcess().WorkingSet64)));
         }
 
         private string ToMB(long value)

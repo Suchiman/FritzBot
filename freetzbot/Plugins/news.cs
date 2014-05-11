@@ -1,4 +1,4 @@
-﻿using FritzBot.Core;
+using FritzBot.Core;
 using FritzBot.DataModel;
 using HtmlAgilityPack;
 using System;
@@ -9,9 +9,9 @@ using System.Threading;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("news")]
-    [Module.Help("Checkt die AVM Firmware News Webseite und gibt beim Fund neuer Nachrichten eine entsprechende Meldung aus")]
-    [Module.Subscribeable]
+    [Name("news")]
+    [Help("Checkt die AVM Firmware News Webseite und gibt beim Fund neuer Nachrichten eine entsprechende Meldung aus")]
+    [Subscribeable]
     class news : PluginBase, IBackgroundTask
     {
         private Thread newsthread;
@@ -76,7 +76,25 @@ namespace FritzBot.Plugins
             Contract.Requires(Url != null);
             Contract.Ensures(Contract.Result<List<NewsEntry>>() != null);
 
-            return new HtmlDocument().LoadUrl(Url).DocumentNode.StripComments().SelectNodes("//table[@width='100%'][@border='0'][@cellpadding='0'][@cellspacing='0'][@bgcolor='F6F6F6']").Select(x => new NewsEntry(x)).ToList();
+            HtmlDocument doc = null;
+            for (int i = 1; true; i++)
+            {
+                try
+                {
+                    doc = new HtmlDocument().LoadUrl(Url);
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    if (i == 1 || i % 100 == 0)
+                    {
+                        toolbox.LogFormat("Fehler beim Laden der News, Versuch {0}: {1}", i, ex.Message);
+                    }
+                    Thread.Sleep(5000);
+                }
+            }
+
+            return doc.DocumentNode.StripComments().SelectNodes("//table[@width='100%'][@border='0'][@cellpadding='0'][@cellspacing='0'][@bgcolor='F6F6F6']").Select(x => new NewsEntry(x)).ToList();
         }
     }
 
@@ -102,7 +120,7 @@ namespace FritzBot.Plugins
         {
             if (obj is NewsEntry)
             {
-                return (this.Titel == (obj as NewsEntry).Titel) && (this.Datum == (obj as NewsEntry).Datum) && (this.Version == (obj as NewsEntry).Version);
+                return (Titel == (obj as NewsEntry).Titel) && (Datum == (obj as NewsEntry).Datum) && (Version == (obj as NewsEntry).Version);
             }
             return false;
         }

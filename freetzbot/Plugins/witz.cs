@@ -1,95 +1,44 @@
-﻿using FritzBot.Core;
+using FritzBot.Database;
 using FritzBot.DataModel;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("witz", "joke")]
-    [Module.Help("Ich werde dann einen Witz erzählen, mit \"!witz add witztext\" kannst du einen neuen Witz hinzufügen. Mit !witz stichwort kannst du einen speziellen Witz suchen")]
+    [Name("witz", "joke")]
+    [Help("Ich werde dann einen Witz erzählen, mit \"!witz add witztext\" kannst du einen neuen Witz hinzufügen. Mit !witz stichwort kannst du einen speziellen Witz suchen")]
     class witz : PluginBase, ICommand
     {
-        public witz()
-        {
-            WitzRandoms = new Queue<WitzEntry>(10);
-        }
-
-        private Queue<WitzEntry> WitzRandoms;
-
         public void Run(ircMessage theMessage)
         {
-            string Joke = "";
-            if (theMessage.HasArgs)
+            using (var context = new BotContext())
             {
-                if (theMessage.CommandArgs[0].ToLower() == "add")
+                if (theMessage.HasArgs && theMessage.CommandArgs[0].Equals("add", StringComparison.OrdinalIgnoreCase))
                 {
-                    WitzEntry w = new WitzEntry() { Witz = String.Join(" ", theMessage.CommandArgs.Skip(1)), Reference = theMessage.TheUser };
-                    using (DBProvider db = new DBProvider())
-                    {
-                        db.SaveOrUpdate(w);
-                    }
+                    WitzEntry w = new WitzEntry() { Witz = String.Join(" ", theMessage.CommandArgs.Skip(1)), Creator = context.GetUser(theMessage.Nickname) };
+                    context.WitzEntries.Add(w);
                     theMessage.Answer("Ist notiert " + theMessage.Nickname);
+                    return;
                 }
-                else
+
+                Random rand = new Random();
+                IQueryable<WitzEntry> ws = context.WitzEntries;
+                if (theMessage.HasArgs)
                 {
-                    using (DBProvider db = new DBProvider())
-                    {
-                        Joke = GetRandom(GetSpecialJokes(theMessage.CommandArgs, db.Query<WitzEntry>()));
-                        if (String.IsNullOrEmpty(Joke))
-                        {
-                            theMessage.Answer("Tut mir leid ich kenne leider keinen Witz der alle deine Stichwörter beinhaltet");
-                            return;
-                        }
-                    }
-
+                    ws = ws.Where(x => theMessage.CommandArgs.All(f => x.Witz.Contains(f)));
                 }
-            }
-            else
-            {
-                using (DBProvider db = new DBProvider())
+                WitzEntry entry = ws.OrderBy(x => x.Frequency).Skip(rand.Next(0, 10)).FirstOrDefault();
+
+                if (entry != null)
                 {
-                    Joke = GetRandom(db.Query<WitzEntry>());
-                    if (String.IsNullOrEmpty(Joke))
-                    {
-                        theMessage.Answer("Mir fällt gerade kein Fritz!Witz ein");
-                        return;
-                    }
+                    entry.Frequency++;
+                    context.SaveChanges();
+                    theMessage.Answer(entry.Witz);
+                    return;
                 }
-            }
-            theMessage.Answer(Joke);
-        }
 
-        private IQueryable<WitzEntry> GetSpecialJokes(List<string> Filter, IQueryable<WitzEntry> ToFilter)
-        {
-            return ToFilter.Where(x => Filter.All(f => x.Witz.Contains(f)));
-        }
-
-        private string GetRandom(IQueryable<WitzEntry> Jokes)
-        {
-            Contract.Requires(Jokes != null && WitzRandoms != null);
-
-            int count = Jokes.Count();
-            if (!(count > 0))
-            {
-                return "";
+                theMessage.Answer(theMessage.HasArgs ? "Tut mir leid ich kenne leider keinen Witz der alle deine Stichwörter beinhaltet" : "Mir fällt gerade kein Fritz!Witz ein");
             }
-            Random rand = new Random();
-            if (WitzRandoms.Count >= 10)
-            {
-                WitzRandoms.Dequeue();
-            }
-            WitzEntry witz = null;
-            int zähler = 0;
-            do
-            {
-                witz = Jokes.ElementAtOrDefault(rand.Next(count));
-                zähler++;
-            }
-            while (WitzRandoms.Contains(witz) && zähler < 11);
-            WitzRandoms.Enqueue(witz);
-            return witz.Witz;
         }
     }
 }

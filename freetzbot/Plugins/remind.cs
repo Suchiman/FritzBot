@@ -1,4 +1,5 @@
 using FritzBot.Core;
+using FritzBot.Database;
 using FritzBot.DataModel;
 using Meebey.SmartIrc4net;
 using System;
@@ -6,40 +7,40 @@ using System.Linq;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("remind")]
-    [Module.Help("Hinterlasse einem Benutzer eine Nachricht. Sobald er wiederkommt oder etwas schreibt werde ich sie ihm Zustellen. !remind <Benutzer> <Nachricht>")]
+    [Name("remind")]
+    [Help("Hinterlasse einem Benutzer eine Nachricht. Sobald er wiederkommt oder etwas schreibt werde ich sie ihm Zustellen. !remind <Benutzer> <Nachricht>")]
     class remind : PluginBase, ICommand, IBackgroundTask
     {
         public void Start()
         {
-            Server.OnJoin += Server_OnJoin;
-            Server.OnPostProcessingMessage += Server_OnPostProcessingMessage;
+            ServerConnetion.OnJoin += Server_OnJoin;
+            ServerConnetion.OnPostProcessingMessage += Server_OnPostProcessingMessage;
         }
 
         public void Stop()
         {
-            Server.OnJoin -= Server_OnJoin;
-            Server.OnPostProcessingMessage -= Server_OnPostProcessingMessage;
+            ServerConnetion.OnJoin -= Server_OnJoin;
+            ServerConnetion.OnPostProcessingMessage -= Server_OnPostProcessingMessage;
         }
 
         private void Server_OnPostProcessingMessage(object sender, ircMessage theMessage)
         {
-            SendIt(theMessage.TheUser, theMessage.SendPrivateMessage);
+            SendIt(theMessage.Nickname, theMessage.SendPrivateMessage);
         }
 
         private void Server_OnJoin(object sender, JoinEventArgs e)
         {
-            SendIt(new DBProvider().GetUser(e.Who), x => e.Data.Irc.SendMessage(SendType.Message, e.Who, x));
+            SendIt(e.Who, x => e.Data.Irc.SendMessage(SendType.Message, e.Who, x));
         }
 
-        private void SendIt(User theUser, Action<string> SendAction)
+        private void SendIt(string nickname, Action<string> SendAction)
         {
-            using (DBProvider db = new DBProvider())
+            using (var context = new BotContext())
             {
-                foreach (ReminderEntry item in db.QueryLinkedData<ReminderEntry, User>(theUser).ToList())
+                foreach (ReminderEntry item in context.ReminderEntries.Where(x => x.User == context.Nicknames.FirstOrDefault(n => n.Name == nickname).User).ToList())
                 {
-                    SendAction(item.Creator.LastUsedName + " hat für dich am " + item.Created.ToString("dd.MM.yyyy 'um' HH:mm:ss") + " eine Nachricht hinterlassen: " + item.Message);
-                    db.Remove(item);
+                    SendAction(item.Creator.LastUsedName + " hat fÃ¼r dich am " + item.Created.ToString("dd.MM.yyyy 'um' HH:mm:ss") + " eine Nachricht hinterlassen: " + item.Message);
+                    context.ReminderEntries.Remove(item);
                 }
             }
         }
@@ -48,23 +49,23 @@ namespace FritzBot.Plugins
         {
             if (theMessage.CommandArgs.Count > 1)
             {
-                using (DBProvider db = new DBProvider())
+                using (var context = new BotContext())
                 {
-                    if (theMessage.Server.IrcClient.IsMe(theMessage.CommandArgs[0]))
+                    if (theMessage.ServerConnetion.IrcClient.IsMe(theMessage.CommandArgs[0]))
                     {
                         theMessage.Answer("Wieso sollte ich mich selbst an etwas erinnern ;) ?");
                         return;
                     }
-                    User u = db.GetUser(theMessage.CommandArgs[0]);
+                    User u = context.GetUser(theMessage.CommandArgs[0]);
                     if (u != null)
                     {
                         ReminderEntry r = new ReminderEntry();
                         r.Created = DateTime.Now;
-                        r.Creator = theMessage.TheUser;
+                        r.Creator = context.GetUser(theMessage.Nickname);
                         r.Message = String.Join(" ", theMessage.CommandArgs.Skip(1));
-                        r.Reference = u;
-                        db.SaveOrUpdate(r);
-                        theMessage.Answer("Okay ich werde es sobald wie möglich zustellen");
+                        r.User = u;
+                        context.ReminderEntries.Add(r);
+                        theMessage.Answer("Okay ich werde es sobald wie mÃ¶glich zustellen");
                     }
                     else
                     {

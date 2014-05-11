@@ -1,4 +1,5 @@
-﻿using FritzBot.Core;
+using FritzBot.Core;
+using FritzBot.Database;
 using FritzBot.DataModel;
 using Meebey.SmartIrc4net;
 using System;
@@ -9,19 +10,19 @@ using System.Text;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("alias", "a")]
-    [Module.Help("Legt einen Alias für einen Begriff fest, Beispiele, \"!a add freetz Eine Modifikation für...\", \"!a edit freetz DIE Modifikation\", \"!a remove freetz\", \"!a freetz\", Variablen: $1 ... $99 für Leerzeichen getrennte Argumente und $X für alle Argumente. encode(url) für URL Konforme Zeichencodierung")]
-    [Module.ParameterRequired]
+    [Name("alias", "a")]
+    [Help("Legt einen Alias für einen Begriff fest, Beispiele, \"!a add freetz Eine Modifikation für...\", \"!a edit freetz DIE Modifikation\", \"!a remove freetz\", \"!a freetz\", Variablen: $1 ... $99 für Leerzeichen getrennte Argumente und $X für alle Argumente. encode(url) für URL Konforme Zeichencodierung")]
+    [ParameterRequired]
     class alias : PluginBase, ICommand, IBackgroundTask
     {
         public void Start()
         {
-            Server.OnPostProcessingMessage += Server_OnPostProcessingMessage;
+            ServerConnetion.OnPostProcessingMessage += Server_OnPostProcessingMessage;
         }
 
         public void Stop()
         {
-            Server.OnPostProcessingMessage -= Server_OnPostProcessingMessage;
+            ServerConnetion.OnPostProcessingMessage -= Server_OnPostProcessingMessage;
         }
 
         void Server_OnPostProcessingMessage(object sender, ircMessage theMessage)
@@ -49,9 +50,10 @@ namespace FritzBot.Plugins
                 SplitString.RemoveAt(0);
             }
             string thealias;
-            using (DBProvider db = new DBProvider())
+            using (var context = new BotContext())
             {
-                AliasEntry entry = db.Query<AliasEntry>(x => x.Key == SplitString[0]).FirstOrDefault();
+                string key = SplitString[0];
+                AliasEntry entry = context.AliasEntries.FirstOrDefault(x => x.Key == key);
                 if (entry != null && !String.IsNullOrEmpty(entry.Text))
                 {
                     thealias = entry.Text;
@@ -61,7 +63,7 @@ namespace FritzBot.Plugins
                     return String.Empty;
                 }
             }
-            for (int i = 0; thealias.Contains("$"); i++)
+            for (int i = 0; thealias.Contains("$") && i < 99; i++)
             {
                 if (SplitString.Count > 1)
                 {
@@ -109,7 +111,7 @@ namespace FritzBot.Plugins
                     return String.Empty;
                 }
                 IrcMessageData data = new IrcMessageData(theMessage.Data.Irc, theMessage.Data.From, theMessage.Data.Nick, theMessage.Data.Ident, theMessage.Data.Host, theMessage.Data.Channel, thealias, thealias, theMessage.Data.Type, theMessage.Data.ReplyCode);
-                ircMessage fake = new ircMessage(data, theMessage.Server, theMessage.TheUser);
+                ircMessage fake = new ircMessage(data, theMessage.ServerConnetion);
                 Program.HandleCommand(fake);
                 return String.Empty;
             }
@@ -118,8 +120,13 @@ namespace FritzBot.Plugins
 
         public static void AliasCommand(ircMessage theMessage)
         {
-            using (DBProvider db = new DBProvider())
+            using (var context = new BotContext())
             {
+                string key = null;
+                if (theMessage.CommandArgs.Count > 1)
+                {
+                    key = theMessage.CommandArgs[1];
+                }
                 switch (theMessage.CommandArgs[0].ToLower())
                 {
                     case "add":
@@ -128,18 +135,18 @@ namespace FritzBot.Plugins
                             theMessage.Answer("Unzureichend viele Argumente: add <key> <text ...>");
                             return;
                         }
-                        AliasEntry add = db.Query<AliasEntry>(x => x.Key == theMessage.CommandArgs[1]).FirstOrDefault();
-                        if (add != null)
+                        if (context.AliasEntries.Any(x => x.Key == key))
                         {
                             theMessage.Answer("Diesen Alias gibt es bereits");
                             return;
                         }
-                        add = new AliasEntry();
+                        var add = new AliasEntry();
                         add.Key = theMessage.CommandArgs[1];
                         add.Text = String.Join(" ", theMessage.CommandArgs.Skip(2));
-                        add.Creator = theMessage.TheUser;
+                        add.Creator = context.GetUser(theMessage.Nickname);
                         add.Created = DateTime.Now;
-                        db.SaveOrUpdate(add);
+                        context.AliasEntries.Add(add);
+                        context.SaveChanges();
                         theMessage.Answer("Der Alias wurde erfolgreich hinzugefügt");
                         return;
                     case "edit":
@@ -148,13 +155,13 @@ namespace FritzBot.Plugins
                             theMessage.Answer("Unzureichend viele Argumente: edit <key> <neuer text>");
                             return;
                         }
-                        AliasEntry edit = db.Query<AliasEntry>(x => x.Key == theMessage.CommandArgs[1]).FirstOrDefault();
+                        AliasEntry edit = context.AliasEntries.FirstOrDefault(x => x.Key == key);
                         if (edit != null)
                         {
                             edit.Text = String.Join(" ", theMessage.CommandArgs.Skip(2));
-                            edit.Updater = theMessage.TheUser;
+                            edit.Updater = context.GetUser(theMessage.Nickname);
                             edit.Updated = DateTime.Now;
-                            db.SaveOrUpdate(edit);
+                            context.SaveChanges();
                             theMessage.Answer("Der Alias wurde erfolgreich bearbeitet");
                             return;
                         }
@@ -166,10 +173,11 @@ namespace FritzBot.Plugins
                             theMessage.Answer("Unzureichend viele Argumente: remove <key>");
                             return;
                         }
-                        AliasEntry remove = db.Query<AliasEntry>(x => x.Key == theMessage.CommandArgs[1]).FirstOrDefault();
+                        AliasEntry remove = context.AliasEntries.FirstOrDefault(x => x.Key == key);
                         if (remove != null)
                         {
-                            db.Remove(remove);
+                            context.AliasEntries.Remove(remove);
+                            context.SaveChanges();
                             theMessage.Answer("Alias wurde gelöscht");
                             return;
                         }
@@ -182,16 +190,16 @@ namespace FritzBot.Plugins
                             theMessage.Answer("Unzureichend viele Argumente: info <key>");
                             return;
                         }
-                        AliasEntry info = db.Query<AliasEntry>(x => x.Key == theMessage.CommandArgs[1]).FirstOrDefault();
+                        AliasEntry info = context.AliasEntries.FirstOrDefault(x => x.Key == key);
                         if (info != null)
                         {
                             StringBuilder sb = new StringBuilder();
                             if (info.Creator != null)
                             {
                                 sb.Append("Erstellt von " + info.Creator.LastUsedName);
-                                if (info.Created > DateTime.MinValue)
+                                if (info.Created.HasValue)
                                 {
-                                    sb.Append(" am " + info.Created.ToShortDateString() + " um " + info.Created.ToShortTimeString() + ". ");
+                                    sb.Append(" am " + info.Created.Value.ToShortDateString() + " um " + info.Created.Value.ToShortTimeString() + ". ");
                                 }
                                 else
                                 {
@@ -201,9 +209,9 @@ namespace FritzBot.Plugins
                             if (info.Updater != null)
                             {
                                 sb.Append("Geändert von " + info.Updater.LastUsedName);
-                                if (info.Updated > DateTime.MinValue)
+                                if (info.Updated.HasValue)
                                 {
-                                    sb.Append(" am " + info.Updated.ToShortDateString() + " um " + info.Updated.ToShortTimeString() + ". ");
+                                    sb.Append(" am " + info.Updated.Value.ToShortDateString() + " um " + info.Updated.Value.ToShortTimeString() + ". ");
                                 }
                                 else
                                 {
@@ -214,11 +222,8 @@ namespace FritzBot.Plugins
                             theMessage.Answer(sb.ToString());
                             return;
                         }
-                        else
-                        {
-                            theMessage.Answer("Wups, diesen Alias kenne ich nicht");
-                            return;
-                        }
+                        theMessage.Answer("Wups, diesen Alias kenne ich nicht");
+                        return;
                     case "find":
                     case "search":
                         {
@@ -227,15 +232,13 @@ namespace FritzBot.Plugins
                                 theMessage.Answer("Wonach soll ich denn Suchen wenn du nichts angibst ?: search <key>");
                                 return;
                             }
-                            SODAQuery<AliasEntry> query = db.SODAQuery<AliasEntry>();
-                            query.Member(x => x.Key).Constrain(theMessage.CommandArgs[1]).Like();
-                            List<AliasEntry> search = query.Execute().ToList();
+                            List<string> search = context.AliasEntries.Select(x => x.Key).Where(x => x.Contains(key)).ToList();
                             if (search.Count == 0)
                             {
                                 theMessage.Answer("Nichts gefunden :(");
                                 return;
                             }
-                            theMessage.Answer("Mögliche Aliase: " + String.Join(", ", search.Select(x => x.Key)));
+                            theMessage.Answer("Mögliche Aliase: " + String.Join(", ", search));
                             return;
                         }
                     default:

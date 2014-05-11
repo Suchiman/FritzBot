@@ -1,13 +1,13 @@
-﻿using FritzBot.Core;
+using FritzBot.Core;
 using FritzBot.DataModel;
 using System;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("leave")]
-    [Module.Help("Zum angegebenen Server werde ich die Verbindung trennen, Operator Befehl: !leave test.de")]
-    [Module.ParameterRequired]
-    [Module.Authorize]
+    [Name("leave")]
+    [Help("Zum angegebenen ServerConnetion werde ich die Verbindung trennen, Operator Befehl: !leave test.de")]
+    [ParameterRequired]
+    [Authorize]
     class leave : PluginBase, ICommand
     {
         public void Run(ircMessage theMessage)

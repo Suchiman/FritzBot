@@ -1,22 +1,25 @@
-﻿using FritzBot.Core;
+using FritzBot.Database;
 using FritzBot.DataModel;
 using System;
 using System.Collections.Generic;
 
 namespace FritzBot.Plugins.SubscriptionProviders
 {
-    [Module.Name("Pushover")]
-    [Module.Help("Stellt dir die benachrichtigungen via Pushover zu. !subscribe setup Pushover <userToken>")]
-    [Module.Hidden]
+    [Name("Pushover")]
+    [Help("Stellt dir die benachrichtigungen via Pushover zu. !subscribe setup Pushover <userToken>")]
+    [Hidden]
     class PushoverSubscriptionProvider : SubscriptionProvider
     {
         public override void SendNotification(User user, string message)
         {
-            string userToken;
-            using (DBProvider db = new DBProvider())
+            string userToken = null;
+            using (var context = new BotContext())
             {
-                SimpleStorage storage = GetSettings(db, user);
-                userToken = storage.Get<string>("token", null);
+                UserKeyValueEntry entry = context.GetStorage(user, "pushover_token");
+                if (entry != null)
+                {
+                    userToken = entry.Value;
+                }
             }
             if (String.IsNullOrEmpty(userToken))
             {
@@ -37,10 +40,10 @@ namespace FritzBot.Plugins.SubscriptionProviders
 
         public override void AddSubscription(ircMessage theMessage, PluginBase plugin)
         {
-            using (DBProvider db = new DBProvider())
+            using (var context = new BotContext())
             {
-                SimpleStorage storage = GetSettings(db, theMessage.TheUser);
-                if (String.IsNullOrEmpty(storage.Get<string>("token", null)))
+                UserKeyValueEntry entry = context.GetStorage(theMessage.Nickname, "pushover_token");
+                if (entry == null || String.IsNullOrEmpty(entry.Value))
                 {
                     theMessage.Answer("Du musst diesen SubscriptionProvider zuerst Konfigurieren (!subscribe setup)");
                 }

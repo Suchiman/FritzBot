@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 
-namespace FritzBot.DataModel
+namespace FritzBot.DataModel.LegacyModels
 {
     public class SimpleStorage : LinkedData<object>
     {
         public string ID { get; set; }
-        private Dictionary<string, object> _values = new Dictionary<string, object>();
+        public Dictionary<string, object> _values = new Dictionary<string, object>();
 
         public SimpleStorage()
         {

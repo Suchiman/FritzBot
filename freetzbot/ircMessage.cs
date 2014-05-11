@@ -1,4 +1,5 @@
-﻿using FritzBot.Core;
+using FritzBot.Core;
+using FritzBot.Plugins;
 using Meebey.SmartIrc4net;
 using System;
 using System.Collections.Generic;
@@ -16,22 +17,21 @@ namespace FritzBot
         /// Erstellt ein neues ircMessage Objekt um eine IRC Nachricht dazustellen
         /// </summary>
         /// <param name="data">Die Ausgangsdaten</param>
-        /// <param name="server">Der Server von dem die Nachricht kommt</param>
+        /// <param name="serverConnetion">Die ServerConnetion von dem die Nachricht kommt</param>
         /// <param name="user">Der der Nachricht zugeordnete User</param>
-        public ircMessage(IrcMessageData data, Server server, User user)
+        public ircMessage(IrcMessageData data, ServerConnetion serverConnetion)
         {
-            Contract.Requires(data != null && server != null && user != null);
+            Contract.Requires(data != null && serverConnetion != null);
 
             Data = data;
-            Server = server;
-            TheUser = user;
+            ServerConnetion = serverConnetion;
             Nickname = Data.Nick;
             Source = Data.Channel ?? Data.Nick;
             Answered = false;
             UnloggedMessages = new Queue<string>(3);
             List<string> MessageTmp = Data.MessageArray.Where(x => !String.IsNullOrEmpty(x)).ToList();
             Message = String.Join(" ", MessageTmp);
-            if (TheUser == null || (Nickname.Contains("#") || Nickname.Contains(".") || Server.IrcClient.IsMe(Nickname) || Nickname.ToLower().Contains("nickserv") || TheUser.Ignored || Data.Message.Contains("[Global Notice]")) && !TheUser.Admin)
+            if (Nickname.Contains("#") || Nickname.Contains(".") || ServerConnetion.IrcClient.IsMe(Nickname) || Nickname.ToLower().Contains("nickserv") || Data.Message.Contains("[Global Notice]"))
             {
                 IsIgnored = true;
             }
@@ -74,9 +74,9 @@ namespace FritzBot
         public IrcMessageData Data { get; protected set; }
 
         /// <summary>
-        /// Der Server von dem diese Nachricht stammt
+        /// Die ServerConnetion von dem diese Nachricht stammt
         /// </summary>
-        public Server Server { get; protected set; }
+        public ServerConnetion ServerConnetion { get; protected set; }
 
         /// <summary>
         /// Gibt an, ob die Nachricht per QUERY gesandt wurde
@@ -145,11 +145,6 @@ namespace FritzBot
         public List<string> CommandArgs { get; protected set; }
 
         /// <summary>
-        /// Gibt den User von dem die Nachricht stammt zurück
-        /// </summary>
-        public User TheUser { get; protected set; }
-
-        /// <summary>
         /// Die bereinigte IRC Nachricht
         /// </summary>
         public string Message { get; protected set; }
@@ -182,7 +177,7 @@ namespace FritzBot
         {
             Contract.Requires(plugin != null);
 
-            Module.HelpAttribute help = toolbox.GetAttribute<Module.HelpAttribute>(plugin);
+            HelpAttribute help = toolbox.GetAttribute<HelpAttribute>(plugin);
             if (help == null)
             {
                 throw new ArgumentException("Das Plugin verfügt über keine Hilfe");
@@ -197,7 +192,7 @@ namespace FritzBot
         public void Answer(string Message)
         {
             Answered = true;
-            Server.IrcClient.SendMessage(SendType.Message, Source, Message);
+            ServerConnetion.IrcClient.SendMessage(SendType.Message, Source, Message);
             UnloggedMessages.Enqueue(String.Format("An {0}: {1}", ForcedPrivat ? Nickname : Source, Message));
         }
 
@@ -208,7 +203,7 @@ namespace FritzBot
         public void AnswerAction(string Message)
         {
             Answered = true;
-            Server.IrcClient.SendMessage(SendType.Action, Source, Message);
+            ServerConnetion.IrcClient.SendMessage(SendType.Action, Source, Message);
             UnloggedMessages.Enqueue(String.Format("An {0}: ***{1}***", ForcedPrivat ? Nickname : Source, Message));
         }
 
@@ -219,7 +214,7 @@ namespace FritzBot
         public void SendPrivateMessage(string Message)
         {
             Answered = true;
-            Server.IrcClient.SendMessage(SendType.Message, Nickname, Message);
+            ServerConnetion.IrcClient.SendMessage(SendType.Message, Nickname, Message);
             UnloggedMessages.Enqueue(String.Format("An {0}: {1}", Nickname, Message));
         }
 
@@ -230,7 +225,7 @@ namespace FritzBot
         public void SendPrivateAction(string Message)
         {
             Answered = true;
-            Server.IrcClient.SendMessage(SendType.Action, Nickname, Message);
+            ServerConnetion.IrcClient.SendMessage(SendType.Action, Nickname, Message);
             UnloggedMessages.Enqueue(String.Format("An {0}: {1}", Nickname, Message));
         }
 

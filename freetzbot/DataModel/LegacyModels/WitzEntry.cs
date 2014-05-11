@@ -1,6 +1,4 @@
-﻿using FritzBot.Core;
-
-namespace FritzBot.DataModel
+﻿namespace FritzBot.DataModel.LegacyModels
 {
     public class WitzEntry : LinkedData<User>
     {

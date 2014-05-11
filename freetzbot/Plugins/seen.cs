@@ -1,30 +1,32 @@
-﻿using FritzBot.Core;
+using FritzBot.Core;
+using FritzBot.Database;
 using FritzBot.DataModel;
 using Meebey.SmartIrc4net;
 using System;
+using System.Data.Entity;
 using System.Linq;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("seen", "said")]
-    [Module.Help("Gibt aus wann der Nutzer zuletzt gesehen wurde und wann er was zuletzt sagte.")]
-    [Module.ParameterRequired]
+    [Name("seen", "said")]
+    [Help("Gibt aus wann der Nutzer zuletzt gesehen wurde und wann er was zuletzt sagte.")]
+    [ParameterRequired]
     class seen : PluginBase, ICommand, IBackgroundTask
     {
         public void Start()
         {
-            Server.OnJoin += Server_OnJoin;
-            Server.OnQuit += Server_OnQuit;
-            Server.OnPart += Server_OnQuit;
-            Server.OnPreProcessingMessage += Server_OnPreProcessingMessage;
+            ServerConnetion.OnJoin += Server_OnJoin;
+            ServerConnetion.OnQuit += Server_OnQuit;
+            ServerConnetion.OnPart += Server_OnQuit;
+            ServerConnetion.OnPreProcessingMessage += Server_OnPreProcessingMessage;
         }
 
         public void Stop()
         {
-            Server.OnJoin -= Server_OnJoin;
-            Server.OnQuit -= Server_OnQuit;
-            Server.OnPart -= Server_OnQuit;
-            Server.OnPreProcessingMessage -= Server_OnPreProcessingMessage;
+            ServerConnetion.OnJoin -= Server_OnJoin;
+            ServerConnetion.OnQuit -= Server_OnQuit;
+            ServerConnetion.OnPart -= Server_OnQuit;
+            ServerConnetion.OnPreProcessingMessage -= Server_OnPreProcessingMessage;
         }
 
         private void Server_OnPreProcessingMessage(object sender, ircMessage theMessage)
@@ -33,89 +35,74 @@ namespace FritzBot.Plugins
             {
                 return;
             }
-            using (DBProvider db = new DBProvider())
+            using (var context = new BotContext())
             {
-                SeenEntry entry = GetSeenEntry(db, theMessage.Nickname);
+                SeenEntry entry = GetSeenEntry(context, theMessage.Nickname);
                 entry.LastMessaged = DateTime.Now;
                 entry.LastMessage = theMessage.Message;
-                db.SaveOrUpdate(entry);
+                context.SaveChanges();
             }
         }
 
         private void Server_OnQuit(object sender, IrcEventArgs e)
         {
-            using (DBProvider db = new DBProvider())
+            using (var context = new BotContext())
             {
-                SeenEntry entry = GetSeenEntry(db, e.Data.Nick);
+                SeenEntry entry = GetSeenEntry(context, e.Data.Nick);
                 entry.LastSeen = DateTime.Now;
-                db.SaveOrUpdate(entry);
+                context.SaveChanges();
             }
         }
 
         private void Server_OnJoin(object sender, JoinEventArgs e)
         {
-            using (DBProvider db = new DBProvider())
+            using (var context = new BotContext())
             {
-                SeenEntry entry = GetSeenEntry(db, e.Who);
+                SeenEntry entry = GetSeenEntry(context, e.Who);
                 entry.LastSeen = DateTime.MinValue;
-                db.SaveOrUpdate(entry);
+                context.SaveChanges();
             }
         }
 
-        private SeenEntry GetSeenEntry(DBProvider db, string nick)
+        private SeenEntry GetSeenEntry(BotContext context, string nick)
         {
-            User u = db.GetUser(nick);
-            SeenEntry entry = db.QueryLinkedData<SeenEntry, User>(u).FirstOrDefault();
+            User u = context.GetUser(nick);
+            SeenEntry entry = context.SeenEntries.FirstOrDefault(x => x.User.Id == u.Id);
             if (entry == null)
             {
-                entry = new SeenEntry();
-                entry.Reference = u;
+                entry = new SeenEntry { User = u };
+                context.SeenEntries.Add(entry);
             }
             return entry;
         }
 
         public void Run(ircMessage theMessage)
         {
-            if (theMessage.CommandLine.ToLower() == theMessage.Server.IrcClient.Nickname.ToLower())
+            if (String.Equals(theMessage.CommandLine, theMessage.ServerConnetion.IrcClient.Nickname, StringComparison.OrdinalIgnoreCase))
             {
                 theMessage.Answer("Ich bin gerade hier und laut meinem Logik System solltest du auch sehen können was ich schreibe");
                 return;
             }
-            using (DBProvider db = new DBProvider())
+            using (var context = new BotContext())
             {
-                User u = db.GetUser(theMessage.CommandLine);
-                if (u != null)
+                var entry = context.SeenEntries.Include(x => x.User).FirstOrDefault(x => x.User == context.Nicknames.FirstOrDefault(n => n.Name == theMessage.CommandLine).User);
+                string output = "";
+                if (entry != null)
                 {
-                    SeenEntry entry = db.QueryLinkedData<SeenEntry, User>(u).FirstOrDefault();
-                    string output = "";
-                    if (entry != null)
+                    if (entry.LastSeen.HasValue)
                     {
-                        if (entry.LastSeen != DateTime.MinValue)
-                        {
-                            output = "Den/Die habe ich hier zuletzt am " + entry.LastSeen.ToString("dd.MM.yyyy ") + "um" + entry.LastSeen.ToString(" HH:mm:ss ") + "Uhr gesehen.";
-                        }
-                        if (entry.LastMessaged != DateTime.MinValue)
-                        {
-                            if (!String.IsNullOrEmpty(output))
-                            {
-                                output += " ";
-                            }
-                            output += "Am " + entry.LastMessaged.ToString("dd.MM.yyyy ") + "um" + entry.LastMessaged.ToString(" HH:mm:ss ") + "Uhr sagte er/sie zuletzt: \"" + entry.LastMessage + "\"";
-                        }
+                        output = "Den/Die habe ich hier zuletzt am " + entry.LastSeen.Value.ToString("dd.MM.yyyy ") + "um" + entry.LastSeen.Value.ToString(" HH:mm:ss ") + "Uhr gesehen.";
                     }
-                    if (!String.IsNullOrEmpty(output))
+                    if (entry.LastMessaged.HasValue)
                     {
-                        theMessage.Answer(output);
+                        output += " Am " + entry.LastMessaged.Value.ToString("dd.MM.yyyy ") + "um" + entry.LastMessaged.Value.ToString(" HH:mm:ss ") + "Uhr sagte er/sie zuletzt: \"" + entry.LastMessage + "\".";
                     }
                     else
                     {
-                        theMessage.Answer("Scheinbar sind meine Datensätze unvollständig, tut mir leid");
+                        output += " Den habe ich hier noch nie etwas schreiben sehen.";
                     }
                 }
-                else
-                {
-                    theMessage.Answer("Diesen Benutzer habe ich noch nie gesehen");
-                }
+                theMessage.Answer(!String.IsNullOrEmpty(output) ? output.Trim() : "Scheinbar sind meine Datensätze unvollständig, tut mir leid");
             }
         }
     }

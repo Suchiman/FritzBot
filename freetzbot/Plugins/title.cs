@@ -1,5 +1,6 @@
-﻿using FritzBot.Core;
+using FritzBot.Core;
 using FritzBot.DataModel;
+using FritzBot.Functions;
 using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
@@ -11,20 +12,20 @@ using System.Text.RegularExpressions;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("title")]
-    [Module.Help("Ruft den Titel der Webseite ab")]
-    [Module.ParameterRequired]
+    [Name("title")]
+    [Help("Ruft den Titel der Webseite ab")]
+    [ParameterRequired]
     class title : PluginBase, IBackgroundTask
     {
         public void Start()
         {
             ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(delegate { return true; });
-            Server.OnPostProcessingMessage += Server_OnPostProcessingMessage;
+            ServerConnetion.OnPostProcessingMessage += Server_OnPostProcessingMessage;
         }
 
         public void Stop()
         {
-            Server.OnPostProcessingMessage -= Server_OnPostProcessingMessage;
+            ServerConnetion.OnPostProcessingMessage -= Server_OnPostProcessingMessage;
         }
 
         private void Server_OnPostProcessingMessage(object sender, ircMessage theMessage)
@@ -56,7 +57,7 @@ namespace FritzBot.Plugins
             try
             {
                 string html;
-                if (FritzBot.Functions.UTF8Checker.IsUtf8(e.Result))
+                if (UTF8Checker.IsUtf8(e.Result))
                 {
                     html = Encoding.UTF8.GetString(e.Result);
                 }
@@ -77,7 +78,9 @@ namespace FritzBot.Plugins
                 string title = Regex.Replace(titleNode.InnerText.Trim().Replace("\n", "").Replace("\r", "").Replace("â€“", "–"), "[ ]{2,}", " ");
                 (e.UserState as ircMessage).Answer("[url] " + HtmlEntity.DeEntitize(title));
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         private void dl_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)

@@ -1,4 +1,4 @@
-﻿using FritzBot.Core;
+using FritzBot.Database;
 using FritzBot.DataModel;
 using Meebey.SmartIrc4net;
 using System;
@@ -6,9 +6,9 @@ using System.Linq;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("bots")]
-    [Module.Help("Findet User die länger als <Tage> inaktiv waren. Benutzung: !bots <Tage> oder !bots <Tage> <Channel>")]
-    [Module.ParameterRequired(true)]
+    [Name("bots")]
+    [Help("Findet User die länger als <Tage> inaktiv waren. Benutzung: !bots <Tage> oder !bots <Tage> <Channel>")]
+    [ParameterRequired(true)]
     class bots : PluginBase, ICommand
     {
         public void Run(ircMessage theMessage)
@@ -23,10 +23,7 @@ namespace FritzBot.Plugins
                     theMessage.Answer("Da du mir Privat schreibst, kann ich den Channel nicht erraten. Verwende: !bots <Tage> <Channel>");
                     return;
                 }
-                else
-                {
-                    channel = theMessage.Source;
-                }
+                channel = theMessage.Source;
             }
             else if (theMessage.CommandArgs.Count == 2)
             {
@@ -44,12 +41,12 @@ namespace FritzBot.Plugins
                 return;
             }
 
-            using (DBProvider db = new DBProvider())
+            using (var context = new BotContext())
             {
                 var UserImChannel = theMessage.Data.Irc.GetChannel(channel).Users.Values.OfType<ChannelUser>().Select(x =>
                 {
-                    User u = db.GetUser(x.Nick);
-                    SeenEntry entry = u != null ? db.QueryLinkedData<SeenEntry, User>(u).FirstOrDefault() : null;
+                    User u = context.GetUser(x.Nick);
+                    SeenEntry entry = context.SeenEntries.FirstOrDefault(s => s.User.Id == u.Id);
                     return new { Nickname = x.Nick, User = u, SeenEntry = entry };
                 }).ToList();
 

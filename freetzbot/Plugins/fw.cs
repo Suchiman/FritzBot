@@ -1,4 +1,5 @@
-﻿using FritzBot.Core;
+using FritzBot.Core;
+using FritzBot.Database;
 using FritzBot.DataModel;
 using System;
 using System.Collections.Generic;
@@ -11,10 +12,10 @@ using System.Threading;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("fw")]
-    [Module.Help("Sucht auf dem AVM FTP nach der Version des angegbenen Modells, z.b. \"!fw 7390\", \"!fw 7270_v1\", \"!fw 7390 source\", \"!fw 7390 recovery\" \"!fw 7390 all\"")]
-    [Module.ParameterRequired]
-    [Module.Subscribeable]
+    [Name("fw")]
+    [Help("Sucht auf dem AVM FTP nach der Version des angegbenen Modells, z.b. \"!fw 7390\", \"!fw 7270_v1\", \"!fw 7390 source\", \"!fw 7390 recovery\" \"!fw 7390 all\"")]
+    [ParameterRequired]
+    [Subscribeable]
     class fw : PluginBase, ICommand//, IBackgroundTask
     {
         const string BaseDirectory = "ftp://ftp.avm.de/fritz.box/";
@@ -84,13 +85,13 @@ namespace FritzBot.Plugins
             return output;
         }
 
-        protected override IQueryable<Subscription> GetSubscribers(string[] criteria)
+        protected override IQueryable<Subscription> GetSubscribers(BotContext context, string[] criteria)
         {
             if (criteria != null && criteria.Length > 0)
             {
-                return base.GetSubscribers(criteria).Where(x => criteria.Any(c => x.Bedingungen.Contains(c)));
+                return base.GetSubscribers(context, criteria).Where(x => criteria.Any(c => x.Bedingungen.Any(a => a.Bedingung.Contains(c))));
             }
-            return base.GetSubscribers(criteria);
+            return base.GetSubscribers(context, criteria);
         }
 
         public void Run(ircMessage theMessage)
@@ -302,7 +303,7 @@ namespace FritzBot.Plugins
             }
             public void BeginScan()
             {
-                Worker = new Thread(delegate()
+                Worker = new Thread(delegate ()
                 {
                     foreach (string dir in dirsToDo)
                     {

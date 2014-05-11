@@ -1,21 +1,31 @@
-﻿using FritzBot.Core;
+using FritzBot.Database;
 using FritzBot.DataModel;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("boxfind")]
-    [Module.Help("Findet die Nutzer der angegebenen Box: Beispiel: \"!boxfind 7270\".")]
-    [Module.ParameterRequired]
+    [Name("boxfind")]
+    [Help("Findet die Nutzer der angegebenen Box: Beispiel: \"!boxfind 7270\".")]
+    [ParameterRequired]
     class boxfind : PluginBase, ICommand
     {
         public void Run(ircMessage theMessage)
         {
-            string BoxName = BoxDatabase.GetInstance().GetShortName(theMessage.CommandLine);
-            using (DBProvider db = new DBProvider())
+            using (var context = new BotContext())
             {
-                string[] usernames = db.Query<BoxEntry>(x => x.HasBox(theMessage.CommandLine)).Select(x => x.Reference).NotNull().Select(x => x.LastUsedName).ToArray();
+                Box result;
+                IQueryable<BoxEntry> filtered;
+                if (BoxDatabase.GetInstance().TryFindExactBox(theMessage.CommandLine, out result))
+                {
+                    filtered = context.BoxEntries.Where(x => x.Box == result);
+                }
+                else
+                {
+                    filtered = context.BoxEntries.Where(x => x.Text.Contains(theMessage.CommandLine));
+                }
+                List<string> usernames = filtered.Select(x => x.User.LastUsedName.Name).Where(x => !String.IsNullOrEmpty(x)).ToList();
                 string besitzer = String.Join(", ", usernames);
                 if (!String.IsNullOrEmpty(besitzer))
                 {

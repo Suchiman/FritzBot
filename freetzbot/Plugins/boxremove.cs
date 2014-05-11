@@ -1,23 +1,22 @@
-﻿using FritzBot.Core;
+using FritzBot.Core;
+using FritzBot.Database;
 using FritzBot.DataModel;
-using System.Linq;
 
 namespace FritzBot.Plugins
 {
-    [Module.Name("boxremove", "boxdel")]
-    [Module.Help("Entfernt die exakt von dir genannte Box aus deiner Boxinfo, als Beispiel: \"!boxremove 7270v1\".")]
-    [Module.ParameterRequired]
+    [Name("boxremove", "boxdel")]
+    [Help("Entfernt die exakt von dir genannte Box aus deiner Boxinfo, als Beispiel: \"!boxremove 7270v1\".")]
+    [ParameterRequired]
     class boxremove : PluginBase, ICommand
     {
         public void Run(ircMessage theMessage)
         {
-            using (DBProvider db = new DBProvider())
+            using (var context = new BotContext())
             {
-                BoxEntry entry = db.QueryLinkedData<BoxEntry, User>(theMessage.TheUser).FirstOrDefault();
-                if (entry.RemoveBox(theMessage.CommandLine))
+                BoxManager mgr = new BoxManager(context.GetUser(theMessage.Nickname), context);
+                if (mgr.RemoveBox(theMessage.CommandLine))
                 {
                     theMessage.Answer("Erledigt!");
-                    db.SaveOrUpdate(entry);
                 }
                 else
                 {
