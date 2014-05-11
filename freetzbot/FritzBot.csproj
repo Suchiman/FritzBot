@@ -101,7 +101,7 @@
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Newtonsoft.Json.6.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\packages\Newtonsoft.Json.6.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
@@ -115,9 +115,9 @@
       <HintPath>..\..\System.Data.Entity.SQLite\System.Data.Entity.SQLite\bin\Debug\System.Data.SQLite.EF6.dll</HintPath>
     </Reference>
     <Reference Include="System.IO.Compression" />
-    <Reference Include="System.Net.FtpClient, Version=1.0.5120.19022, Culture=neutral, PublicKeyToken=fa4be07daa57c2b7, processorArchitecture=MSIL">
+    <Reference Include="System.Net.FtpClient, Version=1.0.5200.21177, Culture=neutral, PublicKeyToken=fa4be07daa57c2b7, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\System.Net.FtpClient.1.0.5120.19022\lib\net40\System.Net.FtpClient.dll</HintPath>
+      <HintPath>..\packages\System.Net.FtpClient.1.0.5200.21177\lib\net40\System.Net.FtpClient.dll</HintPath>
     </Reference>
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.Web" />
