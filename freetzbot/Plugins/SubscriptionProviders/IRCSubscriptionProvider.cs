@@ -19,20 +19,10 @@ namespace FritzBot.Plugins.SubscriptionProviders
                 ServerConnetion UserConnection = ServerManager.GetInstance().FirstOrDefault(x => x.IrcClient.GetChannels().Select(c => x.IrcClient.GetChannel(c)).Any(c => c.Users.Keys.OfType<string>().Any(names.Contains)));
                 if (UserConnection != null)
                 {
-                    string method = "PRIVMSG";
                     UserKeyValueEntry entry = context.GetStorage(user, PluginID);
-                    if (entry != null)
-                    {
-                        method = entry.Value;
-                    }
-                    if (method == "PRIVMSG")
-                    {
-                        UserConnection.IrcClient.SendMessage(SendType.Message, user.LastUsedName.Name, message);
-                    }
-                    else
-                    {
-                        UserConnection.IrcClient.SendMessage(SendType.Notice, user.LastUsedName.Name, message);
-                    }
+                    string method = entry != null ? entry.Value : "PRIVMSG";
+
+                    UserConnection.IrcClient.SendMessage(method == "PRIVMSG" ? SendType.Message : SendType.Notice, user.LastUsedName.Name, message);
                 }
             }
         }

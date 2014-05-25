@@ -2,6 +2,7 @@ using FritzBot.Core;
 using FritzBot.Database;
 using FritzBot.DataModel;
 using System;
+using System.Data.Entity;
 using System.Diagnostics.Contracts;
 using System.Linq;
 
@@ -18,7 +19,7 @@ namespace FritzBot.Plugins.SubscriptionProviders
             using (var context = new BotContext())
             {
                 User u = context.GetUser(theMessage.Nickname);
-                Subscription SpecificSubscription = context.Subscriptions.FirstOrDefault(x => x.User == u && x.Provider == PluginID && x.Plugin == plugin.PluginID);
+                Subscription SpecificSubscription = context.Subscriptions.Include(x => x.Bedingungen).FirstOrDefault(x => x.User.Id == u.Id && x.Provider == PluginID && x.Plugin == plugin.PluginID);
                 if (SpecificSubscription == null)
                 {
                     SpecificSubscription = new Subscription()
@@ -27,30 +28,29 @@ namespace FritzBot.Plugins.SubscriptionProviders
                         Provider = PluginID,
                         User = u
                     };
+
                     if (theMessage.CommandArgs.Count > 3 && !String.IsNullOrEmpty(theMessage.CommandArgs[3]))
                     {
                         SpecificSubscription.Bedingungen.Add(new SubscriptionBedingung { Bedingung = theMessage.CommandArgs[3] });
                     }
+
                     context.Subscriptions.Add(SpecificSubscription);
                     theMessage.Answer(String.Format("Du wirst absofort mit {0} für {1} benachrichtigt", toolbox.GetAttribute<NameAttribute>(this).Names[0], toolbox.GetAttribute<NameAttribute>(plugin).Names[0]));
                 }
+                else if (theMessage.CommandArgs.Count > 3 && !String.IsNullOrEmpty(theMessage.CommandArgs[3]) && SpecificSubscription.Bedingungen.Count == 0)
+                {
+                    SpecificSubscription.Bedingungen.Add(new SubscriptionBedingung { Bedingung = theMessage.CommandArgs[3] });
+                    SpecificSubscription.Bedingungen = SpecificSubscription.Bedingungen.Distinct(x => x.Bedingung).OrderBy(x => x.Bedingung).ToList();
+                    theMessage.Answer("Bedingung für Subscription hinzugefügt");
+                }
+                else if (SpecificSubscription.Bedingungen.Count > 0)
+                {
+                    SpecificSubscription.Bedingungen.Clear();
+                    theMessage.Answer("Bedingungen entfernt");
+                }
                 else
                 {
-                    if (theMessage.CommandArgs.Count > 3 && !String.IsNullOrEmpty(theMessage.CommandArgs[3]) && SpecificSubscription.Bedingungen.Count == 0)
-                    {
-                        SpecificSubscription.Bedingungen.Add(new SubscriptionBedingung { Bedingung = theMessage.CommandArgs[3] });
-                        SpecificSubscription.Bedingungen = SpecificSubscription.Bedingungen.Distinct(x => x.Bedingung).OrderBy(x => x.Bedingung).ToList();
-                        theMessage.Answer("Bedingung für Subscription hinzugefügt");
-                    }
-                    else if (SpecificSubscription.Bedingungen.Count > 0)
-                    {
-                        SpecificSubscription.Bedingungen.Clear();
-                        theMessage.Answer("Bedingungen entfernt");
-                    }
-                    else
-                    {
-                        theMessage.Answer("Du bist bereits für dieses Plugin eingetragen");
-                    }
+                    theMessage.Answer("Du bist bereits für dieses Plugin eingetragen");
                 }
                 context.SaveChanges();
             }
