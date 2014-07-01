@@ -148,7 +148,7 @@ namespace FritzBot
                         Console.WriteLine("Verbunden mit den Servern: {0}", String.Join(", ", ServerManager.GetInstance().Select(x => x.Settings.Address)));
                         break;
                     case "reconnect":
-                        foreach (ServerConnetion srv in ServerManager.GetInstance())
+                        foreach (ServerConnection srv in ServerManager.GetInstance())
                         {
                             Console.WriteLine("Reconnecte {0}", srv.Settings.Address);
                             srv.Disconnect();

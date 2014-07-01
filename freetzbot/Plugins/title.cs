@@ -19,12 +19,12 @@ namespace FritzBot.Plugins
         public void Start()
         {
             ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(delegate { return true; });
-            ServerConnetion.OnPostProcessingMessage += Server_OnPostProcessingMessage;
+            ServerConnection.OnPostProcessingMessage += Server_OnPostProcessingMessage;
         }
 
         public void Stop()
         {
-            ServerConnetion.OnPostProcessingMessage -= Server_OnPostProcessingMessage;
+            ServerConnection.OnPostProcessingMessage -= Server_OnPostProcessingMessage;
         }
 
         private void Server_OnPostProcessingMessage(object sender, ircMessage theMessage)

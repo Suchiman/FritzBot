@@ -14,10 +14,10 @@ namespace FritzBot.Core
     /// <summary>
     /// Der ServerManger verwaltet die ServerConnetions
     /// </summary>
-    public class ServerManager : IEnumerable<ServerConnetion>
+    public class ServerManager : IEnumerable<ServerConnection>
     {
         private static ServerManager instance;
-        private List<ServerConnetion> _servers;
+        private List<ServerConnection> _servers;
 
         /// <summary>
         /// Gibt die Singleton Instanz des ServerManagers zurück
@@ -38,13 +38,13 @@ namespace FritzBot.Core
         /// Gibt die ServerConnetion mit der angegebenen Adresse zurück
         /// </summary>
         /// <param name="Address">Der Hostname des IRC Servers</param>
-        public ServerConnetion this[string Address]
+        public ServerConnection this[string Address]
         {
             get
             {
-                Contract.Ensures(Contract.Result<ServerConnetion>() != null);
+                Contract.Ensures(Contract.Result<ServerConnection>() != null);
 
-                foreach (ServerConnetion oneServer in _servers)
+                foreach (ServerConnection oneServer in _servers)
                 {
                     if (oneServer.Settings.Address == Address)
                     {
@@ -62,7 +62,7 @@ namespace FritzBot.Core
         {
             using (var context = new BotContext())
             {
-                _servers = context.Servers.Include(x => x.Channels).AsEnumerable().Select(x => new ServerConnetion(x)).ToList();
+                _servers = context.Servers.Include(x => x.Channels).AsEnumerable().Select(x => new ServerConnection(x)).ToList();
             }
         }
 
@@ -85,9 +85,9 @@ namespace FritzBot.Core
         /// <param name="Nickname">Der Nickname den der IRCbot für diese Verbindung verwenden soll</param>
         /// <param name="QuitMessage">Legt die Nachricht beim Verlassen des Servers fest</param>
         /// <param name="Channels">Alle Channels die Betreten werden sollen</param>
-        public ServerConnetion NewConnection(string HostName, int Port, string Nickname, string QuitMessage, List<string> Channels)
+        public ServerConnection NewConnection(string HostName, int Port, string Nickname, string QuitMessage, List<string> Channels)
         {
-            Contract.Ensures(Contract.Result<ServerConnetion>() != null);
+            Contract.Ensures(Contract.Result<ServerConnection>() != null);
 
             Server server = new Server
             {
@@ -104,7 +104,7 @@ namespace FritzBot.Core
                 context.SaveChanges();
             }
 
-            ServerConnetion serverConnetion = new ServerConnetion(server);
+            ServerConnection serverConnetion = new ServerConnection(server);
             _servers.Add(serverConnetion);
             return serverConnetion;
         }
@@ -113,7 +113,7 @@ namespace FritzBot.Core
         /// Trennt die Verbindung zu dieser ServerConnetion und entfernt sie aus der Datenbank
         /// </summary>
         /// <param name="serverConnetion"></param>
-        public void Remove(ServerConnetion serverConnetion)
+        public void Remove(ServerConnection serverConnetion)
         {
             Contract.Requires(serverConnetion != null);
 
@@ -132,7 +132,7 @@ namespace FritzBot.Core
         /// </summary>
         public void ConnectAll()
         {
-            foreach (ServerConnetion theServer in _servers.Where(x => !x.Connected))
+            foreach (ServerConnection theServer in _servers.Where(x => !x.Connected))
             {
                 try
                 {
@@ -162,7 +162,7 @@ namespace FritzBot.Core
         /// </summary>
         public void DisconnectAll()
         {
-            foreach (ServerConnetion theServer in _servers.Where(x => x.Connected))
+            foreach (ServerConnection theServer in _servers.Where(x => x.Connected))
             {
                 theServer.Disconnect();
             }
@@ -174,13 +174,13 @@ namespace FritzBot.Core
         /// <param name="message">Die Nachricht</param>
         public void AnnounceGlobal(string message)
         {
-            foreach (ServerConnetion theServer in _servers)
+            foreach (ServerConnection theServer in _servers)
             {
                 theServer.Announce(message);
             }
         }
 
-        public IEnumerator<ServerConnetion> GetEnumerator()
+        public IEnumerator<ServerConnection> GetEnumerator()
         {
             return _servers.GetEnumerator();
         }
@@ -194,7 +194,7 @@ namespace FritzBot.Core
     /// <summary>
     /// Ein ServerConnetion kapselt die Verbindung zu einem IRC Server und speichert die Verbindungsdaten
     /// </summary>
-    public class ServerConnetion
+    public class ServerConnection
     {
         /// <summary>
         /// Wird ausgelöst, wenn ein User einen Channel betritt
@@ -247,7 +247,7 @@ namespace FritzBot.Core
         /// <summary>
         /// Erstellt ein neues ServerConnetion Objekt welches die Verbindung zu einem IRC Server kapselt
         /// </summary>
-        public ServerConnetion(Server srv)
+        public ServerConnection(Server srv)
         {
             Settings = srv;
             Connected = false;

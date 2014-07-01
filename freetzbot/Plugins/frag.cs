@@ -14,12 +14,12 @@ namespace FritzBot.Plugins
     {
         public void Start()
         {
-            ServerConnetion.OnJoin += Server_OnJoin;
+            ServerConnection.OnJoin += Server_OnJoin;
         }
 
         public void Stop()
         {
-            ServerConnetion.OnJoin -= Server_OnJoin;
+            ServerConnection.OnJoin -= Server_OnJoin;
         }
 
         void Server_OnJoin(object sender, JoinEventArgs e)

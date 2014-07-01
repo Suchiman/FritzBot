@@ -17,12 +17,12 @@ namespace FritzBot.Plugins
     {
         public void Start()
         {
-            ServerConnetion.OnPostProcessingMessage += Server_OnPostProcessingMessage;
+            ServerConnection.OnPostProcessingMessage += Server_OnPostProcessingMessage;
         }
 
         public void Stop()
         {
-            ServerConnetion.OnPostProcessingMessage -= Server_OnPostProcessingMessage;
+            ServerConnection.OnPostProcessingMessage -= Server_OnPostProcessingMessage;
         }
 
         void Server_OnPostProcessingMessage(object sender, ircMessage theMessage)

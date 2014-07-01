@@ -13,14 +13,14 @@ namespace FritzBot.Plugins
     {
         public void Start()
         {
-            ServerConnetion.OnPart += LogoutUser;
-            ServerConnetion.OnQuit += LogoutUser;
+            ServerConnection.OnPart += LogoutUser;
+            ServerConnection.OnQuit += LogoutUser;
         }
 
         public void Stop()
         {
-            ServerConnetion.OnPart -= LogoutUser;
-            ServerConnetion.OnQuit -= LogoutUser;
+            ServerConnection.OnPart -= LogoutUser;
+            ServerConnection.OnQuit -= LogoutUser;
         }
 
         void LogoutUser(object sender, IrcEventArgs e)

@@ -15,18 +15,18 @@ namespace FritzBot.Plugins
     {
         public void Start()
         {
-            ServerConnetion.OnJoin += Server_OnJoin;
-            ServerConnetion.OnQuit += Server_OnQuit;
-            ServerConnetion.OnPart += Server_OnQuit;
-            ServerConnetion.OnPreProcessingMessage += Server_OnPreProcessingMessage;
+            ServerConnection.OnJoin += Server_OnJoin;
+            ServerConnection.OnQuit += Server_OnQuit;
+            ServerConnection.OnPart += Server_OnQuit;
+            ServerConnection.OnPreProcessingMessage += Server_OnPreProcessingMessage;
         }
 
         public void Stop()
         {
-            ServerConnetion.OnJoin -= Server_OnJoin;
-            ServerConnetion.OnQuit -= Server_OnQuit;
-            ServerConnetion.OnPart -= Server_OnQuit;
-            ServerConnetion.OnPreProcessingMessage -= Server_OnPreProcessingMessage;
+            ServerConnection.OnJoin -= Server_OnJoin;
+            ServerConnection.OnQuit -= Server_OnQuit;
+            ServerConnection.OnPart -= Server_OnQuit;
+            ServerConnection.OnPreProcessingMessage -= Server_OnPreProcessingMessage;
         }
 
         private void Server_OnPreProcessingMessage(object sender, ircMessage theMessage)

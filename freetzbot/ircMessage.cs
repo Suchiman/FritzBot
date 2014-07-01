@@ -19,7 +19,7 @@ namespace FritzBot
         /// <param name="data">Die Ausgangsdaten</param>
         /// <param name="serverConnetion">Die ServerConnetion von dem die Nachricht kommt</param>
         /// <param name="user">Der der Nachricht zugeordnete User</param>
-        public ircMessage(IrcMessageData data, ServerConnetion serverConnetion)
+        public ircMessage(IrcMessageData data, ServerConnection serverConnetion)
         {
             Contract.Requires(data != null && serverConnetion != null);
 
@@ -76,7 +76,7 @@ namespace FritzBot
         /// <summary>
         /// Die ServerConnetion von dem diese Nachricht stammt
         /// </summary>
-        public ServerConnetion ServerConnetion { get; protected set; }
+        public ServerConnection ServerConnetion { get; protected set; }
 
         /// <summary>
         /// Gibt an, ob die Nachricht per QUERY gesandt wurde

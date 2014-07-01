@@ -13,14 +13,14 @@ namespace FritzBot.Plugins
     {
         public void Start()
         {
-            ServerConnetion.OnJoin += Server_OnJoin;
-            ServerConnetion.OnPostProcessingMessage += Server_OnPostProcessingMessage;
+            ServerConnection.OnJoin += Server_OnJoin;
+            ServerConnection.OnPostProcessingMessage += Server_OnPostProcessingMessage;
         }
 
         public void Stop()
         {
-            ServerConnetion.OnJoin -= Server_OnJoin;
-            ServerConnetion.OnPostProcessingMessage -= Server_OnPostProcessingMessage;
+            ServerConnection.OnJoin -= Server_OnJoin;
+            ServerConnection.OnPostProcessingMessage -= Server_OnPostProcessingMessage;
         }
 
         private void Server_OnPostProcessingMessage(object sender, ircMessage theMessage)

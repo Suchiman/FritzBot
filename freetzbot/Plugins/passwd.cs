@@ -30,12 +30,12 @@ namespace FritzBot.Plugins
             if (!String.IsNullOrEmpty(user.Password))
             {
                 theMessage.SendPrivateMessage("Bitte gib zuerst dein altes Passwort ein:");
-                ServerConnetion.OnPreProcessingMessage += CheckOldPW;
+                ServerConnection.OnPreProcessingMessage += CheckOldPW;
             }
             else
             {
                 theMessage.SendPrivateMessage("Okay bitte gib nun dein Passwort ein");
-                ServerConnetion.OnPreProcessingMessage += SetNewPW;
+                ServerConnection.OnPreProcessingMessage += SetNewPW;
             }
         }
 
@@ -51,7 +51,7 @@ namespace FritzBot.Plugins
                 if (!context.GetUser(Requested).CheckPassword(theMessage.Message))
                 {
                     theMessage.SendPrivateMessage("Passwort korrekt, gib nun dein neues Passwort ein:");
-                    ServerConnetion.OnPreProcessingMessage += SetNewPW;
+                    ServerConnection.OnPreProcessingMessage += SetNewPW;
                 }
                 else
                 {
@@ -59,7 +59,7 @@ namespace FritzBot.Plugins
                     PluginManager.GetInstance().RecycleScoped(this);
                 }
             }
-            ServerConnetion.OnPreProcessingMessage -= CheckOldPW;
+            ServerConnection.OnPreProcessingMessage -= CheckOldPW;
         }
 
         void SetNewPW(object sender, ircMessage theMessage)
@@ -75,7 +75,7 @@ namespace FritzBot.Plugins
                 context.SaveChanges();
             }
             theMessage.SendPrivateMessage("Passwort wurde geändert!");
-            ServerConnetion.OnPreProcessingMessage -= SetNewPW;
+            ServerConnection.OnPreProcessingMessage -= SetNewPW;
             PluginManager.GetInstance().RecycleScoped(this);
         }
     }
