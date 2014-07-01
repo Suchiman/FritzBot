@@ -1,8 +1,9 @@
+using CsQuery;
+using CsQuery.Implementation;
 using FritzBot.Core;
 using FritzBot.Database;
 using FritzBot.DataModel;
 using FritzBot.Functions;
-using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
@@ -21,7 +22,7 @@ namespace FritzBot.Plugins
     [Subscribeable]
     class labor : PluginBase, ICommand, IBackgroundTask
     {
-        public const string BaseUrl = "http://www.avm.de/de/Service/Service-Portale/Labor/";
+        public const string BaseUrl = "http://avm.de/fritz-labor/";
         private DataCache<List<Labordaten>> LaborDaten = null;
         private Thread laborthread;
 
@@ -204,9 +205,9 @@ namespace FritzBot.Plugins
 
         private List<Labordaten> UpdateLaborCache(List<Labordaten> AlteLaborDaten)
         {
-            HtmlNode LaborStartSeite = new HtmlDocument().LoadUrl("http://www.avm.de/de/Service/Service-Portale/Labor/index.php").DocumentNode.StripComments();
-
-            List<Labordaten> NeueLaborDaten = LaborStartSeite.Descendants("h2").First().Siblings().SelectMany(x => x.Descendants("a")).Where(x => x.ChildAttributes("href").Count() == 1).Where(x => x.ChildAttributes("style").Count() == 0).Select(x => x.ChildAttributes("href").First().Value.Trim()).Where(x => !x.StartsWith("..") && !x.Contains("feedback")).SelectMany(x => Labordaten.GetDaten(x)).ToList();
+            CQ LaborStartSeite = CQ.CreateFromUrl(labor.BaseUrl);
+            CQ Labors = LaborStartSeite.Select("#content-section").Find("div.csc-space-after-1").Find("div.csc-default");
+            List<Labordaten> NeueLaborDaten = Labors.Find("a.button-link").Select(x => x.GetAttribute("href")).Where(x => x != null && x.StartsWith("fritz-labor/")).SelectMany(x => Labordaten.GetDaten(x)).ToList();
             NeueLaborDaten.AddRange(GetFTPBetas());
 
             if (NeueLaborDaten.Count > 0)
@@ -224,32 +225,31 @@ namespace FritzBot.Plugins
         public string version;
         public string url;
 
+        const string KeywordVersion = "Version: ";
+        const string KeywordDatum = "Datum: ";
+
         public static IEnumerable<Labordaten> GetDaten(string url)
         {
-            HtmlNode LaborSeite = new HtmlDocument().LoadUrl(labor.BaseUrl + url).DocumentNode.StripComments();
+            CQ LaborSeite = CQ.CreateFromUrl("http://avm.de/" + url);
+            List<string> details = LaborSeite.Select("p:contains('Downloadinformationen:')")[0].ChildNodes.OfType<DomText>().Select(x => x.NodeValue.Trim()).ToList();
 
-            IEnumerable<IGrouping<String, HtmlNode>> node = LaborSeite.SelectSingleNode("//div[@id='effect']").Descendants().Where(x => x.GetAttributeValue("id", "").Length > 2).GroupBy(x => x.GetAttributeValue("id", "").Substring(2));
-            foreach (IGrouping<String, HtmlNode> single in node)
+            Labordaten daten = new Labordaten();
+            string RawTyp = LaborSeite.Select("#pagetitle").Text();
+            if (!BoxDatabase.GetInstance().TryGetShortName(RawTyp, out daten.typ))
             {
-                HtmlNodeCollection table = single.First(x => x.Name == "div").SelectNodes("./table[@style=\"text-align:left; width:350px; float:left;\"]/tr[2]/td/text()");
-                string RawTyp = single.First(x => x.Name == "h3").InnerText.Trim();
-                Labordaten daten = new Labordaten();
-                if (!BoxDatabase.GetInstance().TryGetShortName(RawTyp, out daten.typ))
+                if (RawTyp.LastIndexOf(' ') != -1)
                 {
-                    if (RawTyp.LastIndexOf(' ') != -1)
-                    {
-                        daten.typ = RawTyp.Substring(RawTyp.LastIndexOf(' ')).Trim();
-                    }
-                    else
-                    {
-                        daten.typ = RawTyp.Trim();
-                    }
+                    daten.typ = RawTyp.Substring(RawTyp.LastIndexOf(' ')).Trim();
                 }
-                daten.version = table[0].InnerText.Trim();
-                daten.datum = table[2].InnerText.Trim();
-                daten.url = "http://www.avm.de/de/Service/Service-Portale/Labor/" + url;
-                yield return daten;
+                else
+                {
+                    daten.typ = RawTyp.Trim();
+                }
             }
+            daten.version = details.Where(x => x.StartsWith(KeywordVersion)).Select(x => x.Substring(KeywordVersion.Length)).FirstOrDefault();
+            daten.datum = details.Where(x => x.StartsWith(KeywordDatum)).Select(x => x.Substring(KeywordDatum.Length)).FirstOrDefault();
+            daten.url = "http://avm.de/" + url;
+            yield return daten;
         }
 
         public override int GetHashCode()

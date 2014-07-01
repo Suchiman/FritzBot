@@ -1,7 +1,7 @@
+using CsQuery;
 using FritzBot.Core;
 using FritzBot.DataModel;
 using FritzBot.Functions;
-using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
@@ -176,8 +176,8 @@ namespace FritzBot.Plugins
         {
             try
             {
-                HtmlNode document = new HtmlDocument().LoadUrl(ModelPage).DocumentNode;
-                return document.SelectNodes("//table[@class='wiki']/tr[td[1] != '' and td[1] != ' Modell ']").Select(x => new TableBox(x)).Distinct(x => x.FreetzType).ToDictionary(k => k.FreetzType, v => v, StringComparer.OrdinalIgnoreCase);
+                CQ document = CQ.CreateFromUrl(ModelPage);
+                return document.Select("table.wiki").Find("tr").Where(x => !x.Cq().Find("td").First().Text().In("", " Modell ")).Select(x => new TableBox(x)).Distinct(x => x.FreetzType).ToDictionary(k => k.FreetzType, v => v, StringComparer.OrdinalIgnoreCase);
             }
             catch
             {
@@ -217,9 +217,9 @@ namespace FritzBot.Plugins
 
         public string USBHost { get; set; }
 
-        public TableBox(HtmlNode x)
+        public TableBox(IDomObject x)
         {
-            List<HtmlNode> TableRows = x.SelectNodes("td").ToList();
+            List<IDomObject> TableRows = x.Cq().Find("td").ToList();
             Name = TableRows[0].InnerText.Trim();
 
             if (Name == "+" && !String.IsNullOrEmpty(LastName))
@@ -229,11 +229,11 @@ namespace FritzBot.Plugins
 
             LastName = Name;
 
-            FreetzType = TableRows[1].InnerText.Trim();
-            HtmlNode link = TableRows[1].SelectSingleNode(".//a");
-            if (link != null)
+            FreetzType = TableRows[1].Cq().Text().Trim();
+            CQ link = TableRows[1].Cq().Find("a");
+            if (link.Any())
             {
-                Url = link.GetAttributeValue("href", null);
+                Url = link.Attr("href");
             }
 
             AngepassteFirmware = TableRows[2].InnerText.Trim();

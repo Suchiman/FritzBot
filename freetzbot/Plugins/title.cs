@@ -1,13 +1,12 @@
+using CsQuery;
 using FritzBot.Core;
 using FritzBot.DataModel;
-using FritzBot.Functions;
-using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Security;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace FritzBot.Plugins
@@ -56,27 +55,14 @@ namespace FritzBot.Plugins
             }
             try
             {
-                string html;
-                if (UTF8Checker.IsUtf8(e.Result))
+                CQ doc = CQ.Create(new MemoryStream(e.Result));
+                CQ titleNode = doc.Select("title");
+                if (!titleNode.Any())
                 {
-                    html = Encoding.UTF8.GetString(e.Result);
+                    return;
                 }
-                else
-                {
-                    html = Encoding.GetEncoding("iso-8859-1").GetString(e.Result);
-                }
-                HtmlNode doc = HtmlDocumentExtensions.GetHtmlNode(html);
-                HtmlNode titleNode = doc.SelectSingleNode("//head/title");
-                if (titleNode == null)
-                {
-                    titleNode = doc.SelectSingleNode("//title");
-                    if (titleNode == null)
-                    {
-                        return;
-                    }
-                }
-                string title = Regex.Replace(titleNode.InnerText.Trim().Replace("\n", "").Replace("\r", "").Replace("â€“", "–"), "[ ]{2,}", " ");
-                (e.UserState as ircMessage).Answer("[url] " + HtmlEntity.DeEntitize(title));
+                string title = Regex.Replace(titleNode.Text().Trim().Replace("\n", "").Replace("\r", "").Replace("â€“", "–"), "[ ]{2,}", " ");
+                (e.UserState as ircMessage).Answer("[url] " + title);
             }
             catch
             {

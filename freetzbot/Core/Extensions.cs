@@ -1,10 +1,8 @@
-using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Text;
 using System.Xml.Linq;
 
@@ -172,66 +170,6 @@ namespace FritzBot.Core
         {
             public Utf8StringWriter(StringBuilder builder) : base(builder) { }
             public override Encoding Encoding { get { return Encoding.UTF8; } }
-        }
-    }
-
-    public static class HtmlDocumentExtensions
-    {
-        public static HtmlDocument LoadUrl(this HtmlDocument doc, string url)
-        {
-            Contract.Requires(url != null);
-            Contract.Ensures(Contract.Result<HtmlDocument>() != null);
-
-            WebClient dl = new WebClient();
-            string page = dl.DownloadString(url);
-
-            doc.LoadHtml(page);
-            return doc;
-        }
-
-        public static HtmlNode GetHtmlNode(string html)
-        {
-            Contract.Requires(html != null);
-            Contract.Ensures(Contract.Result<HtmlNode>() != null);
-
-            HtmlDocument doc = new HtmlDocument();
-            doc.LoadHtml(html);
-            return doc.DocumentNode;
-        }
-
-        public static HtmlNode StripComments(this HtmlNode node)
-        {
-            Contract.Requires(node != null);
-            Contract.Ensures(Contract.Result<HtmlNode>() == node);
-
-            foreach (HtmlNode item in node.Descendants().OfType<HtmlCommentNode>().ToList())
-            {
-                item.Remove();
-            }
-            return node;
-        }
-
-        public static HtmlDocument StripComments(this HtmlDocument doc)
-        {
-            Contract.Requires(doc != null);
-            Contract.Ensures(Contract.Result<HtmlDocument>() == doc);
-
-            doc.DocumentNode.StripComments();
-            return doc;
-        }
-
-        public static IEnumerable<HtmlNode> Siblings(this HtmlNode node)
-        {
-            Contract.Requires(node != null);
-            Contract.Ensures(Contract.Result<IEnumerable<HtmlNode>>() != null);
-
-            HtmlNode tmp = node.NextSibling;
-            yield return tmp;
-            while (tmp.NextSibling != null)
-            {
-                tmp = tmp.NextSibling;
-                yield return tmp;
-            }
         }
     }
 

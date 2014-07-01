@@ -1,6 +1,6 @@
+using CsQuery;
 using FritzBot.Core;
 using FritzBot.DataModel;
-using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
@@ -76,12 +76,12 @@ namespace FritzBot.Plugins
             Contract.Requires(Url != null);
             Contract.Ensures(Contract.Result<List<NewsEntry>>() != null);
 
-            HtmlDocument doc = null;
+            CQ doc = null;
             for (int i = 1; true; i++)
             {
                 try
                 {
-                    doc = new HtmlDocument().LoadUrl(Url);
+                    doc = CQ.CreateFromUrl(Url);
                     break;
                 }
                 catch (Exception ex)
@@ -94,7 +94,7 @@ namespace FritzBot.Plugins
                 }
             }
 
-            return doc.DocumentNode.StripComments().SelectNodes("//table[@width='100%'][@border='0'][@cellpadding='0'][@cellspacing='0'][@bgcolor='F6F6F6']").Select(x => new NewsEntry(x)).ToList();
+            return doc.Select("table[bgcolor='F6F6F6']").Select(x => new NewsEntry(x.Cq())).ToList();
         }
     }
 
@@ -104,16 +104,16 @@ namespace FritzBot.Plugins
         public string Version;
         public DateTime Datum;
 
-        public NewsEntry(HtmlNode node)
+        public NewsEntry(CQ node)
         {
-            Titel = HtmlEntity.DeEntitize(node.SelectSingleNode(".//span[@class='uberschriftblau']").InnerText).Trim();
-            string[] SuperInfos = node.SelectNodes(".//table[@width='100%'][@cellpadding='10'][@cellspacing='0'][@bgcolor='#FFFFFF']//table//tr[3]//td[@nowrap=''][@class='newsfont']").Select(x => x.InnerText.Trim()).Where(x => !String.IsNullOrEmpty(x)).ToArray();
+            Titel = node.Find("span.uberschriftblau").Text().Trim();
+            string[] SuperInfos = node.Find("table[bgcolor='#FFFFFF']").Find("table").Find("tr").Skip(2).First().Cq().Find("td.newsfont").Select(x => x.Cq().Text().Trim()).Where(x => !String.IsNullOrEmpty(x)).ToArray();
             if (SuperInfos.Length < 2)
             {
                 throw new Exception("Der News Beitrag konnte nicht geparsed werden");
             }
-            Version = SuperInfos[0];
-            Datum = DateTime.Parse(SuperInfos[1]);
+            Version = SuperInfos[1];
+            Datum = DateTime.Parse(SuperInfos[3]);
         }
 
         public override bool Equals(object obj)

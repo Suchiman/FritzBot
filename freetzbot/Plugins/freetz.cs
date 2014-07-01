@@ -1,7 +1,7 @@
+using CsQuery;
 using FritzBot.Core;
 using FritzBot.DataModel;
 using FritzBot.Functions;
-using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
@@ -80,8 +80,8 @@ namespace FritzBot.Plugins
         {
             try
             {
-                HtmlNode document = new HtmlDocument().LoadUrl(PackagesPage).DocumentNode;
-                return document.SelectNodes("//table[@class='wiki']/tr/td/a[@class='wiki']").Distinct(x => x.InnerText).ToDictionary(k => k.InnerText, v => v.GetAttributeValue("href", ""), StringComparer.OrdinalIgnoreCase);
+                CQ document = CQ.CreateFromUrl(PackagesPage);
+                return document.Select("table.wiki").Find("a.wiki").Where(x => x.InnerTextAllowed).Distinct(x => x.InnerText).ToDictionary(k => k.InnerText, v => v.GetAttribute("href", ""), StringComparer.OrdinalIgnoreCase);
             }
             catch
             {
