@@ -46,7 +46,7 @@ namespace FritzBot.DataModel
 
         protected virtual void DoNotification(Subscription subscription, string message)
         {
-            SubscriptionProvider provider = PluginManager.GetInstance().FirstOrDefault(x => x.ID == subscription.Provider).As<SubscriptionProvider>();
+            SubscriptionProvider provider = PluginManager.Plugins.FirstOrDefault(x => x.ID == subscription.Provider).As<SubscriptionProvider>();
             if (provider != null)
             {
                 provider.SendNotification(subscription.User, message);

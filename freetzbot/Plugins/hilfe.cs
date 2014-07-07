@@ -15,7 +15,7 @@ namespace FritzBot.Plugins
         {
             if (!theMessage.HasArgs)
             {
-                var plugins = PluginManager.GetInstance().Where(x => !x.IsHidden && x.Names.Count > 0);
+                var plugins = PluginManager.Plugins.Where(x => !x.IsHidden && x.Names.Count > 0);
                 using (var context = new BotContext())
                 {
                     if (!toolbox.IsOp(context.GetUser(theMessage.Nickname)))
@@ -31,7 +31,7 @@ namespace FritzBot.Plugins
             }
             else
             {
-                PluginInfo info = PluginManager.GetInstance().Get(theMessage.CommandArgs[0]);
+                PluginInfo info = PluginManager.Get(theMessage.CommandArgs[0]);
                 if (info != null && !String.IsNullOrEmpty(info.HelpText))
                 {
                     theMessage.Answer(info.HelpText);

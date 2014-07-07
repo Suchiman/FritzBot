@@ -62,7 +62,7 @@ namespace FritzBot.Plugins
                 }
                 if (output != String.Empty)
                 {
-                    ServerManager.GetInstance().AnnounceGlobal(output);
+                    ServerManager.AnnounceGlobal(output);
                     NotifySubscribers(output);
                 }
                 output = String.Empty;

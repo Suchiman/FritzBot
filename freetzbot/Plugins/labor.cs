@@ -70,7 +70,7 @@ namespace FritzBot.Plugins
             }
             else
             {
-                string BoxName = BoxDatabase.GetInstance().GetShortName(theMessage.CommandLine);
+                string BoxName = BoxDatabase.GetShortName(theMessage.CommandLine);
                 Labordaten first = daten.FirstOrDefault(x => x.typ == BoxName);
                 if (first != null)
                 {
@@ -103,7 +103,7 @@ namespace FritzBot.Plugins
                     if (unEquals.Count > 0)
                     {
                         string labors = "Neue Labor Versionen gesichtet! - " + String.Join(", ", unEquals.Select(x => String.Format("{0} ({1})", x.typ, x.version)).ToArray()) + " - Zum Labor: " + toolbox.ShortUrl("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
-                        ServerManager.GetInstance().AnnounceGlobal(labors);
+                        ServerManager.AnnounceGlobal(labors);
                         NotifySubscribers(labors);
                         alte = neue;
                     }
@@ -163,7 +163,7 @@ namespace FritzBot.Plugins
                     string RawName = firmware.Name;
 
                     fw.Item1.version = Regex.Match(RawName, @"_Labor.((\d{2,3}\.)?\d\d\.\d\d(-\d{1,6})?).image$").Groups[1].Value;
-                    if (!BoxDatabase.GetInstance().TryGetShortName(RawName, out fw.Item1.typ))
+                    if (!BoxDatabase.TryGetShortName(RawName, out fw.Item1.typ))
                     {
                         if (RawName.LastIndexOf(' ') != -1)
                         {
@@ -235,7 +235,7 @@ namespace FritzBot.Plugins
 
             Labordaten daten = new Labordaten();
             string RawTyp = LaborSeite.Select("#pagetitle").Text();
-            if (!BoxDatabase.GetInstance().TryGetShortName(RawTyp, out daten.typ))
+            if (!BoxDatabase.TryGetShortName(RawTyp, out daten.typ))
             {
                 if (RawTyp.LastIndexOf(' ') != -1)
                 {

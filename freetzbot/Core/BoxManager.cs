@@ -1,7 +1,7 @@
-using System.Collections.Generic;
-using System.Linq;
 using FritzBot.Database;
 using FritzBot.DataModel;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace FritzBot.Core
 {
@@ -23,7 +23,7 @@ namespace FritzBot.Core
             entry.Text = input;
 
             Box result;
-            if (BoxDatabase.GetInstance().TryFindExactBox(input, out result))
+            if (BoxDatabase.TryFindExactBox(input, out result))
             {
                 entry.Box = result;
                 _context.Boxes.Attach(result);
@@ -49,8 +49,7 @@ namespace FritzBot.Core
         public bool HasBox(string input)
         {
             Box result;
-            bool found = BoxDatabase.GetInstance().TryFindExactBox(input, out result);
-            if (found)
+            if (BoxDatabase.TryFindExactBox(input, out result))
             {
                 return _context.BoxEntries.Any(x => x.User.Id == _user.Id && (x.Text == input || x.Box.Id == result.Id));
             }
@@ -63,7 +62,7 @@ namespace FritzBot.Core
             foreach (BoxEntry entry in userBoxEntries)
             {
                 Box result;
-                if (BoxDatabase.GetInstance().TryFindExactBox(entry.Text, out result))
+                if (BoxDatabase.TryFindExactBox(entry.Text, out result))
                 {
                     entry.Box = result;
                 }

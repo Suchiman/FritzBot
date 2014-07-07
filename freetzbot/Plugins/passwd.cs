@@ -56,7 +56,7 @@ namespace FritzBot.Plugins
                 else
                 {
                     theMessage.SendPrivateMessage("Passwort inkorrekt, abbruch!");
-                    PluginManager.GetInstance().RecycleScoped(this);
+                    PluginManager.RecycleScoped(this);
                 }
             }
             ServerConnection.OnPreProcessingMessage -= CheckOldPW;
@@ -76,7 +76,7 @@ namespace FritzBot.Plugins
             }
             theMessage.SendPrivateMessage("Passwort wurde geändert!");
             ServerConnection.OnPreProcessingMessage -= SetNewPW;
-            PluginManager.GetInstance().RecycleScoped(this);
+            PluginManager.RecycleScoped(this);
         }
     }
 }

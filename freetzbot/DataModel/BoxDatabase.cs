@@ -7,29 +7,19 @@ using System.Linq;
 
 namespace FritzBot.DataModel
 {
-    public class BoxDatabase : PluginBase
+    public class BoxDatabase
     {
-        private static BoxDatabase instance;
-        private List<Box> Boxen;
+        private static List<Box> _boxen;
 
-        public static BoxDatabase GetInstance()
-        {
-            Contract.Ensures(Contract.Result<BoxDatabase>() != null);
+        public static IEnumerable<Box> Boxen { get { return _boxen; } }
 
-            if (instance == null)
-            {
-                instance = new BoxDatabase();
-            }
-            return instance;
-        }
-
-        public BoxDatabase()
+        static BoxDatabase()
         {
             try
             {
                 using (var context = new BotContext())
                 {
-                    Boxen = context.Boxes.Include(x => x.RegexPattern).ToList();
+                    _boxen = context.Boxes.Include(x => x.RegexPattern).ToList();
                 }
             }
             catch (Exception ex)
@@ -45,7 +35,7 @@ namespace FritzBot.DataModel
         /// <param name="ShortName">Der Kurzname der Box, z.B. 7270v2</param>
         /// <param name="FullName">Der vollständige Name</param>
         /// <param name="RegexPattern">Ein oder mehrere Reguläre Ausdrücke um die Box zu erkennen</param>
-        public Box AddBox(string ShortName, string FullName, params string[] RegexPattern)
+        public static Box AddBox(string ShortName, string FullName, params string[] RegexPattern)
         {
             Contract.Ensures(Contract.Result<Box>() != null);
 
@@ -63,7 +53,7 @@ namespace FritzBot.DataModel
             {
                 context.Boxes.Add(box);
             }
-            Boxen.Add(box);
+            _boxen.Add(box);
             return box;
         }
 
@@ -71,16 +61,16 @@ namespace FritzBot.DataModel
         /// Gibt die Box mit entsprechendem ShortName zurück
         /// </summary>
         /// <param name="ShortName">Der Kurzname der Box</param>
-        public Box GetBoxByShortName(string ShortName)
+        public static Box GetBoxByShortName(string ShortName)
         {
-            return GetBoxen().FirstOrDefault(x => x.ShortName == ShortName);
+            return _boxen.FirstOrDefault(x => x.ShortName == ShortName);
         }
 
         /// <summary>
         /// Versucht die zum input passende Box zu finden und den ShortName zurückzugeben. Andernfalls ist die Rückgabe der input
         /// </summary>
         /// <param name="input">Ein string anhand dessen versucht werden soll die passende Box zu finden</param>
-        public string GetShortName(string input)
+        public static string GetShortName(string input)
         {
             Box ToFind;
             if (TryFindExactBox(input, out ToFind))
@@ -94,7 +84,7 @@ namespace FritzBot.DataModel
         /// Versucht die zum input passende Box zu finden und den ShortName zurückzugeben.
         /// </summary>
         /// <param name="input">Ein string anhand dessen versucht werden soll die passende Box zu finden</param>
-        public bool TryGetShortName(string input, out string ShortName)
+        public static bool TryGetShortName(string input, out string ShortName)
         {
             ShortName = null;
             string result = GetShortName(input);
@@ -109,15 +99,15 @@ namespace FritzBot.DataModel
         /// <summary>
         /// Versucht anhand des Inputs mit den gegebenen Daten die passende Box zu ermitteln
         /// </summary>
-        public IEnumerable<Box> FindBoxes(string input)
+        public static IEnumerable<Box> FindBoxes(string input)
         {
-            return GetBoxen().Where(x => x.Matches(input));
+            return _boxen.Where(x => x.Matches(input));
         }
 
         /// <summary>
         /// Versucht anhand des Inputs mit den gegebenen Daten die einzig passende Box zu ermitteln
         /// </summary>
-        public bool TryFindExactBox(string input, out Box box)
+        public static bool TryFindExactBox(string input, out Box box)
         {
             box = null;
             try
@@ -129,11 +119,6 @@ namespace FritzBot.DataModel
             {
                 return false;
             }
-        }
-
-        public IEnumerable<Box> GetBoxen()
-        {
-            return Boxen;
         }
     }
 }

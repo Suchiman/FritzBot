@@ -17,7 +17,7 @@ namespace FritzBot.Plugins
                 theMessage.AnswerHelp(this);
                 return;
             }
-            PluginInfo bgtask = PluginManager.GetInstance().Get(theMessage.CommandArgs[0]);
+            PluginInfo bgtask = PluginManager.Get(theMessage.CommandArgs[0]);
             if (bgtask != null && bgtask.IsBackgroundTask)
             {
                 if (theMessage.CommandArgs[1].ToLower() == "start")

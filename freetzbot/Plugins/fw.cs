@@ -53,8 +53,8 @@ namespace FritzBot.Plugins
                     if (unEquals.Count > 0)
                     {
                         string labors = "Änderungen auf dem FTP gesichtet! - " + String.Join(", ", unEquals.Select(x => GetReadableString(x) + ": " + x.Split(' ').Last()).ToArray()) + " - Zum FTP: " + BaseDirectory;
-                        ServerManager.GetInstance().AnnounceGlobal(labors);
-                        NotifySubscribers(labors, unEquals.Select(x => BoxDatabase.GetInstance().GetShortName(x)).ToArray());
+                        ServerManager.AnnounceGlobal(labors);
+                        NotifySubscribers(labors, unEquals.Select(x => BoxDatabase.GetShortName(x)).ToArray());
                         alte = neue;
                     }
                     Thread.Sleep(ConfigHelper.GetInt("FWCheckIntervall", 600000));
@@ -69,7 +69,7 @@ namespace FritzBot.Plugins
         public string GetReadableString(string input)
         {
             string output;
-            if (!BoxDatabase.GetInstance().TryGetShortName(input, out output))
+            if (!BoxDatabase.TryGetShortName(input, out output))
             {
                 //ftp://ftp.avm.de/fritz.box/fritzbox.fon_wlan_7170_sl/firmware/deutsch/-rw-r--r--    1 ftp      ftp         13010 Feb 26  2010 info.txt
                 string[] splits = input.Split('/');
@@ -99,7 +99,7 @@ namespace FritzBot.Plugins
             bool recovery = false;
             bool source = false;
             bool firmware = false;
-            Box box = BoxDatabase.GetInstance().FindBoxes(theMessage.CommandLine).FirstOrDefault();
+            Box box = BoxDatabase.FindBoxes(theMessage.CommandLine).FirstOrDefault();
             if (theMessage.CommandArgs.Count > 1)
             {
                 switch (theMessage.CommandArgs.Last().ToLower())
@@ -131,7 +131,7 @@ namespace FritzBot.Plugins
             List<string> DirectoryNames = GetListingNames(FtpDirectory(ftp)).ToList();
             foreach (string Directory in DirectoryNames)
             {
-                if (BoxDatabase.GetInstance().FindBoxes(Directory).Any(x => x == box))
+                if (BoxDatabase.FindBoxes(Directory).Any(x => x == box))
                 {
                     ftp += Directory + "/";
                     break;

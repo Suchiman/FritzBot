@@ -125,7 +125,7 @@ namespace FritzBot
         /// <param name="Channels">Eine Liste von Channelnamen die der Bot betreten soll</param>
         public static void InstantiateConnection(string server, int Port, string Nick, string Quit_Message, string Channel)
         {
-            ServerConnection Connection = ServerManager.GetInstance().NewConnection(server, Port, Nick, Quit_Message, new List<string>() { Channel });
+            ServerConnection Connection = ServerManager.NewConnection(server, Port, Nick, Quit_Message, new List<string>() { Channel });
             Connection.Connect();
         }
 

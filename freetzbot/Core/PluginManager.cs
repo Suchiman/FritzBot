@@ -3,7 +3,6 @@ using FritzBot.Plugins;
 using Microsoft.CSharp;
 using System;
 using System.CodeDom.Compiler;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,33 +11,25 @@ using System.Threading;
 
 namespace FritzBot.Core
 {
-    public class PluginManager : IEnumerable<PluginInfo>
+    public static class PluginManager
     {
-        private static PluginManager instance;
-        private List<PluginInfo> Plugins = new List<PluginInfo>();
-        private Dictionary<string, PluginInfo> LookupDictionary = new Dictionary<string, PluginInfo>(StringComparer.OrdinalIgnoreCase);
+        private static List<PluginInfo> _plugins = new List<PluginInfo>();
+        private static Dictionary<string, PluginInfo> _lookupDictionary = new Dictionary<string, PluginInfo>(StringComparer.OrdinalIgnoreCase);
 
-        public static PluginManager GetInstance()
-        {
-            if (instance == null)
-            {
-                instance = new PluginManager();
-            }
-            return instance;
-        }
+        public static IEnumerable<PluginInfo> Plugins { get { return _plugins; } }
 
         /// <summary>
         /// Fährt den PluginManager herunter
         /// </summary>
         public static void Shutdown()
         {
-            GetInstance().Where(x => x.IsBackgroundTask).TryLogEach(x => x.Stop());
+            _plugins.Where(x => x.IsBackgroundTask).TryLogEach(x => x.Stop());
         }
 
         /// <summary>
         /// Instanziert die Typen, entfernt bereits vorhandene Typen mit gleichem FullName und fügt die neuen hinzu.
         /// </summary>
-        public int AddDistinct(bool AutostartTask, params Type[] Types)
+        public static int AddDistinct(bool AutostartTask, params Type[] Types)
         {
             IEnumerable<Type> FilteredTypes = Types.Where(x => !x.IsAbstract && !x.IsInterface && typeof(PluginBase).IsAssignableFrom(x));
             Remove(x => FilteredTypes.Select(y => y.FullName).Contains(x.GetType().FullName));
@@ -48,13 +39,13 @@ namespace FritzBot.Core
             {
                 NewPlugins.Where(x => x.IsBackgroundTask).TryLogEach(x => x.Start());
             }
-            Plugins.AddRange(NewPlugins);
+            _plugins.AddRange(NewPlugins);
 
             foreach (PluginInfo plugin in NewPlugins)
             {
                 foreach (string name in plugin.Names)
                 {
-                    LookupDictionary[name] = plugin;
+                    _lookupDictionary[name] = plugin;
                 }
             }
 
@@ -64,15 +55,15 @@ namespace FritzBot.Core
         /// <summary>
         /// Entfernt alle ICommands und IBackgroundTasks auf die die Bedingung zutrifft.
         /// </summary>
-        public int Remove(Func<PluginInfo, bool> bedingung)
+        public static int Remove(Func<PluginInfo, bool> bedingung)
         {
-            List<PluginInfo> toremove = Plugins.Where(bedingung).ToList();
+            List<PluginInfo> toremove = _plugins.Where(bedingung).ToList();
             toremove.Where(x => x.IsBackgroundTask).TryLogEach(x => x.Stop());
-            Plugins.RemoveAll(x => toremove.Contains(x));
+            _plugins.RemoveAll(x => toremove.Contains(x));
 
             foreach (string Name in toremove.SelectMany(x => x.Names))
             {
-                LookupDictionary.Remove(Name);
+                _lookupDictionary.Remove(Name);
             }
 
             return toremove.Count;
@@ -81,10 +72,10 @@ namespace FritzBot.Core
         /// <summary>
         /// Gibt das erste PluginInfo zurück mit dem angegebenen Namen
         /// </summary>
-        public PluginInfo Get(string name)
+        public static PluginInfo Get(string name)
         {
             PluginInfo plugin;
-            if (LookupDictionary.TryGetValue(name, out plugin))
+            if (_lookupDictionary.TryGetValue(name, out plugin))
             {
                 return plugin;
             }
@@ -94,7 +85,7 @@ namespace FritzBot.Core
         /// <summary>
         /// Gibt die PluginInfos zurück mit dem angegebenen Plugin Typ
         /// </summary>
-        public IEnumerable<PluginInfo> GetOfType<T>()
+        public static IEnumerable<PluginInfo> GetOfType<T>()
         {
             return Plugins.Where(x => x.Plugin is T);
         }
@@ -102,7 +93,7 @@ namespace FritzBot.Core
         /// <summary>
         /// Initialisiert das Plugin System Asynchron
         /// </summary>
-        public void BeginInit(bool AutostartTask)
+        public static void BeginInit(bool AutostartTask)
         {
             ThreadPool.QueueUserWorkItem(x => { Init(AutostartTask); });
         }
@@ -110,7 +101,7 @@ namespace FritzBot.Core
         /// <summary>
         /// Initialisiert das Plugin System und instanziert alle Plugins
         /// </summary>
-        public void Init(bool AutostartTask)
+        public static void Init(bool AutostartTask)
         {
             string PluginDirectory = Path.Combine(Environment.CurrentDirectory, "plugins");
             if (!Directory.Exists(PluginDirectory))
@@ -136,9 +127,9 @@ namespace FritzBot.Core
             AddDistinct(AutostartTask, allTypes.ToArray<Type>()); //Die Methode verwirft alle Typen die nicht von PluginBase abgeleitet sind
         }
 
-        public void RecycleScoped(PluginBase plugin)
+        public static void RecycleScoped(PluginBase plugin)
         {
-            PluginInfo info = Plugins.FirstOrDefault(x => x.ID == plugin.PluginID);
+            PluginInfo info = _plugins.FirstOrDefault(x => x.ID == plugin.PluginID);
             info.Recycle(plugin);
         }
 
@@ -146,7 +137,7 @@ namespace FritzBot.Core
         /// Lädt ein oder mehrere Plugins aus den gegebenen Dateien und initialisiert sie
         /// </summary>
         /// <param name="Path"></param>
-        public int LoadPluginFromFile(params string[] Path)
+        public static int LoadPluginFromFile(params string[] Path)
         {
             Assembly assembly = LoadSource(Path);
             return AddDistinct(true, assembly.GetTypes());
@@ -157,7 +148,7 @@ namespace FritzBot.Core
         /// </summary>
         /// <param name="assembly">Die Assembly die den Typ beinhaltet</param>
         /// <param name="name">Der Name des Types</param>
-        public int LoadPluginByName(Assembly assembly, string name)
+        public static int LoadPluginByName(Assembly assembly, string name)
         {
             foreach (Type t in assembly.GetTypes())
             {
@@ -178,7 +169,7 @@ namespace FritzBot.Core
         /// </summary>
         /// <param name="fileName">Ein Array das die Dateinamen enthält</param>
         /// <returns>Das aus den Quellcode erstellte Assembly</returns>
-        public Assembly LoadSource(params string[] fileName)
+        public static Assembly LoadSource(params string[] fileName)
         {
             CSharpCodeProvider compiler = new CSharpCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v4.0" } }); //Default ist sonst .NET 2.0
             CompilerParameters compilerParams = new CompilerParameters();
@@ -213,16 +204,6 @@ namespace FritzBot.Core
                 throw new Exception("Compilation failed");
             }
             return results.CompiledAssembly;
-        }
-
-        public IEnumerator<PluginInfo> GetEnumerator()
-        {
-            return Plugins.GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return Plugins.GetEnumerator();
         }
     }
 

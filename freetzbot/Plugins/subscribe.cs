@@ -49,7 +49,7 @@ namespace FritzBot.Plugins
                 theMessage.Answer("Die Funktion benötigt 2 Parameter: !subscribe help <SubscriptionProvider>");
                 return;
             }
-            SubscriptionProvider provider = PluginManager.GetInstance().Where(x => x.Names.Contains(theMessage.CommandArgs[1], StringComparer.OrdinalIgnoreCase)).SingleOrDefault().As<SubscriptionProvider>();
+            SubscriptionProvider provider = PluginManager.Plugins.Where(x => x.Names.Contains(theMessage.CommandArgs[1], StringComparer.OrdinalIgnoreCase)).SingleOrDefault().As<SubscriptionProvider>();
             if (provider == null)
             {
                 theMessage.Answer("Es gibt keinen solchen SubscriptionProvider");
@@ -73,13 +73,13 @@ namespace FritzBot.Plugins
                 theMessage.Answer("Die Funktion benötigt 3 Parameter: !subscribe remove <PluginName> <SubscriptionProvider>");
                 return;
             }
-            PluginInfo plugin = PluginManager.GetInstance().Where(x => x.IsNamed(theMessage.CommandArgs[1])).SingleOrDefault();
+            PluginInfo plugin = PluginManager.Plugins.Where(x => x.IsNamed(theMessage.CommandArgs[1])).SingleOrDefault();
             if (plugin == null)
             {
                 theMessage.Answer("Ein solches Plugin konnte ich nicht ausfindig machen");
                 return;
             }
-            SubscriptionProvider provider = PluginManager.GetInstance().Where(x => x.IsNamed(theMessage.CommandArgs[2])).SingleOrDefault().As<SubscriptionProvider>();
+            SubscriptionProvider provider = PluginManager.Plugins.Where(x => x.IsNamed(theMessage.CommandArgs[2])).SingleOrDefault().As<SubscriptionProvider>();
             if (provider == null)
             {
                 theMessage.Answer("Es gibt keinen solchen SubscriptionProvider");
@@ -104,7 +104,7 @@ namespace FritzBot.Plugins
         {
             Contract.Requires(theMessage != null);
 
-            SubscriptionProvider provider = PluginManager.GetInstance().FirstOrDefault(x => x.IsNamed(theMessage.CommandArgs[1])).As<SubscriptionProvider>();
+            SubscriptionProvider provider = PluginManager.Plugins.FirstOrDefault(x => x.IsNamed(theMessage.CommandArgs[1])).As<SubscriptionProvider>();
             if (provider == null)
             {
                 theMessage.Answer("Es gibt keinen SubscriptionProvider namens " + theMessage.CommandArgs[1]);
@@ -115,9 +115,9 @@ namespace FritzBot.Plugins
 
         private static void SubscriptionsAvailable(ircMessage theMessage)
         {
-            string[] names = PluginManager.GetInstance().GetOfType<SubscriptionProvider>().Select(x => x.Names.FirstOrDefault()).Where(x => !String.IsNullOrEmpty(x)).ToArray();
+            string[] names = PluginManager.GetOfType<SubscriptionProvider>().Select(x => x.Names.FirstOrDefault()).Where(x => !String.IsNullOrEmpty(x)).ToArray();
             theMessage.Answer("Es sind folgende SubscriptionProvider verfügbar: " + String.Join(", ", names));
-            string[] plugins = PluginManager.GetInstance().Where(x => x.IsSubscribeable).Select(x => x.Names.FirstOrDefault()).Where(x => !String.IsNullOrEmpty(x)).ToArray();
+            string[] plugins = PluginManager.Plugins.Where(x => x.IsSubscribeable).Select(x => x.Names.FirstOrDefault()).Where(x => !String.IsNullOrEmpty(x)).ToArray();
             theMessage.Answer("Folgende Plugins werden unterstützt: " + String.Join(", ", plugins));
         }
 
@@ -128,7 +128,7 @@ namespace FritzBot.Plugins
                 theMessage.Answer("Die Funktion benötigt mindestens 3 Parameter: !subscribe add <PluginName> <SubscriptionProvider> <Bedingung>(optional)");
                 return;
             }
-            SubscriptionProvider provider = PluginManager.GetInstance().Get(theMessage.CommandArgs[2]).As<SubscriptionProvider>();
+            SubscriptionProvider provider = PluginManager.Get(theMessage.CommandArgs[2]).As<SubscriptionProvider>();
             if (provider == null)
             {
                 theMessage.Answer("Es gibt keinen solchen SubscriptionProvider");
@@ -136,7 +136,7 @@ namespace FritzBot.Plugins
             }
             if (theMessage.CommandArgs[1] != "*")
             {
-                PluginBase plugin = PluginManager.GetInstance().Get(theMessage.CommandArgs[1]).As<PluginBase>();
+                PluginBase plugin = PluginManager.Get(theMessage.CommandArgs[1]).As<PluginBase>();
                 if (plugin == null)
                 {
                     theMessage.Answer("Ein solches Plugin konnte ich nicht ausfindig machen");
@@ -151,7 +151,7 @@ namespace FritzBot.Plugins
             }
             else
             {
-                List<PluginBase> availables = PluginManager.GetInstance().Where(x => x.IsSubscribeable).Select(x => x.Plugin).ToList();
+                List<PluginBase> availables = PluginManager.Plugins.Where(x => x.IsSubscribeable).Select(x => x.Plugin).ToList();
                 foreach (PluginBase plugin in availables)
                 {
                     provider.AddSubscription(theMessage, plugin);
@@ -164,7 +164,7 @@ namespace FritzBot.Plugins
             using (var context = new BotContext())
             {
                 List<IGrouping<string, Subscription>> Subscription = context.Subscriptions.Where(x => x.User == context.Nicknames.FirstOrDefault(n => n.Name == theMessage.Nickname).User).GroupBy(x => x.Provider).ToList();
-                string output = String.Join("; ", Subscription.Select(x => String.Format("{0}: {1}", PluginManager.GetInstance().GetOfType<SubscriptionProvider>().First(z => z.ID == x.Key).Names.First(), String.Join(", ", x.Select(y => y.Plugin)))));
+                string output = String.Join("; ", Subscription.Select(x => String.Format("{0}: {1}", PluginManager.GetOfType<SubscriptionProvider>().First(z => z.ID == x.Key).Names.First(), String.Join(", ", x.Select(y => y.Plugin)))));
                 theMessage.Answer(output);
             }
         }

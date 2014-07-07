@@ -1,64 +1,28 @@
 ﻿using FritzBot.Database;
 using Meebey.SmartIrc4net;
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using System.Data.Entity;
 
 namespace FritzBot.Core
 {
     /// <summary>
     /// Der ServerManger verwaltet die ServerConnetions
     /// </summary>
-    public class ServerManager : IEnumerable<ServerConnection>
+    public static class ServerManager
     {
-        private static ServerManager instance;
-        private List<ServerConnection> _servers;
+        private static List<ServerConnection> _servers;
 
-        /// <summary>
-        /// Gibt die Singleton Instanz des ServerManagers zurück
-        /// </summary>
-        /// <returns></returns>
-        public static ServerManager GetInstance()
-        {
-            Contract.Ensures(Contract.Result<ServerManager>() != null);
-
-            if (instance == null)
-            {
-                instance = new ServerManager();
-            }
-            return instance;
-        }
-
-        /// <summary>
-        /// Gibt die ServerConnetion mit der angegebenen Adresse zurück
-        /// </summary>
-        /// <param name="Address">Der Hostname des IRC Servers</param>
-        public ServerConnection this[string Address]
-        {
-            get
-            {
-                Contract.Ensures(Contract.Result<ServerConnection>() != null);
-
-                foreach (ServerConnection oneServer in _servers)
-                {
-                    if (oneServer.Settings.Address == Address)
-                    {
-                        return oneServer;
-                    }
-                }
-                throw new ArgumentException("Unknown ServerConnetion");
-            }
-        }
+        public static IEnumerable<ServerConnection> Servers { get { return _servers; } }
 
         /// <summary>
         /// Erstellt eine neue Instanz des ServerManagers und lädt die ServerConnetions aus der Datenbank
         /// </summary>
-        private ServerManager()
+        static ServerManager()
         {
             using (var context = new BotContext())
             {
@@ -69,7 +33,7 @@ namespace FritzBot.Core
         /// <summary>
         /// Die Anzahl der verwalteten Verbindungen
         /// </summary>
-        public int ConnectionCount
+        public static int ConnectionCount
         {
             get
             {
@@ -85,7 +49,7 @@ namespace FritzBot.Core
         /// <param name="Nickname">Der Nickname den der IRCbot für diese Verbindung verwenden soll</param>
         /// <param name="QuitMessage">Legt die Nachricht beim Verlassen des Servers fest</param>
         /// <param name="Channels">Alle Channels die Betreten werden sollen</param>
-        public ServerConnection NewConnection(string HostName, int Port, string Nickname, string QuitMessage, List<string> Channels)
+        public static ServerConnection NewConnection(string HostName, int Port, string Nickname, string QuitMessage, List<string> Channels)
         {
             Contract.Ensures(Contract.Result<ServerConnection>() != null);
 
@@ -113,7 +77,7 @@ namespace FritzBot.Core
         /// Trennt die Verbindung zu dieser ServerConnetion und entfernt sie aus der Datenbank
         /// </summary>
         /// <param name="serverConnetion"></param>
-        public void Remove(ServerConnection serverConnetion)
+        public static void Remove(ServerConnection serverConnetion)
         {
             Contract.Requires(serverConnetion != null);
 
@@ -130,7 +94,7 @@ namespace FritzBot.Core
         /// <summary>
         /// Ruft die Connect Methode aller Verwalteten Verbindungen auf
         /// </summary>
-        public void ConnectAll()
+        public static void ConnectAll()
         {
             foreach (ServerConnection theServer in _servers.Where(x => !x.Connected))
             {
@@ -149,7 +113,7 @@ namespace FritzBot.Core
         /// <summary>
         /// Gibt an ob mindestens eine ServerConnetion verbunden ist
         /// </summary>
-        public bool Connected
+        public static bool Connected
         {
             get
             {
@@ -160,7 +124,7 @@ namespace FritzBot.Core
         /// <summary>
         /// Trennt die Verbindung zu allen Servern
         /// </summary>
-        public void DisconnectAll()
+        public static void DisconnectAll()
         {
             foreach (ServerConnection theServer in _servers.Where(x => x.Connected))
             {
@@ -172,22 +136,12 @@ namespace FritzBot.Core
         /// Gibt eine Nachricht in allen Channels auf allen Servern bekannt
         /// </summary>
         /// <param name="message">Die Nachricht</param>
-        public void AnnounceGlobal(string message)
+        public static void AnnounceGlobal(string message)
         {
             foreach (ServerConnection theServer in _servers)
             {
                 theServer.Announce(message);
             }
-        }
-
-        public IEnumerator<ServerConnection> GetEnumerator()
-        {
-            return _servers.GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return _servers.GetEnumerator();
         }
     }
 

@@ -1,6 +1,7 @@
 using FritzBot.Core;
 using FritzBot.DataModel;
 using System;
+using System.Linq;
 
 namespace FritzBot.Plugins
 {
@@ -14,7 +15,7 @@ namespace FritzBot.Plugins
         {
             try
             {
-                ServerManager.GetInstance().Remove(ServerManager.GetInstance()[theMessage.CommandLine]);
+                ServerManager.Remove(ServerManager.Servers.FirstOrDefault(x => x.Settings.Address == theMessage.CommandLine));
                 theMessage.Answer(String.Format("Server {0} verlassen", theMessage.CommandLine));
             }
             catch

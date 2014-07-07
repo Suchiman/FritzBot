@@ -40,7 +40,7 @@ namespace FritzBot.Plugins
                 {
                     try
                     {
-                        loaded = PluginManager.GetInstance().LoadPluginFromFile(Path.Combine(PluginDirectory, name));
+                        loaded = PluginManager.LoadPluginFromFile(Path.Combine(PluginDirectory, name));
                     }
                     catch
                     {
@@ -50,7 +50,7 @@ namespace FritzBot.Plugins
                 }
                 else
                 {
-                    loaded = PluginManager.GetInstance().LoadPluginByName(Assembly.GetExecutingAssembly(), name);
+                    loaded = PluginManager.LoadPluginByName(Assembly.GetExecutingAssembly(), name);
                 }
                 theMessage.Answer(String.Format("{0} Plugin{1} geladen", loaded, (loaded == 0 || loaded > 1) ? "s" : ""));
             }

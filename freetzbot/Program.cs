@@ -55,7 +55,7 @@ namespace FritzBot
 
             try
             {
-                PluginInfo info = PluginManager.GetInstance().Get(theMessage.CommandName);
+                PluginInfo info = PluginManager.Get(theMessage.CommandName);
 
                 if (info != null)
                 {
@@ -142,13 +142,13 @@ namespace FritzBot
                             Console.WriteLine("Du musst den Server angeben");
                             continue;
                         }
-                        ServerManager.GetInstance().Remove(ServerManager.GetInstance()[ConsoleSplitted[1]]);
+                        ServerManager.Remove(ServerManager.Servers.FirstOrDefault(x => x.Settings.Address == ConsoleSplitted[1]));
                         break;
                     case "list":
-                        Console.WriteLine("Verbunden mit den Servern: {0}", String.Join(", ", ServerManager.GetInstance().Select(x => x.Settings.Address)));
+                        Console.WriteLine("Verbunden mit den Servern: {0}", String.Join(", ", ServerManager.Servers.Select(x => x.Settings.Address)));
                         break;
                     case "reconnect":
-                        foreach (ServerConnection srv in ServerManager.GetInstance())
+                        foreach (ServerConnection srv in ServerManager.Servers)
                         {
                             Console.WriteLine("Reconnecte {0}", srv.Settings.Address);
                             srv.Disconnect();
@@ -197,7 +197,7 @@ namespace FritzBot
             RestartFlag = false;
             ShutdownSignal = new AutoResetEvent(false);
 
-            PluginManager.GetInstance().BeginInit(true);
+            PluginManager.BeginInit(true);
 
             //System.Data.Entity.Database.SetInitializer(new MigrateDatabaseToLatestVersion<BotContext, Configuration>());
             using (var context = new BotContext())
@@ -206,20 +206,19 @@ namespace FritzBot
                 toolbox.Logging(count + " Benutzer geladen!");
             }
 
-            ServerManager Servers = ServerManager.GetInstance();
-            if (Servers.ConnectionCount == 0)
+            if (ServerManager.ConnectionCount == 0)
             {
                 Console.WriteLine("Keine Verbindungen bekannt, starte Verbindungsassistent");
                 AskConnection();
             }
-            Servers.ConnectAll();
+            ServerManager.ConnectAll();
 
             toolbox.SafeThreadStart("ConsolenThread", true, HandleConsoleInput);
         }
 
         private static void Deinit()
         {
-            ServerManager.GetInstance().DisconnectAll();
+            ServerManager.DisconnectAll();
             PluginManager.Shutdown();
         }
 
