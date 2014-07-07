@@ -57,7 +57,7 @@ namespace FritzBot
             {
                 PluginInfo info = PluginManager.Get(theMessage.CommandName);
 
-                if (info != null)
+                if (info != null && info.IsCommand)
                 {
                     if (!info.AuthenticationRequired || isOp)
                     {
