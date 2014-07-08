@@ -1,9 +1,10 @@
 using FritzBot.DataModel;
 using FritzBot.Plugins;
-using Microsoft.CSharp;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using System;
-using System.CodeDom.Compiler;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -13,8 +14,10 @@ namespace FritzBot.Core
 {
     public static class PluginManager
     {
-        private static List<PluginInfo> _plugins = new List<PluginInfo>();
+        private const string DefaultReferences = "mscorlib.dll,System.dll,System.Core.dll,System.Web.dll,System.Xml.dll,System.Xml.Linq.dll,Db4objects.Db4o.dll,Db4objects.Db4o.Linq.dll,HtmlAgilityPack.dll,Mono.Reflection.dll,Newtonsoft.Json.dll,SmartIrc4net.dll";
+
         private static Dictionary<string, PluginInfo> _lookupDictionary = new Dictionary<string, PluginInfo>(StringComparer.OrdinalIgnoreCase);
+        private static List<PluginInfo> _plugins = new List<PluginInfo>();
 
         public static IEnumerable<PluginInfo> Plugins { get { return _plugins; } }
 
@@ -171,39 +174,53 @@ namespace FritzBot.Core
         /// <returns>Das aus den Quellcode erstellte Assembly</returns>
         public static Assembly LoadSource(params string[] fileName)
         {
-            CSharpCodeProvider compiler = new CSharpCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v4.0" } }); //Default ist sonst .NET 2.0
-            CompilerParameters compilerParams = new CompilerParameters();
-            compilerParams.CompilerOptions = "/target:library /optimize";
-            compilerParams.GenerateExecutable = false;
-            compilerParams.GenerateInMemory = true;
-            compilerParams.IncludeDebugInformation = false;
-            compilerParams.WarningLevel = 0;
+            ProjectId projectId = ProjectId.CreateNewId();
 
-            //Darf für Mono nicht den selben Namen wie die FritzBot.exe Assembly haben, liefert als CompiledAssembly sonst die FritzBot.exe Assembly
-            compilerParams.OutputAssembly = "FritzBotDynamic";
+            string[] assemblies = ConfigHelper.GetString("ReferencedAssemblies", DefaultReferences).Split(',');
+            string FrameworkAssemblyPath = Path.GetDirectoryName(typeof(object).Assembly.Location);
+            string BotAssemblyPath = Path.GetDirectoryName(typeof(PluginManager).Assembly.Location);
 
-            string assemblies = ConfigHelper.GetString("ReferencedAssemblies", "mscorlib.dll,System.dll,System.Core.dll,System.Web.dll,System.Xml.dll,System.Xml.Linq.dll,Db4objects.Db4o.dll,Db4objects.Db4o.Linq.dll,HtmlAgilityPack.dll,Mono.Reflection.dll,Newtonsoft.Json.dll,SmartIrc4net.dll");
-            compilerParams.ReferencedAssemblies.AddRange(assemblies.Split(','));
-            compilerParams.ReferencedAssemblies.Add(Path.GetFileName(Assembly.GetExecutingAssembly().Location));
+            var solution = new CustomWorkspace().CurrentSolution
+                .AddProject(projectId, "FritzBotPlugins", "FritzBotPlugins", LanguageNames.CSharp)
+                .AddMetadataReference(projectId, new MetadataFileReference(typeof(PluginManager).Assembly.Location, MetadataImageKind.Assembly))
+                .WithProjectCompilationOptions(projectId, new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+                .WithProjectParseOptions(projectId, new CSharpParseOptions(LanguageVersion.Experimental));
 
-            CompilerResults results = null;
-            try
+            foreach (string assembly in assemblies)
             {
-                results = compiler.CompileAssemblyFromFile(compilerParams, fileName);
-            }
-            catch (Exception ex)
-            {
-                toolbox.Logging(ex.Message);
-            }
-            if (results.Errors.HasErrors)
-            {
-                foreach (CompilerError theError in results.Errors)
+                string path = "";
+                if (File.Exists((path = Path.Combine(BotAssemblyPath, assembly))) || File.Exists((path = Path.Combine(FrameworkAssemblyPath, assembly))))
                 {
-                    toolbox.Logging(theError.IsWarning ? "CompilerWarnung: " : "CompilerFehler: " + theError.ErrorText);
+                    solution = solution.AddMetadataReference(projectId, new MetadataFileReference(path, MetadataImageKind.Assembly));
                 }
+            }
+
+            foreach (string file in fileName)
+            {
+                solution = solution.AddDocument(DocumentId.CreateNewId(projectId), Path.GetFileName(file), new FileTextLoader(Path.GetFullPath(file)), null, Path.GetFullPath(file));
+            }
+
+            Compilation compile = solution.GetProject(projectId).GetCompilationAsync().Result;
+            ImmutableArray<Diagnostic> diagnostics = compile.GetDiagnostics();
+
+            bool error = false;
+            foreach (Diagnostic diag in diagnostics)
+            {
+                error |= diag.Severity == DiagnosticSeverity.Error;
+                toolbox.Logging(diag.ToString());
+            }
+
+            if (error)
+            {
                 throw new Exception("Compilation failed");
             }
-            return results.CompiledAssembly;
+
+            MemoryStream outputAssembly = new MemoryStream();
+            MemoryStream outputPdb = new MemoryStream();
+            compile.Emit(executableStream: outputAssembly, pdbStream: outputPdb);
+
+            Assembly generated = Assembly.Load(outputAssembly.GetBuffer(), outputPdb.GetBuffer());
+            return generated;
         }
     }
 
