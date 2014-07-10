@@ -32,7 +32,7 @@ namespace FritzBot.Plugins
 
             if (theMessage.CommandArgs.LastOrDefault() == "all")
             {
-                input = String.Join(" ", theMessage.CommandArgs.Take(theMessage.CommandArgs.Count - 1));
+                input = theMessage.CommandArgs.Take(theMessage.CommandArgs.Count - 1).Join(" ");
                 wildcard = true;
             }
             else if (input.EndsWith("*"))
@@ -148,7 +148,7 @@ namespace FritzBot.Plugins
                 if (NotEmpty(Box.Url))
                 {
                     sb.Append(", Detailseite(n): ");
-                    sb.Append(String.Join(" , ", Boxen.Select(x => "http://freetz.org" + x.Url)));
+                    sb.Append(Boxen.Select(x => "http://freetz.org" + x.Url).Join(" , "));
                 }
                 else
                 {
@@ -159,7 +159,7 @@ namespace FritzBot.Plugins
             {
                 if (Boxen.Count > 0)
                 {
-                    sb.Append(String.Join(" , ", Boxen.Select(x => x.FreetzType + " http://freetz.org" + x.Url)));
+                    sb.Append(Boxen.Select(x => x.FreetzType + " http://freetz.org" + x.Url).Join(" , "));
                 }
                 else
                 {

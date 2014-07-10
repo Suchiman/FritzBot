@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FritzBot.Core;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -87,7 +88,7 @@ namespace FritzBot.Functions
             if (Parameter.Count > 0)
             {
                 sb.Append("?");
-                sb.Append(String.Join("&", Parameter.Select(x => String.Format("{0}={1}", HttpUtility.UrlEncode(x.Key), HttpUtility.UrlEncode(x.Value)))));
+                sb.Append(Parameter.Select(x => String.Format("{0}={1}", HttpUtility.UrlEncode(x.Key), HttpUtility.UrlEncode(x.Value))).Join("&"));
             }
             return sb.ToString();
         }

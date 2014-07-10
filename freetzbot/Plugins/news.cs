@@ -39,8 +39,8 @@ namespace FritzBot.Plugins
                 List<NewsEntry> NewsENNew = GetNews(baseurl + "?lang=en");
                 string[] DiffDE = NewsDENew.Where(x => !NewsDE.Contains(x)).Select(x => x.Titel).Distinct().ToArray();
                 string[] DiffEN = NewsENNew.Where(x => !NewsEN.Contains(x)).Select(x => x.Titel).Distinct().ToArray();
-                string DiffDEstring = String.Join(", ", DiffDE);
-                string DiffENstring = String.Join(", ", DiffEN);
+                string DiffDEstring = DiffDE.Join(", ");
+                string DiffENstring = DiffEN.Join(", ");
                 if (DiffDE.Length > 0 && DiffDEstring == DiffENstring)
                 {
                     output = "Neue News: " + DiffDEstring + String.Format(" Auf zu den News: {0}", baseurl);

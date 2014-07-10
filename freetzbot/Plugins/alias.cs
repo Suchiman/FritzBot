@@ -67,7 +67,7 @@ namespace FritzBot.Plugins
             {
                 if (SplitString.Count > 1)
                 {
-                    string commandline = String.Join(" ", SplitString.Skip(1));
+                    string commandline = SplitString.Skip(1).Join(" ");
                     thealias = thealias.Replace("$x", commandline).Replace("$X", commandline);
                 }
                 else
@@ -142,7 +142,7 @@ namespace FritzBot.Plugins
                         }
                         var add = new AliasEntry();
                         add.Key = theMessage.CommandArgs[1];
-                        add.Text = String.Join(" ", theMessage.CommandArgs.Skip(2));
+                        add.Text = theMessage.CommandArgs.Skip(2).Join(" ");
                         add.Creator = context.GetUser(theMessage.Nickname);
                         add.Created = DateTime.Now;
                         context.AliasEntries.Add(add);
@@ -158,7 +158,7 @@ namespace FritzBot.Plugins
                         AliasEntry edit = context.AliasEntries.FirstOrDefault(x => x.Key == key);
                         if (edit != null)
                         {
-                            edit.Text = String.Join(" ", theMessage.CommandArgs.Skip(2));
+                            edit.Text = theMessage.CommandArgs.Skip(2).Join(" ");
                             edit.Updater = context.GetUser(theMessage.Nickname);
                             edit.Updated = DateTime.Now;
                             context.SaveChanges();
@@ -238,7 +238,7 @@ namespace FritzBot.Plugins
                                 theMessage.Answer("Nichts gefunden :(");
                                 return;
                             }
-                            theMessage.Answer("Mögliche Aliase: " + String.Join(", ", search));
+                            theMessage.Answer("Mögliche Aliase: " + search.Join(", "));
                             return;
                         }
                     default:

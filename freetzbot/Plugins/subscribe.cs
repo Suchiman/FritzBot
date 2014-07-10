@@ -116,9 +116,9 @@ namespace FritzBot.Plugins
         private static void SubscriptionsAvailable(ircMessage theMessage)
         {
             string[] names = PluginManager.GetOfType<SubscriptionProvider>().Select(x => x.Names.FirstOrDefault()).Where(x => !String.IsNullOrEmpty(x)).ToArray();
-            theMessage.Answer("Es sind folgende SubscriptionProvider verfügbar: " + String.Join(", ", names));
+            theMessage.Answer("Es sind folgende SubscriptionProvider verfügbar: " + names.Join(", "));
             string[] plugins = PluginManager.Plugins.Where(x => x.IsSubscribeable).Select(x => x.Names.FirstOrDefault()).Where(x => !String.IsNullOrEmpty(x)).ToArray();
-            theMessage.Answer("Folgende Plugins werden unterstützt: " + String.Join(", ", plugins));
+            theMessage.Answer("Folgende Plugins werden unterstützt: " + plugins.Join(", "));
         }
 
         public void SubscriptionAdd(ircMessage theMessage)
@@ -164,7 +164,7 @@ namespace FritzBot.Plugins
             using (var context = new BotContext())
             {
                 List<IGrouping<string, Subscription>> Subscription = context.Subscriptions.Where(x => x.User == context.Nicknames.FirstOrDefault(n => n.Name == theMessage.Nickname).User).GroupBy(x => x.Provider).ToList();
-                string output = String.Join("; ", Subscription.Select(x => String.Format("{0}: {1}", PluginManager.GetOfType<SubscriptionProvider>().First(z => z.ID == x.Key).Names.First(), String.Join(", ", x.Select(y => y.Plugin)))));
+                string output = Subscription.Select(x => String.Format("{0}: {1}", PluginManager.GetOfType<SubscriptionProvider>().First(z => z.ID == x.Key).Names.First(), x.Select(y => y.Plugin).Join(", "))).Join("; ");
                 theMessage.Answer(output);
             }
         }

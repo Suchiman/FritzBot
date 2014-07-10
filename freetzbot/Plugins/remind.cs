@@ -62,7 +62,7 @@ namespace FritzBot.Plugins
                         ReminderEntry r = new ReminderEntry();
                         r.Created = DateTime.Now;
                         r.Creator = context.GetUser(theMessage.Nickname);
-                        r.Message = String.Join(" ", theMessage.CommandArgs.Skip(1));
+                        r.Message = theMessage.CommandArgs.Skip(1).Join(" ");
                         r.User = u;
                         context.ReminderEntries.Add(r);
                         theMessage.Answer("Okay ich werde es sobald wie möglich zustellen");

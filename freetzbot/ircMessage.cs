@@ -30,7 +30,7 @@ namespace FritzBot
             Answered = false;
             UnloggedMessages = new Queue<string>(3);
             List<string> MessageTmp = Data.MessageArray.Where(x => !String.IsNullOrEmpty(x)).ToList();
-            Message = String.Join(" ", MessageTmp);
+            Message = MessageTmp.Join(" ");
             if (Nickname.Contains("#") || Nickname.Contains(".") || ServerConnetion.IrcClient.IsMe(Nickname) || Nickname.ToLower().Contains("nickserv") || Data.Message.Contains("[Global Notice]"))
             {
                 IsIgnored = true;
@@ -51,7 +51,7 @@ namespace FritzBot
             if (IsCommand)
             {
                 CommandArgs = MessageTmp.Skip(1).ToList();
-                CommandLine = String.Join(" ", CommandArgs);
+                CommandLine = CommandArgs.Join(" ");
                 CommandName = MessageTmp[0].TrimStart('!');
             }
             else

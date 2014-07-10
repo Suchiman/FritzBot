@@ -66,7 +66,7 @@ namespace FritzBot.Plugins
 
             if (String.IsNullOrEmpty(theMessage.CommandLine))
             {
-                theMessage.Answer("Aktuelle Labor Daten: " + String.Join(", ", daten.Select(x => String.Format("{0}: {1}", x.typ, x.datum)).ToArray()) + " - Zum Labor: " + toolbox.ShortUrl("http://www.avm.de/de/Service/Service-Portale/Labor/index.php"));
+                theMessage.Answer("Aktuelle Labor Daten: " + daten.Select(x => String.Format("{0}: {1}", x.typ, x.datum)).Join(", ") + " - Zum Labor: " + toolbox.ShortUrl("http://www.avm.de/de/Service/Service-Portale/Labor/index.php"));
             }
             else
             {
@@ -102,7 +102,7 @@ namespace FritzBot.Plugins
                     List<Labordaten> unEquals = GetDifferentLabors(alte, neue);
                     if (unEquals.Count > 0)
                     {
-                        string labors = "Neue Labor Versionen gesichtet! - " + String.Join(", ", unEquals.Select(x => String.Format("{0} ({1})", x.typ, x.version)).ToArray()) + " - Zum Labor: " + toolbox.ShortUrl("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
+                        string labors = "Neue Labor Versionen gesichtet! - " + unEquals.Select(x => String.Format("{0} ({1})", x.typ, x.version)).Join(", ") + " - Zum Labor: " + toolbox.ShortUrl("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
                         ServerManager.AnnounceGlobal(labors);
                         NotifySubscribers(labors);
                         alte = neue;

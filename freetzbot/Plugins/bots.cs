@@ -1,3 +1,4 @@
+using FritzBot.Core;
 using FritzBot.Database;
 using FritzBot.DataModel;
 using Meebey.SmartIrc4net;
@@ -50,8 +51,8 @@ namespace FritzBot.Plugins
                     return new { Nickname = x.Nick, User = u, SeenEntry = entry };
                 }).ToList();
 
-                theMessage.Answer(String.Format("User die wahrscheinlich inaktiv sind: {0}", String.Join(", ", UserImChannel.Where(x => x.User == null || x.SeenEntry == null).Select(x => x.Nickname))));
-                theMessage.Answer(String.Format("User die definitiv länger als {0} inaktiv sind: {1}", tage, String.Join(", ", UserImChannel.Where(x => x.SeenEntry != null && x.SeenEntry.LastMessaged < DateTime.Now.AddDays(-tage)).Select(x => x.Nickname))));
+                theMessage.Answer(String.Format("User die wahrscheinlich inaktiv sind: {0}", UserImChannel.Where(x => x.User == null || x.SeenEntry == null).Select(x => x.Nickname).Join(", ")));
+                theMessage.Answer(String.Format("User die definitiv länger als {0} inaktiv sind: {1}", tage, UserImChannel.Where(x => x.SeenEntry != null && x.SeenEntry.LastMessaged < DateTime.Now.AddDays(-tage)).Select(x => x.Nickname).Join(", ")));
             }
         }
     }

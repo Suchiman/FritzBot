@@ -1,6 +1,6 @@
+using FritzBot.Core;
 using FritzBot.Database;
 using FritzBot.DataModel;
-using System;
 using System.Linq;
 
 namespace FritzBot.Plugins
@@ -14,7 +14,7 @@ namespace FritzBot.Plugins
         {
             using (var context = new BotContext())
             {
-                string boxen = String.Join(", ", context.BoxEntries.Where(x => x.Box != null).Select(x => x.Box.ShortName).Distinct());
+                string boxen = context.BoxEntries.Where(x => x.Box != null).Select(x => x.Box.ShortName).Distinct().Join(", ");
                 theMessage.Answer("Folgende Boxen wurden bei mir registriert: " + boxen);
             }
         }

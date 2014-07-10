@@ -1,3 +1,4 @@
+using FritzBot.Core;
 using FritzBot.DataModel;
 using FritzBot.Functions;
 using System;
@@ -13,11 +14,11 @@ namespace FritzBot.Plugins
         public void Run(ircMessage theMessage)
         {
             string target = theMessage.CommandArgs.First().ToLower();
-            string word = String.Join(" ", theMessage.CommandArgs.Skip(1).ToArray());
+            string word = theMessage.CommandArgs.Skip(1).Join(" ");
             if (target.Length != 2)
             {
                 target = "en";
-                word = String.Join(" ", theMessage.CommandArgs.ToArray());
+                word = theMessage.CommandArgs.Join(" ");
             }
 
             Translation translation = GoogleTranslator.GetTranslation(word, target, "");
@@ -32,7 +33,7 @@ namespace FritzBot.Plugins
                 StringBuilder sb = new StringBuilder(translation.FullTranslation);
                 foreach (Dic item in translation.dict)
                 {
-                    sb.AppendFormat(" - {0}: {1}", item.pos, String.Join(", ", item.terms.Take(5)));
+                    sb.AppendFormat(" - {0}: {1}", item.pos, item.terms.Take(5).Join(", "));
                 }
                 theMessage.Answer(sb.ToString());
             }

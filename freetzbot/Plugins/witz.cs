@@ -1,3 +1,4 @@
+using FritzBot.Core;
 using FritzBot.Database;
 using FritzBot.DataModel;
 using System;
@@ -15,7 +16,7 @@ namespace FritzBot.Plugins
             {
                 if (theMessage.HasArgs && theMessage.CommandArgs[0].Equals("add", StringComparison.OrdinalIgnoreCase))
                 {
-                    WitzEntry w = new WitzEntry() { Witz = String.Join(" ", theMessage.CommandArgs.Skip(1)), Creator = context.GetUser(theMessage.Nickname) };
+                    WitzEntry w = new WitzEntry() { Witz = theMessage.CommandArgs.Skip(1).Join(" "), Creator = context.GetUser(theMessage.Nickname) };
                     context.WitzEntries.Add(w);
                     theMessage.Answer("Ist notiert " + theMessage.Nickname);
                     return;

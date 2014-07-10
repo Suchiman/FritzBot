@@ -145,7 +145,7 @@ namespace FritzBot
                         ServerManager.Remove(ServerManager.Servers.FirstOrDefault(x => x.Settings.Address == ConsoleSplitted[1]));
                         break;
                     case "list":
-                        Console.WriteLine("Verbunden mit den Servern: {0}", String.Join(", ", ServerManager.Servers.Select(x => x.Settings.Address)));
+                        Console.WriteLine("Verbunden mit den Servern: {0}", ServerManager.Servers.Select(x => x.Settings.Address).Join(", "));
                         break;
                     case "reconnect":
                         foreach (ServerConnection srv in ServerManager.Servers)
@@ -224,6 +224,7 @@ namespace FritzBot
 
         private static void Main()
         {
+            new Plugins.fw().WorkerThread();
             Init();
             ShutdownSignal.WaitOne();
             Deinit();

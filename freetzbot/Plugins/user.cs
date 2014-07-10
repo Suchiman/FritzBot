@@ -24,7 +24,7 @@ namespace FritzBot.Plugins
                         if (u != null)
                         {
                             BoxManager mgr = new BoxManager(u, context);
-                            string boxtoadd = String.Join(" ", theMessage.CommandArgs.Skip(2));
+                            string boxtoadd = theMessage.CommandArgs.Skip(2).Join(" ");
                             if (mgr.HasBox(boxtoadd))
                             {
                                 theMessage.Answer("Diese Box gibt es für diesen User bereits!");
@@ -45,7 +45,7 @@ namespace FritzBot.Plugins
                         if (u != null)
                         {
                             BoxManager mgr = new BoxManager(u, context);
-                            if (mgr.RemoveBox(String.Join(" ", theMessage.CommandArgs.Skip(2))))
+                            if (mgr.RemoveBox(theMessage.CommandArgs.Skip(2).Join(" ")))
                             {
                                 theMessage.Answer("Erledigt!");
                                 return;

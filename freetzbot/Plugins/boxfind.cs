@@ -1,3 +1,4 @@
+using FritzBot.Core;
 using FritzBot.Database;
 using FritzBot.DataModel;
 using System;
@@ -26,7 +27,7 @@ namespace FritzBot.Plugins
                     filtered = context.BoxEntries.Where(x => x.Text.Contains(theMessage.CommandLine));
                 }
                 List<string> usernames = filtered.Select(x => x.User.LastUsedName.Name).Where(x => !String.IsNullOrEmpty(x)).ToList();
-                string besitzer = String.Join(", ", usernames);
+                string besitzer = usernames.Join(", ");
                 if (!String.IsNullOrEmpty(besitzer))
                 {
                     theMessage.SendPrivateMessage("Folgende Benutzer scheinen diese Box zu besitzen: " + besitzer);

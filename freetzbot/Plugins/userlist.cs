@@ -1,3 +1,4 @@
+using FritzBot.Core;
 using FritzBot.Database;
 using FritzBot.DataModel;
 using System;
@@ -14,7 +15,7 @@ namespace FritzBot.Plugins
         {
             using (var context = new BotContext())
             {
-                string output = String.Join(", ", context.BoxEntries.Select(x => x.User.LastUsedName.Name).Distinct());
+                string output = context.BoxEntries.Select(x => x.User.LastUsedName.Name).Distinct().Join(", ");
                 if (!String.IsNullOrEmpty(output))
                 {
                     theMessage.SendPrivateMessage("Diese Benutzer haben bei mir mindestens eine Box registriert: " + output);

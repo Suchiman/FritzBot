@@ -23,7 +23,7 @@ namespace FritzBot.Plugins
                 if (u != null)
                 {
                     BoxManager mgr = new BoxManager(u, context);
-                    output += String.Join(", ", mgr.GetRawUserBoxen());
+                    output += mgr.GetRawUserBoxen().Join(", ");
                 }
                 else
                 {

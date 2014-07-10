@@ -111,6 +111,11 @@ namespace FritzBot.Core
                 }
             }
         }
+
+        public static string Join(this IEnumerable<string> source, string seperator)
+        {
+            return String.Join(seperator, source);
+        }
     }
 
     public static class XMLExtensions

@@ -26,7 +26,7 @@ namespace FritzBot.Plugins
 
                 List<string> befehle = plugins.Select(x => x.Names[0]).OrderBy(x => x).ToList();
 
-                theMessage.Answer("Derzeit verfügbare Befehle: " + String.Join(", ", befehle));
+                theMessage.Answer("Derzeit verfügbare Befehle: " +  befehle.Join(", "));
                 theMessage.Answer("Hilfe zu jedem Befehl mit \"!help befehl\". Um die anderen nicht zu belästigen kannst du mich auch per PM (query) anfragen");
             }
             else

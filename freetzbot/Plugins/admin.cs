@@ -96,7 +96,7 @@ namespace FritzBot.Plugins
             }
             if (theMessage.CommandArgs[1] == "remove")
             {
-                Box box = BoxDatabase.GetBoxByShortName(String.Join(" ", theMessage.CommandArgs.Skip(2).ToArray()));
+                Box box = BoxDatabase.GetBoxByShortName(theMessage.CommandArgs.Skip(2).Join(" "));
                 using (var context = new BotContext())
                 {
                     if (box != null)
@@ -140,14 +140,14 @@ namespace FritzBot.Plugins
                     theMessage.Answer("Oh... ich habe keine Einträge über Boxen");
                     return;
                 }
-                theMessage.Answer("Ich kenne folgende Boxen: " + String.Join(", ", AlleBoxen));
+                theMessage.Answer("Ich kenne folgende Boxen: " + AlleBoxen.Join(", "));
             }
             if (theMessage.CommandArgs[1] == "info")
             {
                 Box box = BoxDatabase.GetBoxByShortName(theMessage.CommandArgs[2]);
                 if (box != null)
                 {
-                    theMessage.Answer(String.Format("ShortName: {0}, FullName: {1}, RegexPatterns: {2}", box.ShortName, box.FullName, String.Join(", ", box.RegexPattern.Select(x => x.Pattern))));
+                    theMessage.Answer(String.Format("ShortName: {0}, FullName: {1}, RegexPatterns: {2}", box.ShortName, box.FullName, box.RegexPattern.Select(x => x.Pattern).Join(", ")));
                 }
                 else
                 {
