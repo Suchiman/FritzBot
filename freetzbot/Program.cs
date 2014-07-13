@@ -224,7 +224,6 @@ namespace FritzBot
 
         private static void Main()
         {
-            new Plugins.fw().WorkerThread();
             Init();
             ShutdownSignal.WaitOne();
             Deinit();
