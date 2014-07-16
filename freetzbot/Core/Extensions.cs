@@ -116,6 +116,62 @@ namespace FritzBot.Core
         {
             return String.Join(seperator, source);
         }
+
+        public static IEnumerable<T> Flatten<T>(this IEnumerable<T> source, Func<T, IEnumerable<T>> selector)
+        {
+            foreach (var thisLevel in source)
+            {
+                foreach (var deepOne in Flatten(selector(thisLevel), selector))
+                {
+                    yield return deepOne;
+                }
+                yield return thisLevel;
+            }
+        }
+
+        public static IEnumerable<TR> FullOuterGroupJoin<TA, TB, TK, TR>(
+            this IEnumerable<TA> a,
+            IEnumerable<TB> b,
+            Func<TA, TK> selectKeyA,
+            Func<TB, TK> selectKeyB,
+            Func<IEnumerable<TA>, IEnumerable<TB>, TK, TR> projection,
+            IEqualityComparer<TK> cmp = null)
+        {
+            cmp = cmp ?? EqualityComparer<TK>.Default;
+            var alookup = a.ToLookup(selectKeyA, cmp);
+            var blookup = b.ToLookup(selectKeyB, cmp);
+
+            var keys = new HashSet<TK>(alookup.Select(p => p.Key), cmp);
+            keys.UnionWith(blookup.Select(p => p.Key));
+
+            return from key in keys
+                   let xa = alookup[key]
+                   let xb = blookup[key]
+                   select projection(xa, xb, key);
+        }
+
+        public static IEnumerable<TR> FullOuterJoin<TA, TB, TK, TR>(
+            this IEnumerable<TA> a,
+            IEnumerable<TB> b,
+            Func<TA, TK> selectKeyA,
+            Func<TB, TK> selectKeyB,
+            Func<TA, TB, TK, TR> projection,
+            TA defaultA = default(TA),
+            TB defaultB = default(TB),
+            IEqualityComparer<TK> cmp = null)
+        {
+            cmp = cmp ?? EqualityComparer<TK>.Default;
+            var alookup = a.ToLookup(selectKeyA, cmp);
+            var blookup = b.ToLookup(selectKeyB, cmp);
+
+            var keys = new HashSet<TK>(alookup.Select(p => p.Key), cmp);
+            keys.UnionWith(blookup.Select(p => p.Key));
+
+            return from key in keys
+                   from xa in alookup[key].DefaultIfEmpty(defaultA)
+                   from xb in blookup[key].DefaultIfEmpty(defaultB)
+                   select projection(xa, xb, key);
+        }
     }
 
     public static class XMLExtensions

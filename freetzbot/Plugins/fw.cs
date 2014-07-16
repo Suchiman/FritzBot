@@ -7,6 +7,8 @@ using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.FtpClient;
+using System.Net.Sockets;
 using System.Text.RegularExpressions;
 using System.Threading;
 
@@ -16,10 +18,14 @@ namespace FritzBot.Plugins
     [Help("Sucht auf dem AVM FTP nach der Version des angegbenen Modells, z.b. \"!fw 7390\", \"!fw 7270_v1\", \"!fw 7390 source\", \"!fw 7390 recovery\" \"!fw 7390 all\"")]
     [ParameterRequired]
     [Subscribeable]
-    class fw : PluginBase, ICommand//, IBackgroundTask
+    class fw : PluginBase, ICommand, IBackgroundTask
     {
-        const string BaseDirectory = "ftp://ftp.avm.de/fritz.box/";
-        Thread worker;
+        private FtpDirectory LastScan;
+        private Thread worker;
+        private string host;
+
+        protected bool FWCheckEnabled { get { return ConfigHelper.GetBoolean("FWCheckEnabled", true); } }
+        protected int FWCheckIntervall { get { return ConfigHelper.GetInt("FWCheckIntervall", 6000); } }
 
         public void Start()
         {
@@ -43,21 +49,90 @@ namespace FritzBot.Plugins
 
         public void WorkerThread()
         {
-            List<string> alte = FTPGrabber.Scan(BaseDirectory, 1);
             while (true)
             {
-                if (ConfigHelper.GetBoolean("FWCheckEnabled", true))
+                if (FWCheckEnabled)
                 {
-                    List<string> neue = FTPGrabber.Scan(BaseDirectory, 1);
-                    List<string> unEquals = neue.Where(x => !alte.Contains(x)).ToList();
-                    if (unEquals.Count > 0)
+                    FtpDirectory CurrentScan;
+                    using (FtpClient ftp = GetClient())
                     {
-                        string labors = "Änderungen auf dem FTP gesichtet! - " + String.Join(", ", unEquals.Select(x => GetReadableString(x) + ": " + x.Split(' ').Last()).ToArray()) + " - Zum FTP: " + BaseDirectory;
-                        ServerManager.AnnounceGlobal(labors);
-                        NotifySubscribers(labors, unEquals.Select(x => BoxDatabase.GetShortName(x)).ToArray());
-                        alte = neue;
+                        try
+                        {
+                            CurrentScan = RecurseFTP(ftp, "/fritz.box");
+                        }
+                        catch
+                        {
+                            Thread.Sleep(FWCheckIntervall);
+                            continue;
+                        }
                     }
-                    Thread.Sleep(ConfigHelper.GetInt("FWCheckIntervall", 600000));
+                    if (LastScan == null)
+                    {
+                        LastScan = CurrentScan;
+                        Thread.Sleep(FWCheckIntervall);
+                        continue;
+                    }
+
+                    List<string> neu = new List<string>();
+                    List<string> gelöscht = new List<string>();
+                    List<string> geändert = new List<string>();
+                    var joinedDirectories = LastScan.Folders.Flatten(x => x.Folders).FullOuterJoin(CurrentScan.Folders.Flatten(x => x.Folders), x => x.FullName, x => x.FullName, (o, c, _) => new { Original = o, Current = c });
+                    foreach (var directory in joinedDirectories)
+                    {
+                        if (directory.Original == null) // Neuer Ordner
+                        {
+                            neu.Add("[" + directory.Current.FullName + (directory.Current.Files.Any() ? "(" + directory.Current.Files.Select(x => x.Name).Join(", ") + ")]" : "]"));
+                        }
+                        else if (directory.Current == null) // Ordner gelöscht
+                        {
+                            gelöscht.Add("[" + directory.Original.FullName + (directory.Original.Files.Any() ? "(" + directory.Original.Files.Select(x => x.Name).Join(", ") + ")]" : "]"));
+                        }
+                        else
+                        {
+                            var joinedFiles = directory.Original.Files.FullOuterJoin(directory.Current.Files, x => x.Name, x => x.Name, (o, c, _) => new { Original = o, Current = c });
+                            List<string> fileChanges = new List<string>();
+                            foreach (var file in joinedFiles)
+                            {
+                                if (file.Original == null) // Neue Datei
+                                {
+                                    fileChanges.Add(file.Current.Name + "(neu)");
+                                }
+                                else if (file.Current == null) // Datei gelöscht
+                                {
+                                    fileChanges.Add(file.Original.Name + "(gelöscht)");
+                                }
+                                else if (file.Original.Modified != file.Current.Modified) // Datei geändert
+                                {
+                                    fileChanges.Add(file.Original.Name + "(" + file.Original.Modified.ToString() + "/" + file.Current.Modified.ToString() + ")");
+                                }
+                            }
+                            if (fileChanges.Count > 0)
+                            {
+                                geändert.Add("[" + directory.Current.FullName + "(" + fileChanges.Join(", ") + ")]");
+                            }
+                        }
+                    }
+                    if (neu.Count + gelöscht.Count + geändert.Count > 0)
+                    {
+                        string labors = "Änderungen auf dem FTP gesichtet! - ";
+                        if (neu.Count > 0)
+                        {
+                            labors += "Neue { " + neu.Join(" ") + " } ";
+                        }
+                        if (gelöscht.Count > 0)
+                        {
+                            labors += "Gelöscht { " + gelöscht.Join(" ") + " } ";
+                        }
+                        if (geändert.Count > 0)
+                        {
+                            labors += "Geändert { " + geändert.Join(" ") + " } ";
+                        }
+                        labors = labors.TrimEnd() + " - Zum FTP: ftp://ftp.avm.de/fritz.box/";
+                        ServerManager.AnnounceGlobal(labors);
+                        NotifySubscribers(labors, neu.Concat(geändert).Select(x => BoxDatabase.GetShortName(x)).ToArray());
+                    }
+                    LastScan = CurrentScan;
+                    Thread.Sleep(FWCheckIntervall);
                 }
                 else
                 {
@@ -66,23 +141,31 @@ namespace FritzBot.Plugins
             }
         }
 
-        public string GetReadableString(string input)
+        private FtpClient GetClient()
         {
-            string output;
-            if (!BoxDatabase.TryGetShortName(input, out output))
+            //AVM hat mehrere FTP Server mit unterschiedlichem Inhalt, hier konsistent einen Server auswählen
+            if (host == null)
             {
-                //ftp://ftp.avm.de/fritz.box/fritzbox.fon_wlan_7170_sl/firmware/deutsch/-rw-r--r--    1 ftp      ftp         13010 Feb 26  2010 info.txt
-                string[] splits = input.Split('/');
-                if (splits.Length > 4)
-                {
-                    output = splits[4];
-                }
-                else
-                {
-                    output = input;
-                }
+                IPAddress[] addresses = Dns.GetHostAddresses("ftp.avm.de");
+                host = (addresses.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetworkV6 && x.ToString().EndsWith(".7")) ?? addresses.FirstOrDefault()).ToString();
             }
-            return output;
+            return new FtpClient
+            {
+                Host = host,
+                Credentials = new NetworkCredential("anonymous", "")
+            };
+        }
+
+        private FtpDirectory RecurseFTP(FtpClient ftp, string path)
+        {
+            FtpListItem[] filesAndFolders = ftp.GetListing(path, FtpListOption.Modify);
+
+            FtpDirectory current = new FtpDirectory();
+            current.FullName = path;
+            current.Folders = filesAndFolders.Where(x => x.Type == FtpFileSystemObjectType.Directory).Select(x => RecurseFTP(ftp, x.FullName)).ToList();
+            current.Files = filesAndFolders.Where(x => x.Type == FtpFileSystemObjectType.File).Select(x => new FtpFile { Name = x.Name, Modified = x.Modified }).ToList();
+
+            return current;
         }
 
         protected override IQueryable<Subscription> GetSubscribers(BotContext context, string[] criteria)
@@ -100,255 +183,233 @@ namespace FritzBot.Plugins
             bool source = false;
             bool firmware = false;
             Box box = BoxDatabase.FindBoxes(theMessage.CommandLine).FirstOrDefault();
+            List<string> nameSegments = new List<string>();
+            string rawName;
             if (theMessage.CommandArgs.Count > 1)
             {
-                switch (theMessage.CommandArgs.Last().ToLower())
+                foreach (string argument in theMessage.CommandArgs)
                 {
-                    case "all":
+                    if (argument.Equals("all", StringComparison.OrdinalIgnoreCase) || argument.Equals("alles", StringComparison.OrdinalIgnoreCase))
+                    {
                         firmware = true;
                         recovery = true;
                         source = true;
                         break;
-                    case "source":
+                    }
+                    else if (argument.Equals("source", StringComparison.OrdinalIgnoreCase) || argument.Equals("sources", StringComparison.OrdinalIgnoreCase) || argument.Equals("src", StringComparison.OrdinalIgnoreCase))
+                    {
                         source = true;
-                        break;
-                    case "recovery":
+                    }
+                    else if (argument.Equals("recovery", StringComparison.OrdinalIgnoreCase) || argument.Equals("recoveries", StringComparison.OrdinalIgnoreCase))
+                    {
                         recovery = true;
-                        break;
-                    default:
+                    }
+                    else if (argument.Equals("firmware", StringComparison.OrdinalIgnoreCase) || argument.Equals("firmwares", StringComparison.OrdinalIgnoreCase))
+                    {
                         firmware = true;
-                        break;
+                    }
+                    else
+                    {
+                        nameSegments.Add(argument);
+                    }
                 }
+                rawName = nameSegments.Join(" ");
             }
             else
             {
                 firmware = true;
+                rawName = theMessage.CommandLine;
             }
 
-            string ftp = BaseDirectory;
-            string output = "";
-
-            List<string> DirectoryNames = GetListingNames(FtpDirectory(ftp)).ToList();
-            foreach (string Directory in DirectoryNames)
+            FtpDirectory Scan = LastScan;
+            FtpDirectory match = null;
+            List<FtpDirectory> matches = null;
+            bool shouldRefresh = false;
+            if (Scan != null)
             {
-                if (BoxDatabase.FindBoxes(Directory).Any(x => x == box))
+                matches = FindDirectory(Scan.Folders, box, rawName);
+                if (matches.Count > 1)
                 {
-                    ftp += Directory + "/";
-                    break;
+                    theMessage.Answer("Bitte genauer spezifizieren: " + OnlyReadableNames(matches.Select(x => x.Name)).Join(", "));
+                    return;
                 }
+                match = matches.FirstOrDefault();
+                shouldRefresh = true;
             }
-            if (ftp == BaseDirectory)
+            if (match == null)
             {
-                foreach (string Directory in DirectoryNames)
+                List<FtpDirectory> FreshScanned;
+                using (FtpClient client = GetClient())
                 {
-                    if (Directory.Contains(theMessage.CommandLine))
+                    FreshScanned = client.GetListing("/fritz.box").Where(x => x.Type == FtpFileSystemObjectType.Directory).Select(x => new FtpDirectory { FullName = x.FullName }).ToList();
+                    matches = FindDirectory(FreshScanned, box, rawName);
+                    if (matches.Count > 1)
                     {
-                        ftp += Directory + "/";
-                        break;
+                        theMessage.Answer("Bitte genauer spezifizieren: " + OnlyReadableNames(matches.Select(x => x.Name)).Join(", "));
+                        return;
+                    }
+                    match = matches.FirstOrDefault();
+                    if (match != null)
+                    {
+                        match = RecurseFTP(client, match.FullName);
+                        shouldRefresh = false;
                     }
                 }
             }
-            if (ftp == BaseDirectory)
+
+            if (match == null)
             {
-                theMessage.Answer("Ich habe zu deiner Angabe leider nichts gefunden");
+                theMessage.Answer("Ich habe zu deiner Suche leider kein Verzeichnis gefunden");
                 return;
             }
-            output = ftp;
-            //Box Ordner ist nun gefunden, Firmware Image muss gefunden werden, vorsicht könnte bereits hier sein oder erst in einem weiteren Unterordner
+
+            string output = FormatResult(match, recovery, source, firmware);
+            if (!String.IsNullOrEmpty(output))
+            {
+                theMessage.Answer(output);
+            }
+
+            if (shouldRefresh)
+            {
+                using (FtpClient client = GetClient())
+                {
+                    match = RecurseFTP(client, match.FullName);
+                    string refreshedOutput = FormatResult(match, recovery, source, firmware);
+                    if (String.IsNullOrEmpty(output) && !String.IsNullOrEmpty(refreshedOutput))
+                    {
+                        theMessage.Answer(refreshedOutput);
+                        return;
+                    }
+                    if (output != refreshedOutput)
+                    {
+                        theMessage.Answer("Wups, meine Angabe war nicht mehr Up-to-Date, hier kommen die aktuellen Ergebnisse:");
+                        theMessage.Answer(refreshedOutput);
+                    }
+                }
+            }
+        }
+
+        private static IEnumerable<string> OnlyReadableNames(IEnumerable<string> files)
+        {
+            foreach (string name in files)
+            {
+                string shortName;
+                if (BoxDatabase.TryGetShortName(name, out shortName))
+                {
+                    yield return shortName;
+                }
+            }
+        }
+
+        private static List<FtpDirectory> FindDirectory(List<FtpDirectory> directories, Box box, string name)
+        {
+            FtpDirectory idMatch = null;
+            FtpDirectory directMatch = null;
+            List<FtpDirectory> roughMatches = new List<FtpDirectory>();
+            foreach (FtpDirectory directory in directories)
+            {
+                if (box != null && BoxDatabase.FindBoxes(directory.Name).Any(x => x == box))
+                {
+                    idMatch = directory;
+                    break;
+                }
+                else if (directory.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+                {
+                    directMatch = directory;
+                }
+                else if (directory.Name.IndexOf(name, StringComparison.OrdinalIgnoreCase) != -1)
+                {
+                    roughMatches.Add(directory);
+                }
+            }
+            return idMatch == null && directMatch == null ? roughMatches : new List<FtpDirectory> { idMatch ?? directMatch };
+        }
+
+        private static string FormatResult(FtpDirectory scan, bool recovery, bool source, bool firmware)
+        {
+            List<FtpDirectory> directories = scan.Folders.Flatten(x => x.Folders).Concat(new[] { scan }).ToList();
+
             List<string> recoveries = new List<string>();
             List<string> sources = new List<string>();
             List<string> firmwares = new List<string>();
-            foreach (string datei in FtpRecursiv(ftp))
+
+            foreach (FtpDirectory directory in directories.Where(x => x.Files.Count > 0))
             {
-                string[] slashsplit = datei.Split(new[] { '/' }, 2);
-                string final = slashsplit[0] + "/";
-                if (slashsplit[1].EndsWith(".image"))
+                string folderName = Path.GetFileName(directory.FullName) + "/";
+                foreach (FtpFile file in directory.Files)
                 {
-                    firmwares.Add(final + ExtractVersion(slashsplit[1]));
-                }
-                if (slashsplit[1].EndsWith(".recover-image.exe"))
-                {
-                    recoveries.Add(final + ExtractVersion(slashsplit[1]));
-                }
-                if (slashsplit[1].EndsWith(".tar.gz"))//fritzbox7170-source-files-04.87.tar.gz
-                {
-                    sources.Add(ExtractVersion(slashsplit[1]));
+                    if (file.Name.EndsWith(".image", StringComparison.OrdinalIgnoreCase))
+                    {
+                        firmwares.Add(folderName + TryExtractVersion(file.Name));
+                    }
+                    if (file.Name.EndsWith(".recover-image.exe", StringComparison.OrdinalIgnoreCase))
+                    {
+                        recoveries.Add(folderName + TryExtractVersion(file.Name));
+                    }
+                    if (file.Name.EndsWith(".tar.gz", StringComparison.OrdinalIgnoreCase))//fritzbox7170-source-files-04.87.tar.gz
+                    {
+                        sources.Add(TryExtractVersion(file.Name));
+                    }
                 }
             }
+
+            string output = "";
             if (firmware && firmwares.Count > 0)
             {
-                output += " - Firmwares: " + String.Join(", ", firmwares.ToArray());
+                output += " - Firmwares: " + firmwares.Join(", ");
             }
             if (recovery && recoveries.Count > 0)
             {
-                output += " - Recoveries: " + String.Join(", ", recoveries.ToArray());
+                output += " - Recoveries: " + recoveries.Join(", ");
             }
             if (source && sources.Count > 0)
             {
-                output += " - Sources: " + String.Join(", ", sources.ToArray());
+                output += " - Sources: " + sources.Join(", ");
             }
-            if (String.IsNullOrEmpty(output))
-            {
-                theMessage.Answer("Ich habe zu deiner Angabe leider nichts gefunden");
-                return;
-            }
-            theMessage.Answer(output);
+
+            return output == "" ? "" : "ftp://ftp.avm.de" + scan.FullName + output;
         }
+
         /// <summary>
         /// Extrahiert von einem Dateinamen die Versionsnummer
         /// </summary>
         /// <param name="toExtract">Der Dateiname</param>
-        /// <returns>Die Versionsnummer</returns>
-        /// <exception cref="ArgumentException">Tritt ein wenn kein korrektes Versionsformat übergeben wurde</exception>
-        public static string ExtractVersion(string toExtract)
+        /// <returns>Die Versionsnummer oder der eingabestring wenn keine Versionsnummer extrahiert wurden konnte</returns>
+        public static string TryExtractVersion(string toExtract)
         {
             Contract.Requires(toExtract != null);
             Contract.Ensures(Contract.Result<string>() != null);
 
-            Match regex = Regex.Match(toExtract, @"((\d{2,3}\.)?\d\d\.\d\d-?\d?\d?)\.\D"); //@"\d{2,3}\.\d\d\.\d\d"
-            if (regex.Success)
+            Match regex = Regex.Match(toExtract, @"((\b\d{2,3}\.)?\d\d\.\d\d-?\d?\d?)\.\D"); //@"\d{2,3}\.\d\d\.\d\d"
+            if (!regex.Success)
             {
-                return regex.Groups[1].Value;
+                regex = Regex.Match(toExtract, @"((\b\d{2,3}\.)?\d\d\.\d\d-\d{5})\.\D"); // Mit 5 stelliger Revisionsnummer
             }
-            throw new ArgumentException("Der angegebene string enthält kein korrektes Versionsformat");
-        }
-        /// <summary>
-        /// Extrahiert aus der FTP Verzeichnisauflistung die Namen der Dateien und Ordner
-        /// </summary>
-        /// <param name="Listing">Die FTP Verzeichnisauflistung</param>
-        /// <returns>Eine Liste die alle Namen beinhaltet</returns>
-        public static IEnumerable<string> GetListingNames(string Listing)
-        {
-            string[] Entries = Listing.Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (string Entry in Entries)
-            {
-                yield return Entry.Split(new string[] { " " }, 9, StringSplitOptions.RemoveEmptyEntries)[8];
-            }
-        }
-        /// <summary>
-        /// Durchsucht die FTP Adresse Rekursiv nach Dateien mit der Dateierweiterung .image, .recover-image.exe, .tar.gz und gibt diese mit ihrem relativen Pfad zurück
-        /// </summary>
-        /// <param name="ftp">Die FTP Adresse</param>
-        /// <returns>Eine Liste mit den gefundenen Dateinamen inklusive relativen Pfad angaben</returns>
-        public static IEnumerable<string> FtpRecursiv(string ftp)
-        {
-            string[] lines = FtpDirectory(ftp).Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (string daten in lines)
-            {
-                if (daten[0] == 'd')
-                {
-                    string pfad = daten.Split(new string[] { " " }, 9, StringSplitOptions.RemoveEmptyEntries)[8];
-                    foreach (string recursiv in FtpRecursiv(ftp + pfad + "/"))
-                    {
-                        yield return recursiv;
-                    }
-                }
-                else if (daten[0] == '-' && (daten.EndsWith(".image") || daten.EndsWith(".recover-image.exe") || daten.EndsWith(".tar.gz")))
-                {
-                    string file = daten.Split(new string[] { " " }, 9, StringSplitOptions.RemoveEmptyEntries)[8];
-                    string[] FtpSplitted = ftp.Split(new string[] { "/" }, StringSplitOptions.RemoveEmptyEntries);
-                    yield return FtpSplitted.Last() + "/" + file;
-                }
-            }
-        }
-        /// <summary>
-        /// Ruft von der angegeben FTP Adresse eine Verzeichnissauflistung ab
-        /// </summary>
-        /// <param name="ftp">Die FTP Adresse des Servers</param>
-        /// <returns>Verzeichnissauflistung (String)</returns>
-        public static string FtpDirectory(string ftp)
-        {
-            FtpWebRequest request = (FtpWebRequest)WebRequest.Create(ftp);
-            request.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
-            FtpWebResponse directory = (FtpWebResponse)request.GetResponse();
-            StreamReader DirectoryList = new StreamReader(directory.GetResponseStream());
-            return DirectoryList.ReadToEnd();
+            return regex.Success ? regex.Groups[1].Value : toExtract;
         }
     }
 
-    class FTPGrabber
+    class FtpFile
     {
-        public static List<string> Scan(string Adress, int Threads)
+        public string Name { get; set; }
+        public DateTime Modified { get; set; }
+
+        public override string ToString()
         {
-            FTPGrabber grabber = new FTPGrabber(Adress, Threads);
-            return grabber.Grab().OrderBy(x => x).ToList();
+            return Name;
         }
+    }
 
-        string basedirectory;
-        int threadsCount;
+    class FtpDirectory
+    {
+        public string Name { get { return Path.GetFileName(FullName); } }
+        public string FullName { get; set; }
+        public List<FtpFile> Files { get; set; }
+        public List<FtpDirectory> Folders { get; set; }
 
-        public FTPGrabber(string Adress, int Threads)
+        public override string ToString()
         {
-            basedirectory = Adress;
-            threadsCount = Threads;
-        }
-
-        private class PartlyScanner
-        {
-            string[] dirsToDo;
-            string ftpbase;
-            List<string> result = new List<string>();
-            public Thread Worker;
-
-            public static PartlyScanner BeginScan(string basedir, string[] subdirs)
-            {
-                PartlyScanner scanner = new PartlyScanner(basedir, subdirs);
-                scanner.BeginScan();
-                return scanner;
-            }
-            private PartlyScanner(string basedir, string[] subdirs)
-            {
-                dirsToDo = subdirs;
-                ftpbase = basedir;
-            }
-            public void BeginScan()
-            {
-                Worker = new Thread(delegate ()
-                {
-                    foreach (string dir in dirsToDo)
-                    {
-                        FtpRecursiv(ftpbase + dir);
-                    }
-                });
-                Worker.Start();
-            }
-            public void FtpRecursiv(string ftp)
-            {
-                string[] lines = FtpDirectory(ftp).Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
-                result.AddRange(lines.Where(x => x.StartsWith("-")).Select(x => ftp + x));
-                lines.Where(x => x.StartsWith("d")).Select(x => x.Split(new string[] { " " }, 9, StringSplitOptions.RemoveEmptyEntries)[8]).ForEach(x => FtpRecursiv(ftp + "/" + x));
-            }
-            public static string FtpDirectory(string ftp)
-            {
-                FtpWebRequest request = (FtpWebRequest)WebRequest.Create(ftp);
-                request.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
-                FtpWebResponse directory = (FtpWebResponse)request.GetResponse();
-                StreamReader DirectoryList = new StreamReader(directory.GetResponseStream());
-                return DirectoryList.ReadToEnd();
-            }
-            public List<string> GetResult()
-            {
-                return result;
-            }
-        }
-
-        public List<string> Grab()
-        {
-            string[] lines = PartlyScanner.FtpDirectory(basedirectory).Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
-            string[] dirs = lines.Where(x => x.StartsWith("d")).Select(x => x.Split(new string[] { " " }, 9, StringSplitOptions.RemoveEmptyEntries)[8]).ToArray();
-
-            int divider = dirs.Length / (threadsCount);
-            IEnumerable<IGrouping<int, string>> parts = from index in Enumerable.Range(0, dirs.Length)
-                                                        group dirs[index] by index / divider;
-
-            PartlyScanner[] scanners = new PartlyScanner[parts.Count()];
-
-            foreach (IGrouping<int, string> part in parts)
-            {
-                scanners[part.Key] = PartlyScanner.BeginScan(basedirectory, part.ToArray());
-            }
-            scanners.ForEach(x => x.Worker.Join());
-            return scanners.SelectMany(x => x.GetResult()).ToList();
+            return FullName;
         }
     }
 }
