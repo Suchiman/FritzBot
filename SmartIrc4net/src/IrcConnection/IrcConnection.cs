@@ -38,7 +38,7 @@ using System.Text;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Authentication;
 using System.Threading;
-using Starksoft.Net.Proxy;
+//using Starksoft.Net.Proxy;
 
 namespace Meebey.SmartIrc4net
 {
@@ -83,12 +83,14 @@ namespace Meebey.SmartIrc4net
         private DateTime         _LastPingSent;
         private DateTime         _LastPongReceived;
         private TimeSpan         _Lag;
+        /*
         private string           _ProxyHost;
         private int              _ProxyPort;
         private ProxyType        _ProxyType = ProxyType.None;
         private string           _ProxyUsername;
         private string           _ProxyPassword;
-        
+        */
+
         /// <event cref="OnReadLine">
         /// Raised when a \r\n terminated line is read from the socket
         /// </event>
@@ -453,7 +455,7 @@ namespace Meebey.SmartIrc4net
             }
         }
 
-        
+        /*
         /// <summary>
         /// If you want to use a Proxy, set the ProxyHost to Host of the Proxy you want to use.
         /// </summary>
@@ -515,7 +517,8 @@ namespace Meebey.SmartIrc4net
                 _ProxyPassword = value;
             }
         }
-        
+        */
+
         /// <summary>
         /// Initializes the message queues, read and write thread
         /// </summary>
@@ -589,7 +592,7 @@ namespace Meebey.SmartIrc4net
                 _TcpClient.ReceiveTimeout = _SocketReceiveTimeout * 1000;
                 _TcpClient.SendTimeout = _SocketSendTimeout * 1000;
                 
-                if (_ProxyType != ProxyType.None) {
+                /*if (_ProxyType != ProxyType.None) {
                     IProxyClient proxyClient = null;
                     ProxyClientFactory proxyFactory = new ProxyClientFactory();
                     // HACK: map our ProxyType to Starksoft's ProxyType
@@ -615,7 +618,7 @@ namespace Meebey.SmartIrc4net
                     _TcpClient.Connect(_ProxyHost, _ProxyPort);
                     proxyClient.TcpClient = _TcpClient;
                     proxyClient.CreateConnection(Address, port);
-                } else {
+                } else*/ {
                     _TcpClient.Connect(Address, port);
                 }
                 
