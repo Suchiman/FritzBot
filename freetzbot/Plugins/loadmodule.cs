@@ -29,9 +29,10 @@ namespace FritzBot.Plugins
                         WebClient Downloader = new WebClient();
                         Downloader.DownloadFile(theMessage.CommandLine, Path.Combine(PluginDirectory, name));
                     }
-                    catch
+                    catch (Exception ex)
                     {
                         theMessage.Answer("Beim Downloaden ist leider ein Fehler aufgetreten");
+                        toolbox.Logging(ex);
                         return;
                     }
                 }
@@ -42,9 +43,10 @@ namespace FritzBot.Plugins
                     {
                         loaded = PluginManager.LoadPluginFromFile(Path.Combine(PluginDirectory, name));
                     }
-                    catch
+                    catch (Exception ex)
                     {
                         theMessage.Answer("Das Kompilieren der Quelldatei ist leider fehlgeschlagen...");
+                        toolbox.Logging(ex);
                         return;
                     }
                 }

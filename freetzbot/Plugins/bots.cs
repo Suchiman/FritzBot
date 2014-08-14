@@ -51,8 +51,23 @@ namespace FritzBot.Plugins
                     return new { Nickname = x.Nick, User = u, SeenEntry = entry };
                 }).ToList();
 
-                theMessage.Answer(String.Format("User die wahrscheinlich inaktiv sind: {0}", UserImChannel.Where(x => x.User == null || x.SeenEntry == null).Select(x => x.Nickname).Join(", ")));
-                theMessage.Answer(String.Format("User die definitiv länger als {0} inaktiv sind: {1}", tage, UserImChannel.Where(x => x.SeenEntry != null && x.SeenEntry.LastMessaged < DateTime.Now.AddDays(-tage)).Select(x => x.Nickname).Join(", ")));
+                string wahrscheinlichInaktiv = UserImChannel.Where(x => x.User == null || x.SeenEntry == null).Select(x => x.Nickname).Join(", ");
+                string bestimmtInaktiv = UserImChannel.Where(x => x.SeenEntry != null && x.SeenEntry.LastMessaged < DateTime.Now.AddDays(-tage)).Select(x => x.Nickname).Join(", ");
+
+                if (!String.IsNullOrWhiteSpace(wahrscheinlichInaktiv))
+                {
+                    theMessage.Answer(String.Format("User die wahrscheinlich inaktiv sind: {0}", wahrscheinlichInaktiv));
+                }
+
+                if (!String.IsNullOrWhiteSpace(bestimmtInaktiv))
+                {
+                    theMessage.Answer(String.Format("User die definitiv länger als {0} Tage inaktiv sind: {1}", tage, bestimmtInaktiv));
+                }
+
+                if (String.IsNullOrWhiteSpace(wahrscheinlichInaktiv) && String.IsNullOrWhiteSpace(bestimmtInaktiv))
+                {
+                    theMessage.Answer("Keinen Benutzer gefunden der in diese Kriterien fällt");
+                }
             }
         }
     }

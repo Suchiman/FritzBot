@@ -20,7 +20,7 @@ namespace FritzBot.Plugins
                 IQueryable<BoxEntry> filtered;
                 if (BoxDatabase.TryFindExactBox(theMessage.CommandLine, out result))
                 {
-                    filtered = context.BoxEntries.Where(x => x.Box == result);
+                    filtered = context.BoxEntries.Where(x => x.Box.Id == result.Id);
                 }
                 else
                 {
