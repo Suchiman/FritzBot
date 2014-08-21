@@ -2,6 +2,7 @@
 using FritzBot.Database;
 using FritzBot.Plugins.SubscriptionProviders;
 using System;
+using System.Data.Entity;
 using System.Linq;
 
 namespace FritzBot.DataModel
@@ -55,7 +56,7 @@ namespace FritzBot.DataModel
 
         protected virtual IQueryable<Subscription> GetSubscribers(BotContext context, string[] criteria)
         {
-            return context.Subscriptions.Where(x => x.Plugin == PluginID);
+            return context.Subscriptions.Include(x => x.User).Where(x => x.Plugin == PluginID);
         }
     }
 }
