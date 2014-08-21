@@ -59,7 +59,7 @@ namespace FritzBot.Plugins
             using (var context = new BotContext())
             {
                 SeenEntry entry = GetSeenEntry(context, e.Who);
-                entry.LastSeen = DateTime.MinValue;
+                entry.LastSeen = null;
                 context.SaveChanges();
             }
         }
