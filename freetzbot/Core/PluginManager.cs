@@ -8,6 +8,7 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading;
 
 namespace FritzBot.Core
@@ -197,7 +198,7 @@ namespace FritzBot.Core
 
             foreach (string file in fileName)
             {
-                solution = solution.AddDocument(DocumentId.CreateNewId(projectId), Path.GetFileName(file), new FileTextLoader(Path.GetFullPath(file)), null, Path.GetFullPath(file));
+                solution = solution.AddDocument(DocumentId.CreateNewId(projectId), Path.GetFileName(file), new FileTextLoader(Path.GetFullPath(file), Encoding.UTF8));
             }
 
             Compilation compile = solution.GetProject(projectId).GetCompilationAsync().Result;
@@ -217,7 +218,7 @@ namespace FritzBot.Core
 
             MemoryStream outputAssembly = new MemoryStream();
             MemoryStream outputPdb = new MemoryStream();
-            compile.Emit(executableStream: outputAssembly, pdbStream: outputPdb);
+            compile.Emit(peStream: outputAssembly, pdbStream: outputPdb);
 
             Assembly generated = Assembly.Load(outputAssembly.GetBuffer(), outputPdb.GetBuffer());
             return generated;
