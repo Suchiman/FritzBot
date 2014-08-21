@@ -68,7 +68,7 @@ namespace FritzBot.Plugins
             }
             if (!String.IsNullOrEmpty(PackageUrl))
             {
-                theMessage.Answer(String.Format("{0} {1}: http://freetz.org{2}{3}", lowestDifference > 1 ? "Meinten Sie?" : "Freetz Paket", PackageName, PackageUrl, sharpSplit));
+                theMessage.Answer(String.Format("{0} {1}: http://freetz.org{2}{3}", lowestDifference > 1 ? "Meintest du?" : "Freetz Paket", PackageName, PackageUrl, sharpSplit));
             }
             else
             {
