@@ -113,6 +113,12 @@ namespace FritzBot.Plugins
                 IrcMessageData data = new IrcMessageData(theMessage.Data.Irc, theMessage.Data.From, theMessage.Data.Nick, theMessage.Data.Ident, theMessage.Data.Host, theMessage.Data.Channel, thealias, thealias, theMessage.Data.Type, theMessage.Data.ReplyCode);
                 ircMessage fake = new ircMessage(data, theMessage.ServerConnetion);
                 Program.HandleCommand(fake);
+                theMessage.Hidden = fake.Hidden;
+                theMessage.ProcessedByCommand = fake.ProcessedByCommand;
+                for (int i = 0; i < fake.UnloggedMessages.Count; i++)
+                {
+                    theMessage.UnloggedMessages.Enqueue(fake.UnloggedMessages.Dequeue());
+                }
                 return String.Empty;
             }
             return thealias;
@@ -248,7 +254,10 @@ namespace FritzBot.Plugins
                             theMessage.Answer(theAlias);
                             return;
                         }
-                        theMessage.Answer("Wups, diesen Alias gibt es nicht");
+                        if (theMessage.UnloggedMessages.Count == 0)
+                        {
+                            theMessage.Answer("Wups, diesen Alias gibt es nicht");
+                        }
                         return;
                 }
             }
