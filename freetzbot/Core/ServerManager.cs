@@ -524,7 +524,7 @@ namespace FritzBot.Core
                         }
                         else
                         {
-                            message.Answer("Hallo du da, ich bin nicht so menschlich wie ich aussehe");
+                            message.Answer("Hallo du da, ich bin nicht so menschlich wie ich aussehe. Probier doch mal !hilfe");
                         }
                     }
 
