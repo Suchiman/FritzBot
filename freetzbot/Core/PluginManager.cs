@@ -216,12 +216,13 @@ namespace FritzBot.Core
                 throw new Exception("Compilation failed");
             }
 
-            MemoryStream outputAssembly = new MemoryStream();
-            MemoryStream outputPdb = new MemoryStream();
-            compile.Emit(peStream: outputAssembly, pdbStream: outputPdb);
+            using (var outputAssembly = new MemoryStream())
+            using (var outputPdb = new MemoryStream())
+            {
+                compile.Emit(peStream: outputAssembly, pdbStream: outputPdb);
 
-            Assembly generated = Assembly.Load(outputAssembly.GetBuffer(), outputPdb.GetBuffer());
-            return generated;
+                return Assembly.Load(outputAssembly.ToArray(), outputPdb.ToArray());
+            }
         }
     }
 
