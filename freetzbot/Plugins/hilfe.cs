@@ -24,10 +24,8 @@ namespace FritzBot.Plugins
                     }
                 }
 
-                List<string> befehle = plugins.Select(x => x.Names[0]).OrderBy(x => x).ToList();
-
-                theMessage.Answer("Derzeit verfügbare Befehle: " +  befehle.Join(", "));
-                theMessage.Answer("Hilfe zu jedem Befehl mit \"!help befehl\". Um die anderen nicht zu belästigen kannst du mich auch per PM (query) anfragen");
+                theMessage.Answer("Derzeit verfügbare Befehle: " + plugins.Select(x => x.Names[0]).OrderBy(x => x).Join(", "));
+                theMessage.Answer("Hilfe zu jedem Befehl mit \"!help befehl\"." + (theMessage.IsPrivate ? "" : "Um die anderen nicht zu belästigen kannst du mich auch per PM (query) anfragen"));
             }
             else
             {
