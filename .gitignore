@@ -14,3 +14,8 @@ missing
 smartirc4net.pc
 *.pidb
 *.userprefs
+[Bb]in/
+[Oo]bj/
+*.suo
+*.user
+*.sln.docstates
