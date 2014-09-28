@@ -85,7 +85,7 @@ namespace FritzBot.Plugins
             }
             using (var context = new BotContext())
             {
-                var entry = context.SeenEntries.Include(x => x.User).FirstOrDefault(x => x.User == context.Nicknames.FirstOrDefault(n => n.Name == theMessage.CommandLine).User);
+                SeenEntry entry = context.SeenEntries.Include(x => x.User).FirstOrDefault(x => x.User == context.Nicknames.FirstOrDefault(n => n.Name == theMessage.CommandLine).User);
                 string output = "";
                 if (entry != null)
                 {

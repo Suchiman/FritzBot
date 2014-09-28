@@ -181,7 +181,7 @@ namespace FritzBot.Core
             string FrameworkAssemblyPath = Path.GetDirectoryName(typeof(object).Assembly.Location);
             string BotAssemblyPath = Path.GetDirectoryName(typeof(PluginManager).Assembly.Location);
 
-            var solution = new CustomWorkspace().CurrentSolution
+            Solution solution = new CustomWorkspace().CurrentSolution
                 .AddProject(projectId, "FritzBotPlugins", "FritzBotPlugins", LanguageNames.CSharp)
                 .AddMetadataReference(projectId, new MetadataFileReference(typeof(PluginManager).Assembly.Location, MetadataImageKind.Assembly))
                 .WithProjectCompilationOptions(projectId, new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))

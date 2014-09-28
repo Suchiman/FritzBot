@@ -374,7 +374,7 @@ namespace FritzBot.Core
 
             ThreadPool.QueueUserWorkItem(x =>
             {
-                var ev = OnJoin;
+                JoinEventHandler ev = OnJoin;
                 if (ev != null)
                 {
                     ev(this, e);
@@ -393,7 +393,7 @@ namespace FritzBot.Core
 
             ThreadPool.QueueUserWorkItem(x =>
             {
-                var ev = OnQuit;
+                QuitEventHandler ev = OnQuit;
                 if (ev != null)
                 {
                     ev(this, e);
@@ -412,7 +412,7 @@ namespace FritzBot.Core
 
             ThreadPool.QueueUserWorkItem(x =>
             {
-                var ev = OnPart;
+                PartEventHandler ev = OnPart;
                 if (ev != null)
                 {
                     ev(this, e);
@@ -446,7 +446,7 @@ namespace FritzBot.Core
 
             ThreadPool.QueueUserWorkItem(x =>
             {
-                var ev = OnNickChange;
+                NickChangeEventHandler ev = OnNickChange;
                 if (ev != null)
                 {
                     ev(this, e);
@@ -465,7 +465,7 @@ namespace FritzBot.Core
 
             ThreadPool.QueueUserWorkItem(x =>
             {
-                var ev = OnKick;
+                KickEventHandler ev = OnKick;
                 if (ev != null)
                 {
                     ev(this, e);
@@ -492,7 +492,7 @@ namespace FritzBot.Core
 
                 if (!message.IsIgnored)
                 {
-                    var ev = OnPreProcessingMessage;
+                    IrcMessageEventHandler ev = OnPreProcessingMessage;
                     if (ev != null)
                     {
                         ev(this, message);

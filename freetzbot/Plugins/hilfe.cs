@@ -15,7 +15,7 @@ namespace FritzBot.Plugins
         {
             if (!theMessage.HasArgs)
             {
-                var plugins = PluginManager.Plugins.Where(x => !x.IsHidden && x.IsCommand && x.Names.Count > 0);
+                IEnumerable<PluginInfo> plugins = PluginManager.Plugins.Where(x => !x.IsHidden && x.IsCommand && x.Names.Count > 0);
                 using (var context = new BotContext())
                 {
                     if (!toolbox.IsOp(context.GetUser(theMessage.Nickname)))
