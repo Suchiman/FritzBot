@@ -119,9 +119,9 @@ namespace FritzBot.Core
 
         public static IEnumerable<T> Flatten<T>(this IEnumerable<T> source, Func<T, IEnumerable<T>> selector)
         {
-            foreach (var thisLevel in source)
+            foreach (T thisLevel in source)
             {
-                foreach (var deepOne in Flatten(selector(thisLevel), selector))
+                foreach (T deepOne in Flatten(selector(thisLevel), selector))
                 {
                     yield return deepOne;
                 }
@@ -138,8 +138,8 @@ namespace FritzBot.Core
             IEqualityComparer<TK> cmp = null)
         {
             cmp = cmp ?? EqualityComparer<TK>.Default;
-            var alookup = a.ToLookup(selectKeyA, cmp);
-            var blookup = b.ToLookup(selectKeyB, cmp);
+            ILookup<TK, TA> alookup = a.ToLookup(selectKeyA, cmp);
+            ILookup<TK, TB> blookup = b.ToLookup(selectKeyB, cmp);
 
             var keys = new HashSet<TK>(alookup.Select(p => p.Key), cmp);
             keys.UnionWith(blookup.Select(p => p.Key));
@@ -161,8 +161,8 @@ namespace FritzBot.Core
             IEqualityComparer<TK> cmp = null)
         {
             cmp = cmp ?? EqualityComparer<TK>.Default;
-            var alookup = a.ToLookup(selectKeyA, cmp);
-            var blookup = b.ToLookup(selectKeyB, cmp);
+            ILookup<TK, TA> alookup = a.ToLookup(selectKeyA, cmp);
+            ILookup<TK, TB> blookup = b.ToLookup(selectKeyB, cmp);
 
             var keys = new HashSet<TK>(alookup.Select(p => p.Key), cmp);
             keys.UnionWith(blookup.Select(p => p.Key));
@@ -255,6 +255,11 @@ namespace FritzBot.Core
 
             return values.Contains(source);
         }
+
+        public static string SanitizeString(this string source)
+        {
+            return String.IsNullOrWhiteSpace(source) ? null : source.Trim();
+        }
     }
 
     public class KeyEqualityComparer<T> : IEqualityComparer<T>
@@ -277,7 +282,7 @@ namespace FritzBot.Core
         {
             if (comparer != null)
                 return comparer(x, y);
-            var valX = keyExtractor(x);
+            object valX = keyExtractor(x);
             if (valX is IEnumerable<object>) // The special case where we pass a list of keys
                 return ((IEnumerable<object>)valX).SequenceEqual((IEnumerable<object>)keyExtractor(y));
 
@@ -288,7 +293,7 @@ namespace FritzBot.Core
         {
             if (keyExtractor == null)
                 return obj.ToString().ToLower().GetHashCode();
-            var val = keyExtractor(obj);
+            object val = keyExtractor(obj);
             if (val is IEnumerable<object>) // The special case where we pass a list of keys
                 return (int)((IEnumerable<object>)val).Aggregate((x, y) => x.GetHashCode() ^ y.GetHashCode());
 
