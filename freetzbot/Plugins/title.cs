@@ -62,7 +62,10 @@ namespace FritzBot.Plugins
                     return;
                 }
                 string title = Regex.Replace(titleNode.Text().Trim().Replace("\n", "").Replace("\r", "").Replace("â€“", "–"), "[ ]{2,}", " ");
-                (e.UserState as ircMessage).Answer("[url] " + title);
+                if (!String.IsNullOrWhiteSpace(title))
+                {
+                    (e.UserState as ircMessage).Answer("[url] " + title);
+                }
             }
             catch
             {
