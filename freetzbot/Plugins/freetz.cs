@@ -15,7 +15,7 @@ namespace FritzBot.Plugins
     {
         private const string PackagesPage = "http://freetz.org/wiki/packages";
 
-        private DataCache<Dictionary<string, string>> PackagesCache = new DataCache<Dictionary<string, string>>(GetPackages, 30);
+        private DataCache<List<FreetzPackage>> PackagesCache = new DataCache<List<FreetzPackage>>(GetPackages, 30);
 
         public void Run(ircMessage theMessage)
         {
@@ -25,68 +25,102 @@ namespace FritzBot.Plugins
                 return;
             }
 
-            int lowestDifference = 0;
-            string input = theMessage.CommandLine.ToLower();
-            string sharpSplit = String.Empty;
+            string input = theMessage.CommandLine;
+            string anchor = String.Empty;
             if (input.Contains('#'))
             {
                 string[] split = input.Split(new[] { '#' }, 2);
                 Contract.Assume(split.Length == 2);
-                sharpSplit = "#" + split[1];
+                anchor = "#" + split[1];
                 input = split[0];
             }
-            int inputLength = input.Length;
-            string PackageUrl = null, PackageName = input;
 
-            Dictionary<string, string> packages = PackagesCache.GetItem(true);
-            if (packages != null)
+            int lowestFuzzyDifference = 0, lowestStartsWithDifference = 0;
+            FreetzPackage exactMatch = null, fuzzyMatch = null, startsWithMatch = null;
+
+            List<FreetzPackage> packages = PackagesCache.GetItem(true);
+            if (packages != null && (exactMatch = packages.FirstOrDefault(x => x.Name.Equals(input, StringComparison.OrdinalIgnoreCase))) == null)
             {
-                if (!packages.TryGetValue(input, out PackageUrl) || String.IsNullOrEmpty(PackageUrl))
+                FreetzPackage likelyKey = packages.FirstOrDefault(x => x.Name.StartsWith(input, StringComparison.OrdinalIgnoreCase));
+                if (likelyKey != null)
                 {
-                    string likelyKey = packages.Keys.FirstOrDefault(x => x.StartsWith(input, StringComparison.OrdinalIgnoreCase));
-                    if (likelyKey != null)
+                    lowestStartsWithDifference = Math.Abs(likelyKey.Name.Length - input.Length);
+                    startsWithMatch = likelyKey;
+                }
+                else
+                {
+                    lowestFuzzyDifference = 1000;
+                    foreach (FreetzPackage one in packages)
                     {
-                        PackageUrl = packages[likelyKey];
-                        PackageName = likelyKey;
-                        lowestDifference = Math.Abs(likelyKey.Length - inputLength);
-                    }
-                    else
-                    {
-                        lowestDifference = 1000;
-                        foreach (KeyValuePair<string, string> one in packages)
+                        int result = StringSimilarity.Compare(input, one.Name, true);
+                        if (result < lowestFuzzyDifference)
                         {
-                            int result = StringSimilarity.Compare(input, one.Key, true);
-                            if (result < lowestDifference)
-                            {
-                                PackageUrl = one.Value;
-                                PackageName = one.Key;
-                                lowestDifference = result;
-                            }
+                            fuzzyMatch = one;
+                            lowestFuzzyDifference = result;
                         }
                     }
                 }
             }
-            if (!String.IsNullOrEmpty(PackageUrl))
+
+            if (exactMatch != null)
             {
-                theMessage.Answer(String.Format("{0} {1}: http://freetz.org{2}{3}", lowestDifference > 1 ? "Meintest du?" : "Freetz Paket", PackageName, PackageUrl, sharpSplit));
+                Answer(theMessage, exactMatch, false, anchor);
+            }
+            else if (startsWithMatch != null && lowestStartsWithDifference < 5)
+            {
+                Answer(theMessage, startsWithMatch, lowestStartsWithDifference > 1, anchor);
+            }
+            else if (fuzzyMatch != null && lowestFuzzyDifference < 4)
+            {
+                Answer(theMessage, fuzzyMatch, true, anchor);
+            }
+            else if (startsWithMatch != null)
+            {
+                Answer(theMessage, startsWithMatch, true, anchor);
             }
             else
             {
-                theMessage.Answer("Da ist etwas fürchterlich schief gelaufen");
+                theMessage.Answer("Ich habe kein solches Paket gefunden");
             }
         }
 
-        private static Dictionary<string, string> GetPackages(Dictionary<string, string> Alte)
+        private static void Answer(ircMessage theMessage, FreetzPackage package, bool isAmbiguous, string anchor)
+        {
+            if (String.IsNullOrWhiteSpace(package.RelativUrl))
+            {
+                theMessage.Answer(String.Format("Das Paket {0} existiert, hat jedoch keine Detailseite", package.Name));
+                return;
+            }
+
+            string answer = isAmbiguous ? "Meintest du " : "Freetz Paket ";
+            answer += package.Name;
+            if (isAmbiguous)
+            {
+                answer += " ?";
+            }
+            answer += ": http://freetz.org" + package.RelativUrl + anchor;
+
+            theMessage.Answer(answer);
+
+        }
+
+        private static List<FreetzPackage> GetPackages(List<FreetzPackage> Alte)
         {
             try
             {
                 CQ document = CQ.CreateFromUrl(PackagesPage);
-                return document.Select("table.wiki").Find("a.wiki").Where(x => x.InnerTextAllowed).Distinct(x => x.InnerText).ToDictionary(k => k.InnerText, v => v.GetAttribute("href", ""), StringComparer.OrdinalIgnoreCase);
+                return document.Select("table.wiki").Find("a.wiki").Where(x => x.InnerTextAllowed).Distinct(x => x.InnerText).Select(x => new FreetzPackage { Name = x.InnerText, RelativUrl = x.GetAttribute("href", "") }).ToList();
             }
             catch
             {
                 return Alte;
             }
+        }
+
+        class FreetzPackage
+        {
+            public string Name { get; set; }
+            public string RelativUrl { get; set; }
         }
     }
 }
