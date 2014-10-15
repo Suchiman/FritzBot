@@ -56,9 +56,16 @@ namespace FritzBot.Plugins
                     theMessage.Answer("Der Schlüssel " + key + " existiert nicht");
                 }
             }
-            if (theMessage.CommandArgs.Count == 3)
+            else if (theMessage.CommandArgs.Count == 3)
             {
-                ConfigHelper.SetValue(key, theMessage.CommandArgs[2]);
+                if (key == "remove")
+                {
+                    ConfigHelper.Remove(theMessage.CommandArgs[2]);
+                }
+                else
+                {
+                    ConfigHelper.SetValue(key, theMessage.CommandArgs[2]);
+                }
                 theMessage.Answer("Okay");
             }
         }

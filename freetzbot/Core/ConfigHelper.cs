@@ -13,6 +13,15 @@ namespace FritzBot.Core
             return conf.AppSettings.Settings.AllKeys.Contains(key);
         }
 
+        public static void Remove(string key)
+        {
+            if (KeyExists(key))
+            {
+                conf.AppSettings.Settings.Remove(key);
+                conf.Save();
+            }
+        }
+
         public static void SetValue(string key, string value)
         {
             if (KeyExists(key))
