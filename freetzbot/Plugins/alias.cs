@@ -238,7 +238,8 @@ namespace FritzBot.Plugins
                                 theMessage.Answer("Wonach soll ich denn Suchen wenn du nichts angibst ?: search <key>");
                                 return;
                             }
-                            List<string> search = context.AliasEntries.Select(x => x.Key).Where(x => x.Contains(key)).ToList();
+                            key = key.ToLower();
+                            List<string> search = context.AliasEntries.Where(x => x.Key.ToLower().Contains(key) || x.Text.ToLower().Contains(key)).Select(x => x.Key).ToList();
                             if (search.Count == 0)
                             {
                                 theMessage.Answer("Nichts gefunden :(");
