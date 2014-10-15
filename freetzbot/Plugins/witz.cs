@@ -16,8 +16,9 @@ namespace FritzBot.Plugins
             {
                 if (theMessage.HasArgs && theMessage.CommandArgs[0].Equals("add", StringComparison.OrdinalIgnoreCase))
                 {
-                    WitzEntry w = new WitzEntry() { Witz = theMessage.CommandArgs.Skip(1).Join(" "), Creator = context.GetUser(theMessage.Nickname) };
+                    WitzEntry w = new WitzEntry { Witz = theMessage.CommandArgs.Skip(1).Join(" "), Creator = context.GetUser(theMessage.Nickname) };
                     context.WitzEntries.Add(w);
+                    context.SaveChanges();
                     theMessage.Answer("Ist notiert " + theMessage.Nickname);
                     return;
                 }
@@ -26,9 +27,14 @@ namespace FritzBot.Plugins
                 IQueryable<WitzEntry> ws = context.WitzEntries;
                 if (theMessage.HasArgs)
                 {
-                    ws = ws.Where(x => theMessage.CommandArgs.All(f => x.Witz.Contains(f)));
+                    ws = ws.Where(x => theMessage.CommandArgs.All(f => x.Witz.ToLower().Contains(f.ToLower())));
                 }
                 WitzEntry entry = ws.OrderBy(x => x.Frequency).Skip(rand.Next(0, 10)).FirstOrDefault();
+
+                if (entry == null)
+                {
+                    entry = ws.OrderBy(x => x.Frequency).FirstOrDefault();
+                }
 
                 if (entry != null)
                 {
