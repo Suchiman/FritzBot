@@ -4,6 +4,7 @@ using FritzBot.DataModel;
 using Meebey.SmartIrc4net;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -196,7 +197,7 @@ namespace FritzBot.Plugins
                             theMessage.Answer("Unzureichend viele Argumente: info <key>");
                             return;
                         }
-                        AliasEntry info = context.AliasEntries.FirstOrDefault(x => x.Key == key);
+                        AliasEntry info = context.AliasEntries.Include(x => x.Creator.LastUsedName).Include(x => x.Updater.LastUsedName).FirstOrDefault(x => x.Key == key);
                         if (info != null)
                         {
                             StringBuilder sb = new StringBuilder();
