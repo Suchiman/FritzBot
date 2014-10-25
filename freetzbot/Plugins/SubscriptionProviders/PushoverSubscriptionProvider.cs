@@ -38,7 +38,7 @@ namespace FritzBot.Plugins.SubscriptionProviders
             //</hash>
         }
 
-        public override void AddSubscription(ircMessage theMessage, PluginBase plugin)
+        public override void AddSubscription(IrcMessage theMessage, PluginBase plugin)
         {
             using (var context = new BotContext())
             {

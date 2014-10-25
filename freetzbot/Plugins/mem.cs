@@ -11,7 +11,7 @@ namespace FritzBot.Plugins
     [ParameterRequired(false)]
     class mem : PluginBase, ICommand
     {
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             string version = Environment.Version.ToString(2);
             string os = Environment.OSVersion.ToString();

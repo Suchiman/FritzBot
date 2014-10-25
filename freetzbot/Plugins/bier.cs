@@ -17,7 +17,7 @@ namespace FritzBot.Plugins
             ServerConnection.OnPostProcessingMessage += Server_OnPostProcessingMessage;
         }
 
-        public void Server_OnPostProcessingMessage(object sender, ircMessage theMessage)
+        public void Server_OnPostProcessingMessage(object sender, IrcMessage theMessage)
         {
             if (theMessage.Message.Contains("#96*6*") && !theMessage.IsIgnored)
             {

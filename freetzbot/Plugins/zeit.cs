@@ -9,7 +9,7 @@ namespace FritzBot.Plugins
     [ParameterRequired(false)]
     class zeit : PluginBase, ICommand
     {
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             try
             {

@@ -27,7 +27,7 @@ namespace FritzBot.Plugins
             ServerConnection.OnPostProcessingMessage -= Server_OnPostProcessingMessage;
         }
 
-        private void Server_OnPostProcessingMessage(object sender, ircMessage theMessage)
+        private void Server_OnPostProcessingMessage(object sender, IrcMessage theMessage)
         {
             try
             {
@@ -64,7 +64,7 @@ namespace FritzBot.Plugins
                 string title = Regex.Replace(titleNode.Text().Trim().Replace("\n", "").Replace("\r", "").Replace("â€“", "–"), "[ ]{2,}", " ");
                 if (!String.IsNullOrWhiteSpace(title))
                 {
-                    (e.UserState as ircMessage).Answer("[url] " + title);
+                    (e.UserState as IrcMessage).Answer("[url] " + title);
                 }
             }
             catch

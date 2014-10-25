@@ -225,7 +225,7 @@
     <Compile Include="Plugins\userlist.cs" />
     <Compile Include="Plugins\witz.cs" />
     <Compile Include="Plugins\zeit.cs" />
-    <Compile Include="ircMessage.cs" />
+    <Compile Include="IrcMessage.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Core\ServerManager.cs" />

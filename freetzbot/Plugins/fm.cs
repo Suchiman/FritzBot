@@ -18,7 +18,7 @@ namespace FritzBot.Plugins
 
         private DataCache<Dictionary<string, TableBox>> PackagesCache = new DataCache<Dictionary<string, TableBox>>(GetPackages, 30);
 
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             if (!theMessage.HasArgs)
             {

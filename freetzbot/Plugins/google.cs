@@ -7,7 +7,7 @@ namespace FritzBot.Plugins
     [Help("Syntax: (!g) !google etwas das du suchen möchtest")]
     class google : PluginBase, ICommand
     {
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             string output = "https://www.google.de/search?q=";
             if (String.IsNullOrEmpty(theMessage.CommandLine))

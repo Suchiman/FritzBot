@@ -15,7 +15,7 @@ namespace FritzBot.Plugins
             startzeit = DateTime.Now;
         }
 
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             TimeSpan laufzeit = DateTime.Now.Subtract(startzeit);
             theMessage.Answer(String.Format("Meine Laufzeit beträgt {0} Tage, {1} Stunden, {2} Minuten und {3} Sekunden", laufzeit.Days, laufzeit.Hours, laufzeit.Minutes, laufzeit.Seconds));

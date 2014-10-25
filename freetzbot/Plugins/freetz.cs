@@ -17,7 +17,7 @@ namespace FritzBot.Plugins
 
         private DataCache<List<FreetzPackage>> PackagesCache = new DataCache<List<FreetzPackage>>(GetPackages, 30);
 
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             if (!theMessage.HasArgs)
             {
@@ -84,7 +84,7 @@ namespace FritzBot.Plugins
             }
         }
 
-        private static void Answer(ircMessage theMessage, FreetzPackage package, bool isAmbiguous, string anchor)
+        private static void Answer(IrcMessage theMessage, FreetzPackage package, bool isAmbiguous, string anchor)
         {
             if (String.IsNullOrWhiteSpace(package.RelativUrl))
             {

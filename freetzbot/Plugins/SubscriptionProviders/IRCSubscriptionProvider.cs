@@ -27,7 +27,7 @@ namespace FritzBot.Plugins.SubscriptionProviders
             }
         }
 
-        public override void ParseSubscriptionSetup(ircMessage theMessage)
+        public override void ParseSubscriptionSetup(IrcMessage theMessage)
         {
             if (theMessage.CommandArgs.Count < 3)
             {

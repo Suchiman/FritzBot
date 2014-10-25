@@ -50,7 +50,7 @@ namespace FritzBot.Plugins
             return base.GetSubscribers(context, criteria);
         }
 
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             List<Labordaten> daten = LaborDaten.GetItem(true);
 

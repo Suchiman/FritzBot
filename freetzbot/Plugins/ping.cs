@@ -7,7 +7,7 @@ namespace FritzBot.Plugins
     [ParameterRequired(false)]
     class ping : PluginBase, ICommand
     {
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             theMessage.Answer("Pong " + theMessage.Nickname);
         }

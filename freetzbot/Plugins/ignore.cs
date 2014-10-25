@@ -8,7 +8,7 @@ namespace FritzBot.Plugins
     [ParameterRequired]
     class ignore : PluginBase, ICommand
     {
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             using (var context = new BotContext())
             {

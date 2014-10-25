@@ -13,7 +13,7 @@ namespace FritzBot.Plugins
     [ParameterRequired]
     class admin : PluginBase, ICommand
     {
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             switch (theMessage.CommandArgs[0])
             {
@@ -37,7 +37,7 @@ namespace FritzBot.Plugins
             }
         }
 
-        private void Config(ircMessage theMessage)
+        private void Config(IrcMessage theMessage)
         {
             if (!theMessage.CommandArgs.Count.In(2, 3))
             {
@@ -70,7 +70,7 @@ namespace FritzBot.Plugins
             }
         }
 
-        private static void BoxDB(ircMessage theMessage)
+        private static void BoxDB(IrcMessage theMessage)
         {
             if (theMessage.CommandArgs.Count < 2)
             {

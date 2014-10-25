@@ -10,7 +10,7 @@ namespace FritzBot.Plugins
     [Authorize]
     class taskcontrol : PluginBase, ICommand
     {
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             if (theMessage.CommandArgs.Count < 2)
             {

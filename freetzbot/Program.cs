@@ -20,7 +20,7 @@ namespace FritzBot
         /// Verarbeitet eine ircMessage mit einem Command und stellt sicher, dass die dem Command zugeordneten Attribute eingehalten werden
         /// </summary>
         /// <param name="theMessage">Die zu verarbeitende ircMessage</param>
-        public static void HandleCommand(ircMessage theMessage)
+        public static void HandleCommand(IrcMessage theMessage)
         {
             Contract.Requires(theMessage != null);
             bool isOp;

@@ -9,7 +9,7 @@ namespace FritzBot.Plugins
     [Authorize]
     class quit : PluginBase, ICommand
     {
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             ServerManager.DisconnectAll();
         }

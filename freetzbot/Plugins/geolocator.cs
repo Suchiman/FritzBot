@@ -11,7 +11,7 @@ namespace FritzBot.Plugins
     [ParameterRequired]
     public class geolocator : PluginBase, ICommand
     {
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             string address = theMessage.CommandArgs.FirstOrDefault();
             try

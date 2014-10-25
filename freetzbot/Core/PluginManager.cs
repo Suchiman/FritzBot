@@ -381,7 +381,7 @@ namespace FritzBot.Core
             (Plugin as IBackgroundTask).Stop();
         }
 
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             if (!IsCommand)
             {

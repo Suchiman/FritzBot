@@ -11,7 +11,7 @@ namespace FritzBot
     /// <summary>
     /// Representiert eine einzelne IRC Nachricht
     /// </summary>
-    public class ircMessage
+    public class IrcMessage
     {
         /// <summary>
         /// Erstellt ein neues ircMessage Objekt um eine IRC Nachricht dazustellen
@@ -19,7 +19,7 @@ namespace FritzBot
         /// <param name="data">Die Ausgangsdaten</param>
         /// <param name="serverConnetion">Die ServerConnetion von dem die Nachricht kommt</param>
         /// <param name="user">Der der Nachricht zugeordnete User</param>
-        public ircMessage(IrcMessageData data, ServerConnection serverConnetion)
+        public IrcMessage(IrcMessageData data, ServerConnection serverConnetion)
         {
             Contract.Requires(data != null && serverConnetion != null);
 

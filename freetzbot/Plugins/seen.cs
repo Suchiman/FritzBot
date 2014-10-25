@@ -29,7 +29,7 @@ namespace FritzBot.Plugins
             ServerConnection.OnPreProcessingMessage -= Server_OnPreProcessingMessage;
         }
 
-        private void Server_OnPreProcessingMessage(object sender, ircMessage theMessage)
+        private void Server_OnPreProcessingMessage(object sender, IrcMessage theMessage)
         {
             if (theMessage.IsIgnored)
             {
@@ -76,7 +76,7 @@ namespace FritzBot.Plugins
             return entry;
         }
 
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             if (String.Equals(theMessage.CommandLine, theMessage.ServerConnetion.IrcClient.Nickname, StringComparison.OrdinalIgnoreCase))
             {

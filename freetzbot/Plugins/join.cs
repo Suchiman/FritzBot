@@ -8,7 +8,7 @@ namespace FritzBot.Plugins
     [Authorize]
     class join : PluginBase, ICommand
     {
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             theMessage.AnswerAction("rennt los zum channel " + theMessage.CommandLine);
             theMessage.ServerConnetion.JoinChannel(theMessage.CommandLine);

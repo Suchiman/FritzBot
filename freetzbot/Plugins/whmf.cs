@@ -6,7 +6,7 @@ namespace FritzBot.Plugins
     [Help("Das erzeugt einen Link zu wehavemorefun mit dem angegebenen Suchkriterium, Beispiele: !whmf 7270, !whmf CAPI Treiber")]
     class whmf : PluginBase, ICommand
     {
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             string output = "http://wehavemorefun.de/fbwiki/index.php?search=";
             if (!theMessage.HasArgs)

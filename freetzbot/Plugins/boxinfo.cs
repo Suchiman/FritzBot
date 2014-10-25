@@ -9,7 +9,7 @@ namespace FritzBot.Plugins
     [Help("Zeigt die Box/en des angegebenen Benutzers an.")]
     class boxinfo : PluginBase, ICommand
     {
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             string output = "";
             string UserToUse = theMessage.CommandLine;

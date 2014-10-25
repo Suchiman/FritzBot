@@ -177,7 +177,7 @@ namespace FritzBot.Plugins
             return base.GetSubscribers(context, criteria);
         }
 
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             bool recovery = false;
             bool source = false;

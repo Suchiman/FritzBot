@@ -10,7 +10,7 @@ namespace FritzBot.Plugins
     [Authorize]
     class unloadmodule : PluginBase, ICommand
     {
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             try
             {

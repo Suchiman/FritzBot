@@ -23,7 +23,7 @@ namespace FritzBot.Plugins
             ServerConnection.OnPostProcessingMessage -= Server_OnPostProcessingMessage;
         }
 
-        private void Server_OnPostProcessingMessage(object sender, ircMessage theMessage)
+        private void Server_OnPostProcessingMessage(object sender, IrcMessage theMessage)
         {
             SendIt(theMessage.Nickname, theMessage.SendPrivateMessage);
         }
@@ -45,7 +45,7 @@ namespace FritzBot.Plugins
             }
         }
 
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             if (theMessage.CommandArgs.Count > 1)
             {

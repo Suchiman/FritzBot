@@ -32,7 +32,7 @@ namespace FritzBot.Plugins
             boxfrage(e.Data.Irc, e.Who, true);
         }
 
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             boxfrage(theMessage.ServerConnetion.IrcClient, theMessage.CommandLine, false);
         }

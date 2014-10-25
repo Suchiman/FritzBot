@@ -36,7 +36,7 @@ namespace FritzBot.Plugins
             }
         }
 
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             using (var context = new BotContext())
             {

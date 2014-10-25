@@ -185,7 +185,7 @@ namespace FritzBot.Core
         /// </summary>
         public static event IrcMessageEventHandler OnPostProcessingMessage;
 
-        public delegate void IrcMessageEventHandler(object sender, ircMessage theMessage);
+        public delegate void IrcMessageEventHandler(object sender, IrcMessage theMessage);
 
         public Server Settings { get; set; }
 
@@ -488,7 +488,7 @@ namespace FritzBot.Core
             ThreadPool.QueueUserWorkItem(x =>
             {
                 User user = MaintainUser(e.Data.Nick);
-                ircMessage message = new ircMessage(e.Data, this);
+                IrcMessage message = new IrcMessage(e.Data, this);
 
                 if (!message.IsIgnored)
                 {

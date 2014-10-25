@@ -9,7 +9,7 @@ namespace FritzBot.Plugins
     [Authorize]
     class op : PluginBase, ICommand
     {
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             using (var context = new BotContext())
             {

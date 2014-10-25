@@ -10,7 +10,7 @@ namespace FritzBot.Plugins
     [Authorize]
     class connect : PluginBase, ICommand
     {
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             string[] parameter = theMessage.CommandLine.Split(new string[] { "," }, 5, StringSplitOptions.None);
             if (parameter.Length < 5)

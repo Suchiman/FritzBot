@@ -7,7 +7,7 @@ namespace FritzBot.Plugins
     [ParameterRequired(false)]
     class about : PluginBase, ICommand
     {
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             theMessage.Answer("Primäraufgabe: Daten über Fritzboxen sammeln, Sekundäraufgabe: Menschheit eliminieren. Funktionsliste ist durch !hilfe zu erhalten. Programmiert in C# umfasst mein Quellcode derzeit 6770 Zeilen. Entwickler: Suchiman");
         }

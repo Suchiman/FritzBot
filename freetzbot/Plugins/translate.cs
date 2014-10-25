@@ -11,7 +11,7 @@ namespace FritzBot.Plugins
     [Help("Übersetzt zwischen Sprachen ;-), Beispiel: !translate en Guten Morgen")]
     class translate : PluginBase, ICommand
     {
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             string target = theMessage.CommandArgs.First().ToLower();
             string word = theMessage.CommandArgs.Skip(1).Join(" ");

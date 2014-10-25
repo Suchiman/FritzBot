@@ -12,7 +12,7 @@ namespace FritzBot.Plugins
     [ParameterRequired]
     class boxfind : PluginBase, ICommand
     {
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             using (var context = new BotContext())
             {

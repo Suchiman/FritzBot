@@ -10,7 +10,7 @@ namespace FritzBot
         /// Die Methode die ausgeführt wird wenn der Befehl aufgerufen wird
         /// </summary>
         /// <param name="theMessage">Das Objekt, dass diie Nachricht die den Befehl ausgelöst hat dastellt</param>
-        void Run(ircMessage theMessage);
+        void Run(IrcMessage theMessage);
     }
 
     [ContractClass(typeof(BackgroundTaskContract))]
@@ -29,7 +29,7 @@ namespace FritzBot
     [ContractClassFor(typeof(ICommand))]
     public abstract class CommandContract : ICommand
     {
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             Contract.Requires<ArgumentNullException>(theMessage != null, "theMessage darf nicht null sein");
         }

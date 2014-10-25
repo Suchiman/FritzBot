@@ -13,7 +13,7 @@ namespace FritzBot.Plugins
     [Help("Unterbefehle: add <PluginName> <SubscriptionProvider> <Bedingung>(optional), available, list, setup <SubscriptionProvider> <Adresse>, remove <PluginName> <SubscriptionProvider>, help <SubscriptionProvider>")]
     class subscribe : PluginBase, ICommand
     {
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             switch (theMessage.CommandArgs.FirstOrDefault())
             {
@@ -42,7 +42,7 @@ namespace FritzBot.Plugins
             }
         }
 
-        private void HelpSubscription(ircMessage theMessage)
+        private void HelpSubscription(IrcMessage theMessage)
         {
             if (theMessage.CommandArgs.Count < 2)
             {
@@ -66,7 +66,7 @@ namespace FritzBot.Plugins
             }
         }
 
-        private void RemoveSubscription(ircMessage theMessage)
+        private void RemoveSubscription(IrcMessage theMessage)
         {
             if (theMessage.CommandArgs.Count < 3)
             {
@@ -100,7 +100,7 @@ namespace FritzBot.Plugins
             }
         }
 
-        private static void SetupSubscription(ircMessage theMessage)
+        private static void SetupSubscription(IrcMessage theMessage)
         {
             Contract.Requires(theMessage != null);
 
@@ -113,7 +113,7 @@ namespace FritzBot.Plugins
             provider.ParseSubscriptionSetup(theMessage);
         }
 
-        private static void SubscriptionsAvailable(ircMessage theMessage)
+        private static void SubscriptionsAvailable(IrcMessage theMessage)
         {
             string[] names = PluginManager.GetOfType<SubscriptionProvider>().Select(x => x.Names.FirstOrDefault()).Where(x => !String.IsNullOrEmpty(x)).ToArray();
             theMessage.Answer("Es sind folgende SubscriptionProvider verfügbar: " + names.Join(", "));
@@ -121,7 +121,7 @@ namespace FritzBot.Plugins
             theMessage.Answer("Folgende Plugins werden unterstützt: " + plugins.Join(", "));
         }
 
-        public void SubscriptionAdd(ircMessage theMessage)
+        public void SubscriptionAdd(IrcMessage theMessage)
         {
             if (theMessage.CommandArgs.Count < 3)
             {
@@ -159,7 +159,7 @@ namespace FritzBot.Plugins
             }
         }
 
-        public void SubscriptionsList(ircMessage theMessage)
+        public void SubscriptionsList(IrcMessage theMessage)
         {
             using (var context = new BotContext())
             {

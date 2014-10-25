@@ -8,7 +8,7 @@ namespace FritzBot.Plugins
     [Authorize]
     class restart : PluginBase, ICommand
     {
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             Program.Shutdown(true);
         }

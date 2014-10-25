@@ -7,7 +7,7 @@ namespace FritzBot.Plugins
     [ParameterRequired]
     class shorturl : PluginBase, ICommand
     {
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             theMessage.Answer(toolbox.ShortUrl(theMessage.CommandLine));
         }

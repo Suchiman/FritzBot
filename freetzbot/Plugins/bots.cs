@@ -12,7 +12,7 @@ namespace FritzBot.Plugins
     [ParameterRequired(true)]
     class bots : PluginBase, ICommand
     {
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             int tage;
             string channel;

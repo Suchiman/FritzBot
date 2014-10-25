@@ -11,7 +11,7 @@ namespace FritzBot.Plugins
     [Help("Die Hilfe!")]
     class hilfe : PluginBase, ICommand
     {
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             if (!theMessage.HasArgs)
             {

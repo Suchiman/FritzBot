@@ -12,7 +12,7 @@ namespace FritzBot.Plugins.SubscriptionProviders
     {
         public abstract void SendNotification(User user, string message);
 
-        public virtual void AddSubscription(ircMessage theMessage, PluginBase plugin)
+        public virtual void AddSubscription(IrcMessage theMessage, PluginBase plugin)
         {
             Contract.Requires(theMessage != null && plugin != null);
 
@@ -56,7 +56,7 @@ namespace FritzBot.Plugins.SubscriptionProviders
             }
         }
 
-        public virtual void ParseSubscriptionSetup(ircMessage theMessage)
+        public virtual void ParseSubscriptionSetup(IrcMessage theMessage)
         {
             Contract.Requires(theMessage != null);
 

@@ -13,7 +13,7 @@ namespace FritzBot.Plugins
     {
         private string Requested;
 
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             theMessage.Hidden = true;
             if (!theMessage.IsPrivate)
@@ -39,7 +39,7 @@ namespace FritzBot.Plugins
             }
         }
 
-        private void CheckOldPW(object sender, ircMessage theMessage)
+        private void CheckOldPW(object sender, IrcMessage theMessage)
         {
             if (!theMessage.IsPrivate || Requested != theMessage.Nickname)
             {
@@ -62,7 +62,7 @@ namespace FritzBot.Plugins
             ServerConnection.OnPreProcessingMessage -= CheckOldPW;
         }
 
-        void SetNewPW(object sender, ircMessage theMessage)
+        void SetNewPW(object sender, IrcMessage theMessage)
         {
             if (!theMessage.IsPrivate || Requested != theMessage.Nickname)
             {

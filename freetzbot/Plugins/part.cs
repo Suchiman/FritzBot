@@ -8,7 +8,7 @@ namespace FritzBot.Plugins
     [Authorize]
     class part : PluginBase, ICommand
     {
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             theMessage.AnswerAction("verlässt den channel " + theMessage.CommandLine);
             theMessage.ServerConnetion.PartChannel(theMessage.CommandLine);

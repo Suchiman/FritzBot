@@ -7,7 +7,7 @@ namespace FritzBot.Plugins
     [ParameterRequired]
     class lmgtfy : PluginBase, ICommand
     {
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             theMessage.Answer("http://lmgtfy.com/?q=" + toolbox.UrlEncode(theMessage.CommandLine));
         }

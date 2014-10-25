@@ -26,7 +26,7 @@ namespace FritzBot.Plugins
             ServerConnection.OnPostProcessingMessage -= Server_OnPostProcessingMessage;
         }
 
-        void Server_OnPostProcessingMessage(object sender, ircMessage theMessage)
+        void Server_OnPostProcessingMessage(object sender, IrcMessage theMessage)
         {
             if (theMessage.IsCommand && !theMessage.Answered && !theMessage.ProcessedByCommand)
             {
@@ -38,12 +38,12 @@ namespace FritzBot.Plugins
             }
         }
 
-        public void Run(ircMessage theMessage)
+        public void Run(IrcMessage theMessage)
         {
             AliasCommand(theMessage);
         }
 
-        public static string GetAlias(ircMessage theMessage)
+        public static string GetAlias(IrcMessage theMessage)
         {
             List<string> SplitString = new List<string>(theMessage.Message.TrimStart('!', ' ').Split(' '));
             if (SplitString[0] == "alias" || SplitString[0] == "a")
@@ -112,7 +112,7 @@ namespace FritzBot.Plugins
                     return String.Empty;
                 }
                 IrcMessageData data = new IrcMessageData(theMessage.Data.Irc, theMessage.Data.From, theMessage.Data.Nick, theMessage.Data.Ident, theMessage.Data.Host, theMessage.Data.Channel, thealias, thealias, theMessage.Data.Type, theMessage.Data.ReplyCode);
-                ircMessage fake = new ircMessage(data, theMessage.ServerConnetion);
+                IrcMessage fake = new IrcMessage(data, theMessage.ServerConnetion);
                 Program.HandleCommand(fake);
                 theMessage.Hidden = fake.Hidden;
                 theMessage.ProcessedByCommand = fake.ProcessedByCommand;
@@ -125,7 +125,7 @@ namespace FritzBot.Plugins
             return thealias;
         }
 
-        public static void AliasCommand(ircMessage theMessage)
+        public static void AliasCommand(IrcMessage theMessage)
         {
             using (var context = new BotContext())
             {
