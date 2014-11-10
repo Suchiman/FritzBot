@@ -3,6 +3,8 @@ using FritzBot.Functions;
 using Meebey.SmartIrc4net;
 using System;
 using System.Linq;
+using System.Net;
+using System.Text.RegularExpressions;
 
 namespace FritzBot.Plugins
 {
@@ -19,10 +21,14 @@ namespace FritzBot.Plugins
                 IrcUser user = theMessage.Data.Irc.GetIrcUser(address);
                 address = user.Host;
             }
-            catch
+            catch { }
+
+            Match match = Regex.Match(address, @"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}");
+            IPAddress parsedAddress;
+            if (match.Success && IPAddress.TryParse(match.Groups[0].Value, out parsedAddress))
             {
+                address = parsedAddress.ToString();
             }
-            Console.WriteLine("Führe ortung durch für: " + address);
 
             LocationInfoDetailed details = Geolocation.GetLocationInfoDetailed(address);
             if (details.Success)
