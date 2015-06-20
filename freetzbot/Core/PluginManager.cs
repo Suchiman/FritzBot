@@ -181,18 +181,18 @@ namespace FritzBot.Core
             string FrameworkAssemblyPath = Path.GetDirectoryName(typeof(object).Assembly.Location);
             string BotAssemblyPath = Path.GetDirectoryName(typeof(PluginManager).Assembly.Location);
 
-            Solution solution = new CustomWorkspace().CurrentSolution
+            Solution solution = new AdhocWorkspace().CurrentSolution
                 .AddProject(projectId, "FritzBotPlugins", "FritzBotPlugins", LanguageNames.CSharp)
-                .AddMetadataReference(projectId, new MetadataFileReference(typeof(PluginManager).Assembly.Location, MetadataImageKind.Assembly))
+                .AddMetadataReference(projectId, MetadataReference.CreateFromFile(typeof(PluginManager).Assembly.Location))
                 .WithProjectCompilationOptions(projectId, new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
-                .WithProjectParseOptions(projectId, new CSharpParseOptions(LanguageVersion.Experimental));
+                .WithProjectParseOptions(projectId, new CSharpParseOptions(LanguageVersion.CSharp6));
 
             foreach (string assembly in assemblies)
             {
                 string path = "";
                 if (File.Exists((path = Path.Combine(BotAssemblyPath, assembly))) || File.Exists((path = Path.Combine(FrameworkAssemblyPath, assembly))))
                 {
-                    solution = solution.AddMetadataReference(projectId, new MetadataFileReference(path, MetadataImageKind.Assembly));
+                    solution = solution.AddMetadataReference(projectId, MetadataReference.CreateFromFile(path));
                 }
             }
 
@@ -217,11 +217,10 @@ namespace FritzBot.Core
             }
 
             using (var outputAssembly = new MemoryStream())
-            using (var outputPdb = new MemoryStream())
             {
-                compile.Emit(peStream: outputAssembly, pdbStream: outputPdb);
+                compile.Emit(outputAssembly);
 
-                return Assembly.Load(outputAssembly.ToArray(), outputPdb.ToArray());
+                return Assembly.Load(outputAssembly.ToArray());
             }
         }
     }
