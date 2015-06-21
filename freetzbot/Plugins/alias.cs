@@ -240,13 +240,20 @@ namespace FritzBot.Plugins
                                 return;
                             }
                             key = key.ToLower();
-                            List<string> search = context.AliasEntries.Where(x => x.Key.ToLower().Contains(key) || x.Text.ToLower().Contains(key)).Select(x => x.Key).ToList();
+                            List<AliasEntry> search = context.AliasEntries.Where(x => x.Key.ToLower().Contains(key) || x.Text.ToLower().Contains(key)).ToList();
                             if (search.Count == 0)
                             {
                                 theMessage.Answer("Nichts gefunden :(");
                                 return;
                             }
-                            theMessage.Answer("Mögliche Aliase: " + search.Join(", "));
+                            if (search.Count == 1)
+                            {
+                                theMessage.Answer(search[0].Key + ": " + search[0].Text);
+                            }
+                            else
+                            {
+                                theMessage.Answer("Mögliche Aliase: " + search.Select(x => x.Key).Join(", "));
+                            }
                             return;
                         }
                     default:
