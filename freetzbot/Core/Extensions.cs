@@ -1,3 +1,4 @@
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
@@ -20,7 +21,7 @@ namespace FritzBot.Core
                 }
                 catch (Exception ex)
                 {
-                    toolbox.Logging(ex);
+                    Log.Error(ex, "Fehler beim batchen");
                 }
             }
             return list;

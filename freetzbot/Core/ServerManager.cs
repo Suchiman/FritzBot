@@ -1,5 +1,6 @@
 ﻿using FritzBot.Database;
 using Meebey.SmartIrc4net;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
@@ -104,8 +105,7 @@ namespace FritzBot.Core
                 }
                 catch (Exception ex)
                 {
-                    toolbox.Logging("Herstellen der Verbindung zu Server " + theServer.Settings.Address + " fehlgeschlagen");
-                    toolbox.Logging(ex);
+                    Log.Error(ex, "Herstellen der Verbindung zu Server {ServerAddress} fehlgeschlagen", theServer.Settings.Address);
                 }
             }
         }
@@ -297,7 +297,7 @@ namespace FritzBot.Core
 
         void _connection_OnConnectionError(object sender, EventArgs e)
         {
-            toolbox.LogFormat("Verbindung zu Server {0} verloren. Versuche Verbindung wiederherzustellen.", Settings.Address);
+            Log.Error("Verbindung zu Server {ServerAddress} verloren. Versuche Verbindung wiederherzustellen", Settings.Address);
             DateTime TimeConnectionLost = DateTime.Now;
 
             //Wenn wir bis hierhin gekommen sind, wurde eine bestehende Verbindung aus einem externen Grund terminiert
@@ -319,26 +319,19 @@ namespace FritzBot.Core
                 }
                 catch (Exception ex)
                 {
-                    if (ex is CouldNotConnectException && ex.InnerException != null)
-                    {
-                        toolbox.LogFormat("Verbindungsversuch zu {0} gescheitert: {1}", Settings.Address, ex.InnerException.Message);
-                    }
-                    else
-                    {
-                        toolbox.LogFormat("Verbindungsversuch zu {0} gescheitert: {1}", Settings.Address, ex.Message);
-                    }
+                    Log.Error(ex, "Verbindungsversuch zu {ServerAddress} gescheitert", Settings.Address);
                 }
 
                 if (!_connection.IsConnected)
                 {
                     ++ConnectionAttempt;
                     int delay = (ConnectionAttempt - 1) % 3 == 0 ? 30000 : 5000;
-                    toolbox.LogFormat("Nächster Verbindungsversuch ({0}) zu {1}:{2} in {3} Sekunden", ConnectionAttempt, Settings.Address, Settings.Port, delay / 1000);
+                    Log.Information("Nächster Verbindungsversuch ({ConnectionAttempt}) zu {ServerAddress}:{ServerPort} in {Delay} Sekunden", ConnectionAttempt, Settings.Address, Settings.Port, delay / 1000);
                     Thread.Sleep(delay);
                 }
             }
             while (!_connection.IsConnected);
-            toolbox.LogFormat("Verbindung mit {0} nach {1} Sekunden ohne Verbindung und {2} Verbindungsversuchen wiederhergestellt.", Settings.Address, DateTime.Now.Subtract(TimeConnectionLost).TotalSeconds, ConnectionAttempt);
+            Log.Information("Verbindung mit {ServerAddress} nach {TimeConnectionLost} Sekunden ohne Verbindung und {ConnectionAttempt} Verbindungsversuchen wiederhergestellt.", Settings.Address, DateTime.Now.Subtract(TimeConnectionLost).TotalSeconds, ConnectionAttempt);
         }
 
         /// <summary>
@@ -369,7 +362,7 @@ namespace FritzBot.Core
         /// <seealso cref="OnJoin"/>
         private void _connection_OnJoin(object sender, JoinEventArgs e)
         {
-            toolbox.LogFormat("{0} hat den Raum {1} betreten", e.Who, e.Channel);
+            Log.Information("{Nickname} hat den Raum {Channel} betreten", e.Who, e.Channel);
             MaintainUser(e.Who);
 
             ThreadPool.QueueUserWorkItem(x =>
@@ -388,7 +381,7 @@ namespace FritzBot.Core
         /// <seealso cref="OnQuit"/>
         private void _connection_OnQuit(object sender, QuitEventArgs e)
         {
-            toolbox.LogFormat("{0} hat den Server verlassen ({1})", e.Who, e.QuitMessage);
+            Log.Information("{Nickname} hat den Server verlassen ({QuitMessage})", e.Who, e.QuitMessage);
             MaintainUser(e.Who);
 
             ThreadPool.QueueUserWorkItem(x =>
@@ -407,7 +400,7 @@ namespace FritzBot.Core
         /// <seealso cref="OnPart"/>
         private void _connection_OnPart(object sender, PartEventArgs e)
         {
-            toolbox.LogFormat("{0} hat den Raum {1} verlassen", e.Who, e.Channel);
+            Log.Information("{Nickname} hat den Raum {Channel} verlassen", e.Who, e.Channel);
             MaintainUser(e.Who);
 
             ThreadPool.QueueUserWorkItem(x =>
@@ -426,7 +419,7 @@ namespace FritzBot.Core
         /// <seealso cref="OnNickChange"/>
         private void _connection_OnNickChange(object sender, NickChangeEventArgs e)
         {
-            toolbox.LogFormat("{0} heißt jetzt {1}", e.OldNickname, e.NewNickname);
+            Log.Information("{OldNickname} heißt jetzt {NewNickname}", e.OldNickname, e.NewNickname);
             using (var context = new BotContext())
             {
                 User oldNick = context.GetUser(e.OldNickname);
@@ -460,7 +453,7 @@ namespace FritzBot.Core
         /// <seealso cref="OnKick"/>
         private void _connection_OnKick(object sender, KickEventArgs e)
         {
-            toolbox.LogFormat("{0} wurde von {1} aus dem Raum {2} geworfen", e.Who, e.Whom, e.Channel);
+            Log.Information("{Nickname} wurde von {Operator} aus dem Raum {Channel} geworfen", e.Who, e.Whom, e.Channel);
             MaintainUser(e.Who);
 
             ThreadPool.QueueUserWorkItem(x =>
@@ -506,7 +499,7 @@ namespace FritzBot.Core
                         }
                         catch (Exception ex)
                         {
-                            toolbox.Logging(ex);
+                            Log.Error(ex, "HandleCommand fehlgeschlagen");
                         }
                     }
 
@@ -532,15 +525,15 @@ namespace FritzBot.Core
                     {
                         if (message.IsPrivate)
                         {
-                            toolbox.Logging("Von " + message.Source + ": " + message.Message);
+                            Log.Information("Von {Sender}: {Message}", message.Source, message.Message);
                         }
                         else
                         {
-                            toolbox.Logging(message.Source + " " + message.Nickname + ": " + message.Message);
+                            Log.Information("{Channel} {Sender}: {Message}", message.Source, message.Nickname, message.Message);
                         }
-                        foreach (string OneMessage in message.UnloggedMessages)
+                        foreach (var OneMessage in message.UnloggedMessages)
                         {
-                            toolbox.Logging(OneMessage);
+                            Log.Write(OneMessage);
                         }
                     }
                 }
@@ -563,7 +556,7 @@ namespace FritzBot.Core
                 if (_connection.IsConnected)
                 {
                     _connection.Disconnect();
-                    toolbox.Logging("Verbindung zu Server " + Settings.Address + " getrennt");
+                    Log.Information("Verbindung zu Server {ServerAddress} getrennt", Settings.Address);
                 }
                 _connection = null;
             }

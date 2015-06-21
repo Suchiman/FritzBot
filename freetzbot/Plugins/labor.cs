@@ -5,6 +5,7 @@ using FritzBot.Core;
 using FritzBot.Database;
 using FritzBot.DataModel;
 using FritzBot.Functions;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
@@ -157,7 +158,7 @@ namespace FritzBot.Plugins
                     ZipArchiveEntry firmware = archive.Entries.FirstOrDefault(x => x.Name.Contains("_Labor."));
                     if (firmware == null)
                     {
-                        toolbox.LogFormat("Firmware {0} hat keine erkannte Labor Firmware", fw.Item2);
+                        Log.Error("Firmware {Firmware} hat keine erkannte Labor Firmware", fw.Item2);
                         continue;
                     }
 
@@ -225,12 +226,13 @@ namespace FritzBot.Plugins
                 {
                     fallbackDate = lastUpdate.TextContent.Substring(KeywordLetztesUpdate.Length);
                 }
-                IHtmlParagraphElement details = link.Navigate().Result.QuerySelector<IHtmlParagraphElement>("p:contains('Downloadinformationen:')");
+                IDocument detailPage = link.Navigate().Result;
+                IHtmlParagraphElement downloadInformations = detailPage.QuerySelector<IHtmlParagraphElement>("p:contains('Downloadinformationen:')");
 
                 Labordaten daten = new Labordaten();
-                daten.Typ = details.Title.EndsWith(TitleAVM) ? details.Title.Substring(TitleAVM.Length) : details.Title;
-                daten.Version = details.ChildNodes.Where(x => x.TextContent.StartsWith(KeywordVersion)).Select(x => x.TextContent.Substring(KeywordVersion.Length)).FirstOrDefault();
-                daten.Datum = details.ChildNodes.Where(x => x.TextContent.StartsWith(KeywordDatum)).Select(x => x.TextContent.Substring(KeywordDatum.Length)).FirstOrDefault() ?? fallbackDate;
+                daten.Typ = detailPage.Title.EndsWith(TitleAVM) ? detailPage.Title.Remove(detailPage.Title.Length - TitleAVM.Length) : detailPage.Title;
+                daten.Version = downloadInformations.ChildNodes.Where(x => x.TextContent.StartsWith(KeywordVersion)).Select(x => x.TextContent.Substring(KeywordVersion.Length)).FirstOrDefault();
+                daten.Datum = downloadInformations.ChildNodes.Where(x => x.TextContent.StartsWith(KeywordDatum)).Select(x => x.TextContent.Substring(KeywordDatum.Length)).FirstOrDefault() ?? fallbackDate;
                 daten.Url = link.Href;
                 return daten;
             }).ToList();

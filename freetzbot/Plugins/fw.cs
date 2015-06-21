@@ -1,6 +1,7 @@
 using FritzBot.Core;
 using FritzBot.Database;
 using FritzBot.DataModel;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
@@ -43,7 +44,7 @@ namespace FritzBot.Plugins
             }
             catch (Exception ex)
             {
-                toolbox.Logging(ex);
+                Log.Error(ex, "Fehler beim Stoppen von fw");
             }
         }
 

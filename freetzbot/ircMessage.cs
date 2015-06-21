@@ -1,6 +1,8 @@
 using FritzBot.Core;
 using FritzBot.Plugins;
 using Meebey.SmartIrc4net;
+using Serilog.Events;
+using Serilog.Parsing;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
@@ -28,7 +30,7 @@ namespace FritzBot
             Nickname = Data.Nick;
             Source = Data.Channel ?? Data.Nick;
             Answered = false;
-            UnloggedMessages = new Queue<string>(3);
+            UnloggedMessages = new Queue<LogEvent>(3);
             List<string> MessageTmp = Data.MessageArray.Where(x => !String.IsNullOrEmpty(x)).ToList();
             Message = MessageTmp.Join(" ");
             if (Nickname.Contains("#") || Nickname.Contains(".") || ServerConnetion.IrcClient.IsMe(Nickname) || Nickname.ToLower().Contains("nickserv") || Data.Message.Contains("[Global Notice]"))
@@ -163,7 +165,7 @@ namespace FritzBot
         /// <summary>
         /// Bisher ungeloggte IRC Nachrichten
         /// </summary>
-        public Queue<string> UnloggedMessages { get; protected set; }
+        public Queue<LogEvent> UnloggedMessages { get; protected set; }
 
         /// <summary>
         /// Die Quelle der Nachricht (#channel oder Nickname)
@@ -193,7 +195,7 @@ namespace FritzBot
         {
             Answered = true;
             ServerConnetion.IrcClient.SendMessage(SendType.Message, Source, Message);
-            UnloggedMessages.Enqueue(String.Format("An {0}: {1}", ForcedPrivat ? Nickname : Source, Message));
+            UnloggedMessages.Enqueue(new LogEvent(DateTimeOffset.Now, LogEventLevel.Information, null, new MessageTemplate("An {Receiver}: {Message}", new[] { new TextToken(ForcedPrivat ? Nickname : Source), new TextToken(Message) }), Enumerable.Empty<LogEventProperty>()));
         }
 
         /// <summary>
@@ -204,7 +206,7 @@ namespace FritzBot
         {
             Answered = true;
             ServerConnetion.IrcClient.SendMessage(SendType.Action, Source, Message);
-            UnloggedMessages.Enqueue(String.Format("An {0}: ***{1}***", ForcedPrivat ? Nickname : Source, Message));
+            UnloggedMessages.Enqueue(new LogEvent(DateTimeOffset.Now, LogEventLevel.Information, null, new MessageTemplate("An {Receiver}: ***{Message}***", new[] { new TextToken(ForcedPrivat ? Nickname : Source), new TextToken(Message) }), Enumerable.Empty<LogEventProperty>()));
         }
 
         /// <summary>
@@ -215,7 +217,7 @@ namespace FritzBot
         {
             Answered = true;
             ServerConnetion.IrcClient.SendMessage(SendType.Message, Nickname, Message);
-            UnloggedMessages.Enqueue(String.Format("An {0}: {1}", Nickname, Message));
+            UnloggedMessages.Enqueue(new LogEvent(DateTimeOffset.Now, LogEventLevel.Information, null, new MessageTemplate("An {Receiver}: {Message}", new[] { new TextToken(Nickname), new TextToken(Message) }), Enumerable.Empty<LogEventProperty>()));
         }
 
         /// <summary>
@@ -226,7 +228,7 @@ namespace FritzBot
         {
             Answered = true;
             ServerConnetion.IrcClient.SendMessage(SendType.Action, Nickname, Message);
-            UnloggedMessages.Enqueue(String.Format("An {0}: {1}", Nickname, Message));
+            UnloggedMessages.Enqueue(new LogEvent(DateTimeOffset.Now, LogEventLevel.Information, null, new MessageTemplate("An {Receiver}: ***{Message}***", new[] { new TextToken(Nickname), new TextToken(Message) }), Enumerable.Empty<LogEventProperty>()));
         }
 
         public override string ToString()

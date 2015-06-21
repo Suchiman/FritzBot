@@ -1,5 +1,6 @@
 using FritzBot.Core;
 using FritzBot.DataModel;
+using Serilog;
 using System;
 using System.IO;
 using System.Net;
@@ -32,7 +33,7 @@ namespace FritzBot.Plugins
                     catch (Exception ex)
                     {
                         theMessage.Answer("Beim Downloaden ist leider ein Fehler aufgetreten");
-                        toolbox.Logging(ex);
+                        Log.Error(ex, "Downloaden der Quelldatei fehlgeschlagen");
                         return;
                     }
                 }
@@ -46,7 +47,7 @@ namespace FritzBot.Plugins
                     catch (Exception ex)
                     {
                         theMessage.Answer("Das Kompilieren der Quelldatei ist leider fehlgeschlagen...");
-                        toolbox.Logging(ex);
+                        Log.Error(ex, "Kompilieren der Quelldatei fehlgeschlagen");
                         return;
                     }
                 }

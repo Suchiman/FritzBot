@@ -1,4 +1,5 @@
 ﻿using FritzBot.Database;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
@@ -24,8 +25,7 @@ namespace FritzBot.DataModel
             }
             catch (Exception ex)
             {
-                toolbox.Logging("Fehler beim Laden der BoxDatabase");
-                toolbox.Logging(ex);
+                Log.Error(ex, "Fehler beim Laden der BoxDatabase");
             }
         }
 

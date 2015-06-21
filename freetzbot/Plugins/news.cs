@@ -3,6 +3,7 @@ using AngleSharp.Dom;
 using AngleSharp.Dom.Html;
 using FritzBot.Core;
 using FritzBot.DataModel;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
@@ -90,12 +91,12 @@ namespace FritzBot.Plugins
                 {
                     if (i == 1 || i % 100 == 0)
                     {
-                        toolbox.LogFormat("Fehler beim Laden der News, Versuch {0}: {1}", i, ex.Message);
+                        Log.Error(ex, "Fehler beim Laden der News, Versuch {Try}", i);
                     }
                     Thread.Sleep(5000);
                 }
             }
-            
+
             var news = document.QuerySelectorAll<IHtmlTableElement>("table[bgcolor='F6F6F6']").Select(x =>
             {
                 NewsEntry entry = new NewsEntry();

@@ -1,6 +1,7 @@
 using AngleSharp;
 using AngleSharp.Dom;
 using FritzBot.DataModel;
+using Serilog;
 using System;
 using System.Text.RegularExpressions;
 
@@ -22,9 +23,8 @@ namespace FritzBot.Plugins
             }
             catch (Exception ex)
             {
-                theMessage.Answer("Leider war es mir nicht möglich auf die Freetz Webseite zuzugreifen");
-                //theMessage.Answer("Das parsen der Freetz Webseite schlug fehl. Möglicherweise wurde die Struktur geändert oder es trat ein anderer Fehler auf.");
-                toolbox.Logging(ex);
+                theMessage.Answer("Das parsen oder Zugreifen auf die Freetz Webseite schlug fehl. Möglicherweise wurde die Struktur geändert oder es trat ein anderer Fehler auf.");
+                Log.Error(ex, "Zugriff auf die Freetz Webseite fehlgeschlagen");
             }
         }
     }

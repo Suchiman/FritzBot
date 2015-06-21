@@ -2,6 +2,7 @@ using FritzBot.Core;
 using FritzBot.Database;
 using FritzBot.DataModel;
 using Meebey.SmartIrc4net;
+using Serilog;
 using System;
 using System.Threading;
 
@@ -62,7 +63,7 @@ namespace FritzBot.Plugins
             }
             catch (Exception ex)
             {
-                toolbox.Logging("Da ist etwas beim erfragen der Box schiefgelaufen:" + ex.Message);
+                Log.Error(ex, "Da ist etwas beim erfragen der Box schiefgelaufen");
             }
         }
     }

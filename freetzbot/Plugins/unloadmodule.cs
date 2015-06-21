@@ -1,5 +1,6 @@
 using FritzBot.Core;
 using FritzBot.DataModel;
+using Serilog;
 using System;
 
 namespace FritzBot.Plugins
@@ -20,7 +21,7 @@ namespace FritzBot.Plugins
             }
             catch (Exception ex)
             {
-                toolbox.Logging(ex);
+                Log.Error(ex, "Fehler beim entladen des Plugins");
             }
         }
     }

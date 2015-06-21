@@ -1,5 +1,6 @@
 ﻿using FritzBot.Core;
 using FritzBot.Database;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
@@ -14,90 +15,6 @@ namespace FritzBot
 {
     public static class toolbox
     {
-        private static Thread LoggingThread = new Thread(LogThread);
-        private static Queue<string> LoggingList = new Queue<string>();
-        private static readonly object _LogThreadLocker = new object();
-        private static readonly object _LoggingLocker = new object();
-
-        private static void LogThread()
-        {
-            while (true)
-            {
-                try
-                {
-                    lock (_LogThreadLocker)
-                    {
-                        while (!(LoggingList.Count > 0))
-                        {
-                            Monitor.Wait(_LogThreadLocker);
-                        }
-                    }
-                    FileInfo loginfo = new FileInfo("log.txt");
-                    if (loginfo.Exists)
-                    {
-                        if (loginfo.Length >= 1048576)
-                        {
-                            if (!Directory.Exists("oldlogs"))
-                            {
-                                Directory.CreateDirectory("oldlogs");
-                            }
-                            if (!File.Exists("oldlogs/log" + DateTime.Now.Day + "." + DateTime.Now.Month + ".txt"))
-                            {
-                                loginfo.MoveTo("oldlogs/log" + DateTime.Now.Day + "." + DateTime.Now.Month + ".txt");
-                            }
-                        }
-                    }
-                    File.AppendAllText("log.txt", LoggingList.Peek() + "\r\n", Encoding.GetEncoding("iso-8859-1"));
-                    Console.WriteLine(LoggingList.Dequeue());
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Fehler beim Zugriff auf den Serverlog: " + ex.Message);
-                    return;
-                }
-            }
-        }
-
-        public static void Logging(Exception ex)
-        {
-            if (ex is ThreadAbortException)
-            {
-                return;
-            }
-            LogFormat("Es ist eine Exception aufgetreten: {0} \r\n {1}", ex.Message, ex.StackTrace);
-            Exception inner = ex.InnerException;
-            while (inner != null)
-            {
-                LogFormat("    InnerException: {0} \r\n {1}", inner.Message, inner.StackTrace);
-                inner = inner.InnerException;
-            }
-        }
-
-        public static void Logging(string toLog)
-        {
-            lock (_LogThreadLocker)
-            {
-                try
-                {
-                    if (!LoggingThread.IsAlive)
-                    {
-                        LoggingThread = SafeThreadStart("LoggingThread", true, LogThread);
-                    }
-                    LoggingList.Enqueue(DateTime.Now.ToString("dd.MM HH:mm:ss ") + toLog);
-                    Monitor.Pulse(_LogThreadLocker);
-                }
-                catch (Exception ex)
-                {
-                    Logging("Exception beim logging aufgetreten: " + ex.Message);
-                }
-            }
-        }
-
-        public static void LogFormat(string toLog, params object[] args)
-        {
-            Logging(String.Format(toLog, args));
-        }
-
         /// <summary>
         /// Hasht einen string mit dem SHA512 Algorithmus
         /// </summary>
@@ -165,7 +82,7 @@ namespace FritzBot
             }
             catch (Exception ex)
             {
-                Logging("Exception beim Webseiten Aufruf aufgetreten: " + ex.Message);
+                Log.Error(ex, "Exception beim Webseiten Aufruf");
                 return "";
             }
             string theEncoding = "UTF-8";
@@ -260,7 +177,7 @@ namespace FritzBot
                         {
                             return;
                         }
-                        Logging(ex);
+                        Log.Error(ex, "Fehler beim ausführen eines Threads");
                     }
                 } while (restartOnException);
             })

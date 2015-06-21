@@ -2,6 +2,7 @@ using AngleSharp;
 using AngleSharp.Dom;
 using FritzBot.Core;
 using FritzBot.DataModel;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -44,7 +45,7 @@ namespace FritzBot.Plugins
             }
             catch (Exception ex)
             {
-                toolbox.Logging(ex);
+                Log.Error(ex, "Fehler beim Downloaden der Webseite");
             }
         }
 

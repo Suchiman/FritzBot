@@ -1,8 +1,10 @@
 using FritzBot.Core;
 using FritzBot.Database;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.IO;
 using System.Linq;
 using System.Threading;
 
@@ -70,7 +72,7 @@ namespace FritzBot
                             }
                             catch (Exception ex)
                             {
-                                toolbox.Logging("Das Plugin " + info.Names.FirstOrDefault() + " hat eine nicht abgefangene Exception ausgelöst: " + ex.Message + "\r\n" + ex.StackTrace);
+                                Log.Error(ex, "Das Plugin {PluginName} hat eine nicht abgefangene Exception ausgelöst", info.Names.FirstOrDefault());
                                 theMessage.Answer("Oh... tut mir leid. Das Plugin hat einen internen Ausnahmefehler ausgelöst");
                             }
                             theMessage.ProcessedByCommand = true;
@@ -92,7 +94,7 @@ namespace FritzBot
             }
             catch (Exception ex)
             {
-                toolbox.Logging("Eine Exception ist beim Ausführen eines Befehles abgefangen worden: " + ex.Message);
+                Log.Error(ex, "Eine Exception ist beim Ausführen eines Befehles abgefangen worden");
             }
         }
 
@@ -188,7 +190,7 @@ namespace FritzBot
             catch (Exception ex)
             {
                 Console.WriteLine("Das war nicht erfolgreich: ");
-                toolbox.Logging(ex);
+                Log.Error(ex, "Fehler beim Herstellen einer Verbindung zum IRC Server");
             }
         }
 
@@ -197,13 +199,18 @@ namespace FritzBot
             RestartFlag = false;
             ShutdownSignal = new AutoResetEvent(false);
 
+            Log.Logger = new LoggerConfiguration()
+                .WriteTo.ColoredConsole(outputTemplate: "{Timestamp:dd.MM HH:mm:ss} {Message}{NewLine}{Exception}")
+                .ReadFrom.AppSettings()
+                .CreateLogger();
+
             PluginManager.BeginInit(true);
 
             //System.Data.Entity.Database.SetInitializer(new MigrateDatabaseToLatestVersion<BotContext, Configuration>());
             using (var context = new BotContext())
             {
                 int count = context.Users.Count();
-                toolbox.Logging(count + " Benutzer geladen!");
+                Log.Information("{UserCount} Benutzer geladen!", count);
             }
 
             if (ServerManager.ConnectionCount == 0)

@@ -2,6 +2,7 @@ using FritzBot.DataModel;
 using FritzBot.Plugins;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -122,9 +123,9 @@ namespace FritzBot.Core
                     Assembly Compiled = LoadSource(allFiles);
                     allTypes.AddRange(Compiled.GetTypes());
                 }
-                catch
+                catch (Exception ex)
                 {
-                    toolbox.Logging("Das Laden der Source Module ist fehlgeschlagen und werden deshalb nicht zur Verfügung stehen!");
+                    Log.Error(ex, "Das Laden der Source Module ist fehlgeschlagen und werden deshalb nicht zur Verfügung stehen!");
                 }
             }
             allTypes.AddRange(Bot.GetTypes().Where(x => !allTypes.Contains(x, y => y.FullName)));
@@ -207,8 +208,19 @@ namespace FritzBot.Core
             bool error = false;
             foreach (Diagnostic diag in diagnostics)
             {
-                error |= diag.Severity == DiagnosticSeverity.Error;
-                toolbox.Logging(diag.ToString());
+                switch (diag.Severity)
+                {
+                    case DiagnosticSeverity.Info:
+                        Log.Information(diag.ToString());
+                        break;
+                    case DiagnosticSeverity.Warning:
+                        Log.Warning(diag.ToString());
+                        break;
+                    case DiagnosticSeverity.Error:
+                        error = true;
+                        Log.Error(diag.ToString());
+                        break;
+                }
             }
 
             if (error)

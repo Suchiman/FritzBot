@@ -1,4 +1,5 @@
 using FritzBot.DataModel;
+using Serilog;
 using System;
 using System.Diagnostics;
 using System.Reflection;
@@ -36,7 +37,7 @@ namespace FritzBot.Plugins
                 }
                 catch (Exception ex)
                 {
-                    toolbox.Logging(ex);
+                    Log.Error(ex, "Abrufen der Kernelversion fehlgeschlagen");
                 }
             }
             GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;

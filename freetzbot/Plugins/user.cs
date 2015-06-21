@@ -1,6 +1,7 @@
 using FritzBot.Core;
 using FritzBot.Database;
 using FritzBot.DataModel;
+using Serilog;
 using System;
 using System.Linq;
 
@@ -59,7 +60,7 @@ namespace FritzBot.Plugins
             }
             catch (Exception ex)
             {
-                toolbox.Logging("Bei einer Datenbank Operation ist eine Exception aufgetreten: " + ex.Message);
+                Log.Error(ex, "Bei einer Datenbank Operation ist eine Exception aufgetreten");
                 theMessage.Answer("Wups, das hat eine Exception verursacht");
             }
         }
