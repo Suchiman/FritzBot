@@ -155,7 +155,7 @@ namespace FritzBot.Plugins
                 using (Stream file = File.OpenRead(fw.Item2))
                 using (ZipArchive archive = new ZipArchive(file, ZipArchiveMode.Read))
                 {
-                    ZipArchiveEntry firmware = archive.Entries.FirstOrDefault(x => x.Name.Contains("_Labor."));
+                    ZipArchiveEntry firmware = archive.Entries.FirstOrDefault(x => x.Name.Contains("_Labor.") || x.Name.Contains(".Labor.") || x.Name.Contains("_LabBETA.") || x.Name.Contains(".LabBETA."));
                     if (firmware == null)
                     {
                         Log.Error("Firmware {Firmware} hat keine erkannte Labor Firmware", fw.Item2);
@@ -164,7 +164,7 @@ namespace FritzBot.Plugins
 
                     string RawName = firmware.Name;
 
-                    fw.Item1.Version = Regex.Match(RawName, @"_Labor.((\d{2,3}\.)?\d\d\.\d\d(-\d{1,6})?).image$").Groups[1].Value;
+                    fw.Item1.Version = Regex.Match(RawName, @"((\d{2,3}\.)?\d\d\.\d\d(-\d{1,6})?).image$").Groups[1].Value;
                     string tmp;
                     if (!BoxDatabase.TryGetShortName(RawName, out tmp))
                     {
