@@ -1,6 +1,7 @@
 ﻿using FritzBot.Database;
 using Meebey.SmartIrc4net;
 using Serilog;
+using Serilog.Events;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
@@ -478,6 +479,8 @@ namespace FritzBot.Core
                 return;
             }
 
+            DateTimeOffset received = DateTimeOffset.Now;
+
             ThreadPool.QueueUserWorkItem(x =>
             {
                 User user = MaintainUser(e.Data.Nick);
@@ -525,11 +528,11 @@ namespace FritzBot.Core
                     {
                         if (message.IsPrivate)
                         {
-                            Log.Information("Von {Sender}: {Message}", message.Source, message.Message);
+                            Log.Write(SerilogHack.CreateLogEvent(received, LogEventLevel.Information, null, "Von {Sender:l}: {Message:l}", message.Source, message.Message));
                         }
                         else
                         {
-                            Log.Information("{Channel} {Sender}: {Message}", message.Source, message.Nickname, message.Message);
+                            Log.Write(SerilogHack.CreateLogEvent(received, LogEventLevel.Information, null, "{Channel:l} {Sender:l}: {Message:l}", message.Source, message.Nickname, message.Message));
                         }
                         foreach (var OneMessage in message.UnloggedMessages)
                         {

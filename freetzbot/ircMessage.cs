@@ -2,7 +2,6 @@ using FritzBot.Core;
 using FritzBot.Plugins;
 using Meebey.SmartIrc4net;
 using Serilog.Events;
-using Serilog.Parsing;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
@@ -195,7 +194,7 @@ namespace FritzBot
         {
             Answered = true;
             ServerConnetion.IrcClient.SendMessage(SendType.Message, Source, Message);
-            UnloggedMessages.Enqueue(new LogEvent(DateTimeOffset.Now, LogEventLevel.Information, null, new MessageTemplate("An {Receiver}: {Message}", new[] { new TextToken(ForcedPrivat ? Nickname : Source), new TextToken(Message) }), Enumerable.Empty<LogEventProperty>()));
+            UnloggedMessages.Enqueue(SerilogHack.CreateLogEvent(DateTimeOffset.Now, LogEventLevel.Information, null, "An {Receiver:l}: {Message:l}", ForcedPrivat ? Nickname : Source, Message));
         }
 
         /// <summary>
@@ -206,7 +205,7 @@ namespace FritzBot
         {
             Answered = true;
             ServerConnetion.IrcClient.SendMessage(SendType.Action, Source, Message);
-            UnloggedMessages.Enqueue(new LogEvent(DateTimeOffset.Now, LogEventLevel.Information, null, new MessageTemplate("An {Receiver}: ***{Message}***", new[] { new TextToken(ForcedPrivat ? Nickname : Source), new TextToken(Message) }), Enumerable.Empty<LogEventProperty>()));
+            UnloggedMessages.Enqueue(SerilogHack.CreateLogEvent(DateTimeOffset.Now, LogEventLevel.Information, null, "An {Receiver:l}: ***{Message:l}***", ForcedPrivat ? Nickname : Source, Message));
         }
 
         /// <summary>
@@ -217,7 +216,7 @@ namespace FritzBot
         {
             Answered = true;
             ServerConnetion.IrcClient.SendMessage(SendType.Message, Nickname, Message);
-            UnloggedMessages.Enqueue(new LogEvent(DateTimeOffset.Now, LogEventLevel.Information, null, new MessageTemplate("An {Receiver}: {Message}", new[] { new TextToken(Nickname), new TextToken(Message) }), Enumerable.Empty<LogEventProperty>()));
+            UnloggedMessages.Enqueue(SerilogHack.CreateLogEvent(DateTimeOffset.Now, LogEventLevel.Information, null, "An {Receiver:l}: {Message:l}", Nickname, Message));
         }
 
         /// <summary>
@@ -228,7 +227,7 @@ namespace FritzBot
         {
             Answered = true;
             ServerConnetion.IrcClient.SendMessage(SendType.Action, Nickname, Message);
-            UnloggedMessages.Enqueue(new LogEvent(DateTimeOffset.Now, LogEventLevel.Information, null, new MessageTemplate("An {Receiver}: ***{Message}***", new[] { new TextToken(Nickname), new TextToken(Message) }), Enumerable.Empty<LogEventProperty>()));
+            UnloggedMessages.Enqueue(SerilogHack.CreateLogEvent(DateTimeOffset.Now, LogEventLevel.Information, null, "An {Receiver:l}: ***{Message:l}***", Nickname, Message));
         }
 
         public override string ToString()

@@ -169,6 +169,7 @@
   <ItemGroup>
     <Compile Include="Core\BoxManager.cs" />
     <Compile Include="Core\ConfigHelper.cs" />
+    <Compile Include="Core\SerilogHack.cs" />
     <Compile Include="Database\AliasEntry.cs" />
     <Compile Include="Database\BotContext.cs" />
     <Compile Include="Database\BotContextExtensions.cs" />
