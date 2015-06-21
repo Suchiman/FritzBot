@@ -1,4 +1,6 @@
-using CsQuery;
+using AngleSharp;
+using AngleSharp.Dom;
+using AngleSharp.Dom.Html;
 using FritzBot.Core;
 using FritzBot.DataModel;
 using System;
@@ -71,17 +73,17 @@ namespace FritzBot.Plugins
             }
         }
 
-        private List<NewsEntry> GetNews(string Url)
+        private static List<NewsEntry> GetNews(string Url)
         {
             Contract.Requires(Url != null);
             Contract.Ensures(Contract.Result<List<NewsEntry>>() != null);
 
-            CQ doc = null;
+            IDocument document = null;
             for (int i = 1; true; i++)
             {
                 try
                 {
-                    doc = CQ.CreateFromUrl(Url);
+                    document = BrowsingContext.New(Configuration.Default.WithDefaultLoader()).OpenAsync(Url).Result;
                     break;
                 }
                 catch (Exception ex)
@@ -93,8 +95,23 @@ namespace FritzBot.Plugins
                     Thread.Sleep(5000);
                 }
             }
+            
+            var news = document.QuerySelectorAll<IHtmlTableElement>("table[bgcolor='F6F6F6']").Select(x =>
+            {
+                NewsEntry entry = new NewsEntry();
 
-            return doc.Select("table[bgcolor='F6F6F6']").Select(x => new NewsEntry(x.Cq())).ToList();
+                entry.Titel = x.QuerySelector<IHtmlSpanElement>("span.uberschriftblau").TextContent.Trim();
+                string[] SuperInfos = x.QuerySelectorAll<IHtmlTableRowElement>("table[bgcolor='#FFFFFF'] table tr").ElementAt(2).QuerySelectorAll<IHtmlTableCellElement>("td.newsfont").Select(s => s.TextContent.Trim()).Where(w => !String.IsNullOrEmpty(w)).ToArray();
+                if (SuperInfos.Length < 2)
+                {
+                    throw new Exception("Der News Beitrag konnte nicht geparsed werden");
+                }
+                entry.Version = SuperInfos[1];
+                entry.Datum = DateTime.Parse(SuperInfos[3]);
+
+                return entry;
+            }).ToList();
+            return news;
         }
     }
 
@@ -103,18 +120,6 @@ namespace FritzBot.Plugins
         public string Titel;
         public string Version;
         public DateTime Datum;
-
-        public NewsEntry(CQ node)
-        {
-            Titel = node.Find("span.uberschriftblau").Text().Trim();
-            string[] SuperInfos = node.Find("table[bgcolor='#FFFFFF']").Find("table").Find("tr").Skip(2).First().Cq().Find("td.newsfont").Select(x => x.Cq().Text().Trim()).Where(x => !String.IsNullOrEmpty(x)).ToArray();
-            if (SuperInfos.Length < 2)
-            {
-                throw new Exception("Der News Beitrag konnte nicht geparsed werden");
-            }
-            Version = SuperInfos[1];
-            Datum = DateTime.Parse(SuperInfos[3]);
-        }
 
         public override bool Equals(object obj)
         {

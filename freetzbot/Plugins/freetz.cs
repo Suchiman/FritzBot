@@ -1,4 +1,6 @@
-using CsQuery;
+using AngleSharp;
+using AngleSharp.Dom;
+using AngleSharp.Dom.Html;
 using FritzBot.Core;
 using FritzBot.DataModel;
 using FritzBot.Functions;
@@ -108,8 +110,12 @@ namespace FritzBot.Plugins
         {
             try
             {
-                CQ document = CQ.CreateFromUrl(PackagesPage);
-                return document.Select("table.wiki").Find("a.wiki").Where(x => x.InnerTextAllowed).Distinct(x => x.InnerText).Select(x => new FreetzPackage { Name = x.InnerText, RelativUrl = x.GetAttribute("href", "") }).ToList();
+                IDocument document = BrowsingContext.New(Configuration.Default.WithDefaultLoader()).OpenAsync(PackagesPage).Result;
+                return document.QuerySelectorAll<IHtmlAnchorElement>("table.wiki a.wiki").Select(x => new FreetzPackage
+                {
+                    Name = x.Text,
+                    RelativUrl = x.ClassList.Contains("missing") ? null : x.Href
+                }).ToList();
             }
             catch
             {

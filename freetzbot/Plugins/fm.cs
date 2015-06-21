@@ -1,4 +1,6 @@
-using CsQuery;
+using AngleSharp;
+using AngleSharp.Dom;
+using AngleSharp.Dom.Html;
 using FritzBot.Core;
 using FritzBot.DataModel;
 using FritzBot.Functions;
@@ -176,8 +178,42 @@ namespace FritzBot.Plugins
         {
             try
             {
-                CQ document = CQ.CreateFromUrl(ModelPage);
-                return document.Select("table.wiki").Find("tr").Where(x => !x.Cq().Find("td").First().Text().In("", " Modell ")).Select(x => new TableBox(x)).Distinct(x => x.FreetzType).ToDictionary(k => k.FreetzType, v => v, StringComparer.OrdinalIgnoreCase);
+                IDocument document = BrowsingContext.New(Configuration.Default.WithDefaultLoader()).OpenAsync(ModelPage).Result;
+
+                string PreviousName = null;
+                return document.QuerySelector<IHtmlTableElement>("table.wiki").Rows.Where(x => x.Cells.Length == 10 && !x.Cells[0].TextContent.Contains("Modell")).Select(row =>
+                {
+                    var cells = row.Cells;
+
+                    TableBox box = new TableBox();
+                    box.Name = cells[0].TextContent.Trim();
+
+                    //Wenn die Zelle nur + enthält dann ist damit der name der vorherigen Zeile gemeint
+                    if (box.Name == "+" && !String.IsNullOrEmpty(PreviousName))
+                    {
+                        box.Name = PreviousName;
+                    }
+                    PreviousName = box.Name;
+
+                    box.FreetzType = cells[1].TextContent.Trim();
+
+                    IHtmlAnchorElement link = cells[1].ChildNodes.OfType<IHtmlAnchorElement>().FirstOrDefault();
+                    if (link != null && !link.ClassList.Contains("missing"))
+                    {
+                        box.Url = link.Href;
+                    }
+
+                    box.AngepassteFirmware = cells[2].TextContent.Trim();
+                    box.FreetzVersion = cells[3].TextContent.Trim();
+                    box.Annex = cells[4].TextContent.Trim();
+                    box.Sprache = cells[5].TextContent.Trim();
+                    box.CPU = cells[6].TextContent.Trim();
+                    box.Flash = cells[7].TextContent.Trim();
+                    box.RAM = cells[8].TextContent.Trim();
+                    box.USBHost = cells[9].TextContent.Trim();
+
+                    return box;
+                }).Distinct(x => x.FreetzType).ToDictionary(k => k.FreetzType, v => v, StringComparer.OrdinalIgnoreCase);
             }
             catch
             {
@@ -193,8 +229,6 @@ namespace FritzBot.Plugins
 
     class TableBox
     {
-        private static string LastName = null;
-
         public string Name { get; set; }
 
         public string Url { get; set; }
@@ -216,41 +250,5 @@ namespace FritzBot.Plugins
         public string RAM { get; set; }
 
         public string USBHost { get; set; }
-
-        public TableBox(IDomObject x)
-        {
-            List<IDomObject> TableRows = x.Cq().Find("td").ToList();
-            Name = TableRows[0].InnerText.Trim();
-
-            if (Name == "+" && !String.IsNullOrEmpty(LastName))
-            {
-                Name = LastName;
-            }
-
-            LastName = Name;
-
-            FreetzType = TableRows[1].Cq().Text().Trim();
-            CQ link = TableRows[1].Cq().Find("a");
-            if (link.Any())
-            {
-                Url = link.Attr("href");
-            }
-
-            AngepassteFirmware = TableRows[2].InnerText.Trim();
-
-            FreetzVersion = TableRows[3].InnerText.Trim();
-
-            Annex = TableRows[4].InnerText.Trim();
-
-            Sprache = TableRows[5].InnerText.Trim();
-
-            CPU = TableRows[6].InnerText.Trim();
-
-            Flash = TableRows[7].InnerText.Trim();
-
-            RAM = TableRows[8].InnerText.Trim();
-
-            USBHost = TableRows[9].InnerText.Trim();
-        }
     }
 }

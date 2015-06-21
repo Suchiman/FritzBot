@@ -1,5 +1,6 @@
-using CsQuery;
-using CsQuery.Implementation;
+using AngleSharp;
+using AngleSharp.Dom;
+using AngleSharp.Dom.Html;
 using FritzBot.Core;
 using FritzBot.Database;
 using FritzBot.DataModel;
@@ -66,15 +67,15 @@ namespace FritzBot.Plugins
 
             if (String.IsNullOrEmpty(theMessage.CommandLine))
             {
-                theMessage.Answer("Aktuelle Labor Daten: " + daten.Select(x => String.Format("{0}: {1}", x.typ, x.datum)).Join(", ") + " - Zum Labor: " + toolbox.ShortUrl("http://www.avm.de/de/Service/Service-Portale/Labor/index.php"));
+                theMessage.Answer("Aktuelle Labor Daten: " + daten.Select(x => String.Format("{0}: {1}", x.Typ, x.Datum)).Join(", ") + " - Zum Labor: " + toolbox.ShortUrl("http://www.avm.de/de/Service/Service-Portale/Labor/index.php"));
             }
             else
             {
                 string BoxName = BoxDatabase.GetShortName(theMessage.CommandLine);
-                Labordaten first = daten.FirstOrDefault(x => x.typ == BoxName);
+                Labordaten first = daten.FirstOrDefault(x => x.Typ == BoxName);
                 if (first != null)
                 {
-                    theMessage.Answer(String.Format("Die neueste {0} labor Version ist am {1} erschienen mit der Versionsnummer: {2} - Laborseite: {3}", first.typ, first.datum, first.version, first.url));
+                    theMessage.Answer(String.Format("Die neueste {0} labor Version ist am {1} erschienen mit der Versionsnummer: {2} - Laborseite: {3}", first.Typ, first.Datum, first.Version, first.Url));
                 }
                 else
                 {
@@ -102,7 +103,7 @@ namespace FritzBot.Plugins
                     List<Labordaten> unEquals = GetDifferentLabors(alte, neue);
                     if (unEquals.Count > 0)
                     {
-                        string labors = "Neue Labor Versionen gesichtet! - " + unEquals.Select(x => String.Format("{0} ({1})", x.typ, x.version)).Join(", ") + " - Zum Labor: " + toolbox.ShortUrl("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
+                        string labors = "Neue Labor Versionen gesichtet! - " + unEquals.Select(x => String.Format("{0} ({1})", x.Typ, x.Version)).Join(", ") + " - Zum Labor: " + toolbox.ShortUrl("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
                         ServerManager.AnnounceGlobal(labors);
                         NotifySubscribers(labors);
                         alte = neue;
@@ -133,8 +134,8 @@ namespace FritzBot.Plugins
                 foreach (FtpListItem file in files)
                 {
                     Labordaten daten = new Labordaten();
-                    daten.datum = (file.Modified == DateTime.MinValue && ftp.HasFeature(FtpCapability.MDTM) ? ftp.GetModifiedTime(file.FullName) : file.Modified).ToString("dd.MM.yyyy HH:mm:ss");
-                    daten.url = "ftp://ftp.avm.de" + file.FullName;
+                    daten.Datum = (file.Modified == DateTime.MinValue && ftp.HasFeature(FtpCapability.MDTM) ? ftp.GetModifiedTime(file.FullName) : file.Modified).ToString("dd.MM.yyyy HH:mm:ss");
+                    daten.Url = "ftp://ftp.avm.de" + file.FullName;
 
                     string target = Path.Combine(Environment.CurrentDirectory, "betaCache", file.Name);
                     if (!File.Exists(target))
@@ -162,17 +163,22 @@ namespace FritzBot.Plugins
 
                     string RawName = firmware.Name;
 
-                    fw.Item1.version = Regex.Match(RawName, @"_Labor.((\d{2,3}\.)?\d\d\.\d\d(-\d{1,6})?).image$").Groups[1].Value;
-                    if (!BoxDatabase.TryGetShortName(RawName, out fw.Item1.typ))
+                    fw.Item1.Version = Regex.Match(RawName, @"_Labor.((\d{2,3}\.)?\d\d\.\d\d(-\d{1,6})?).image$").Groups[1].Value;
+                    string tmp;
+                    if (!BoxDatabase.TryGetShortName(RawName, out tmp))
                     {
                         if (RawName.LastIndexOf(' ') != -1)
                         {
-                            fw.Item1.typ = RawName.Substring(RawName.LastIndexOf(' ')).Trim();
+                            fw.Item1.Typ = RawName.Substring(RawName.LastIndexOf(' ')).Trim();
                         }
                         else
                         {
-                            fw.Item1.typ = RawName.Trim();
+                            fw.Item1.Typ = RawName.Trim();
                         }
+                    }
+                    else
+                    {
+                        fw.Item1.Typ = tmp;
                     }
                 }
             }
@@ -203,11 +209,32 @@ namespace FritzBot.Plugins
             return neue.Where(neu => !alte.Any(alt => alt == neu)).ToList();
         }
 
+        private const string KeywordVersion = "Version: ";
+        private const string KeywordDatum = "Datum: ";
+        private const string KeywordLetztesUpdate = "Letzte Aktualisierung: ";
+        private const string TitleAVM = " | AVM Deutschland";
         private List<Labordaten> UpdateLaborCache(List<Labordaten> AlteLaborDaten)
         {
-            CQ LaborStartSeite = CQ.CreateFromUrl(labor.BaseUrl);
-            CQ Labors = LaborStartSeite.Select("#content-section").Find("div.csc-space-after-1").Find("div.csc-default");
-            List<Labordaten> NeueLaborDaten = Labors.Find("a.button-link").Select(x => x.GetAttribute("href")).Where(x => x != null && x.StartsWith("fritz-labor/")).SelectMany(x => Labordaten.GetDaten(x)).ToList();
+            var context = BrowsingContext.New(Configuration.Default.WithDefaultLoader());
+            IDocument LaborStartSeite = context.OpenAsync(BaseUrl).Result;
+            List<Labordaten> NeueLaborDaten = LaborStartSeite.QuerySelectorAll<IHtmlAnchorElement>("#content-section div.csc-space-after-1 div.csc-default a.button-link").Where(x => x.Href.Contains("/fritz-labor/")).Select(link =>
+            {
+                string fallbackDate = null;
+                var lastUpdate = link.ParentElement.PreviousElementSibling;
+                if (lastUpdate.TextContent.StartsWith(KeywordLetztesUpdate))
+                {
+                    fallbackDate = lastUpdate.TextContent.Substring(KeywordLetztesUpdate.Length);
+                }
+                IHtmlParagraphElement details = link.Navigate().Result.QuerySelector<IHtmlParagraphElement>("p:contains('Downloadinformationen:')");
+
+                Labordaten daten = new Labordaten();
+                daten.Typ = details.Title.EndsWith(TitleAVM) ? details.Title.Substring(TitleAVM.Length) : details.Title;
+                daten.Version = details.ChildNodes.Where(x => x.TextContent.StartsWith(KeywordVersion)).Select(x => x.TextContent.Substring(KeywordVersion.Length)).FirstOrDefault();
+                daten.Datum = details.ChildNodes.Where(x => x.TextContent.StartsWith(KeywordDatum)).Select(x => x.TextContent.Substring(KeywordDatum.Length)).FirstOrDefault() ?? fallbackDate;
+                daten.Url = link.Href;
+                return daten;
+            }).ToList();
+
             NeueLaborDaten.AddRange(GetFTPBetas());
 
             if (NeueLaborDaten.Count > 0)
@@ -220,41 +247,14 @@ namespace FritzBot.Plugins
 
     class Labordaten : IEquatable<Labordaten>
     {
-        public string typ;
-        public string datum;
-        public string version;
-        public string url;
-
-        const string KeywordVersion = "Version: ";
-        const string KeywordDatum = "Datum: ";
-
-        public static IEnumerable<Labordaten> GetDaten(string url)
-        {
-            CQ LaborSeite = CQ.CreateFromUrl("http://avm.de/" + url);
-            List<string> details = LaborSeite.Select("p:contains('Downloadinformationen:')")[0].ChildNodes.OfType<DomText>().Select(x => x.NodeValue.Trim()).ToList();
-
-            Labordaten daten = new Labordaten();
-            string RawTyp = LaborSeite.Select("#pagetitle").Text();
-            if (!BoxDatabase.TryGetShortName(RawTyp, out daten.typ))
-            {
-                if (RawTyp.LastIndexOf(' ') != -1)
-                {
-                    daten.typ = RawTyp.Substring(RawTyp.LastIndexOf(' ')).Trim();
-                }
-                else
-                {
-                    daten.typ = RawTyp.Trim();
-                }
-            }
-            daten.version = details.Where(x => x.StartsWith(KeywordVersion)).Select(x => x.Substring(KeywordVersion.Length)).FirstOrDefault();
-            daten.datum = details.Where(x => x.StartsWith(KeywordDatum)).Select(x => x.Substring(KeywordDatum.Length)).FirstOrDefault();
-            daten.url = "http://avm.de/" + url;
-            yield return daten;
-        }
+        public string Typ { get; set; }
+        public string Datum { get; set; }
+        public string Version { get; set; }
+        public string Url { get; set; }
 
         public override int GetHashCode()
         {
-            return datum.GetHashCode() ^ version.GetHashCode();
+            return Datum.GetHashCode() ^ Version.GetHashCode();
         }
 
         public override bool Equals(object obj)
@@ -267,7 +267,7 @@ namespace FritzBot.Plugins
 
         public bool Equals(Labordaten other)
         {
-            return (object)other != null && version == other.version && datum == other.datum && url == other.url && typ == other.typ;
+            return (object)other != null && Version == other.Version && Datum == other.Datum && Url == other.Url && Typ == other.Typ;
         }
 
         public static bool operator ==(Labordaten labordaten1, Labordaten labordaten2)

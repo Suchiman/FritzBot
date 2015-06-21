@@ -1,4 +1,5 @@
-using CsQuery;
+using AngleSharp;
+using AngleSharp.Dom;
 using FritzBot.Core;
 using FritzBot.DataModel;
 using System;
@@ -55,13 +56,9 @@ namespace FritzBot.Plugins
             }
             try
             {
-                CQ doc = CQ.Create(new MemoryStream(e.Result));
-                CQ titleNode = doc.Select("title");
-                if (!titleNode.Any())
-                {
-                    return;
-                }
-                string title = Regex.Replace(titleNode.Text().Trim().Replace("\n", "").Replace("\r", "").Replace("â€“", "–"), "[ ]{2,}", " ");
+                IDocument doc = BrowsingContext.New().OpenAsync(x => x.Content(new MemoryStream(e.Result), true)).Result;
+
+                string title = Regex.Replace(doc.Title.Replace("\n", "").Replace("\r", "").Replace("â€“", "–"), "[ ]{2,}", " ");
                 if (!String.IsNullOrWhiteSpace(title))
                 {
                     (e.UserState as IrcMessage).Answer("[url] " + title);
