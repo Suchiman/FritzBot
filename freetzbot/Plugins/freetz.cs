@@ -88,7 +88,7 @@ namespace FritzBot.Plugins
 
         private static void Answer(IrcMessage theMessage, FreetzPackage package, bool isAmbiguous, string anchor)
         {
-            if (String.IsNullOrWhiteSpace(package.RelativUrl))
+            if (String.IsNullOrWhiteSpace(package.Url))
             {
                 theMessage.Answer(String.Format("Das Paket {0} existiert, hat jedoch keine Detailseite", package.Name));
                 return;
@@ -100,7 +100,7 @@ namespace FritzBot.Plugins
             {
                 answer += " ?";
             }
-            answer += ": http://freetz.org" + package.RelativUrl + anchor;
+            answer += ": " + package.Url + anchor;
 
             theMessage.Answer(answer);
 
@@ -114,7 +114,7 @@ namespace FritzBot.Plugins
                 return document.QuerySelectorAll<IHtmlAnchorElement>("table.wiki a.wiki").Select(x => new FreetzPackage
                 {
                     Name = x.Text,
-                    RelativUrl = x.ClassList.Contains("missing") ? null : x.Href
+                    Url = x.HrefOrNull()
                 }).ToList();
             }
             catch
@@ -126,7 +126,7 @@ namespace FritzBot.Plugins
         class FreetzPackage
         {
             public string Name { get; set; }
-            public string RelativUrl { get; set; }
+            public string Url { get; set; }
         }
     }
 }

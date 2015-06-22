@@ -1,3 +1,4 @@
+using AngleSharp.Dom.Html;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -232,6 +233,14 @@ namespace FritzBot.Core
         {
             public Utf8StringWriter(StringBuilder builder) : base(builder) { }
             public override Encoding Encoding { get { return Encoding.UTF8; } }
+        }
+    }
+
+    public static class HtmlExtensions
+    {
+        public static string HrefOrNull(this IHtmlAnchorElement a)
+        {
+            return a.HasAttribute("href") ? a.Href : null;
         }
     }
 

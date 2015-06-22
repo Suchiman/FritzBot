@@ -198,9 +198,9 @@ namespace FritzBot.Plugins
                     box.FreetzType = cells[1].TextContent.Trim();
 
                     IHtmlAnchorElement link = cells[1].ChildNodes.OfType<IHtmlAnchorElement>().FirstOrDefault();
-                    if (link != null && !link.ClassList.Contains("missing"))
+                    if (link != null)
                     {
-                        box.Url = link.Href;
+                        box.Url = link.HrefOrNull();
                     }
 
                     box.AngepassteFirmware = cells[2].TextContent.Trim();
