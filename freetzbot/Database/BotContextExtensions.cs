@@ -17,12 +17,12 @@ namespace FritzBot.Database
 
         public static UserKeyValueEntry GetStorage(this BotContext context, string nickname, string key)
         {
-            return context.UserKeyValueEntries.FirstOrDefault(x => x.User == context.Nicknames.FirstOrDefault(n => n.Name == nickname).User && x.Key == key);
+            return context.UserKeyValueEntries.FirstOrDefault(x => x.User.Id == context.Nicknames.FirstOrDefault(n => n.Name == nickname).User.Id && x.Key == key);
         }
 
         public static UserKeyValueEntry GetStorage(this BotContext context, User user, string key)
         {
-            return context.UserKeyValueEntries.FirstOrDefault(x => x.User == user && x.Key == key);
+            return context.UserKeyValueEntries.FirstOrDefault(x => x.User.Id == user.Id && x.Key == key);
         }
 
         public static UserKeyValueEntry GetStorageOrCreate(this BotContext context, User user, string key)
