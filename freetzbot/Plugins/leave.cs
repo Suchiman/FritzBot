@@ -1,5 +1,6 @@
 using FritzBot.Core;
 using FritzBot.DataModel;
+using Serilog;
 using System;
 using System.Linq;
 
@@ -13,15 +14,23 @@ namespace FritzBot.Plugins
     {
         public void Run(IrcMessage theMessage)
         {
-            try
-            {
-                ServerManager.Remove(ServerManager.Servers.FirstOrDefault(x => x.Settings.Address == theMessage.CommandLine));
-                theMessage.Answer(String.Format("Server {0} verlassen", theMessage.CommandLine));
-            }
-            catch
+            var server = ServerManager.Servers.FirstOrDefault(x => x.Settings.Address == theMessage.CommandLine);
+            if (server == null)
             {
                 theMessage.Answer("Den Server kenne ich nicht");
+                return;
             }
+
+            try
+            {
+                ServerManager.Remove(server);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Verlassen von Server {Server} fehlgeschlagen", theMessage.CommandLine);
+            }
+
+            theMessage.Answer($"Server {theMessage.CommandLine} verlassen");
         }
     }
 }

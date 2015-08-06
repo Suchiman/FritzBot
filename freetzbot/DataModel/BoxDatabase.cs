@@ -8,7 +8,7 @@ using System.Linq;
 
 namespace FritzBot.DataModel
 {
-    public class BoxDatabase
+    public static class BoxDatabase
     {
         private static List<Box> _boxen;
 
@@ -110,15 +110,13 @@ namespace FritzBot.DataModel
         public static bool TryFindExactBox(string input, out Box box)
         {
             box = null;
-            try
-            {
-                box = FindBoxes(input).Single();
-                return true;
-            }
-            catch
+            var boxes = FindBoxes(input).Take(2).ToArray();
+            if (boxes.Length != 1)
             {
                 return false;
             }
+            box = boxes[0];
+            return true;
         }
     }
 }

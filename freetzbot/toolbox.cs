@@ -109,8 +109,9 @@ namespace FritzBot
             {
                 return GetWeb("http://tinyurl.com/api-create.php?url=" + Url);
             }
-            catch
+            catch (Exception ex)
             {
+                Log.Error(ex, "Konnte {Url} nicht kürzen", Url);
                 return Url;
             }
         }

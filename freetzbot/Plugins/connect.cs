@@ -23,18 +23,15 @@ namespace FritzBot.Plugins
                 theMessage.Answer("Hörmal, das RFC erlaubt nur Nicknames mit 9 Zeichen");
                 return;
             }
-            try
-            {
-                int port = Convert.ToInt32(parameter[1]);
-                if (!(port > 0 && port < 65536))
-                {
-                    theMessage.Answer("Gültige Ports liegen zwischen 0 und 65536");
-                    return;
-                }
-            }
-            catch
+            int port;
+            if (!Int32.TryParse(parameter[1], out port))
             {
                 theMessage.Answer("Der PORT sollte eine gültige Ganzahl sein, Prüfe das");
+                return;
+            }
+            if (!(port > 0 && port < 65536))
+            {
+                theMessage.Answer("Gültige Ports liegen zwischen 0 und 65536");
                 return;
             }
             try
@@ -48,7 +45,7 @@ namespace FritzBot.Plugins
                     theMessage.Answer("Ich konnte die Adresse nicht auflösen, Prüfe nochmal ob deine Eingabe korrekt ist");
                     return;
                 }
-                toolbox.InstantiateConnection(parameter[0], Convert.ToInt32(parameter[1]), parameter[2], parameter[3], parameter[4]);
+                toolbox.InstantiateConnection(parameter[0], port, parameter[2], parameter[3], parameter[4]);
             }
             catch
             {

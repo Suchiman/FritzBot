@@ -52,7 +52,7 @@ namespace FritzBot.Plugins
                 {
                     if (DiffDE.Length > 0)
                     {
-                        output = "Neue Deutsche News: " + DiffDEstring + String.Format(" Auf zu den DE-News: {0}?lang=de", baseurl); ;
+                        output = $"Neue Deutsche News: {DiffDEstring} Auf zu den DE-News: {baseurl}?lang=de";
                     }
                     if (DiffEN.Length > 0)
                     {
@@ -60,7 +60,7 @@ namespace FritzBot.Plugins
                         {
                             output += ", ";
                         }
-                        output += "Neue Englische News: " + DiffENstring + String.Format(" Auf zu den EN-News: {0}?lang=en", baseurl); ; ;
+                        output += $"Neue Englische News: {DiffENstring} Auf zu den EN-News: {baseurl}?lang=en";
                     }
                 }
                 if (output != String.Empty)
@@ -80,7 +80,7 @@ namespace FritzBot.Plugins
             Contract.Ensures(Contract.Result<List<NewsEntry>>() != null);
 
             IDocument document = null;
-            for (int i = 1; true; i++)
+            for (int i = 1; ; i++)
             {
                 try
                 {
@@ -124,9 +124,10 @@ namespace FritzBot.Plugins
 
         public override bool Equals(object obj)
         {
-            if (obj is NewsEntry)
+            var newsEntry = obj as NewsEntry;
+            if (newsEntry != null)
             {
-                return (Titel == (obj as NewsEntry).Titel) && (Datum == (obj as NewsEntry).Datum) && (Version == (obj as NewsEntry).Version);
+                return (Titel == newsEntry.Titel) && (Datum == newsEntry.Datum) && (Version == newsEntry.Version);
             }
             return false;
         }

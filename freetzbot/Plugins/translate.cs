@@ -28,7 +28,7 @@ namespace FritzBot.Plugins
                 theMessage.Answer("Das hat nicht so geklappt wie erwartet");
                 return;
             }
-            if (translation.dict != null && theMessage.CommandArgs.Where(x => x != "en").Count() == 1)
+            if (translation.dict != null && theMessage.CommandArgs.Count(x => x != "en") == 1)
             {
                 StringBuilder sb = new StringBuilder(translation.FullTranslation);
                 foreach (Dic item in translation.dict)

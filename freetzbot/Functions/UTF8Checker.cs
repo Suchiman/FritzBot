@@ -3,7 +3,7 @@
 namespace FritzBot.Functions
 {
     //http://utf8checker.codeplex.com/
-    public class UTF8Checker
+    public static class UTF8Checker
     {
         public static bool IsUtf8(byte[] buffer)
         {

@@ -11,7 +11,7 @@ namespace FritzBot.DataModel
     {
         public string PluginID { get; protected set; }
 
-        public PluginBase()
+        protected PluginBase()
         {
             PluginID = GetType().Name;
         }

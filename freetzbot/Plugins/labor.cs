@@ -14,6 +14,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.FtpClient;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 
@@ -138,7 +139,7 @@ namespace FritzBot.Plugins
                     daten.Datum = (file.Modified == DateTime.MinValue && ftp.HasFeature(FtpCapability.MDTM) ? ftp.GetModifiedTime(file.FullName) : file.Modified).ToString("dd.MM.yyyy HH:mm:ss");
                     daten.Url = "ftp://ftp.avm.de" + file.FullName;
 
-                    string target = Path.Combine(Environment.CurrentDirectory, "betaCache", file.Name);
+                    string target = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "betaCache", file.Name);
                     if (!File.Exists(target))
                     {
                         using (Stream f = ftp.OpenRead(file.Name))
@@ -152,35 +153,47 @@ namespace FritzBot.Plugins
 
             foreach (Tuple<Labordaten, string> fw in ftpBetas)
             {
-                using (Stream file = File.OpenRead(fw.Item2))
-                using (ZipArchive archive = new ZipArchive(file, ZipArchiveMode.Read))
+                try
                 {
-                    ZipArchiveEntry firmware = archive.Entries.FirstOrDefault(x => x.Name.Contains("_Labor.") || x.Name.Contains(".Labor.") || x.Name.Contains("_LabBETA.") || x.Name.Contains(".LabBETA."));
-                    if (firmware == null)
+                    using (Stream file = File.OpenRead(fw.Item2))
+                    using (ZipArchive archive = new ZipArchive(file, ZipArchiveMode.Read))
                     {
-                        Log.Error("Firmware {Firmware} hat keine erkannte Labor Firmware", fw.Item2);
-                        continue;
-                    }
-
-                    string RawName = firmware.Name;
-
-                    fw.Item1.Version = Regex.Match(RawName, @"((\d{2,3}\.)?\d\d\.\d\d(-\d{1,6})?).image$").Groups[1].Value;
-                    string tmp;
-                    if (!BoxDatabase.TryGetShortName(RawName, out tmp))
-                    {
-                        if (RawName.LastIndexOf(' ') != -1)
+                        ZipArchiveEntry firmware = archive.Entries.FirstOrDefault(x => x.Name.Contains("_Labor.") || x.Name.Contains(".Labor.") || x.Name.Contains("_LabBETA.") || x.Name.Contains(".LabBETA."));
+                        if (firmware == null)
                         {
-                            fw.Item1.Typ = RawName.Substring(RawName.LastIndexOf(' ')).Trim();
+                            Log.Error("Firmware {Firmware} hat keine erkannte Labor Firmware", fw.Item2);
+                            continue;
+                        }
+
+                        string RawName = firmware.Name;
+
+                        fw.Item1.Version = Regex.Match(RawName, @"((\d{2,3}\.)?\d\d\.\d\d(-\d{1,6})?).image$").Groups[1].Value;
+                        string tmp;
+                        if (!BoxDatabase.TryGetShortName(RawName, out tmp))
+                        {
+                            if (RawName.LastIndexOf(' ') != -1)
+                            {
+                                fw.Item1.Typ = RawName.Substring(RawName.LastIndexOf(' ')).Trim();
+                            }
+                            else
+                            {
+                                fw.Item1.Typ = RawName.Trim();
+                            }
                         }
                         else
                         {
-                            fw.Item1.Typ = RawName.Trim();
+                            fw.Item1.Typ = tmp;
                         }
                     }
-                    else
-                    {
-                        fw.Item1.Typ = tmp;
-                    }
+                }
+                catch (InvalidDataException ex) //'System.IO.InvalidDataException' in System.IO.Compression.dll("Das Ende des Datensatzes im zentralen Verzeichnis wurde nicht gefunden.")
+                {
+                    var betaCachePath = Path.GetDirectoryName(fw.Item2);
+                    var name = Path.GetFileNameWithoutExtension(fw.Item2);
+                    var extension = Path.GetExtension(fw.Item2);
+                    string corruptedFilePath = Path.Combine(betaCachePath, $"{name}_corrupted_{DateTime.Now:dd_MM_yyyy_hh_mm_ss}{extension}");
+                    File.Move(fw.Item2, corruptedFilePath);
+                    Log.Error(ex, "Korruptes Zip {Filename} gefunden. Zip umbenannt zu {NewFilename}", fw.Item2, corruptedFilePath);
                 }
             }
 
@@ -237,7 +250,14 @@ namespace FritzBot.Plugins
                 return daten;
             }).ToList();
 
-            NeueLaborDaten.AddRange(GetFTPBetas());
+            try
+            {
+                NeueLaborDaten.AddRange(GetFTPBetas());
+            }
+            catch (FtpCommandException ex)
+            {
+                Log.Error(ex, "Abrufen von FTP Labors fehlgeschlagen");
+            }
 
             if (NeueLaborDaten.Count > 0)
             {
@@ -261,10 +281,11 @@ namespace FritzBot.Plugins
 
         public override bool Equals(object obj)
         {
-            if (!(obj is Labordaten))
+            var labordaten = obj as Labordaten;
+            if (labordaten == null)
                 return false;
 
-            return Equals((Labordaten)obj);
+            return Equals(labordaten);
         }
 
         public bool Equals(Labordaten other)

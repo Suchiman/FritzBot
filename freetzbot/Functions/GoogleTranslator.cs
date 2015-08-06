@@ -6,7 +6,7 @@ using System.Text;
 
 namespace FritzBot.Functions
 {
-    public class GoogleTranslator
+    public static class GoogleTranslator
     {
         public static string TranslateTextSimple(string Text, string DestinationLanguage)
         {

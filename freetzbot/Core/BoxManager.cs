@@ -62,14 +62,7 @@ namespace FritzBot.Core
             foreach (BoxEntry entry in userBoxEntries)
             {
                 Box result;
-                if (BoxDatabase.TryFindExactBox(entry.Text, out result))
-                {
-                    entry.Box = result;
-                }
-                else
-                {
-                    entry.Box = null;
-                }
+                entry.Box = BoxDatabase.TryFindExactBox(entry.Text, out result) ? result : null;
             }
             _context.SaveChanges();
         }

@@ -39,48 +39,16 @@ namespace FritzBot.Core
             return list;
         }
 
-        public static IEnumerable<T> HasAttribute<T, A>(this IEnumerable<T> source)
+        public static bool Contains<T>(this IEnumerable<T> list, T item, Func<T, object> selector)
         {
-            return source.Where(x => toolbox.GetAttribute<A>(x) != null);
+            return list.Contains(item, new KeyEqualityComparer<T>(selector));
         }
 
-        public static IEnumerable<T> NotNull<T>(this IEnumerable<T> list)
+        public static IEnumerable<T> Distinct<T>(this IEnumerable<T> list, Func<T, object> selector)
         {
             Contract.Requires(list != null);
 
-            return list.Where(x => x != null);
-        }
-
-        public static IEnumerable<TSource> NotNull<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector)
-        {
-            foreach (TSource item in source)
-            {
-                bool notNull = false;
-                try
-                {
-                    TResult result = selector(item);
-                    notNull = result != null;
-                }
-                catch (NullReferenceException)
-                {
-                }
-                if (notNull)
-                {
-                    yield return item;
-                }
-            }
-        }
-
-        public static bool Contains<T>(this IEnumerable<T> list, T item, Func<T, object> bedingung)
-        {
-            return list.Contains(item, new KeyEqualityComparer<T>(bedingung));
-        }
-
-        public static IEnumerable<T> Distinct<T>(this IEnumerable<T> list, Func<T, object> bedingung)
-        {
-            Contract.Requires(list != null);
-
-            return list.Distinct<T>(new KeyEqualityComparer<T>(bedingung));
+            return list.Distinct<T>(new KeyEqualityComparer<T>(selector));
         }
 
         public static IEnumerable<T> Intersect<T>(this IEnumerable<T> list, IEnumerable<T> second, Func<T, object> bedingung)
@@ -219,7 +187,7 @@ namespace FritzBot.Core
             Contract.Requires(doc != null);
             if (doc == null)
             {
-                throw new ArgumentNullException("doc");
+                throw new ArgumentNullException(nameof(doc));
             }
             StringBuilder builder = new StringBuilder();
             using (TextWriter writer = new Utf8StringWriter(builder))
