@@ -1,6 +1,7 @@
 using AngleSharp;
 using AngleSharp.Dom;
 using AngleSharp.Dom.Html;
+using AngleSharp.Extensions;
 using FritzBot.Core;
 using FritzBot.Database;
 using FritzBot.DataModel;
