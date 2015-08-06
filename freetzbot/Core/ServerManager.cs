@@ -139,7 +139,7 @@ namespace FritzBot.Core
         /// <param name="message">Die Nachricht</param>
         public static void AnnounceGlobal(string message)
         {
-            foreach (ServerConnection theServer in _servers)
+            foreach (ServerConnection theServer in _servers.Where(x => x.Connected))
             {
                 theServer.Announce(message);
             }
