@@ -126,7 +126,7 @@ namespace FritzBot.Plugins
         public override bool Equals(object obj)
         {
             var newsEntry = obj as NewsEntry;
-            if (newsEntry != null)
+            if (newsEntry is NewsEntry)
             {
                 return (Titel == newsEntry.Titel) && (Datum == newsEntry.Datum) && (Version == newsEntry.Version);
             }
