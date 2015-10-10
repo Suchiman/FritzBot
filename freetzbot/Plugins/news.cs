@@ -7,6 +7,7 @@ using FritzBot.DataModel;
 using Serilog;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
@@ -32,46 +33,27 @@ namespace FritzBot.Plugins
 
         private void NewsThread()
         {
-            const string baseurl = "http://webgw.avm.de/download/UpdateNews.jsp";
-            string output = string.Empty;
-            List<NewsEntry> NewsDE = GetNews(baseurl + "?lang=de");
-            List<NewsEntry> NewsEN = GetNews(baseurl + "?lang=en");
+            const string newsUrl = "http://avm.de/service/downloads/update-news/";
+
+            List<NewsEntry> news = GetNews(newsUrl);
             while (true)
             {
                 Thread.Sleep(ConfigHelper.GetInt("NewsCheckIntervall", 300) * 1000);
-                List<NewsEntry> NewsDENew = GetNews(baseurl + "?lang=de");
-                List<NewsEntry> NewsENNew = GetNews(baseurl + "?lang=en");
-                string[] DiffDE = NewsDENew.Where(x => !NewsDE.Contains(x)).Select(x => x.Titel).Distinct().ToArray();
-                string[] DiffEN = NewsENNew.Where(x => !NewsEN.Contains(x)).Select(x => x.Titel).Distinct().ToArray();
-                string DiffDEstring = DiffDE.Join(", ");
-                string DiffENstring = DiffEN.Join(", ");
-                if (DiffDE.Length > 0 && DiffDEstring == DiffENstring)
+
+                List<NewsEntry> updatedNews = GetNews(newsUrl);
+                if (updatedNews.Count == 0)
                 {
-                    output = "Neue News: " + DiffDEstring + String.Format(" Auf zu den News: {0}", baseurl);
+                    Log.Warning("Keine News gefunden");
                 }
-                else
+
+                List<NewsEntry> newNews = updatedNews.Except(news).ToList();
+                if (newNews.Count > 0)
                 {
-                    if (DiffDE.Length > 0)
-                    {
-                        output = $"Neue Deutsche News: {DiffDEstring} Auf zu den DE-News: {baseurl}?lang=de";
-                    }
-                    if (DiffEN.Length > 0)
-                    {
-                        if (output != String.Empty)
-                        {
-                            output += ", ";
-                        }
-                        output += $"Neue Englische News: {DiffENstring} Auf zu den EN-News: {baseurl}?lang=en";
-                    }
-                }
-                if (output != String.Empty)
-                {
+                    string output = $"Neue News: {newNews.Select(x => $"{x.Titel} ({x.Version})").Distinct().Join(", ")} Auf zu den News: {newsUrl}";
                     ServerManager.AnnounceGlobal(output);
                     NotifySubscribers(output);
                 }
-                output = String.Empty;
-                NewsDE = NewsDENew;
-                NewsEN = NewsENNew;
+                news = updatedNews;
             }
         }
 
@@ -98,30 +80,31 @@ namespace FritzBot.Plugins
                 }
             }
 
-            var news = document.QuerySelectorAll<IHtmlTableElement>("table[bgcolor='F6F6F6']").Select(x =>
+            return document.QuerySelectorAll<IHtmlDivElement>("div.entrylist > div.entry").Select(x =>
             {
                 NewsEntry entry = new NewsEntry();
 
-                entry.Titel = x.QuerySelector<IHtmlSpanElement>("span.uberschriftblau").TextContent.Trim();
-                string[] SuperInfos = x.QuerySelectorAll<IHtmlTableRowElement>("table[bgcolor='#FFFFFF'] table tr").ElementAt(2).QuerySelectorAll<IHtmlTableCellElement>("td.newsfont").Select(s => s.TextContent.Trim()).Where(w => !String.IsNullOrEmpty(w)).ToArray();
-                if (SuperInfos.Length < 2)
+                entry.Titel = x.QuerySelector<IHtmlDivElement>("div.headline")?.Children.FirstOrDefault()?.TextContent?.Trim();
+                List<IHtmlDivElement> metaInfos = x.QuerySelectorAll<IHtmlDivElement>("div.meta-infos > div.row > div.cell").ToList();
+                if (metaInfos.Count != 6)
                 {
-                    throw new Exception("Der News Beitrag konnte nicht geparsed werden");
+                    Debug.Fail("Meta-Info struktur geändert");
+                    Log.Warning("Meta-Info struktur geändert, Count {Count}", metaInfos.Count);
+                    return null;
                 }
-                entry.Version = SuperInfos[1];
-                entry.Datum = DateTime.Parse(SuperInfos[3]);
+                entry.Version = metaInfos[3].TextContent.Trim();
+                entry.Datum = DateTime.Parse(metaInfos[5].TextContent.Trim());
 
                 return entry;
-            }).ToList();
-            return news;
+            }).NotNull().ToList();
         }
     }
 
     class NewsEntry
     {
-        public string Titel;
-        public string Version;
-        public DateTime Datum;
+        public string Titel { get; set; }
+        public string Version { get; set; }
+        public DateTime Datum { get; set; }
 
         public override bool Equals(object obj)
         {

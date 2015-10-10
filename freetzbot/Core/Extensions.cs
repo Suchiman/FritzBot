@@ -99,6 +99,17 @@ namespace FritzBot.Core
             }
         }
 
+        public static IEnumerable<T> NotNull<T>(this IEnumerable<T> source) where T : class
+        {
+            foreach (T element in source)
+            {
+                if (element != null)
+                {
+                    yield return element;
+                }
+            }
+        }
+
         public static IEnumerable<TR> FullOuterGroupJoin<TA, TB, TK, TR>(
             this IEnumerable<TA> a,
             IEnumerable<TB> b,
