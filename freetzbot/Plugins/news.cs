@@ -46,9 +46,23 @@ namespace FritzBot.Plugins
                     Log.Warning("Keine News gefunden");
                 }
 
+                if (news.Count == 0)
+                {
+                    Log.Warning("Es waren keine referenz News vorhanden, verwende News aus diesem Poll als Referenz für den nächsten Poll");
+                    news = updatedNews;
+                    continue;
+                }
+
                 List<NewsEntry> newNews = updatedNews.Except(news).ToList();
                 if (newNews.Count > 0)
                 {
+                    if (newNews.Count == news.Count)
+                    {
+                        Log.Warning("Anzahl neuer News entspricht anzahl News insgesamt. Überspringe Meldung auf verdacht");
+                        news = updatedNews;
+                        continue;
+                    }
+
                     string output = $"Neue News: {newNews.Select(x => $"{x.Titel} ({x.Version})").Distinct().Join(", ")} Auf zu den News: {newsUrl}";
                     ServerManager.AnnounceGlobal(output);
                     NotifySubscribers(output);
