@@ -585,6 +585,7 @@ namespace FritzBot.Core
             foreach (ServerChannel channel in Settings.Channels)
             {
                 _connection.SendMessage(SendType.Message, channel.Name, message);
+                Log.Information("An {Receiver:l}: {Message:l}", channel.Name, message);
             }
         }
     }
