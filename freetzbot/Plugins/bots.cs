@@ -56,12 +56,12 @@ namespace FritzBot.Plugins
 
                 if (!String.IsNullOrWhiteSpace(wahrscheinlichInaktiv))
                 {
-                    theMessage.Answer(String.Format("User die wahrscheinlich inaktiv sind: {0}", wahrscheinlichInaktiv));
+                    theMessage.Answer($"User die wahrscheinlich inaktiv sind: {wahrscheinlichInaktiv}");
                 }
 
                 if (!String.IsNullOrWhiteSpace(bestimmtInaktiv))
                 {
-                    theMessage.Answer(String.Format("User die definitiv länger als {0} Tage inaktiv sind: {1}", tage, bestimmtInaktiv));
+                    theMessage.Answer($"User die definitiv länger als {tage} Tage inaktiv sind: {bestimmtInaktiv}");
                 }
 
                 if (String.IsNullOrWhiteSpace(wahrscheinlichInaktiv) && String.IsNullOrWhiteSpace(bestimmtInaktiv))

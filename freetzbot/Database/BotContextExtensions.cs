@@ -7,12 +7,7 @@ namespace FritzBot.Database
     {
         public static User GetUser(this BotContext context, string nickname)
         {
-            Nickname nick = context.Nicknames.Include(x => x.User).FirstOrDefault(x => x.Name == nickname);
-            if (nick != null)
-            {
-                return nick.User;
-            }
-            return null;
+            return context.Nicknames.Include(x => x.User).FirstOrDefault(x => x.Name == nickname)?.User;
         }
 
         public static UserKeyValueEntry GetStorage(this BotContext context, string nickname, string key)

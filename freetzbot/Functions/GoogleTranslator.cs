@@ -10,12 +10,7 @@ namespace FritzBot.Functions
     {
         public static string TranslateTextSimple(string Text, string DestinationLanguage)
         {
-            Translation trans = GetTranslation(Text, DestinationLanguage, "");
-            if (trans != null)
-            {
-                return trans.FullTranslation;
-            }
-            return String.Empty;
+            return GetTranslation(Text, DestinationLanguage, "")?.FullTranslation;
         }
 
         public static Translation GetTranslation(string Text, string DestinationLanguage, string SourceLanguage)
@@ -31,12 +26,7 @@ namespace FritzBot.Functions
 
         public static string DetectLanguage(string Text)
         {
-            Translation trans = GetTranslation(Text, "", "");
-            if (trans != null)
-            {
-                return trans.src;
-            }
-            return String.Empty;
+            return GetTranslation(Text, "", "")?.src;
         }
     }
 

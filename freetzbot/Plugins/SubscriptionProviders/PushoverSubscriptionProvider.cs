@@ -15,17 +15,13 @@ namespace FritzBot.Plugins.SubscriptionProviders
             string userToken = null;
             using (var context = new BotContext())
             {
-                UserKeyValueEntry entry = context.GetStorage(user, "pushover_token");
-                if (entry != null)
-                {
-                    userToken = entry.Value;
-                }
+                userToken = context.GetStorage(user, "pushover_token")?.Value;
             }
             if (String.IsNullOrEmpty(userToken))
             {
                 return;
             }
-            Dictionary<String, String> Parameter = new Dictionary<String, String>()
+            Dictionary<string, string> Parameter = new Dictionary<string, string>()
             {
                 {"token", "b6p6augH1KDpxcRxyo4I35Yxl9XP5x"},
                 {"user", userToken},
@@ -43,7 +39,7 @@ namespace FritzBot.Plugins.SubscriptionProviders
             using (var context = new BotContext())
             {
                 UserKeyValueEntry entry = context.GetStorage(theMessage.Nickname, "pushover_token");
-                if (entry == null || String.IsNullOrEmpty(entry.Value))
+                if (String.IsNullOrEmpty(entry?.Value))
                 {
                     theMessage.Answer("Du musst diesen SubscriptionProvider zuerst Konfigurieren (!subscribe setup)");
                 }

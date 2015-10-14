@@ -15,7 +15,7 @@ namespace FritzBot.Plugins
             {
                 Expression exp = new Expression(theMessage.CommandLine);
                 object result = exp.Evaluate();
-                theMessage.Answer(String.Format("{0} ergibt {1}", exp.ParsedExpression, result));
+                theMessage.Answer($"{exp.ParsedExpression} ergibt {result}");
             }
             catch (Exception ex)
             {

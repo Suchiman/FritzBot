@@ -88,7 +88,7 @@ namespace FritzBot.Functions
             if (Parameter.Count > 0)
             {
                 sb.Append("?");
-                sb.Append(Parameter.Select(x => String.Format("{0}={1}", HttpUtility.UrlEncode(x.Key), HttpUtility.UrlEncode(x.Value))).Join("&"));
+                sb.Append(Parameter.Select(x => $"{HttpUtility.UrlEncode(x.Key)}={HttpUtility.UrlEncode(x.Value)}").Join("&"));
             }
             return sb.ToString();
         }

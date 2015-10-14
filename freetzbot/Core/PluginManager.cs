@@ -158,7 +158,7 @@ namespace FritzBot.Core
             foreach (Type t in assembly.GetTypes())
             {
                 NameAttribute att = toolbox.GetAttribute<NameAttribute>(t);
-                if (att != null && att.Names != null)
+                if (att?.Names != null)
                 {
                     if (att.Names.Any(x => x.Equals(name, StringComparison.OrdinalIgnoreCase)))
                     {

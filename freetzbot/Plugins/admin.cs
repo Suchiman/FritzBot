@@ -53,7 +53,7 @@ namespace FritzBot.Plugins
                 }
                 else
                 {
-                    theMessage.Answer("Der Schlüssel " + key + " existiert nicht");
+                    theMessage.Answer($"Der Schlüssel {key} existiert nicht");
                 }
             }
             else if (theMessage.CommandArgs.Count == 3)
@@ -61,12 +61,13 @@ namespace FritzBot.Plugins
                 if (key == "remove")
                 {
                     ConfigHelper.Remove(theMessage.CommandArgs[2]);
+                    theMessage.Answer("Wert gelöscht");
                 }
                 else
                 {
                     ConfigHelper.SetValue(key, theMessage.CommandArgs[2]);
+                    theMessage.Answer("Wert geändert");
                 }
-                theMessage.Answer("Okay");
             }
         }
 
@@ -77,90 +78,110 @@ namespace FritzBot.Plugins
                 theMessage.Answer("Zu wenig Parameter: add, remove, regex, list");
                 return;
             }
-            if (theMessage.CommandArgs[1] == "add")
+
+            switch (theMessage.CommandArgs[1])
             {
-                Match m = Regex.Match(theMessage.CommandLine, "boxdb add \"(?<short>[^\"]*)\" \"(?<full>[^\"]*)\" (?<regex>.*)");
-                if (m.Success)
-                {
-                    Box box = BoxDatabase.GetBoxByShortName(m.Groups["short"].Value);
-                    string[] regexes = Regex.Matches(m.Groups["regex"].Value, "\"(?<value>[^\"]*)\"").Cast<Match>().Select(x => x.Groups["value"].Value).ToArray();
-                    if (box == null)
-                    {
-                        box = BoxDatabase.AddBox(m.Groups["short"].Value, m.Groups["full"].Value, regexes);
-                        theMessage.Answer("Box erfolgreich hinzugefügt");
-                    }
-                    else
-                    {
-                        box.FullName = m.Groups["full"].Value;
-                        box.AddRegex(regexes);
-                        theMessage.Answer("Box Infos geupdated");
-                    }
-                }
-                else
-                {
-                    theMessage.Answer("Zu wenig Parameter: boxdb add \"(?<short>[^\"]*)\" \"(?<full>[^\"]*)\" (?<regex>.*)");
-                }
-            }
-            if (theMessage.CommandArgs[1] == "remove")
-            {
-                Box box = BoxDatabase.GetBoxByShortName(theMessage.CommandArgs.Skip(2).Join(" "));
-                using (var context = new BotContext())
-                {
-                    if (box != null)
-                    {
-                        context.Boxes.Remove(box);
-                        theMessage.Answer("Box entfernt");
-                    }
-                    else
-                    {
-                        theMessage.Answer("So eine Box habe ich nicht gefunden");
-                    }
-                }
-            }
-            if (theMessage.CommandArgs[1] == "regex")
-            {
-                Match m = Regex.Match(theMessage.CommandLine, "boxdb regex \"(?<short>[^\"]*)\" (?<regex>.*)");
-                if (m.Success)
-                {
-                    Box box = BoxDatabase.GetBoxByShortName(m.Groups["short"].Value);
-                    string[] regexes = Regex.Matches(m.Groups["regex"].Value, "\"(?<value>[^\"]*)\"").Cast<Match>().Select(x => x.Groups["value"].Value).ToArray();
-                    if (box == null)
-                    {
-                        theMessage.Answer("Für diesen ShortName konnte ich keine Box ermitteln");
-                    }
-                    else
-                    {
-                        box.AddRegex(regexes);
-                        theMessage.Answer("Regex(e) erfolgreich hinzugefügt");
-                    }
-                }
-                else
-                {
-                    theMessage.Answer("Zu wenig Parameter: boxdb regex \"(?<short>[^\"]*)\" (?<regex>.*)");
-                }
-            }
-            if (theMessage.CommandArgs[1] == "list")
-            {
-                string[] AlleBoxen = BoxDatabase.Boxen.Select(x => x.ShortName).OrderByDescending(x => x).ToArray();
-                if (AlleBoxen.Length == 0)
-                {
-                    theMessage.Answer("Oh... ich habe keine Einträge über Boxen");
+                case "add":
+                    BoxDbAdd(theMessage);
                     return;
-                }
-                theMessage.Answer("Ich kenne folgende Boxen: " + AlleBoxen.Join(", "));
+                case "remove":
+                    BoxDbRemove(theMessage);
+                    return;
+                case "regex":
+                    BoxDbRegex(theMessage);
+                    return;
+                case "list":
+                    BoxDbList(theMessage);
+                    return;
+                case "info":
+                    BoxDbInfo(theMessage);
+                    return;
             }
-            if (theMessage.CommandArgs[1] == "info")
+        }
+
+        private static void BoxDbAdd(IrcMessage theMessage)
+        {
+            Match match = Regex.Match(theMessage.CommandLine, "boxdb add \"(?<short>[^\"]*)\" \"(?<full>[^\"]*)\" (?<regex>.*)");
+            if (!match.Success)
             {
-                Box box = BoxDatabase.GetBoxByShortName(theMessage.CommandArgs[2]);
-                if (box != null)
-                {
-                    theMessage.Answer(String.Format("ShortName: {0}, FullName: {1}, RegexPatterns: {2}", box.ShortName, box.FullName, box.RegexPattern.Select(x => x.Pattern).Join(", ")));
-                }
-                else
-                {
-                    theMessage.Answer("So eine Box habe ich nicht gefunden");
-                }
+                theMessage.Answer("Zu wenig Parameter: boxdb add \"(?<short>[^\"]*)\" \"(?<full>[^\"]*)\" (?<regex>.*)");
+                return;
             }
+
+            Box box = BoxDatabase.GetBoxByShortName(match.Groups["short"].Value);
+            string[] regexes = Regex.Matches(match.Groups["regex"].Value, "\"(?<value>[^\"]*)\"").Cast<Match>().Select(x => x.Groups["value"].Value).ToArray();
+            if (box == null)
+            {
+                box = BoxDatabase.AddBox(match.Groups["short"].Value, match.Groups["full"].Value, regexes);
+                theMessage.Answer("Box erfolgreich hinzugefügt");
+            }
+            else
+            {
+                box.FullName = match.Groups["full"].Value;
+                box.AddRegex(regexes);
+                theMessage.Answer("Box Infos geupdated");
+            }
+        }
+
+        private static void BoxDbRemove(IrcMessage theMessage)
+        {
+            Box box = BoxDatabase.GetBoxByShortName(theMessage.CommandArgs.Skip(2).Join(" "));
+            if (box == null)
+            {
+                theMessage.Answer("So eine Box habe ich nicht gefunden");
+                return;
+            }
+
+            using (var context = new BotContext())
+            {
+                context.Boxes.Remove(box);
+                theMessage.Answer("Box entfernt");
+            }
+        }
+
+        private static void BoxDbRegex(IrcMessage theMessage)
+        {
+            Match match = Regex.Match(theMessage.CommandLine, "boxdb regex \"(?<short>[^\"]*)\" (?<regex>.*)");
+            if (!match.Success)
+            {
+                theMessage.Answer("Zu wenig Parameter: boxdb regex \"(?<short>[^\"]*)\" (?<regex>.*)");
+                return;
+            }
+
+            Box box = BoxDatabase.GetBoxByShortName(match.Groups["short"].Value);
+            if (box == null)
+            {
+                theMessage.Answer("Für diesen ShortName konnte ich keine Box ermitteln");
+                return;
+            }
+
+            string[] regexes = Regex.Matches(match.Groups["regex"].Value, "\"(?<value>[^\"]*)\"").Cast<Match>().Select(x => x.Groups["value"].Value).ToArray();
+            box.AddRegex(regexes);
+            theMessage.Answer("Regex(e) erfolgreich hinzugefügt");
+        }
+
+        private static void BoxDbList(IrcMessage theMessage)
+        {
+            string[] allBoxes = BoxDatabase.Boxen.Select(x => x.ShortName).OrderByDescending(x => x).ToArray();
+            if (allBoxes.Length == 0)
+            {
+                theMessage.Answer("Oh... ich habe keine Einträge über Boxen");
+                return;
+            }
+
+            theMessage.Answer($"Ich kenne folgende Boxen: {allBoxes.Join(", ")}");
+        }
+
+        private static void BoxDbInfo(IrcMessage theMessage)
+        {
+            Box box = BoxDatabase.GetBoxByShortName(theMessage.CommandArgs[2]);
+            if (box == null)
+            {
+                theMessage.Answer("So eine Box habe ich nicht gefunden");
+                return;
+            }
+
+            theMessage.Answer($"ShortName: {box.ShortName}, FullName: {box.FullName}, RegexPatterns: {box.RegexPattern.Select(x => x.Pattern).Join(", ")}");
         }
     }
 }

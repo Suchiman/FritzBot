@@ -39,7 +39,7 @@ namespace FritzBot.Plugins
             {
                 foreach (ReminderEntry item in context.ReminderEntries.Where(x => x.User == context.Nicknames.FirstOrDefault(n => n.Name == nickname).User).ToList())
                 {
-                    SendAction(item.Creator.LastUsedName + " hat für dich am " + item.Created.ToString("dd.MM.yyyy 'um' HH:mm:ss") + " eine Nachricht hinterlassen: " + item.Message);
+                    SendAction($"{item.Creator.LastUsedName} hat für dich am {item.Created:dd.MM.yyyy 'um' HH:mm:ss} eine Nachricht hinterlassen: {item.Message}");
                     context.ReminderEntries.Remove(item);
                 }
             }

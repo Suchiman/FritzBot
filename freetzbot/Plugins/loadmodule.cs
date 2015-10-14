@@ -53,7 +53,7 @@ namespace FritzBot.Plugins
             {
                 loaded = PluginManager.LoadPluginByName(Assembly.GetExecutingAssembly(), name);
             }
-            theMessage.Answer(String.Format("{0} Plugin{1} geladen", loaded, (loaded == 0 || loaded > 1) ? "s" : ""));
+            theMessage.Answer($"{loaded} Plugin{((loaded == 0 || loaded > 1) ? "s" : "")} geladen");
         }
     }
 }

@@ -18,14 +18,14 @@ namespace FritzBot.Plugins
                 return;
             }
             PluginInfo bgtask = PluginManager.Get(theMessage.CommandArgs[0]);
-            if (bgtask != null && bgtask.IsBackgroundTask)
+            if (bgtask?.IsBackgroundTask ?? false)
             {
-                if (theMessage.CommandArgs[1].ToLower() == "start")
+                if (theMessage.CommandArgs[1].Equals("start", StringComparison.OrdinalIgnoreCase))
                 {
                     bgtask.Start();
                     theMessage.Answer("Task erfolgreich gestartet");
                 }
-                else if (theMessage.CommandArgs[1].ToLower() == "stop")
+                else if (theMessage.CommandArgs[1].Equals("stop", StringComparison.OrdinalIgnoreCase))
                 {
                     bgtask.Stop();
                     theMessage.Answer("Task erfolgreich angehalten");
@@ -37,7 +37,7 @@ namespace FritzBot.Plugins
             }
             else
             {
-                theMessage.Answer(String.Format("Ich habe keinen Task namens {0} finden können", theMessage.CommandArgs[0]));
+                theMessage.Answer($"Ich habe keinen Task namens {theMessage.CommandArgs[0]} finden können");
             }
         }
     }

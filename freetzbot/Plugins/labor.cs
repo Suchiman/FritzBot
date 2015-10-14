@@ -70,7 +70,7 @@ namespace FritzBot.Plugins
 
             if (String.IsNullOrEmpty(theMessage.CommandLine))
             {
-                theMessage.Answer("Aktuelle Labor Daten: " + daten.Select(x => String.Format("{0}: {1}", x.Typ, x.Datum)).Join(", ") + " - Zum Labor: " + toolbox.ShortUrl("http://www.avm.de/de/Service/Service-Portale/Labor/index.php"));
+                theMessage.Answer("Aktuelle Labor Daten: " + daten.Select(x => $"{x.Typ}: {x.Datum}").Join(", ") + " - Zum Labor: " + toolbox.ShortUrl("http://www.avm.de/de/Service/Service-Portale/Labor/index.php"));
             }
             else
             {
@@ -78,7 +78,7 @@ namespace FritzBot.Plugins
                 Labordaten first = daten.FirstOrDefault(x => x.Typ == BoxName);
                 if (first != null)
                 {
-                    theMessage.Answer(String.Format("Die neueste {0} labor Version ist am {1} erschienen mit der Versionsnummer: {2} - Laborseite: {3}", first.Typ, first.Datum, first.Version, first.Url));
+                    theMessage.Answer($"Die neueste {first.Typ} labor Version ist am {first.Datum} erschienen mit der Versionsnummer: {first.Version} - Laborseite: {first.Url}");
                 }
                 else
                 {
@@ -106,7 +106,7 @@ namespace FritzBot.Plugins
                     List<Labordaten> unEquals = GetDifferentLabors(alte, neue);
                     if (unEquals.Count > 0)
                     {
-                        string labors = "Neue Labor Versionen gesichtet! - " + unEquals.Select(x => String.Format("{0} ({1})", x.Typ, x.Version)).Join(", ") + " - Zum Labor: " + toolbox.ShortUrl("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
+                        string labors = "Neue Labor Versionen gesichtet! - " + unEquals.Select(x => $"{x.Typ} ({x.Version})").Join(", ") + " - Zum Labor: " + toolbox.ShortUrl("http://www.avm.de/de/Service/Service-Portale/Labor/index.php");
                         ServerManager.AnnounceGlobal(labors);
                         NotifySubscribers(labors);
                         alte = neue;

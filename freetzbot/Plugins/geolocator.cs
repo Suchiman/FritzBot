@@ -35,11 +35,11 @@ namespace FritzBot.Plugins
             {
                 if (String.IsNullOrEmpty(details.timeZone))
                 {
-                    theMessage.Answer(String.Format("Die IP {0} befindet sich im Land {1} ({2})", details.ipAddress, details.countryName, details.countryCode));
+                    theMessage.Answer($"Die IP {details.ipAddress} befindet sich im Land {details.countryName} ({details.countryCode})");
                 }
                 else
                 {
-                    theMessage.Answer(String.Format("Die IP {0} befindet sich im Land {1} ({2}), vermutlich in der Stadt {3}. Dort ist es gerade {4} Uhr", details.ipAddress, details.countryName, details.countryCode, details.cityName, details.LocalTime.ToString()));
+                    theMessage.Answer($"Die IP {details.ipAddress} befindet sich im Land {details.countryName} ({details.countryCode}), vermutlich in der Stadt {details.cityName}. Dort ist es gerade {details.LocalTime} Uhr");
                 }
             }
             else

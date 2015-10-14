@@ -164,7 +164,7 @@ namespace FritzBot.Plugins
             using (var context = new BotContext())
             {
                 List<IGrouping<string, Subscription>> Subscription = context.Subscriptions.Where(x => x.User == context.Nicknames.FirstOrDefault(n => n.Name == theMessage.Nickname).User).GroupBy(x => x.Provider).ToList();
-                string output = Subscription.Select(x => String.Format("{0}: {1}", PluginManager.GetOfType<SubscriptionProvider>().First(z => z.ID == x.Key).Names.First(), x.Select(y => y.Plugin).Join(", "))).Join("; ");
+                string output = Subscription.Select(x => $"{PluginManager.GetOfType<SubscriptionProvider>().First(z => z.ID == x.Key).Names.First()}: {x.Select(y => y.Plugin).Join(", ")}").Join("; ");
                 theMessage.Answer(output);
             }
         }

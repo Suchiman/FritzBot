@@ -55,7 +55,7 @@ namespace FritzBot.Plugins
                         if (!ConfigHelper.GetBoolean("BoxFrage", false) || entry.Value == "true") return;
                         Thread.Sleep(10000);
                     }
-                    connection.SendMessage(SendType.Message, nick, String.Format("Hallo {0}, ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !boxadd deine box, mitteilen, falls du dies nicht bereits getan hast :).", nick));
+                    connection.SendMessage(SendType.Message, nick, $"Hallo {nick}, ich interessiere mich sehr für Fritz!Boxen, wenn du eine oder mehrere hast kannst du sie mir mit !boxadd deine box, mitteilen, falls du dies nicht bereits getan hast :).");
                     connection.SendMessage(SendType.Message, nick, "Pro !boxadd bitte nur eine Box nennen (nur die Boxversion) z.b. !boxadd 7270v1 oder !boxadd 7170. Um die anderen im Channel nicht zu stören, sende es mir doch bitte per query/private Nachricht (z.b. /msg FritzBot !boxadd 7270)");
                     entry.Value = "true";
                     context.SaveChanges();

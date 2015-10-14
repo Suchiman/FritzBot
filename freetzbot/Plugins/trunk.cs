@@ -19,7 +19,7 @@ namespace FritzBot.Plugins
                 IDocument document = BrowsingContext.New(Configuration.Default.WithDefaultLoader()).OpenAsync("http://freetz.org/changeset").Result;
                 string changeset = document.QuerySelector("#title").TextContent.Trim().Split(' ')[1];
                 string datum = Regex.Replace(document.QuerySelector("#overview dd.time").TextContent.Trim().Replace("\n", ""), "[ ]{2,}", " ");
-                theMessage.Answer(String.Format("Der aktuellste Changeset ist {0} und wurde am {1} in den Trunk eingecheckt. Siehe: http://freetz.org/changeset", changeset, datum));
+                theMessage.Answer($"Der aktuellste Changeset ist {changeset} und wurde am {datum} in den Trunk eingecheckt. Siehe: http://freetz.org/changeset");
             }
             catch (Exception ex)
             {

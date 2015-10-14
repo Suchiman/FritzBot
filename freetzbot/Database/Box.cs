@@ -44,12 +44,7 @@ namespace FritzBot.Database
 
         public override bool Equals(object obj)
         {
-            var box = obj as Box;
-            if (box != null)
-            {
-                return ShortName == box.ShortName;
-            }
-            return false;
+            return ShortName == (obj as Box)?.ShortName;
         }
 
         public override int GetHashCode()

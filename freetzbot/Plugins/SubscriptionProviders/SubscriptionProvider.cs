@@ -35,7 +35,7 @@ namespace FritzBot.Plugins.SubscriptionProviders
                     }
 
                     context.Subscriptions.Add(SpecificSubscription);
-                    theMessage.Answer(String.Format("Du wirst absofort mit {0} für {1} benachrichtigt", toolbox.GetAttribute<NameAttribute>(this).Names[0], toolbox.GetAttribute<NameAttribute>(plugin).Names[0]));
+                    theMessage.Answer($"Du wirst absofort mit {toolbox.GetAttribute<NameAttribute>(this).Names[0]} für {toolbox.GetAttribute<NameAttribute>(plugin).Names[0]} benachrichtigt");
                 }
                 else if (theMessage.CommandArgs.Count > 3 && !String.IsNullOrEmpty(theMessage.CommandArgs[3]) && SpecificSubscription.Bedingungen.Count == 0)
                 {

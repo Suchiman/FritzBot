@@ -1,7 +1,6 @@
 using FritzBot.Core;
 using FritzBot.Database;
 using FritzBot.DataModel;
-using System;
 
 namespace FritzBot.Plugins
 {
@@ -17,11 +16,11 @@ namespace FritzBot.Plugins
                 BoxManager manager = new BoxManager(context.GetUser(theMessage.Nickname), context);
                 if (manager.HasBox(theMessage.CommandLine))
                 {
-                    theMessage.Answer("Wups, danke aber du hast mir deine \"" + theMessage.CommandLine + "\" bereits mitgeteilt ;-).");
+                    theMessage.Answer($"Wups, danke aber du hast mir deine \"{theMessage.CommandLine}\" bereits mitgeteilt ;-).");
                     return;
                 }
                 BoxEntry box = manager.AddBox(theMessage.CommandLine);
-                theMessage.Answer(String.Format("Okay danke, ich werde mir deine \"{0}\"{1} notieren.", box.Text, box.Box != null ? " (" + box.Box.FullName + ")" : ""));
+                theMessage.Answer($"Okay danke, ich werde mir deine \"{box.Text}\"{(box.Box != null ? " (" + box.Box.FullName + ")" : "")} notieren.");
             }
         }
     }

@@ -23,7 +23,7 @@ namespace FritzBot.Plugins
 
             Translation translation = GoogleTranslator.GetTranslation(word, target, "");
 
-            if (translation == null || String.IsNullOrEmpty(translation.FullTranslation))
+            if (String.IsNullOrEmpty(translation?.FullTranslation))
             {
                 theMessage.Answer("Das hat nicht so geklappt wie erwartet");
                 return;

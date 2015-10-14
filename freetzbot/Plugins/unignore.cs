@@ -20,7 +20,7 @@ namespace FritzBot.Plugins
                 {
                     u.Ignored = false;
                     context.SaveChanges();
-                    theMessage.Answer(String.Format("Ignoranz für {0} aufgehoben", u.LastUsedName));
+                    theMessage.Answer($"Ignoranz für {u.LastUsedName} aufgehoben");
                     return;
                 }
                 theMessage.Answer("Oh... Dieser User ist mir nicht bekannt");

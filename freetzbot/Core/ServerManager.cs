@@ -35,13 +35,7 @@ namespace FritzBot.Core
         /// <summary>
         /// Die Anzahl der verwalteten Verbindungen
         /// </summary>
-        public static int ConnectionCount
-        {
-            get
-            {
-                return _servers.Count;
-            }
-        }
+        public static int ConnectionCount => _servers.Count;
 
         /// <summary>
         /// Erstellt eine neue IRC Verbindung zu der Verbunden wird und zur Verwaltung hinzugefügt wird
@@ -114,13 +108,7 @@ namespace FritzBot.Core
         /// <summary>
         /// Gibt an ob mindestens eine ServerConnetion verbunden ist
         /// </summary>
-        public static bool Connected
-        {
-            get
-            {
-                return _servers.Any(x => x.Connected);
-            }
-        }
+        public static bool Connected => _servers.Any(x => x.Connected);
 
         /// <summary>
         /// Trennt die Verbindung zu allen Servern
@@ -368,11 +356,7 @@ namespace FritzBot.Core
 
             ThreadPool.QueueUserWorkItem(x =>
             {
-                JoinEventHandler ev = OnJoin;
-                if (ev != null)
-                {
-                    ev(this, e);
-                }
+                OnJoin?.Invoke(this, e);
             });
         }
 
@@ -387,11 +371,7 @@ namespace FritzBot.Core
 
             ThreadPool.QueueUserWorkItem(x =>
             {
-                QuitEventHandler ev = OnQuit;
-                if (ev != null)
-                {
-                    ev(this, e);
-                }
+                OnQuit?.Invoke(this, e);
             });
         }
 
@@ -406,11 +386,7 @@ namespace FritzBot.Core
 
             ThreadPool.QueueUserWorkItem(x =>
             {
-                PartEventHandler ev = OnPart;
-                if (ev != null)
-                {
-                    ev(this, e);
-                }
+                OnPart?.Invoke(this, e);
             });
         }
 
@@ -440,11 +416,7 @@ namespace FritzBot.Core
 
             ThreadPool.QueueUserWorkItem(x =>
             {
-                NickChangeEventHandler ev = OnNickChange;
-                if (ev != null)
-                {
-                    ev(this, e);
-                }
+                OnNickChange?.Invoke(this, e);
             });
         }
 
@@ -459,11 +431,7 @@ namespace FritzBot.Core
 
             ThreadPool.QueueUserWorkItem(x =>
             {
-                KickEventHandler ev = OnKick;
-                if (ev != null)
-                {
-                    ev(this, e);
-                }
+                OnKick?.Invoke(this, e);
             });
         }
 
@@ -488,11 +456,7 @@ namespace FritzBot.Core
 
                 if (!message.IsIgnored)
                 {
-                    IrcMessageEventHandler ev = OnPreProcessingMessage;
-                    if (ev != null)
-                    {
-                        ev(this, message);
-                    }
+                    OnPreProcessingMessage?.Invoke(this, message);
 
                     if (message.IsCommand && !message.HandledByEvent)
                     {
@@ -506,11 +470,7 @@ namespace FritzBot.Core
                         }
                     }
 
-                    ev = OnPostProcessingMessage;
-                    if (ev != null)
-                    {
-                        ev(this, message);
-                    }
+                    OnPostProcessingMessage?.Invoke(this, message);
 
                     if (message.IsPrivate && !(message.ProcessedByCommand || message.Answered))
                     {
@@ -552,10 +512,8 @@ namespace FritzBot.Core
             if (_connection != null)
             {
                 _connection.RfcQuit(Settings.QuitMessage);
-                if (_listener != null)
-                {
-                    _listener.Abort();
-                }
+                _listener?.Abort();
+
                 if (_connection.IsConnected)
                 {
                     _connection.Disconnect();
@@ -568,13 +526,7 @@ namespace FritzBot.Core
         /// <summary>
         /// Gibt das der Verbindung zugrunde liegende IRC Objekt zurück
         /// </summary>
-        public IrcFeatures IrcClient
-        {
-            get
-            {
-                return _connection;
-            }
-        }
+        public IrcFeatures IrcClient => _connection;
 
         /// <summary>
         /// Gibt eine Nachricht in allen Channels bekannt

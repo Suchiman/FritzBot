@@ -91,7 +91,7 @@ namespace FritzBot.Plugins
         {
             if (String.IsNullOrWhiteSpace(package.Url))
             {
-                theMessage.Answer(String.Format("Das Paket {0} existiert, hat jedoch keine Detailseite", package.Name));
+                theMessage.Answer($"Das Paket {package.Name} existiert, hat jedoch keine Detailseite");
                 return;
             }
 

@@ -73,13 +73,7 @@ namespace FritzBot.Functions
 
     public class LocationInfo
     {
-        public bool Success
-        {
-            get
-            {
-                return statusCode == "OK" && !String.IsNullOrEmpty(countryCode) && countryCode != "-";
-            }
-        }
+        public bool Success => statusCode == "OK" && !String.IsNullOrEmpty(countryCode) && countryCode != "-";
         public string statusCode { get; set; }
         public string statusMessage { get; set; }
         public string ipAddress { get; set; }
