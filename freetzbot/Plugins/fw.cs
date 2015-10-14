@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Net;
 using System.Net.FtpClient;
 using System.Net.Sockets;
@@ -113,7 +114,13 @@ namespace FritzBot.Plugins
                             }
                         }
                     }
-                    if (neu.Count + gelöscht.Count + geändert.Count > 0)
+
+                    int summarizedCount = neu.Count + gelöscht.Count + geändert.Count;
+                    if (summarizedCount > 20)
+                    {
+                        Log.Warning("{summarizedCount} überschreitet limit an Änderungen, ignoriere...", summarizedCount);
+                    }
+                    else if (summarizedCount > 0)
                     {
                         string labors = "Änderungen auf dem FTP gesichtet! - ";
                         if (neu.Count > 0)
@@ -169,13 +176,34 @@ namespace FritzBot.Plugins
             return current;
         }
 
-        protected override IQueryable<Subscription> GetSubscribers(BotContext context, string[] criteria)
+        protected override IQueryable<Subscription> GetSubscribers(BotContext context, string[] criterias)
         {
-            if (criteria != null && criteria.Length > 0)
+            if (criterias?.Length > 0)
             {
-                return base.GetSubscribers(context, criteria).Where(x => criteria.Any(c => x.Bedingungen.Any(a => a.Bedingung.Contains(c))));
+                Expression filter = null;
+                ParameterExpression[] parameter = null;
+                MemberExpression subscriptionBedingungen = null;
+                foreach (string criteria in criterias)
+                {
+                    Expression<Func<Subscription, bool>> condition = subscription => subscription.Bedingungen.Any(a => a.Bedingung.Contains(criteria));
+                    if (filter == null)
+                    {
+                        filter = condition.Body;
+                        parameter = condition.Parameters.ToArray();
+                        subscriptionBedingungen = Expression.Property(parameter[0], nameof(Subscription.Bedingungen));
+                        continue;
+                    }
+
+                    var methodCall = condition.Body as MethodCallExpression;
+                    methodCall = Expression.Call(methodCall.Method, subscriptionBedingungen, methodCall.Arguments[1]);
+
+                    filter = Expression.OrElse(filter, methodCall);
+                }
+
+                Expression<Func<Subscription, bool>> finalFilter = Expression.Lambda<Func<Subscription, bool>>(filter, parameter);
+                return base.GetSubscribers(context, criterias).Where(finalFilter);
             }
-            return base.GetSubscribers(context, criteria);
+            return base.GetSubscribers(context, criterias);
         }
 
         public void Run(IrcMessage theMessage)
