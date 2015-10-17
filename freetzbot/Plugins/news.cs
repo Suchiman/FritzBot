@@ -44,6 +44,7 @@ namespace FritzBot.Plugins
                 if (updatedNews.Count == 0)
                 {
                     Log.Warning("Keine News gefunden");
+                    continue;
                 }
 
                 if (news.Count == 0)
