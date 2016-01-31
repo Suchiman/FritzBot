@@ -101,14 +101,22 @@ namespace FritzBot.Plugins
 
                 entry.Titel = x.QuerySelector<IHtmlDivElement>("div.headline")?.Children.FirstOrDefault()?.TextContent?.Trim();
                 List<IHtmlDivElement> metaInfos = x.QuerySelectorAll<IHtmlDivElement>("div.meta-infos > div.row > div.cell").ToList();
-                if (metaInfos.Count != 6)
+                if (metaInfos.Count % 2 == 0)
                 {
                     Debug.Fail("Meta-Info struktur geändert");
                     Log.Warning("Meta-Info struktur geändert, Count {Count}", metaInfos.Count);
                     return null;
                 }
-                entry.Version = metaInfos[3].TextContent.Trim();
-                entry.Datum = DateTime.Parse(metaInfos[5].TextContent.Trim());
+
+                entry.Version = metaInfos.SkipWhile(m => m.TextContent != "Version:").ElementAtOrDefault(1)?.TextContent.Trim();
+                string rawDateString = metaInfos.SkipWhile(m => m.TextContent != "Datum:").ElementAtOrDefault(1)?.TextContent.Trim();
+                DateTime parsed;
+                if (!DateTime.TryParse(rawDateString, out parsed))
+                {
+                    parsed = DateTime.MinValue;
+                    Log.Warning("Fehler beim Parsen der DateTime {DateTime}", rawDateString);
+                }
+                entry.Datum = parsed;
 
                 return entry;
             }).NotNull().ToList();
