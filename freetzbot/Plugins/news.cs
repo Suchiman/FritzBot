@@ -101,7 +101,7 @@ namespace FritzBot.Plugins
 
                 entry.Titel = x.QuerySelector<IHtmlDivElement>("div.headline")?.Children.FirstOrDefault()?.TextContent?.Trim();
                 List<IHtmlDivElement> metaInfos = x.QuerySelectorAll<IHtmlDivElement>("div.meta-infos > div.row > div.cell").ToList();
-                if (metaInfos.Count % 2 == 0)
+                if (metaInfos.Count % 2 != 0)
                 {
                     Debug.Fail("Meta-Info struktur geändert");
                     Log.Warning("Meta-Info struktur geändert, Count {Count}", metaInfos.Count);
