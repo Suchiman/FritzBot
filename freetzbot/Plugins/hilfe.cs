@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace FritzBot.Plugins
 {
-    [Name("hilfe", "help", "faq", "info", "man", "lsmod")]
+    [Name("hilfe", "help", "info", "man", "lsmod")]
     [Help("Die Hilfe!")]
     class hilfe : PluginBase, ICommand
     {
