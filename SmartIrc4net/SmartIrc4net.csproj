@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>SmartIrc4net</RootNamespace>
     <AssemblyName>Meebey.SmartIrc4net</AssemblyName>
-    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
