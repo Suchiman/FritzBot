@@ -257,7 +257,14 @@ namespace FritzBot.Plugins
             }
             catch (FtpCommandException ex)
             {
-                Log.Error(ex, "Abrufen von FTP Labors fehlgeschlagen");
+                if (ex.Message == "There are too many connections from your internet address.")
+                {
+                    Log.Warning("Abrufen von FTP Labors wegen zu vielen Connections fehlgeschlagen");
+                }
+                else
+                {
+                    Log.Error(ex, "Abrufen von FTP Labors fehlgeschlagen");
+                }
             }
 
             if (NeueLaborDaten.Count > 0)
