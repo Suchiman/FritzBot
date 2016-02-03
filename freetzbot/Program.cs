@@ -199,7 +199,7 @@ namespace FritzBot
             ShutdownSignal = new AutoResetEvent(false);
 
             Log.Logger = new LoggerConfiguration()
-                .WriteTo.ColoredConsole(outputTemplate: "{Timestamp:dd.MM HH:mm:ss} {Message}{NewLine}{Exception}")
+                .WriteTo.LiterateConsole(outputTemplate: "{Timestamp:dd.MM HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}")
                 .ReadFrom.AppSettings()
                 .CreateLogger();
 
