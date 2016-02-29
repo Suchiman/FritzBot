@@ -18,7 +18,7 @@ namespace FritzBot.Plugins
     {
         private const string PackagesPage = "http://freetz.org/wiki/packages";
 
-        private DataCache<List<FreetzPackage>> PackagesCache = new DataCache<List<FreetzPackage>>(GetPackages, 30);
+        private DataCache<List<FreetzPackage>> PackagesCache = new DataCache<List<FreetzPackage>>(GetPackages, TimeSpan.FromMinutes(30));
 
         public void Run(IrcMessage theMessage)
         {

@@ -19,7 +19,7 @@ namespace FritzBot.Plugins
     {
         private const string ModelPage = "http://freetz.org/wiki/models";
 
-        private DataCache<Dictionary<string, TableBox>> PackagesCache = new DataCache<Dictionary<string, TableBox>>(GetPackages, 30);
+        private DataCache<Dictionary<string, TableBox>> PackagesCache = new DataCache<Dictionary<string, TableBox>>(GetPackages, TimeSpan.FromMinutes(30));
 
         public void Run(IrcMessage theMessage)
         {

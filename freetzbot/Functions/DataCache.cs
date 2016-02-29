@@ -9,27 +9,27 @@ namespace FritzBot.Functions
     public class DataCache<T>
     {
         private T Item;
-        private Func<T, T> Renewer;
-        private double expires;
+        private Func<T, T> ValueFactory;
+        private TimeSpan Expires;
         public DateTime Renewed { get; protected set; }
-        public Exception LastUpdateFail { get; set; }
+        public Exception LastUpdateFail { get; protected set; }
         public bool IsUpToDate
         {
             get
             {
-                return expires == 0 || Renewed.AddMinutes(expires) >= DateTime.Now;
+                return Expires == TimeSpan.Zero || Renewed + Expires >= DateTime.Now;
             }
         }
         /// <summary>
         /// Initialisiert eine neue Cache Instanz
         /// </summary>
-        /// <param name="renewMethod">Die Methode mit der der gekapselte Typ bei Ablauf erneuert werden kann. Erhält als Parameter die gecachten Daten</param>
-        /// <param name="ExpiresInMinutes">Die Zeit in Minuten bis der Cache erneuert werden muss oder 0 wenn er nicht automatisch erneuert werden soll</param>
-        public DataCache(Func<T, T> renewMethod, double ExpiresInMinutes)
+        /// <param name="valueFactory">Die Methode mit der der gekapselte Typ bei Ablauf erneuert werden kann. Erhält als Parameter die gecachten Daten</param>
+        /// <param name="expiresIn">Die Zeit bis der Cache erneuert werden muss oder TimeSpan.Zero wenn er nicht automatisch erneuert werden soll</param>
+        public DataCache(Func<T, T> valueFactory, TimeSpan expiresIn)
         {
-            Renewer = renewMethod;
+            ValueFactory = valueFactory;
             Renewed = DateTime.MinValue;
-            expires = ExpiresInMinutes;
+            Expires = expiresIn;
             LastUpdateFail = null;
         }
 
@@ -41,7 +41,7 @@ namespace FritzBot.Functions
             LastUpdateFail = null;
             try
             {
-                T tmp = Renewer(Item);
+                T tmp = ValueFactory(Item);
                 if (!tmp.Equals(Item))
                 {
                     Item = tmp;

@@ -32,7 +32,7 @@ namespace FritzBot.Plugins
 
         public labor()
         {
-            LaborDaten = new DataCache<List<Labordaten>>(UpdateLaborCache, 60);
+            LaborDaten = new DataCache<List<Labordaten>>(UpdateLaborCache, TimeSpan.FromMinutes(60));
         }
 
         public void Start()
