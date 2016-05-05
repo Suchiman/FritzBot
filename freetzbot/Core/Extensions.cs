@@ -235,6 +235,25 @@ namespace FritzBot.Core
         }
     }
 
+    public static class CollectionExtensions
+    {
+        public static void AddRange<T>(this ICollection<T> source, IEnumerable<T> values)
+        {
+            foreach (var item in values)
+            {
+                source.Add(item);
+            }
+        }
+
+        public static void RemoveAll<T>(this ICollection<T> source, Predicate<T> predicate)
+        {
+            foreach (var item in source.Where(x => predicate(x)).ToList())
+            {
+                source.Remove(item);
+            }
+        }
+    }
+
     public static class OtherExtensions
     {
         public static bool In<T>(this T source, params T[] values)

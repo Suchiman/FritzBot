@@ -2,27 +2,23 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using FritzBot.Core;
 
 namespace FritzBot.Database
 {
     public class Box
     {
-        public Int64 Id { get; set; }
-        public string ShortName { get; set; }
-        public string FullName { get; set; }
-        public List<BoxRegexPattern> RegexPattern { get; set; }
-
-        public Box()
-        {
-            RegexPattern = new List<BoxRegexPattern>();
-        }
+        public virtual Int64 Id { get; set; }
+        public virtual string ShortName { get; set; }
+        public virtual string FullName { get; set; }
+        public virtual ICollection<BoxRegexPattern> RegexPattern { get; set; }
 
         /// <summary>
         /// Überprüft mit den gegebenen Daten ob der input dieser Box entspricht
         /// </summary>
         public bool Matches(string input)
         {
-            return ((ShortName == input) || (FullName == input) || RegexPattern.Select(x => x.Pattern).Any(x => Regex.Match(input, x).Success));
+            return (ShortName == input || FullName == input || RegexPattern.Select(x => x.Pattern).Any(x => Regex.Match(input, x).Success));
         }
 
         /// <summary>
@@ -30,8 +26,7 @@ namespace FritzBot.Database
         /// </summary>
         public void AddRegex(params string[] pattern)
         {
-            RegexPattern.AddRange(pattern.Select(x => new BoxRegexPattern { Pattern = x }));
-            RegexPattern = RegexPattern.Distinct().ToList();
+            RegexPattern.AddRange(pattern.Except(RegexPattern.Select(x => x.Pattern)).Select(x => new BoxRegexPattern { Pattern = x }));
         }
 
         /// <summary>

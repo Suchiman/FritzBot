@@ -5,10 +5,10 @@ namespace FritzBot.Database
 {
     public class BoxEntry
     {
-        public Int64 Id { get; set; }
+        public virtual Int64 Id { get; set; }
         [Required]
-        public string Text { get; set; }
-        public Box Box { get; set; }
-        public User User { get; set; }
+        public virtual string Text { get; set; }
+        public virtual Box Box { get; set; }
+        public virtual User User { get; set; }
     }
 }

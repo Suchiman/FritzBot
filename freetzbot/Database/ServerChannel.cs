@@ -4,8 +4,8 @@ namespace FritzBot.Database
 {
     public class ServerChannel
     {
-        public Int64 Id { get; set; }
-        public string Name { get; set; }
-        public Server Server { get; set; }
+        public virtual Int64 Id { get; set; }
+        public virtual string Name { get; set; }
+        public virtual Server Server { get; set; }
     }
 }

@@ -6,14 +6,14 @@ namespace FritzBot.Database
 {
     public class AliasEntry
     {
-        public Int64 Id { get; set; }
+        public virtual Int64 Id { get; set; }
         [Required]
         [Index(IsUnique = true)]
-        public string Key { get; set; }
-        public string Text { get; set; }
-        public User Creator { get; set; }
-        public DateTime? Created { get; set; }
-        public User Updater { get; set; }
-        public DateTime? Updated { get; set; }
+        public virtual string Key { get; set; }
+        public virtual string Text { get; set; }
+        public virtual User Creator { get; set; }
+        public virtual DateTime? Created { get; set; }
+        public virtual User Updater { get; set; }
+        public virtual DateTime? Updated { get; set; }
     }
 }

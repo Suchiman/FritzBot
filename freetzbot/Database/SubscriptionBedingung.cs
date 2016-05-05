@@ -4,7 +4,7 @@ namespace FritzBot.Database
 {
     public class SubscriptionBedingung
     {
-        public Int64 Id { get; set; }
-        public string Bedingung { get; set; }
+        public virtual Int64 Id { get; set; }
+        public virtual string Bedingung { get; set; }
     }
 }

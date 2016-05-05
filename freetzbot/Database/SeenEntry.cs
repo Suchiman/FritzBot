@@ -4,10 +4,10 @@ namespace FritzBot.Database
 {
     public class SeenEntry
     {
-        public Int64 Id { get; set; }
-        public DateTime? LastSeen { get; set; }
-        public DateTime? LastMessaged { get; set; }
-        public string LastMessage { get; set; }
-        public User User { get; set; }
+        public virtual Int64 Id { get; set; }
+        public virtual DateTime? LastSeen { get; set; }
+        public virtual DateTime? LastMessaged { get; set; }
+        public virtual string LastMessage { get; set; }
+        public virtual User User { get; set; }
     }
 }

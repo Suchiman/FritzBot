@@ -4,9 +4,9 @@ namespace FritzBot.Database
 {
     public class UserKeyValueEntry
     {
-        public Int64 Id { get; set; }
-        public User User { get; set; }
-        public string Key { get; set; }
-        public string Value { get; set; }
+        public virtual Int64 Id { get; set; }
+        public virtual User User { get; set; }
+        public virtual string Key { get; set; }
+        public virtual string Value { get; set; }
     }
 }

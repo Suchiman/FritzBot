@@ -5,11 +5,11 @@ namespace FritzBot.Database
 {
     public class Server
     {
-        public Int64 Id { get; set; }
-        public string Address { get; set; }
-        public int Port { get; set; }
-        public string Nickname { get; set; }
-        public string QuitMessage { get; set; }
-        public List<ServerChannel> Channels { get; set; }
+        public virtual Int64 Id { get; set; }
+        public virtual string Address { get; set; }
+        public virtual int Port { get; set; }
+        public virtual string Nickname { get; set; }
+        public virtual string QuitMessage { get; set; }
+        public virtual ICollection<ServerChannel> Channels { get; set; }
     }
 }

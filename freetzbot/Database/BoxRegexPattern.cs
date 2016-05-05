@@ -4,8 +4,8 @@ namespace FritzBot.Database
 {
     public class BoxRegexPattern
     {
-        public Int64 Id { get; set; }
-        public string Pattern { get; set; }
-        public Box Box { get; set; }
+        public virtual Int64 Id { get; set; }
+        public virtual string Pattern { get; set; }
+        public virtual Box Box { get; set; }
     }
 }
