@@ -24,7 +24,7 @@ namespace FritzBot.Plugins
     [Name("labor")]
     [Help("Gibt Informationen zu den aktuellen Labor Firmwares aus: !labor <boxnummer>")]
     [Subscribeable]
-    class labor : PluginBase, ICommand, IBackgroundTask
+    class labor : PluginBase, ICommand//, IBackgroundTask
     {
         public const string BaseUrl = "http://avm.de/fritz-labor/";
         private DataCache<List<Labordaten>> LaborDaten = null;
@@ -224,6 +224,7 @@ namespace FritzBot.Plugins
             return neue.Where(neu => !alte.Any(alt => alt == neu)).ToList();
         }
 
+        private const string KeywordFritzOS = "FRITZ!OS ";
         private const string KeywordVersion = "Version: ";
         private const string KeywordDatum = "Datum: ";
         private const string KeywordLetztesUpdate = "Letzte Aktualisierung: ";
@@ -240,8 +241,11 @@ namespace FritzBot.Plugins
                 {
                     fallbackDate = lastUpdate.TextContent.Substring(KeywordLetztesUpdate.Length);
                 }
-                IDocument detailPage = link.Navigate().Result;
-                IHtmlParagraphElement downloadInformations = detailPage.QuerySelector<IHtmlParagraphElement>("p:contains('Downloadinformationen:')");
+                IDocument detailPage = link.NavigateAsync().Result;
+                IHtmlParagraphElement downloadInformations = detailPage.QuerySelector<IHtmlParagraphElement>("p:contains('Downloadinformationen:')") ?? detailPage.QuerySelector<IHtmlParagraphElement>("p:contains('Informationen zum Download:')");
+
+                if (downloadInformations == null)
+                    return null;
 
                 Labordaten daten = new Labordaten();
                 daten.Typ = detailPage.Title.EndsWith(TitleAVM) ? detailPage.Title.Remove(detailPage.Title.Length - TitleAVM.Length) : detailPage.Title;
