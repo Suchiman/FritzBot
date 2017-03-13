@@ -37,7 +37,8 @@ namespace FritzBot.Plugins
                 foreach (string link in links)
                 {
                     WebClient dl = new WebClient();
-                    dl.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1468.0 Safari/537.36");
+                    dl.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.93 Safari/537.36");
+                    dl.Headers.Add("Accept-Language", "de-de, de, en;q=0.5");
                     dl.DownloadProgressChanged += dl_DownloadProgressChanged;
                     dl.DownloadDataCompleted += dl_DownloadDataCompleted;
                     dl.DownloadDataAsync(new Uri(link), theMessage);
