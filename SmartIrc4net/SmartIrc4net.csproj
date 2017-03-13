@@ -1,69 +1,18 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>10.0.0</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{8B969B3B-F0DF-4A4B-AF59-FF49E9435589}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <RootNamespace>SmartIrc4net</RootNamespace>
-    <AssemblyName>Meebey.SmartIrc4net</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFramework>net462</TargetFramework>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <Copyright>2003-2015 (C) Mirco Bauer &lt;meebey@meebey.net&gt; and other contributors</Copyright>
+    <Company>qNETp</Company>
+    <Description>IRC library for CLI</Description>
+    <AssemblyVersion>0.4.5.0</AssemblyVersion>
+    <FileVersion>0.4.5.0</FileVersion>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\debug</OutputPath>
-    <DefineConstants>TRACE;DEBUG</DefineConstants>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>none</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\release</OutputPath>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
+
   <ItemGroup>
-    <Compile Include="src\AssemblyInfo.cs" />
-    <Compile Include="src\Logger.cs" />
-    <Compile Include="src\Consts.cs" />
-    <Compile Include="src\EventArgs.cs" />
-    <Compile Include="src\Exceptions.cs" />
-    <Compile Include="src\IrcConnection\IrcConnection.cs" />
-    <Compile Include="src\IrcConnection\Delegates.cs" />
-    <Compile Include="src\IrcConnection\EventArgs.cs" />
-    <Compile Include="src\IrcCommands\IrcCommands.cs" />
-    <Compile Include="src\IrcCommands\Rfc2812.cs" />
-    <Compile Include="src\IrcClient\IrcClient.cs" />
-    <Compile Include="src\IrcClient\IrcMessageData.cs" />
-    <Compile Include="src\IrcClient\Delegates.cs" />
-    <Compile Include="src\IrcClient\EventArgs.cs" />
-    <Compile Include="src\IrcClient\IrcUser.cs" />
-    <Compile Include="src\IrcClient\Channel.cs" />
-    <Compile Include="src\IrcClient\NonRfcChannel.cs" />
-    <Compile Include="src\IrcClient\ChannelUser.cs" />
-    <Compile Include="src\IrcClient\NonRfcChannelUser.cs" />
-    <Compile Include="src\IrcConnection\IrcProperties.cs" />
-    <Compile Include="src\IrcClient\ChannelInfo.cs" />
-    <Compile Include="src\IrcClient\WhoInfo.cs" />
-    <Compile Include="src\IrcClient\BanInfo.cs" />
-    <Compile Include="src\IrcFeatures\DccChat.cs" />
-    <Compile Include="src\IrcFeatures\DccConnection.cs" />
-    <Compile Include="src\IrcFeatures\DccSend.cs" />
-    <Compile Include="src\IrcFeatures\Delegates.cs" />
-    <Compile Include="src\IrcFeatures\EventArgs.cs" />
-    <Compile Include="src\IrcFeatures\IrcConstants.cs" />
-    <Compile Include="src\IrcFeatures\IrcFeatures.cs" />
-    <Compile Include="src\IrcConnection\ProxyType.cs" />
-    <Compile Include="src\IrcConnection\PrimaryOrFallbackEncoding.cs" />
-    <Compile Include="src\IrcClient\ServerProperties.cs" />
-    <Compile Include="src\IrcClient\ChannelModeChangeInfo.cs" />
+    <Compile Include="src\**\*.cs" />
+    <Compile Remove="src\AssemblyInfo.cs" />
+    <None Remove="src\AssemblyInfo.cs" />
+    <None Remove="src\AssemblyInfo.cs.in" />
   </ItemGroup>
-  <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-  </ItemGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
