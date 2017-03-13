@@ -108,7 +108,7 @@ namespace FritzBot.Core
         /// </summary>
         public static void Init(bool AutostartTask)
         {
-            string PluginDirectory = Path.Combine(Environment.CurrentDirectory, "plugins");
+            string PluginDirectory = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location), "plugins");
             if (!Directory.Exists(PluginDirectory))
             {
                 Directory.CreateDirectory(PluginDirectory);
