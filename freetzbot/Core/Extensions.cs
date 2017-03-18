@@ -39,29 +39,29 @@ namespace FritzBot.Core
             return list;
         }
 
-        public static bool Contains<T>(this IEnumerable<T> list, T item, Func<T, object> selector)
+        public static bool Contains<T>(this IEnumerable<T> source, T item, Func<T, object> selector)
         {
-            return list.Contains(item, new KeyEqualityComparer<T>(selector));
+            return source.Contains(item, new KeyEqualityComparer<T>(selector));
         }
 
-        public static IEnumerable<T> Distinct<T>(this IEnumerable<T> list, Func<T, object> selector)
+        public static IEnumerable<T> Distinct<T>(this IEnumerable<T> source, Func<T, object> selector)
         {
-            Contract.Requires(list != null);
+            Contract.Requires(source != null);
 
-            return list.Distinct<T>(new KeyEqualityComparer<T>(selector));
+            return source.Distinct(new KeyEqualityComparer<T>(selector));
         }
 
-        public static IEnumerable<T> Intersect<T>(this IEnumerable<T> list, IEnumerable<T> second, Func<T, object> bedingung)
+        public static IEnumerable<T> Intersect<T>(this IEnumerable<T> source, IEnumerable<T> second, Func<T, object> selector)
         {
-            return list.Intersect<T>(second, new KeyEqualityComparer<T>(bedingung));
+            return source.Intersect(second, new KeyEqualityComparer<T>(selector));
         }
 
-        public static List<T> Steal<T>(this List<T> list, Func<T, bool> bedingung)
+        public static List<T> Steal<T>(this List<T> list, Predicate<T> predicate)
         {
             List<T> extracted = new List<T>();
             for (int i = 0; i < list.Count; i++)
             {
-                if (bedingung(list[i]))
+                if (predicate(list[i]))
                 {
                     extracted.Add(list[i]);
                     list.RemoveAt(i);
