@@ -44,7 +44,7 @@ namespace Meebey.SmartIrc4net
         private Hashtable        _Users     = Hashtable.Synchronized(new Hashtable(StringComparer.OrdinalIgnoreCase));
         private Hashtable        _Ops       = Hashtable.Synchronized(new Hashtable(StringComparer.OrdinalIgnoreCase));
         private Hashtable        _Voices    = Hashtable.Synchronized(new Hashtable(StringComparer.OrdinalIgnoreCase));
-        private StringCollection _Bans      = new StringCollection();
+        private List<string>     _Bans      = new List<string>();
         private List<string>     _BanExcepts = new List<string>();
         private List<string>     _InviteExcepts = new List<string>();
         private string           _Topic     = String.Empty;
@@ -159,7 +159,7 @@ namespace Meebey.SmartIrc4net
         /// 
         /// </summary>
         /// <value> </value>
-        public StringCollection Bans {
+        public List<string> Bans {
             get {
                 return _Bans;
             }

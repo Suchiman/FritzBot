@@ -109,7 +109,7 @@ namespace Meebey.SmartIrc4net
             if (!Valid)
                 return;
             if (DccServer != null) {
-                Connection = DccServer.AcceptTcpClient();
+                Connection = DccServer.AcceptTcpClientAsync().Result;
                 RemoteEndPoint = (IPEndPoint)Connection.Client.RemoteEndPoint;
                 DccServer.Stop();
                 isConnected = true;
@@ -196,7 +196,7 @@ namespace Meebey.SmartIrc4net
                 } else {
                     if(offset==0) {
                         Connection = new TcpClient();
-                        Connection.Connect(RemoteEndPoint);
+                        Connection.ConnectAsync(RemoteEndPoint.Address, RemoteEndPoint.Port).Wait();
                         isConnected = true;
                     } else {
                         if(_File.CanSeek) {

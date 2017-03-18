@@ -39,6 +39,7 @@ using System.Text;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Authentication;
 using System.Threading;
+using System.Linq;
 //using Starksoft.Net.Proxy;
 
 namespace Meebey.SmartIrc4net
@@ -74,7 +75,7 @@ namespace Meebey.SmartIrc4net
         private int              _AutoRetryDelay = 30;
         private int              _AutoRetryLimit = 3;
         private bool             _AutoReconnect;
-        private Encoding         _Encoding = Encoding.Default;
+        private Encoding         _Encoding = Encoding.ASCII;
         public bool EnableUTF8Recode { get; set; }
         private int              _SocketReceiveTimeout  = 600;
         private int              _SocketSendTimeout = 600;
@@ -538,13 +539,13 @@ namespace Meebey.SmartIrc4net
             PingStopwatch = new Stopwatch();
             NextPingStopwatch = new Stopwatch();
 
-            Assembly assm = Assembly.GetAssembly(this.GetType());
-            AssemblyName assm_name = assm.GetName(false);
+            Assembly assm = this.GetType().GetTypeInfo().Assembly;
+            AssemblyName assm_name = assm.GetName();
 
-            AssemblyProductAttribute pr = (AssemblyProductAttribute)assm.GetCustomAttributes(typeof(AssemblyProductAttribute), false)[0];
+            AssemblyProductAttribute pr = (AssemblyProductAttribute)assm.GetCustomAttributes(typeof(AssemblyProductAttribute)).First();
 
             _VersionNumber = assm_name.Version.ToString();
-            _VersionString = pr.Product+" "+_VersionNumber;
+            _VersionString = pr.Product + " " + _VersionNumber;
         }
         
 #if LOG4NET
@@ -616,32 +617,29 @@ namespace Meebey.SmartIrc4net
                     proxyClient.TcpClient = _TcpClient;
                     proxyClient.CreateConnection(Address, port);
                 } else*/ {
-                    _TcpClient.Connect(Address, port);
+                    _TcpClient.ConnectAsync(Address, port).Wait();
                 }
                 
                 Stream stream = _TcpClient.GetStream();
                 if (_UseSsl) {
                     RemoteCertificateValidationCallback certValidation;
                     if (_ValidateServerCertificate) {
-                        certValidation = ServicePointManager.ServerCertificateValidationCallback;
-                        if (certValidation == null) {
-                            certValidation = delegate(object sender,
-                                X509Certificate certificate,
-                                X509Chain chain,
-                                SslPolicyErrors sslPolicyErrors) {
-                                if (sslPolicyErrors == SslPolicyErrors.None) {
-                                    return true;
-                                }
+                        certValidation = delegate(object sender,
+                            X509Certificate certificate,
+                            X509Chain chain,
+                            SslPolicyErrors sslPolicyErrors) {
+                            if (sslPolicyErrors == SslPolicyErrors.None) {
+                                return true;
+                            }
 
 #if LOG4NET
-                                Logger.Connection.Error(
-                                    "Connect(): Certificate error: " +
-                                    sslPolicyErrors
-                                );
+                            Logger.Connection.Error(
+                                "Connect(): Certificate error: " +
+                                sslPolicyErrors
+                            );
 #endif
-                                return false;
-                            };
-                        }
+                            return false;
+                        };
                     } else {
                         certValidation = delegate { return true; };
                     }
@@ -663,11 +661,11 @@ namespace Meebey.SmartIrc4net
                         if (_SslClientCertificate != null) {
                             var certs = new X509Certificate2Collection();
                             certs.Add(_SslClientCertificate);
-                            sslStream.AuthenticateAsClient(Address, certs,
-                                                           SslProtocols.Default,
-                                                           false);
+                            sslStream.AuthenticateAsClientAsync(Address, certs,
+                                                               SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12,
+                                                               false).Wait();
                         } else {
-                            sslStream.AuthenticateAsClient(Address);
+                            sslStream.AuthenticateAsClientAsync(Address).Wait();
                         }
                     } catch (IOException ex) {
 #if LOG4NET
@@ -723,18 +721,18 @@ namespace Meebey.SmartIrc4net
             } catch (Exception e) {
                 if (_Reader != null) {
                     try {
-                        _Reader.Close();
+                        _Reader.Dispose();
                     } catch (ObjectDisposedException) {
                     }
                 }
                 if (_Writer != null) {
                     try {
-                        _Writer.Close();
+                        _Writer.Dispose();
                     } catch (ObjectDisposedException) {
                     }
                 }
                 if (_TcpClient != null) {
-                    _TcpClient.Close();
+                    _TcpClient.Dispose();
                 }
                 _IsConnected = false;
                 IsConnectionError = true;
@@ -822,7 +820,7 @@ namespace Meebey.SmartIrc4net
             _IdleWorkerThread.RequestStop();
             _ReadThread.RequestStop();
             _WriteThread.RequestStop();
-            _TcpClient.Close();
+            _TcpClient.Dispose();
             _IsConnected = false;
             _IsRegistered = false;
             
@@ -1162,7 +1160,7 @@ namespace Meebey.SmartIrc4net
                         Logger.Socket.Debug("ReadThread Worker(): loop ended");
                         Logger.Socket.Debug("ReadThread Worker(): closing reader");
 #endif
-                        _Connection._Reader.Close();
+                        _Connection._Reader.Dispose();
 
                         // clean up our receive queue else we continue processing old
                         // messages when the read thread is restarted!
@@ -1242,7 +1240,7 @@ namespace Meebey.SmartIrc4net
                         Logger.Socket.Debug("WriteThread Worker(): loop ended");
                         Logger.Socket.Debug("WriteThread Worker(): closing writer");
 #endif
-                        _Connection._Writer.Close();
+                        _Connection._Writer.Dispose();
                     } catch (IOException e) {
 #if LOG4NET
                         Logger.Socket.Warn("IOException: " + e.Message);

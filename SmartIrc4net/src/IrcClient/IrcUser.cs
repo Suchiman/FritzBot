@@ -26,6 +26,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+using System.Collections.Generic;
 using System.Collections.Specialized;
 
 namespace Meebey.SmartIrc4net
@@ -206,7 +207,7 @@ namespace Meebey.SmartIrc4net
                 Channel          channel;
                 string[]         result;
                 string[]         channels       = _IrcClient.GetChannels();
-                StringCollection joinedchannels = new StringCollection();
+                List<string>     joinedchannels = new List<string>();
                 foreach (string channelname in channels) {
                     channel = _IrcClient.GetChannel(channelname);
                     if (channel.UnsafeUsers.ContainsKey(_Nick)) {
