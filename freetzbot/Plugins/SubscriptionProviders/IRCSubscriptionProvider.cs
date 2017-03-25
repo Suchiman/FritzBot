@@ -16,13 +16,19 @@ namespace FritzBot.Plugins.SubscriptionProviders
             using (var context = new BotContext())
             {
                 List<string> names = context.Nicknames.Where(x => x.User.Id == user.Id).Select(x => x.Name).ToList();
-                ServerConnection UserConnection = ServerManager.Servers.FirstOrDefault(x => x.IrcClient.GetChannels().Select(c => x.IrcClient.GetChannel(c)).Any(c => c.Users.Keys.OfType<string>().Any(names.Contains)));
-                if (UserConnection != null)
+                
+                foreach (var connection in ServerManager.Servers)
                 {
-                    UserKeyValueEntry entry = context.GetStorage(user, PluginID);
-                    string method = entry != null ? entry.Value : "PRIVMSG";
+                    foreach (var channel in connection.IrcClient.GetChannels().Select(c => connection.IrcClient.GetChannel(c)))
+                    {
+                        var userInChannel = channel.Users.Keys.OfType<string>().Intersect(names).FirstOrDefault();
+                        if (userInChannel != null)
+                        {
+                            UserKeyValueEntry entry = context.GetStorage(user, PluginID);
 
-                    UserConnection.IrcClient.SendMessage(method == "PRIVMSG" ? SendType.Message : SendType.Notice, user.LastUsedName.Name, message);
+                            connection.IrcClient.SendMessage((entry?.Value ?? "PRIVMSG") == "PRIVMSG" ? SendType.Message : SendType.Notice, userInChannel, message);
+                        }
+                    }
                 }
             }
         }

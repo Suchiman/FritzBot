@@ -1,4 +1,5 @@
-﻿using System.Data.Entity;
+﻿using Microsoft.EntityFrameworkCore;
+using System.Configuration;
 
 namespace FritzBot.Database
 {
@@ -17,11 +18,25 @@ namespace FritzBot.Database
         public DbSet<UserKeyValueEntry> UserKeyValueEntries { get; set; }
         public DbSet<WitzEntry> WitzEntries { get; set; }
 
-        protected override void OnModelCreating(DbModelBuilder modelBuilder)
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.EnableSensitiveDataLogging();
+            optionsBuilder.UseSqlite(ConfigurationManager.ConnectionStrings["BotContext"].ConnectionString);
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<User>()
                 .HasMany(x => x.Names)
-                .WithRequired(x => x.User);
+                .WithOne(x => x.User);
+
+            modelBuilder.Entity<AliasEntry>()
+                .HasIndex(x => x.Key)
+                .IsUnique();
+
+            modelBuilder.Entity<Nickname>()
+                .HasIndex(x => x.Name)
+                .IsUnique();
         }
     }
 }

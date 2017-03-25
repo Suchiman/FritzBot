@@ -1,8 +1,8 @@
 using FritzBot.Core;
 using FritzBot.Database;
 using FritzBot.DataModel;
+using Microsoft.EntityFrameworkCore;
 using System;
-using System.Data.Entity;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;

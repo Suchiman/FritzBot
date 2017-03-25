@@ -1,6 +1,5 @@
 using System;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FritzBot.Database
 {
@@ -8,7 +7,6 @@ namespace FritzBot.Database
     {
         public virtual Int64 Id { get; set; }
         [Required]
-        [Index(IsUnique = true)]
         public virtual string Key { get; set; }
         public virtual string Text { get; set; }
         public virtual User Creator { get; set; }

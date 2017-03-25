@@ -2,6 +2,7 @@ using FritzBot.Core;
 using FritzBot.Database;
 using FritzBot.DataModel;
 using Meebey.SmartIrc4net;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 
@@ -37,7 +38,7 @@ namespace FritzBot.Plugins
         {
             using (var context = new BotContext())
             {
-                foreach (ReminderEntry item in context.ReminderEntries.Where(x => x.User == context.Nicknames.FirstOrDefault(n => n.Name == nickname).User).ToList())
+                foreach (ReminderEntry item in context.ReminderEntries.Include(x => x.Creator.LastUsedName).Where(x => x.User == context.Nicknames.FirstOrDefault(n => n.Name == nickname).User).ToList())
                 {
                     SendAction($"{item.Creator.LastUsedName} hat für dich am {item.Created:dd.MM.yyyy 'um' HH:mm:ss} eine Nachricht hinterlassen: {item.Message}");
                     context.ReminderEntries.Remove(item);

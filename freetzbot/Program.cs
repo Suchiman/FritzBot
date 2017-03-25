@@ -1,5 +1,6 @@
 using FritzBot.Core;
 using FritzBot.Database;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -208,6 +209,7 @@ namespace FritzBot
             //System.Data.Entity.Database.SetInitializer(new MigrateDatabaseToLatestVersion<BotContext, Configuration>());
             using (var context = new BotContext())
             {
+                context.Database.Migrate();
                 int count = context.Users.Count();
                 Log.Information("{UserCount} Benutzer geladen!", count);
             }

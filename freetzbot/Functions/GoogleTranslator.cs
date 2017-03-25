@@ -16,6 +16,8 @@ namespace FritzBot.Functions
         public static Translation GetTranslation(string Text, string DestinationLanguage, string SourceLanguage)
         {
             string url = String.Format("http://translate.google.com/translate_a/t?client=p&text={0}&hl={1}&sl={2}&tl={1}&ie=UTF-8&oe=UTF-8&multires=1&otf=1&pc=1&trs=1&ssel=3&tsel=6&sc=1", toolbox.UrlEncode(Text), DestinationLanguage, SourceLanguage); //"" Für Auto Erkennung der Ausgangssprache
+            //string _l = String.Format("https://translate.google.com/translate_a/single?client=t&sl=en&tl=de&hl=de&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t&ie=UTF-8&oe=UTF-8&otf=1&ssel=0&tsel=0&kc=11&tk=42047.455952&q=hello%20world")
+            //string _rl = String.Format("https://translate.google.de/translate_a/single?client=t&sl=de&tl=en&hl=de&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t&ie=UTF-8&oe=UTF-8&otf=1&ssel=0&tsel=0&kc=5&tk=488734.74801&q=hallo");
             WebClient dl = new WebClient();
             dl.Encoding = Encoding.UTF8;
             string response = dl.DownloadString(url);

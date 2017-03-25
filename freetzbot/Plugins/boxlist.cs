@@ -14,7 +14,7 @@ namespace FritzBot.Plugins
         {
             using (var context = new BotContext())
             {
-                string boxen = context.BoxEntries.Where(x => x.Box != null).Select(x => x.Box.ShortName).Distinct().Join(", ");
+                string boxen = context.BoxEntries.Select(x => x.Box.ShortName).Where(x => x != null).Distinct().Join(", ");
                 theMessage.Answer("Folgende Boxen wurden bei mir registriert: " + boxen);
             }
         }

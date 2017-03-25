@@ -1,10 +1,10 @@
 ﻿using FritzBot.Database;
 using Meebey.SmartIrc4net;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Events;
 using System;
 using System.Collections.Generic;
-using System.Data.Entity;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;

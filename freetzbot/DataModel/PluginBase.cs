@@ -1,8 +1,8 @@
 ﻿using FritzBot.Core;
 using FritzBot.Database;
 using FritzBot.Plugins.SubscriptionProviders;
+using Microsoft.EntityFrameworkCore;
 using System;
-using System.Data.Entity;
 using System.Linq;
 
 namespace FritzBot.DataModel
