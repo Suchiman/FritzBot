@@ -1,3 +1,4 @@
+using FluentFTP;
 using FritzBot.Core;
 using FritzBot.Database;
 using FritzBot.DataModel;
@@ -9,7 +10,6 @@ using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Net;
-using System.Net.FtpClient;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
 using System.Threading;

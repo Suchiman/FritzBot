@@ -2,6 +2,7 @@ using AngleSharp;
 using AngleSharp.Dom;
 using AngleSharp.Dom.Html;
 using AngleSharp.Extensions;
+using FluentFTP;
 using FritzBot.Core;
 using FritzBot.Database;
 using FritzBot.DataModel;
@@ -14,8 +15,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
-using System.Net.FtpClient;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 
