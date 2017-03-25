@@ -30,11 +30,7 @@ namespace FritzBot.Database
 
         public bool CheckPassword(string pw)
         {
-            if (Password == toolbox.Crypt(pw))
-            {
-                return true;
-            }
-            return false;
+            return Password == toolbox.Crypt(pw);
         }
 
         public override string ToString()

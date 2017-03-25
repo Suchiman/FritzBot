@@ -48,7 +48,7 @@ namespace FritzBot.Plugins
             theMessage.Hidden = true;
             using (var context = new BotContext())
             {
-                if (!context.GetUser(Requested).CheckPassword(theMessage.Message))
+                if (context.GetUser(Requested).CheckPassword(theMessage.Message))
                 {
                     theMessage.SendPrivateMessage("Passwort korrekt, gib nun dein neues Passwort ein:");
                     ServerConnection.OnPreProcessingMessage += SetNewPW;
