@@ -3,6 +3,7 @@ using FritzBot.Database;
 using FritzBot.DataModel;
 using System;
 using System.Data.Entity;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 
@@ -26,7 +27,8 @@ namespace FritzBot.Plugins.SubscriptionProviders
                     {
                         Plugin = plugin.PluginID,
                         Provider = PluginID,
-                        User = u
+                        User = u,
+                        Bedingungen = new List<SubscriptionBedingung>()
                     };
 
                     if (theMessage.CommandArgs.Count > 3 && !String.IsNullOrEmpty(theMessage.CommandArgs[3]))

@@ -42,6 +42,7 @@ namespace FritzBot.Plugins
                     SendAction($"{item.Creator.LastUsedName} hat für dich am {item.Created:dd.MM.yyyy 'um' HH:mm:ss} eine Nachricht hinterlassen: {item.Message}");
                     context.ReminderEntries.Remove(item);
                 }
+                context.SaveChanges();
             }
         }
 
@@ -65,6 +66,7 @@ namespace FritzBot.Plugins
                         r.Message = theMessage.CommandArgs.Skip(1).Join(" ");
                         r.User = u;
                         context.ReminderEntries.Add(r);
+                        context.SaveChanges();
                         theMessage.Answer("Okay ich werde es sobald wie möglich zustellen");
                     }
                     else
