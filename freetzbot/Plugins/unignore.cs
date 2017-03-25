@@ -1,6 +1,5 @@
 using FritzBot.Database;
 using FritzBot.DataModel;
-using System;
 using System.Linq;
 
 namespace FritzBot.Plugins
@@ -15,12 +14,13 @@ namespace FritzBot.Plugins
         {
             using (var context = new BotContext())
             {
-                User u = context.GetUser(theMessage.CommandArgs.FirstOrDefault());
+                string nickname = theMessage.CommandArgs.FirstOrDefault();
+                User u = context.GetUser(nickname);
                 if (u != null)
                 {
                     u.Ignored = false;
                     context.SaveChanges();
-                    theMessage.Answer($"Ignoranz für {u.LastUsedName} aufgehoben");
+                    theMessage.Answer($"Ignoranz für {nickname} aufgehoben");
                     return;
                 }
                 theMessage.Answer("Oh... Dieser User ist mir nicht bekannt");
