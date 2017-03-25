@@ -124,8 +124,9 @@ namespace FritzBot.Plugins
         {
             List<Tuple<Labordaten, string>> ftpBetas = new List<Tuple<Labordaten, string>>();
 
-            if (!Directory.Exists("betaCache"))
-                Directory.CreateDirectory("betaCache");
+            var betaCache = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location), "betaCache");
+            if (!Directory.Exists(betaCache))
+                Directory.CreateDirectory(betaCache);
 
             using (FtpClient ftp = new FtpClient())
             {
@@ -140,7 +141,7 @@ namespace FritzBot.Plugins
                     daten.Datum = (file.Modified == DateTime.MinValue && ftp.HasFeature(FtpCapability.MDTM) ? ftp.GetModifiedTime(file.FullName) : file.Modified).ToString("dd.MM.yyyy HH:mm:ss");
                     daten.Url = "ftp://ftp.avm.de" + file.FullName;
 
-                    string target = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "betaCache", file.Name);
+                    string target = Path.Combine(betaCache, file.Name);
                     if (!File.Exists(target))
                     {
                         using (Stream f = ftp.OpenRead(file.Name))
