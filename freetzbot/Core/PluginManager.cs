@@ -2,6 +2,7 @@ using FritzBot.DataModel;
 using FritzBot.Plugins;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Text;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -176,34 +177,36 @@ namespace FritzBot.Core
         /// <returns>Das aus den Quellcode erstellte Assembly</returns>
         public static Assembly LoadSource(params string[] fileName)
         {
-            ProjectId projectId = ProjectId.CreateNewId();
-
             string[] assemblies = ConfigHelper.GetString("ReferencedAssemblies", DefaultReferences).Split(',');
             string FrameworkAssemblyPath = Path.GetDirectoryName(typeof(object).Assembly.Location);
             string BotAssemblyPath = Path.GetDirectoryName(typeof(PluginManager).Assembly.Location);
 
-            Solution solution = new AdhocWorkspace().CurrentSolution
-                .AddProject(projectId, "FritzBotPlugins", "FritzBotPlugins", LanguageNames.CSharp)
-                .AddMetadataReference(projectId, MetadataReference.CreateFromFile(typeof(PluginManager).Assembly.Location))
-                .WithProjectCompilationOptions(projectId, new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
-                .WithProjectParseOptions(projectId, new CSharpParseOptions(LanguageVersion.CSharp6));
-
+            var references = new List<MetadataReference>();
+            references.Add(MetadataReference.CreateFromFile(typeof(PluginManager).Assembly.Location));
             foreach (string assembly in assemblies)
             {
                 string path = "";
                 if (File.Exists((path = Path.Combine(BotAssemblyPath, assembly))) || File.Exists((path = Path.Combine(FrameworkAssemblyPath, assembly))))
                 {
-                    solution = solution.AddMetadataReference(projectId, MetadataReference.CreateFromFile(path));
+                    references.Add(MetadataReference.CreateFromFile(path));
                 }
             }
 
+            var syntaxTrees = new List<SyntaxTree>();
             foreach (string file in fileName)
             {
-                solution = solution.AddDocument(DocumentId.CreateNewId(projectId), Path.GetFileName(file), new FileTextLoader(Path.GetFullPath(file), Encoding.UTF8));
+                using (var stream = File.OpenRead(file))
+                {
+                    syntaxTrees.Add(CSharpSyntaxTree.ParseText(SourceText.From(stream)));
+                }
             }
 
-            Compilation compile = solution.GetProject(projectId).GetCompilationAsync().Result;
-            ImmutableArray<Diagnostic> diagnostics = compile.GetDiagnostics();
+            var compilation = CSharpCompilation.Create("FritzBotPlugins")
+                .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+                .AddReferences(references)
+                .AddSyntaxTrees(syntaxTrees);
+
+            ImmutableArray<Diagnostic> diagnostics = compilation.GetDiagnostics();
 
             bool error = false;
             foreach (Diagnostic diag in diagnostics)
@@ -230,7 +233,7 @@ namespace FritzBot.Core
 
             using (var outputAssembly = new MemoryStream())
             {
-                compile.Emit(outputAssembly);
+                compilation.Emit(outputAssembly);
 
                 return Assembly.Load(outputAssembly.ToArray());
             }
