@@ -3,7 +3,6 @@ using FritzBot.Database;
 using FritzBot.DataModel;
 using Meebey.SmartIrc4net;
 using System;
-using System.Data.Entity;
 using System.Linq;
 
 namespace FritzBot.Plugins
@@ -85,7 +84,7 @@ namespace FritzBot.Plugins
             }
             using (var context = new BotContext())
             {
-                SeenEntry entry = context.SeenEntries.Include(x => x.User).FirstOrDefault(x => x.User == context.Nicknames.FirstOrDefault(n => n.Name == theMessage.CommandLine).User);
+                SeenEntry entry = context.SeenEntries.FirstOrDefault(x => x.User == context.Nicknames.FirstOrDefault(n => n.Name == theMessage.CommandLine).User);
                 string output = "";
                 if (entry != null)
                 {
