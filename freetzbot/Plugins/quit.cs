@@ -1,4 +1,3 @@
-using FritzBot.Core;
 using FritzBot.DataModel;
 
 namespace FritzBot.Plugins
