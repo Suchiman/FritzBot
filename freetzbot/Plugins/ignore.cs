@@ -26,7 +26,10 @@ namespace FritzBot.Plugins
                         theMessage.Answer("Huch den kenne ich nicht :o");
                     }
                 }
-                theMessage.Answer("Du bist dazu nicht berechtigt");
+                else
+                {
+                    theMessage.Answer("Du bist dazu nicht berechtigt");
+                }
             }
         }
     }
