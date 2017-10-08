@@ -19,7 +19,6 @@ namespace FritzBot
         /// </summary>
         /// <param name="data">Die Ausgangsdaten</param>
         /// <param name="serverConnetion">Die ServerConnetion von dem die Nachricht kommt</param>
-        /// <param name="user">Der der Nachricht zugeordnete User</param>
         public IrcMessage(IrcMessageData data, ServerConnection serverConnetion)
         {
             Contract.Requires(data != null && serverConnetion != null);
