@@ -583,12 +583,6 @@ namespace Meebey.SmartIrc4net
                 OnConnecting(this, EventArgs.Empty);
             }
             try {
-                _TcpClient = new TcpClient();
-                _TcpClient.NoDelay = true;
-                _TcpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, 1);
-                // set timeout, after this the connection will be aborted
-                _TcpClient.ReceiveTimeout = _SocketReceiveTimeout * 1000;
-                _TcpClient.SendTimeout = _SocketSendTimeout * 1000;
                 
                 /*if (_ProxyType != ProxyType.None) {
                     IProxyClient proxyClient = null;
@@ -617,7 +611,28 @@ namespace Meebey.SmartIrc4net
                     proxyClient.TcpClient = _TcpClient;
                     proxyClient.CreateConnection(Address, port);
                 } else*/ {
-                    _TcpClient.ConnectAsync(Address, port).Wait();
+                    var addresses = Dns.GetHostAddressesAsync(Address).Result;
+                    Exception lastException = null;
+                    foreach (var address in addresses)
+                    {
+                        try
+                        {
+                            _TcpClient = new TcpClient(address.AddressFamily);
+                            _TcpClient.NoDelay = true;
+                            _TcpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, 1);
+                            // set timeout, after this the connection will be aborted
+                            _TcpClient.ReceiveTimeout = _SocketReceiveTimeout * 1000;
+                            _TcpClient.SendTimeout = _SocketSendTimeout * 1000;
+                            _TcpClient.ConnectAsync(address, port).Wait();
+                            goto SuccessfulConnection;
+                        }
+                        catch (Exception ex)
+                        {
+                            lastException = ex;
+                        }
+                    }
+                    throw lastException;
+                    SuccessfulConnection:;
                 }
                 
                 Stream stream = _TcpClient.GetStream();
