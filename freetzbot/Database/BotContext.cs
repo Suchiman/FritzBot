@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System.Configuration;
 
 namespace FritzBot.Database
 {
@@ -21,7 +20,7 @@ namespace FritzBot.Database
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.EnableSensitiveDataLogging();
-            optionsBuilder.UseSqlite(ConfigurationManager.ConnectionStrings["BotContext"].ConnectionString);
+            optionsBuilder.UseSqlite(@"Data Source=database.sqlite");
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

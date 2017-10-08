@@ -206,7 +206,12 @@ namespace FritzBot
 
             PluginManager.BeginInit(true);
 
-            //System.Data.Entity.Database.SetInitializer(new MigrateDatabaseToLatestVersion<BotContext, Configuration>());
+            if (Environment.OSVersion.Platform == PlatformID.Unix)
+            {
+                SQLitePCL.raw.SetProvider(new SQLitePCL.SQLite3Provider_sqlite3());
+                SQLitePCL.raw.FreezeProvider();
+            }
+
             using (var context = new BotContext())
             {
                 context.Database.Migrate();
