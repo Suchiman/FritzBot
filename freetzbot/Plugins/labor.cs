@@ -17,6 +17,7 @@ using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace FritzBot.Plugins
 {
@@ -27,7 +28,7 @@ namespace FritzBot.Plugins
     {
         public const string BaseUrl = "http://avm.de/fritz-labor/";
         private DataCache<List<Labordaten>> LaborDaten = null;
-        private Thread laborthread;
+        private CancellationTokenSource laborCancellation;
 
         public labor()
         {
@@ -36,12 +37,14 @@ namespace FritzBot.Plugins
 
         public void Start()
         {
-            laborthread = toolbox.SafeThreadStart(PluginID, true, LaborCheck);
+            laborCancellation = new CancellationTokenSource();
+            Task.Run(() => LaborCheck(laborCancellation.Token), laborCancellation.Token);
         }
 
         public void Stop()
         {
-            laborthread.Abort();
+            laborCancellation.Cancel();
+            laborCancellation = null;
         }
 
         protected override IQueryable<Subscription> GetSubscribers(BotContext context, string[] criteria)
@@ -86,12 +89,12 @@ namespace FritzBot.Plugins
             }
         }
 
-        private void LaborCheck()
+        private async Task LaborCheck(CancellationToken token)
         {
             List<Labordaten> alte = null;
             while (!TryGetNewestLabors(out alte))
             {
-                Thread.Sleep(1000);
+                await Task.Delay(1000, token);
             }
             while (true)
             {
@@ -100,7 +103,7 @@ namespace FritzBot.Plugins
                     List<Labordaten> neue = null;
                     while (!TryGetNewestLabors(out neue))
                     {
-                        Thread.Sleep(1000);
+                        await Task.Delay(1000, token);
                     }
                     List<Labordaten> unEquals = GetDifferentLabors(alte, neue);
                     if (unEquals.Count > 0)
@@ -110,11 +113,11 @@ namespace FritzBot.Plugins
                         NotifySubscribers(labors);
                         alte = neue;
                     }
-                    Thread.Sleep(ConfigHelper.GetInt("LaborCheckIntervall", 300000));
+                    await Task.Delay(ConfigHelper.GetInt("LaborCheckIntervall", 300000), token);
                 }
                 else
                 {
-                    Thread.Sleep(30000);
+                    await Task.Delay(30000, token);
                 }
             }
         }

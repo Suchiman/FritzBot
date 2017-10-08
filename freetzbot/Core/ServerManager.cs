@@ -512,11 +512,14 @@ namespace FritzBot.Core
             if (_connection != null)
             {
                 _connection.RfcQuit(Settings.QuitMessage);
-                _listener?.Abort();
 
                 if (_connection.IsConnected)
                 {
-                    _connection.Disconnect();
+                    try
+                    {
+                        _connection.Disconnect();
+                    }
+                    catch (NotConnectedException) { }
                     Log.Information("Verbindung zu Server {ServerAddress} getrennt", Settings.Address);
                 }
                 _connection = null;

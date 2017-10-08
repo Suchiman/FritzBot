@@ -13,6 +13,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace FritzBot.Plugins
 {
@@ -23,7 +24,7 @@ namespace FritzBot.Plugins
     class fw : PluginBase, ICommand, IBackgroundTask
     {
         private FtpDirectory LastScan;
-        private Thread worker;
+        private CancellationTokenSource worker;
         private string host;
 
         protected bool FWCheckEnabled { get { return ConfigHelper.GetBoolean("FWCheckEnabled", true); } }
@@ -31,25 +32,17 @@ namespace FritzBot.Plugins
 
         public void Start()
         {
-            worker = toolbox.SafeThreadStart(PluginID, true, WorkerThread);
+            worker = new CancellationTokenSource();
+            Task.Run(() => WorkerThread(worker.Token));
         }
 
         public void Stop()
         {
-            try
-            {
-                if (worker != null && worker.IsAlive)
-                {
-                    worker.Abort();
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Fehler beim Stoppen von fw");
-            }
+            worker?.Cancel();
+            worker = null;
         }
 
-        public void WorkerThread()
+        public async Task WorkerThread(CancellationToken token)
         {
             while (true)
             {
@@ -62,16 +55,17 @@ namespace FritzBot.Plugins
                         {
                             CurrentScan = RecurseFTP(ftp, "/fritz.box");
                         }
-                        catch
+                        catch (Exception ex)
                         {
-                            Thread.Sleep(FWCheckIntervall);
+                            Log.Warning(ex, "Fehler beim FTP Scan");
+                            await Task.Delay(FWCheckIntervall, token);
                             continue;
                         }
                     }
                     if (LastScan == null)
                     {
                         LastScan = CurrentScan;
-                        Thread.Sleep(FWCheckIntervall);
+                        await Task.Delay(FWCheckIntervall, token);
                         continue;
                     }
 
@@ -118,7 +112,7 @@ namespace FritzBot.Plugins
                     int summarizedCount = neu.Count + gelöscht.Count + geändert.Count;
                     if (summarizedCount > 20)
                     {
-                        Log.Warning("{summarizedCount} überschreitet limit an Änderungen, ignoriere...", summarizedCount);
+                        Log.Warning("{SummarizedCount} überschreitet limit an Änderungen, ignoriere...", summarizedCount);
                     }
                     else if (summarizedCount > 0)
                     {
@@ -140,11 +134,11 @@ namespace FritzBot.Plugins
                         NotifySubscribers(labors, neu.Concat(geändert).Select(x => BoxDatabase.GetShortName(x)).ToArray());
                     }
                     LastScan = CurrentScan;
-                    Thread.Sleep(FWCheckIntervall);
+                    await Task.Delay(FWCheckIntervall, token);
                 }
                 else
                 {
-                    Thread.Sleep(30000);
+                    await Task.Delay(30000, token);
                 }
             }
         }

@@ -9,8 +9,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace FritzBot.Plugins
 {
@@ -19,28 +21,30 @@ namespace FritzBot.Plugins
     [Subscribeable]
     class news : PluginBase, IBackgroundTask
     {
-        private Thread newsthread;
+        private CancellationTokenSource newsthread;
 
         public void Start()
         {
-            newsthread = toolbox.SafeThreadStart("NewsThread", true, NewsThread);
+            newsthread = new CancellationTokenSource();
+            Task.Run(() => NewsThread(newsthread.Token), newsthread.Token);
         }
 
         public void Stop()
         {
-            newsthread.Abort();
+            newsthread.Cancel();
+            newsthread = null;
         }
 
-        private void NewsThread()
+        private async Task NewsThread(CancellationToken token)
         {
             const string newsUrl = "http://avm.de/service/downloads/update-news/";
 
-            List<NewsEntry> news = GetNews(newsUrl);
+            List<NewsEntry> news = await GetNews(newsUrl, token);
             while (true)
             {
-                Thread.Sleep(ConfigHelper.GetInt("NewsCheckIntervall", 300) * 1000);
+                await Task.Delay(ConfigHelper.GetInt("NewsCheckIntervall", 300) * 1000, token);
 
-                List<NewsEntry> updatedNews = GetNews(newsUrl);
+                List<NewsEntry> updatedNews = await GetNews(newsUrl, token);
                 if (updatedNews.Count == 0)
                 {
                     Log.Warning("Keine News gefunden");
@@ -72,7 +76,7 @@ namespace FritzBot.Plugins
             }
         }
 
-        private static List<NewsEntry> GetNews(string Url)
+        private static async Task<List<NewsEntry>> GetNews(string Url, CancellationToken token)
         {
             Contract.Requires(Url != null);
             Contract.Ensures(Contract.Result<List<NewsEntry>>() != null);
@@ -82,7 +86,7 @@ namespace FritzBot.Plugins
             {
                 try
                 {
-                    document = BrowsingContext.New(Configuration.Default.WithDefaultLoader()).OpenAsync(Url).Result;
+                    document = await BrowsingContext.New(Configuration.Default.WithDefaultLoader()).OpenAsync(Url);
                     break;
                 }
                 catch (Exception ex)
@@ -91,7 +95,7 @@ namespace FritzBot.Plugins
                     {
                         Log.Error(ex, "Fehler beim Laden der News, Versuch {Try}", i);
                     }
-                    Thread.Sleep(5000);
+                    await Task.Delay(5000, token);
                 }
             }
 
@@ -111,7 +115,7 @@ namespace FritzBot.Plugins
                 entry.Version = metaInfos.SkipWhile(m => m.TextContent != "Version:").ElementAtOrDefault(1)?.TextContent.Trim();
                 string rawDateString = metaInfos.SkipWhile(m => m.TextContent != "Datum:").ElementAtOrDefault(1)?.TextContent.Trim();
                 DateTime parsed;
-                if (!DateTime.TryParse(rawDateString, out parsed))
+                if (!DateTime.TryParseExact(rawDateString, "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out parsed))
                 {
                     parsed = DateTime.MinValue;
                     Log.Warning("Fehler beim Parsen der DateTime {DateTime}", rawDateString);
