@@ -5,6 +5,7 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.IO;
 using System.Linq;
 using System.Threading;
 
@@ -200,8 +201,8 @@ namespace FritzBot
             ShutdownSignal = new AutoResetEvent(false);
 
             Log.Logger = new LoggerConfiguration()
-                .WriteTo.LiterateConsole(outputTemplate: "{Timestamp:dd.MM HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}")
-                .ReadFrom.AppSettings()
+                .WriteTo.Console(outputTemplate: "{Timestamp:dd.MM HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}")
+                .WriteTo.RollingFile(pathFormat: Path.Combine("Logs", "log-{Date}.txt"), outputTemplate: "{Timestamp:dd.MM.yyyy HH:mm:ss.fff} [{Level}] {Message}{NewLine}{Exception}", retainedFileCountLimit: null)
                 .CreateLogger();
 
             PluginManager.BeginInit(true);
