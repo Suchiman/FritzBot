@@ -1,45 +1,67 @@
-﻿using System;
-using System.Configuration;
-using System.Linq;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
+using System.IO;
 
 namespace FritzBot.Core
 {
     public static class ConfigHelper
     {
-        private static Configuration conf = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+        private static JObject conf;
+
+        static ConfigHelper()
+        {
+            string configPath = GetPath();
+            if (File.Exists(configPath))
+            {
+                using (var text = File.OpenText(configPath))
+                {
+                    conf = JToken.ReadFrom(new JsonTextReader(text)) as JObject;
+                }
+            }
+            else
+            {
+                conf = new JObject();
+            }
+        }
+
+        private static string GetPath()
+        {
+            return Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location), "config.json");
+        }
+
+        private static void SaveChanges()
+        {
+            string configPath = GetPath();
+            using (var text = File.CreateText(configPath))
+            {
+                conf.WriteTo(new JsonTextWriter(text));
+            }
+        }
 
         public static bool KeyExists(string key)
         {
-            return conf.AppSettings.Settings.AllKeys.Contains(key);
+            return conf[key] != null;
         }
 
         public static void Remove(string key)
         {
             if (KeyExists(key))
             {
-                conf.AppSettings.Settings.Remove(key);
-                conf.Save();
+                conf.Remove(key);
+                SaveChanges();
             }
         }
 
         public static void SetValue(string key, string value)
         {
-            if (KeyExists(key))
-            {
-                conf.AppSettings.Settings.Remove(key);
-            }
-            conf.AppSettings.Settings.Add(key, value);
-            conf.Save();
+            conf[key] = value;
+            SaveChanges();
         }
 
         public static string GetString(string key)
         {
-            KeyValueConfigurationElement entry = conf.AppSettings.Settings[key];
-            if (entry == null)
-            {
-                throw new ConfigurationErrorsException();
-            }
-            return entry.Value;
+            return conf[key].Value<string>();
         }
 
         public static string GetString(string key, string @default)
