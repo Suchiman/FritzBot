@@ -202,7 +202,7 @@ namespace FritzBot
 
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.Console(outputTemplate: "{Timestamp:dd.MM HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}")
-                .WriteTo.RollingFile(pathFormat: Path.Combine("Logs", "log-{Date}.txt"), outputTemplate: "{Timestamp:dd.MM.yyyy HH:mm:ss.fff} [{Level}] {Message}{NewLine}{Exception}", retainedFileCountLimit: null)
+                .WriteTo.File(path: Path.Combine("Logs", "log.txt"), outputTemplate: "{Timestamp:dd.MM.yyyy HH:mm:ss.fff} [{Level}] {Message}{NewLine}{Exception}", fileSizeLimitBytes: 20 * 1024 * 1024, rollOnFileSizeLimit: true, retainedFileCountLimit: null)
                 .CreateLogger();
 
             PluginManager.BeginInit(true);
