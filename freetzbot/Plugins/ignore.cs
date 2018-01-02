@@ -12,7 +12,7 @@ namespace FritzBot.Plugins
         {
             using (var context = new BotContext())
             {
-                if (theMessage.Source == theMessage.CommandLine || toolbox.IsOp(context.GetUser(theMessage.Nickname)))
+                if (theMessage.Source == theMessage.CommandLine || Toolbox.IsOp(context.GetUser(theMessage.Nickname)))
                 {
                     User u = context.GetUser(theMessage.CommandLine);
                     if (u != null)

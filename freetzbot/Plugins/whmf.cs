@@ -15,7 +15,7 @@ namespace FritzBot.Plugins
             }
             else
             {
-                output += toolbox.UrlEncode(theMessage.CommandLine);
+                output += Toolbox.UrlEncode(theMessage.CommandLine);
             }
             output = output.Replace("%23", "#");
             theMessage.Answer(output);

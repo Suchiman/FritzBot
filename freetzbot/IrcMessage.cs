@@ -177,7 +177,7 @@ namespace FritzBot
         {
             Contract.Requires(plugin != null);
 
-            HelpAttribute help = toolbox.GetAttribute<HelpAttribute>(plugin);
+            HelpAttribute help = Toolbox.GetAttribute<HelpAttribute>(plugin);
             if (help == null)
             {
                 throw new ArgumentException("Das Plugin verfügt über keine Hilfe");

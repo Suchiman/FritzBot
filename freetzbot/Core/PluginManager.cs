@@ -158,7 +158,7 @@ namespace FritzBot.Core
         {
             foreach (Type t in assembly.GetTypes())
             {
-                NameAttribute att = toolbox.GetAttribute<NameAttribute>(t);
+                NameAttribute att = Toolbox.GetAttribute<NameAttribute>(t);
                 if (att?.Names != null)
                 {
                     if (att.Names.Any(x => x.Equals(name, StringComparison.OrdinalIgnoreCase)))
@@ -273,22 +273,22 @@ namespace FritzBot.Core
             IsCommand = Plugin is ICommand;
             IsBackgroundTask = Plugin is IBackgroundTask;
 
-            AuthenticationRequired = toolbox.GetAttribute<AuthorizeAttribute>(Plugin) != null;
+            AuthenticationRequired = Toolbox.GetAttribute<AuthorizeAttribute>(Plugin) != null;
 
-            HelpText = toolbox.GetAttribute<HelpAttribute>(Plugin)?.Help;
+            HelpText = Toolbox.GetAttribute<HelpAttribute>(Plugin)?.Help;
 
-            IsHidden = toolbox.GetAttribute<HiddenAttribute>(Plugin) != null;
+            IsHidden = Toolbox.GetAttribute<HiddenAttribute>(Plugin) != null;
 
-            Names = toolbox.GetAttribute<NameAttribute>(Plugin)?.Names.Select(x => x.ToLower()).ToList() ?? new List<string>();
-            ParameterRequiredAttribute paramAtt = toolbox.GetAttribute<ParameterRequiredAttribute>(Plugin);
+            Names = Toolbox.GetAttribute<NameAttribute>(Plugin)?.Names.Select(x => x.ToLower()).ToList() ?? new List<string>();
+            ParameterRequiredAttribute paramAtt = Toolbox.GetAttribute<ParameterRequiredAttribute>(Plugin);
             if (paramAtt != null)
             {
                 ParameterRequiredSpecified = true;
                 ParameterRequired = paramAtt.Required;
             }
 
-            InstanceScope = toolbox.GetAttribute<ScopeAttribute>(Plugin)?.Scope ?? Scope.Global;
-            IsSubscribeable = toolbox.GetAttribute<SubscribeableAttribute>(Plugin) != null;
+            InstanceScope = Toolbox.GetAttribute<ScopeAttribute>(Plugin)?.Scope ?? Scope.Global;
+            IsSubscribeable = Toolbox.GetAttribute<SubscribeableAttribute>(Plugin) != null;
         }
 
         public T GetScoped<T>(string channel, string user) where T : class

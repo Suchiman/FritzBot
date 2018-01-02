@@ -55,7 +55,7 @@ namespace FritzBot.Plugins
                 theMessage.Answer("Es gibt keinen solchen SubscriptionProvider");
                 return;
             }
-            HelpAttribute help = toolbox.GetAttribute<HelpAttribute>(provider);
+            HelpAttribute help = Toolbox.GetAttribute<HelpAttribute>(provider);
             if (help != null)
             {
                 theMessage.Answer(help.Help);
@@ -142,7 +142,7 @@ namespace FritzBot.Plugins
                     theMessage.Answer("Ein solches Plugin konnte ich nicht ausfindig machen");
                     return;
                 }
-                if (toolbox.GetAttribute<SubscribeableAttribute>(plugin) == null)
+                if (Toolbox.GetAttribute<SubscribeableAttribute>(plugin) == null)
                 {
                     theMessage.Answer("Dieses Plugin unterstützt keine Benachrichtigungen");
                     return;

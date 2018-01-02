@@ -45,7 +45,7 @@ namespace FritzBot.Plugins
                     theMessage.Answer("Ich konnte die Adresse nicht auflösen, Prüfe nochmal ob deine Eingabe korrekt ist");
                     return;
                 }
-                toolbox.InstantiateConnection(parameter[0], port, parameter[2], parameter[3], parameter[4]);
+                Toolbox.InstantiateConnection(parameter[0], port, parameter[2], parameter[3], parameter[4]);
             }
             catch
             {

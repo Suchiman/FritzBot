@@ -31,7 +31,7 @@ namespace FritzBot
             using (var context = new BotContext())
             {
                 User user = context.GetUser(theMessage.Nickname);
-                isOp = toolbox.IsOp(user);
+                isOp = Toolbox.IsOp(user);
                 isAdmin = user.Admin;
             }
 
@@ -186,7 +186,7 @@ namespace FritzBot
             string channel = Console.ReadLine();
             try
             {
-                toolbox.InstantiateConnection(Hostname, port, nickname, QuitMessage, channel);
+                Toolbox.InstantiateConnection(Hostname, port, nickname, QuitMessage, channel);
             }
             catch (Exception ex)
             {
@@ -227,7 +227,7 @@ namespace FritzBot
             }
             ServerManager.ConnectAll();
 
-            toolbox.SafeThreadStart("ConsolenThread", true, HandleConsoleInput);
+            Toolbox.SafeThreadStart("ConsolenThread", true, HandleConsoleInput);
         }
 
         private static void Deinit()

@@ -279,7 +279,7 @@ namespace FritzBot.Core
                 _connection.RfcJoin(channel.Name);
             }
 
-            _listener = toolbox.SafeThreadStart("ListenThread " + Settings.Address, true, _connection.Listen);
+            _listener = Toolbox.SafeThreadStart("ListenThread " + Settings.Address, true, _connection.Listen);
 
             Connected = true;
         }

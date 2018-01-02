@@ -13,7 +13,7 @@ using System.Web;
 
 namespace FritzBot
 {
-    public static class toolbox
+    public static class Toolbox
     {
         /// <summary>
         /// Hasht einen string mit dem SHA512 Algorithmus

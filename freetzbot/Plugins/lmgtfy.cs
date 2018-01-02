@@ -9,7 +9,7 @@ namespace FritzBot.Plugins
     {
         public void Run(IrcMessage theMessage)
         {
-            theMessage.Answer("http://lmgtfy.com/?q=" + toolbox.UrlEncode(theMessage.CommandLine));
+            theMessage.Answer("http://lmgtfy.com/?q=" + Toolbox.UrlEncode(theMessage.CommandLine));
         }
     }
 }

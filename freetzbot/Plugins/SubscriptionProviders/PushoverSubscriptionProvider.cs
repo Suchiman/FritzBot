@@ -27,7 +27,7 @@ namespace FritzBot.Plugins.SubscriptionProviders
                 {"user", userToken},
                 {"message", message}
             };
-            toolbox.GetWeb("https://api.pushover.net/1/messages.xml", Parameter);
+            Toolbox.GetWeb("https://api.pushover.net/1/messages.xml", Parameter);
             //XDocument antwort = XDocument.Parse(toolbox.GetWeb("https://api.pushover.net/1/messages.xml", Parameter));
             //<hash>
             //  <status type="integer">1</status>

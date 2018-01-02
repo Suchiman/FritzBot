@@ -83,7 +83,7 @@ namespace FritzBot.Plugins
     {
         public static bool CheckHidden(Object obj)
         {
-            return toolbox.GetAttribute<HiddenAttribute>(obj) != null;
+            return Toolbox.GetAttribute<HiddenAttribute>(obj) != null;
         }
     }
 

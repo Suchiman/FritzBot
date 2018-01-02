@@ -18,11 +18,11 @@ namespace FritzBot.Plugins
             {
                 if (theMessage.CommandName == "gg")
                 {
-                    output += toolbox.UrlEncode("\"" + theMessage.CommandLine + "\"");
+                    output += Toolbox.UrlEncode("\"" + theMessage.CommandLine + "\"");
                 }
                 else
                 {
-                    output += toolbox.UrlEncode(theMessage.CommandLine);
+                    output += Toolbox.UrlEncode(theMessage.CommandLine);
                 }
             }
             theMessage.Answer(output);

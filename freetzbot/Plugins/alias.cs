@@ -96,7 +96,7 @@ namespace FritzBot.Plugins
                 int end = thealias.Remove(0, start).IndexOf(')') + 1 + start;
 
                 string second = thealias.Substring(start + 7, end - (start + 8));
-                second = toolbox.UrlEncode(second);
+                second = Toolbox.UrlEncode(second);
                 second = second.Replace("%23", "#").Replace("%3a", ":").Replace("%2f", "/").Replace("%3f", "?");
 
                 thealias = thealias.Substring(0, start) + second + thealias.Substring(end);

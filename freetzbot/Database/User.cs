@@ -25,12 +25,12 @@ namespace FritzBot.Database
 
         public void SetPassword(string pw)
         {
-            Password = toolbox.Crypt(pw);
+            Password = Toolbox.Crypt(pw);
         }
 
         public bool CheckPassword(string pw)
         {
-            return Password == toolbox.Crypt(pw);
+            return Password == Toolbox.Crypt(pw);
         }
 
         public override string ToString()

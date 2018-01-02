@@ -50,7 +50,7 @@ namespace FritzBot.Functions
             }
 
             string url = String.Format(APIUrl, preferedMode, ip);
-            string response = toolbox.GetWeb(url);
+            string response = Toolbox.GetWeb(url);
 
             if (String.IsNullOrEmpty(response) || response.Contains("ERROR"))
             {
