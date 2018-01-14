@@ -170,20 +170,21 @@ namespace FritzBot
 
         private static void AskConnection()
         {
-            Console.Write("Hostname: ");
-            string Hostname = Console.ReadLine();
+            string Question(string question)
+            {
+                Console.Write(question);
+                return Console.ReadLine();
+            }
+            string Hostname = Question("Hostname: ");
             int port = 0;
             do
             {
                 Console.Write("Port: ");
             }
             while (!int.TryParse(Console.ReadLine(), out port));
-            Console.Write("Nickname: ");
-            string nickname = Console.ReadLine();
-            Console.Write("QuitMessage: ");
-            string QuitMessage = Console.ReadLine();
-            Console.Write("InitialChannel: ");
-            string channel = Console.ReadLine();
+            string nickname = Question("Nickname: ");
+            string QuitMessage = Question("QuitMessage: ");
+            string channel = Question("InitialChannel: ");
             try
             {
                 Toolbox.InstantiateConnection(Hostname, port, nickname, QuitMessage, channel);
