@@ -114,8 +114,7 @@ namespace FritzBot.Plugins
 
                 entry.Version = metaInfos.SkipWhile(m => m.TextContent != "Version:").ElementAtOrDefault(1)?.TextContent.Trim();
                 string rawDateString = metaInfos.SkipWhile(m => m.TextContent != "Datum:").ElementAtOrDefault(1)?.TextContent.Trim();
-                DateTime parsed;
-                if (!DateTime.TryParseExact(rawDateString, "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out parsed))
+                if (!DateTime.TryParseExact(rawDateString, "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsed))
                 {
                     parsed = DateTime.MinValue;
                     Log.Warning("Fehler beim Parsen der DateTime {DateTime}", rawDateString);

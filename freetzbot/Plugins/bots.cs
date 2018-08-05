@@ -14,10 +14,9 @@ namespace FritzBot.Plugins
     {
         public void Run(IrcMessage theMessage)
         {
-            int tage;
             string channel;
 
-            if (theMessage.CommandArgs.Count < 2 | !Int32.TryParse(theMessage.CommandArgs.FirstOrDefault(), out tage))
+            if (theMessage.CommandArgs.Count < 2 | !Int32.TryParse(theMessage.CommandArgs.FirstOrDefault(), out int tage))
             {
                 if (theMessage.IsPrivate)
                 {

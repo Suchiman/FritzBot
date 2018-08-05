@@ -24,8 +24,7 @@ namespace FritzBot.Plugins
             catch { }
 
             Match match = Regex.Match(address, @"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}");
-            IPAddress parsedAddress;
-            if (match.Success && IPAddress.TryParse(match.Groups[0].Value, out parsedAddress))
+            if (match.Success && IPAddress.TryParse(match.Groups[0].Value, out IPAddress parsedAddress))
             {
                 address = parsedAddress.ToString();
             }

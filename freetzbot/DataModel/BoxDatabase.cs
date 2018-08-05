@@ -72,8 +72,7 @@ namespace FritzBot.DataModel
         /// <param name="input">Ein string anhand dessen versucht werden soll die passende Box zu finden</param>
         public static string GetShortName(string input)
         {
-            Box ToFind;
-            if (TryFindExactBox(input, out ToFind))
+            if (TryFindExactBox(input, out Box ToFind))
             {
                 return ToFind.ShortName;
             }

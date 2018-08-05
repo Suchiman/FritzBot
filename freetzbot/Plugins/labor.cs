@@ -172,8 +172,7 @@ namespace FritzBot.Plugins
                         string RawName = firmware.Name;
 
                         fw.Item1.Version = Regex.Match(RawName, @"((\d{2,3}\.)?\d\d\.\d\d(-\d{1,6})?).image$").Groups[1].Value;
-                        string tmp;
-                        if (!BoxDatabase.TryGetShortName(RawName, out tmp))
+                        if (!BoxDatabase.TryGetShortName(RawName, out string tmp))
                         {
                             if (RawName.LastIndexOf(' ') != -1)
                             {

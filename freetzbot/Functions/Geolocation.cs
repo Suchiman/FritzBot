@@ -21,8 +21,7 @@ namespace FritzBot.Functions
 
         private static string SafeGet(string ip, string preferedMode)
         {
-            IPAddress ad;
-            if (IPAddress.TryParse(ip, out ad))
+            if (IPAddress.TryParse(ip, out IPAddress ad))
             {
                 if (ad.AddressFamily == AddressFamily.InterNetworkV6)
                 {

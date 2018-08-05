@@ -23,8 +23,7 @@ namespace FritzBot.Plugins
                 theMessage.Answer("Hörmal, das RFC erlaubt nur Nicknames mit 9 Zeichen");
                 return;
             }
-            int port;
-            if (!Int32.TryParse(parameter[1], out port))
+            if (!Int32.TryParse(parameter[1], out int port))
             {
                 theMessage.Answer("Der PORT sollte eine gültige Ganzahl sein, Prüfe das");
                 return;

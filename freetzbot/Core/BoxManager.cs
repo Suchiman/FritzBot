@@ -22,8 +22,7 @@ namespace FritzBot.Core
             entry.User = _user;
             entry.Text = input;
 
-            Box result;
-            if (BoxDatabase.TryFindExactBox(input, out result))
+            if (BoxDatabase.TryFindExactBox(input, out Box result))
             {
                 entry.Box = result;
                 _context.Boxes.Attach(result);
@@ -48,8 +47,7 @@ namespace FritzBot.Core
 
         public bool HasBox(string input)
         {
-            Box result;
-            if (BoxDatabase.TryFindExactBox(input, out result))
+            if (BoxDatabase.TryFindExactBox(input, out Box result))
             {
                 return _context.BoxEntries.Any(x => x.User.Id == _user.Id && (x.Text == input || x.Box.Id == result.Id));
             }
@@ -61,8 +59,7 @@ namespace FritzBot.Core
             List<BoxEntry> userBoxEntries = _context.BoxEntries.Where(x => x.User.Id == _user.Id).ToList();
             foreach (BoxEntry entry in userBoxEntries)
             {
-                Box result;
-                entry.Box = BoxDatabase.TryFindExactBox(entry.Text, out result) ? result : null;
+                entry.Box = BoxDatabase.TryFindExactBox(entry.Text, out Box result) ? result : null;
             }
             _context.SaveChanges();
         }

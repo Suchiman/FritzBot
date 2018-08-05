@@ -16,9 +16,8 @@ namespace FritzBot.Plugins
         {
             using (var context = new BotContext())
             {
-                Box result;
                 IQueryable<BoxEntry> filtered;
-                if (BoxDatabase.TryFindExactBox(theMessage.CommandLine, out result))
+                if (BoxDatabase.TryFindExactBox(theMessage.CommandLine, out Box result))
                 {
                     filtered = context.BoxEntries.Where(x => x.Box.Id == result.Id);
                 }

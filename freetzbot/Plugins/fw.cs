@@ -316,8 +316,7 @@ namespace FritzBot.Plugins
         {
             foreach (string name in files)
             {
-                string shortName;
-                if (BoxDatabase.TryGetShortName(name, out shortName))
+                if (BoxDatabase.TryGetShortName(name, out string shortName))
                 {
                     yield return shortName;
                 }

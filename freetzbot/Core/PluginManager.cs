@@ -80,8 +80,7 @@ namespace FritzBot.Core
         /// </summary>
         public static PluginInfo Get(string name)
         {
-            PluginInfo plugin;
-            if (_lookupDictionary.TryGetValue(name, out plugin))
+            if (_lookupDictionary.TryGetValue(name, out PluginInfo plugin))
             {
                 return plugin;
             }
@@ -315,8 +314,7 @@ namespace FritzBot.Core
 
         public PluginBase GetUserScoped(string user)
         {
-            PluginBase pluginBase;
-            if (!UserScoped.TryGetValue(user, out pluginBase))
+            if (!UserScoped.TryGetValue(user, out PluginBase pluginBase))
             {
                 pluginBase = Activator.CreateInstance(PluginType) as PluginBase;
                 UserScoped[user] = pluginBase;
@@ -327,8 +325,7 @@ namespace FritzBot.Core
         public PluginBase GetUserChannelScoped(string user, string channel)
         {
             KeyValuePair<string, string> key = new KeyValuePair<string, string>(user, channel);
-            PluginBase pluginBase;
-            if (!UserChannelScoped.TryGetValue(key, out pluginBase))
+            if (!UserChannelScoped.TryGetValue(key, out PluginBase pluginBase))
             {
                 pluginBase = Activator.CreateInstance(PluginType) as PluginBase;
                 UserChannelScoped[key] = pluginBase;
@@ -338,8 +335,7 @@ namespace FritzBot.Core
 
         public PluginBase GetChannelScoped(string channel)
         {
-            PluginBase pluginBase;
-            if (!ChannelScoped.TryGetValue(channel, out pluginBase))
+            if (!ChannelScoped.TryGetValue(channel, out PluginBase pluginBase))
             {
                 pluginBase = Activator.CreateInstance(PluginType) as PluginBase;
                 ChannelScoped[channel] = pluginBase;
