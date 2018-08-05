@@ -54,11 +54,11 @@ namespace FritzBot.Database
 
         public static bool operator ==(Box daten1, Box daten2)
         {
-            if ((object)daten1 == null ^ (object)daten2 == null)
+            if (daten1 is null ^ daten2 is null)
             {
                 return false;
             }
-            if ((object)daten1 == null)
+            if (daten1 is null)
             {
                 return true;
             }
@@ -67,11 +67,11 @@ namespace FritzBot.Database
 
         public static bool operator !=(Box daten1, Box daten2)
         {
-            if ((object)daten1 == null ^ (object)daten2 == null)
+            if (daten1 is null ^ daten2 is null)
             {
                 return true;
             }
-            if ((object)daten1 == null)
+            if (daten1 is null)
             {
                 return false;
             }
