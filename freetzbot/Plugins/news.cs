@@ -126,7 +126,7 @@ namespace FritzBot.Plugins
         }
     }
 
-    class NewsEntry
+    class NewsEntry : IEquatable<NewsEntry>
     {
         public string Titel { get; set; }
         public string Version { get; set; }
@@ -134,17 +134,17 @@ namespace FritzBot.Plugins
 
         public override bool Equals(object obj)
         {
-            var newsEntry = obj as NewsEntry;
-            if (newsEntry is NewsEntry)
-            {
-                return (Titel == newsEntry.Titel) && (Datum == newsEntry.Datum) && (Version == newsEntry.Version);
-            }
-            return false;
+            return Equals(obj as NewsEntry);
+        }
+
+        public bool Equals(NewsEntry other)
+        {
+            return other != null && Titel == other.Titel && Datum == other.Datum && Version == other.Version;
         }
 
         public override int GetHashCode()
         {
-            return Titel.GetHashCode() ^ Version.GetHashCode() ^ Datum.GetHashCode();
+            return HashCode.Combine(Titel, Version, Datum);
         }
 
         public override string ToString()
@@ -152,14 +152,14 @@ namespace FritzBot.Plugins
             return Titel;
         }
 
-        public static bool operator ==(NewsEntry daten1, NewsEntry daten2)
+        public static bool operator ==(NewsEntry lhs, NewsEntry rhs)
         {
-            return daten1.Equals(daten2);
+            return Object.ReferenceEquals(lhs, rhs) || lhs?.Equals(rhs) == true;
         }
 
-        public static bool operator !=(NewsEntry daten1, NewsEntry daten2)
+        public static bool operator !=(NewsEntry lhs, NewsEntry rhs)
         {
-            return (daten1.Titel != daten2.Titel) || (daten1.Datum != daten2.Datum) || (daten1.Version != daten2.Version);
+            return !Object.ReferenceEquals(lhs, rhs) && lhs?.Equals(rhs) == false;
         }
     }
 }
