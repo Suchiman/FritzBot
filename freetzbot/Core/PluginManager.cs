@@ -278,7 +278,7 @@ namespace FritzBot.Core
 
             IsHidden = plugin.GetCustomAttribute<HiddenAttribute>() != null;
 
-            Names = plugin.GetCustomAttribute<NameAttribute>()?.Names.Select(x => x.ToLower()).ToList() ?? new List<string>();
+            Names = plugin.GetCustomAttribute<NameAttribute>()?.Names.ToList() ?? new List<string>();
             ParameterRequiredAttribute paramAtt = plugin.GetCustomAttribute<ParameterRequiredAttribute>();
             if (paramAtt != null)
             {
