@@ -177,7 +177,7 @@ namespace FritzBot.Plugins
                         {
                             if (RawName.LastIndexOf(' ') != -1)
                             {
-                                fw.Item1.Typ = RawName.Substring(RawName.LastIndexOf(' ')).Trim();
+                                fw.Item1.Typ = RawName.AsSpan(RawName.LastIndexOf(' ')).Trim().ToString();
                             }
                             else
                             {

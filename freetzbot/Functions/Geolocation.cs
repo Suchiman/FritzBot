@@ -97,7 +97,7 @@ namespace FritzBot.Functions
                 {
                     throw new InvalidOperationException("Es wurde keine timeZone geliefert");
                 }
-                return DateTime.UtcNow.AddHours(Int32.Parse(timeZone.Substring(0, 3)));
+                return DateTime.UtcNow.AddHours(Int32.Parse(timeZone.AsSpan(0, 3)));
             }
         }
     }
