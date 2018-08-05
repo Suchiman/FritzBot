@@ -10,6 +10,7 @@ namespace FritzBot.Database
         public virtual int Port { get; set; }
         public virtual string Nickname { get; set; }
         public virtual string QuitMessage { get; set; }
+        public virtual string NickServPassword { get; set; }
         public virtual ICollection<ServerChannel> Channels { get; set; }
     }
 }

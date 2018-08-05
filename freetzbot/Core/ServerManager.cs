@@ -274,6 +274,11 @@ namespace FritzBot.Core
             _connection.Connect(Settings.Address, Settings.Port);
             _connection.Login(Settings.Nickname, Settings.Nickname, 0, Settings.Nickname);
 
+            if (Settings.NickServPassword != null)
+            {
+                _connection.SendMessage(SendType.Message, "nickserv", "identify " + Settings.NickServPassword);
+            }
+
             foreach (ServerChannel channel in Settings.Channels)
             {
                 _connection.RfcJoin(channel.Name);

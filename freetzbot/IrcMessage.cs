@@ -31,7 +31,7 @@ namespace FritzBot
             UnloggedMessages = new Queue<LogEvent>(3);
             List<string> MessageTmp = Data.MessageArray.Where(x => !String.IsNullOrEmpty(x)).ToList();
             Message = MessageTmp.Join(" ");
-            if (Nickname.Contains("#") || Nickname.Contains(".") || ServerConnetion.IrcClient.IsMe(Nickname) || Nickname.ToLower().Contains("nickserv") || Data.Message.Contains("[Global Notice]"))
+            if (Nickname.Contains("#") || Nickname.Contains(".") || ServerConnetion.IrcClient.IsMe(Nickname) || Nickname.Equals("freenode-connect", StringComparison.OrdinalIgnoreCase) || Nickname.Equals("nickserv", StringComparison.OrdinalIgnoreCase) || Nickname.Equals("chanserv", StringComparison.OrdinalIgnoreCase) || Data.Message.Contains("[Global Notice]"))
             {
                 IsIgnored = true;
             }
