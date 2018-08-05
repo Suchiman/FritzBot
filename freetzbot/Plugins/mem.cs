@@ -41,7 +41,7 @@ namespace FritzBot.Plugins
                 }
             }
             GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
-            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true);
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true, true);
             theMessage.Answer($"Betriebssystem: {os}, RuntimeVersion: {version.Trim()} {IntPtr.Size * 8}bit, CPU's: {Environment.ProcessorCount}, RAM Verbrauch (Programm / +Runtime): {ToMB(GC.GetTotalMemory(true))}MB / {ToMB(Process.GetCurrentProcess().WorkingSet64)}MB");
         }
 
