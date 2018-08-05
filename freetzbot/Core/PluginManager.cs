@@ -158,7 +158,7 @@ namespace FritzBot.Core
         {
             foreach (Type t in assembly.GetTypes())
             {
-                NameAttribute att = Toolbox.GetAttribute<NameAttribute>(t);
+                NameAttribute att = t.GetCustomAttribute<NameAttribute>();
                 if (att?.Names != null)
                 {
                     if (att.Names.Any(x => x.Equals(name, StringComparison.OrdinalIgnoreCase)))
@@ -273,22 +273,22 @@ namespace FritzBot.Core
             IsCommand = Plugin is ICommand;
             IsBackgroundTask = Plugin is IBackgroundTask;
 
-            AuthenticationRequired = Toolbox.GetAttribute<AuthorizeAttribute>(Plugin) != null;
+            AuthenticationRequired = plugin.GetCustomAttribute<AuthorizeAttribute>() != null;
 
-            HelpText = Toolbox.GetAttribute<HelpAttribute>(Plugin)?.Help;
+            HelpText = plugin.GetCustomAttribute<HelpAttribute>()?.Help;
 
-            IsHidden = Toolbox.GetAttribute<HiddenAttribute>(Plugin) != null;
+            IsHidden = plugin.GetCustomAttribute<HiddenAttribute>() != null;
 
-            Names = Toolbox.GetAttribute<NameAttribute>(Plugin)?.Names.Select(x => x.ToLower()).ToList() ?? new List<string>();
-            ParameterRequiredAttribute paramAtt = Toolbox.GetAttribute<ParameterRequiredAttribute>(Plugin);
+            Names = plugin.GetCustomAttribute<NameAttribute>()?.Names.Select(x => x.ToLower()).ToList() ?? new List<string>();
+            ParameterRequiredAttribute paramAtt = plugin.GetCustomAttribute<ParameterRequiredAttribute>();
             if (paramAtt != null)
             {
                 ParameterRequiredSpecified = true;
                 ParameterRequired = paramAtt.Required;
             }
 
-            InstanceScope = Toolbox.GetAttribute<ScopeAttribute>(Plugin)?.Scope ?? Scope.Global;
-            IsSubscribeable = Toolbox.GetAttribute<SubscribeableAttribute>(Plugin) != null;
+            InstanceScope = plugin.GetCustomAttribute<ScopeAttribute>()?.Scope ?? Scope.Global;
+            IsSubscribeable = plugin.GetCustomAttribute<SubscribeableAttribute>() != null;
         }
 
         public T GetScoped<T>(string channel, string user) where T : class

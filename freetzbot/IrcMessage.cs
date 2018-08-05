@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Reflection;
 
 namespace FritzBot
 {
@@ -177,7 +178,7 @@ namespace FritzBot
         {
             Contract.Requires(plugin != null);
 
-            HelpAttribute help = Toolbox.GetAttribute<HelpAttribute>(plugin);
+            HelpAttribute help = plugin.GetType().GetCustomAttribute<HelpAttribute>();
             if (help == null)
             {
                 throw new ArgumentException("Das Plugin verfügt über keine Hilfe");

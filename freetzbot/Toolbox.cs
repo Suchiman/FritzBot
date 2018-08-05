@@ -139,25 +139,6 @@ namespace FritzBot
             return false;
         }
 
-        public static T GetAttribute<T>(object obj)
-        {
-            Contract.Requires(obj != null);
-
-            return GetAttribute<T>(obj.GetType());
-        }
-
-        public static T GetAttribute<T>(Type type)
-        {
-            Contract.Requires(type != null);
-
-            Attribute Attr = Attribute.GetCustomAttribute(type, typeof(T));
-            if (Attr == null)
-            {
-                return default(T);
-            }
-            return (T)(Attr as object);
-        }
-
         public static Thread SafeThreadStart(string name, bool restartOnException, Action method)
         {
             Contract.Requires(method != null);

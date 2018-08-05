@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Reflection;
 
 namespace FritzBot.Plugins
 {
@@ -55,7 +56,7 @@ namespace FritzBot.Plugins
                 theMessage.Answer("Es gibt keinen solchen SubscriptionProvider");
                 return;
             }
-            HelpAttribute help = Toolbox.GetAttribute<HelpAttribute>(provider);
+            HelpAttribute help = provider.GetType().GetCustomAttribute<HelpAttribute>();
             if (help != null)
             {
                 theMessage.Answer(help.Help);
@@ -142,7 +143,7 @@ namespace FritzBot.Plugins
                     theMessage.Answer("Ein solches Plugin konnte ich nicht ausfindig machen");
                     return;
                 }
-                if (Toolbox.GetAttribute<SubscribeableAttribute>(plugin) == null)
+                if (plugin.GetType().GetCustomAttribute<SubscribeableAttribute>() == null)
                 {
                     theMessage.Answer("Dieses Plugin unterstützt keine Benachrichtigungen");
                     return;

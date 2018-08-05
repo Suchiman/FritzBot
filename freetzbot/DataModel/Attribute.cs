@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 
 namespace FritzBot.Plugins
 {
@@ -81,9 +82,9 @@ namespace FritzBot.Plugins
     [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
     public class HiddenAttribute : Attribute
     {
-        public static bool CheckHidden(Object obj)
+        public static bool CheckHidden(object obj)
         {
-            return Toolbox.GetAttribute<HiddenAttribute>(obj) != null;
+            return obj.GetType().GetCustomAttribute<HiddenAttribute>() != null;
         }
     }
 

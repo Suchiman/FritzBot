@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Reflection;
 
 namespace FritzBot.Plugins.SubscriptionProviders
 {
@@ -37,7 +38,7 @@ namespace FritzBot.Plugins.SubscriptionProviders
                     }
 
                     context.Subscriptions.Add(SpecificSubscription);
-                    theMessage.Answer($"Du wirst absofort mit {Toolbox.GetAttribute<NameAttribute>(this).Names[0]} für {Toolbox.GetAttribute<NameAttribute>(plugin).Names[0]} benachrichtigt");
+                    theMessage.Answer($"Du wirst absofort mit {GetType().GetCustomAttribute<NameAttribute>().Names[0]} für {plugin.GetType().GetCustomAttribute<NameAttribute>().Names[0]} benachrichtigt");
                 }
                 else if (theMessage.CommandArgs.Count > 3 && !String.IsNullOrEmpty(theMessage.CommandArgs[3]) && SpecificSubscription.Bedingungen.Count == 0)
                 {
