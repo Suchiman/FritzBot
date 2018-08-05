@@ -18,7 +18,7 @@ namespace FritzBot.Database
         /// </summary>
         public bool Matches(string input)
         {
-            return (ShortName == input || FullName == input || RegexPattern.Select(x => x.Pattern).Any(x => Regex.Match(input, x).Success));
+            return (ShortName.Equals(input, StringComparison.OrdinalIgnoreCase) || FullName.Equals(input, StringComparison.OrdinalIgnoreCase) || RegexPattern.Select(x => x.Pattern).Any(x => Regex.Match(input, x, RegexOptions.IgnoreCase).Success));
         }
 
         /// <summary>
