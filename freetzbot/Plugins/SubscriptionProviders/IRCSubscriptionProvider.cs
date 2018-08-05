@@ -16,12 +16,12 @@ namespace FritzBot.Plugins.SubscriptionProviders
             using (var context = new BotContext())
             {
                 List<string> names = context.Nicknames.Where(x => x.User.Id == user.Id).Select(x => x.Name).ToList();
-                
+
                 foreach (var connection in ServerManager.Servers)
                 {
-                    foreach (var channel in connection.IrcClient.GetChannels().Select(c => connection.IrcClient.GetChannel(c)))
+                    foreach (var channel in connection.IrcClient.GetChannels().Select(connection.IrcClient.GetChannel))
                     {
-                        var userInChannel = channel.Users.Keys.OfType<string>().Intersect(names).FirstOrDefault();
+                        var userInChannel = channel.Users.Keys.Intersect(names).FirstOrDefault();
                         if (userInChannel != null)
                         {
                             UserKeyValueEntry entry = context.GetStorage(user, PluginID);
