@@ -104,19 +104,24 @@ namespace FritzBot
         {
             while (true)
             {
-                string ConsoleInput = Console.ReadLine();
-                string[] ConsoleSplitted = ConsoleInput.Split(new[] { ' ' }, 2);
-                switch (ConsoleSplitted[0])
+                string consoleInput = Console.ReadLine();
+                if (String.IsNullOrWhiteSpace(consoleInput))
+                {
+                    continue;
+                }
+
+                string[] consoleSplitted = consoleInput.Split(new[] { ' ' }, 2);
+                switch (consoleSplitted[0])
                 {
                     case "op":
-                        if (ConsoleSplitted.Length < 2)
+                        if (consoleSplitted.Length < 2)
                         {
                             Console.WriteLine("Du musst den Benutzernamen angeben");
                             continue;
                         }
                         using (var context = new BotContext())
                         {
-                            User nutzer = context.GetUser(ConsoleSplitted[1]);
+                            User nutzer = context.GetUser(consoleSplitted[1]);
                             if (nutzer != null)
                             {
                                 if (nutzer.Admin)
@@ -130,7 +135,7 @@ namespace FritzBot
                             }
                             else
                             {
-                                Console.WriteLine("Benutzer " + ConsoleSplitted[1] + " nicht gefunden");
+                                Console.WriteLine("Benutzer " + consoleSplitted[1] + " nicht gefunden");
                             }
                         }
                         break;
@@ -141,12 +146,12 @@ namespace FritzBot
                         AskConnection();
                         break;
                     case "leave":
-                        if (ConsoleSplitted.Length < 2)
+                        if (consoleSplitted.Length < 2)
                         {
                             Console.WriteLine("Du musst den Server angeben");
                             continue;
                         }
-                        ServerManager.Remove(ServerManager.Servers.FirstOrDefault(x => x.Settings.Address == ConsoleSplitted[1]));
+                        ServerManager.Remove(ServerManager.Servers.FirstOrDefault(x => x.Settings.Address == consoleSplitted[1]));
                         break;
                     case "list":
                         Console.WriteLine("Verbunden mit den Servern: {0}", ServerManager.Servers.Select(x => x.Settings.Address).Join(", "));
