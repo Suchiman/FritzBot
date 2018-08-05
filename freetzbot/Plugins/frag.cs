@@ -30,15 +30,15 @@ namespace FritzBot.Plugins
                 User u = context.GetUser(e.Who);
                 if (u == null || u.Ignored) return;
             }
-            boxfrage(e.Data.Irc, e.Who, true);
+            Boxfrage(e.Data.Irc, e.Who, true);
         }
 
         public void Run(IrcMessage theMessage)
         {
-            boxfrage(theMessage.ServerConnetion.IrcClient, theMessage.CommandLine, false);
+            Boxfrage(theMessage.ServerConnetion.IrcClient, theMessage.CommandLine, false);
         }
 
-        public void boxfrage(IrcClient connection, string nick, bool check_db = true)
+        public void Boxfrage(IrcClient connection, string nick, bool check_db = true)
         {
             if (check_db && ConfigHelper.GetBoolean("BoxFrage", false))
             {

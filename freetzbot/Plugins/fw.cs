@@ -27,8 +27,8 @@ namespace FritzBot.Plugins
         private CancellationTokenSource worker;
         private string host;
 
-        protected bool FWCheckEnabled { get { return ConfigHelper.GetBoolean("FWCheckEnabled", true); } }
-        protected int FWCheckIntervall { get { return ConfigHelper.GetInt("FWCheckIntervall", 6000); } }
+        protected bool FWCheckEnabled => ConfigHelper.GetBoolean("FWCheckEnabled", true);
+        protected int FWCheckIntervall => ConfigHelper.GetInt("FWCheckIntervall", 6000);
 
         public void Start()
         {
