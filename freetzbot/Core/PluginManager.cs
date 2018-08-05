@@ -17,7 +17,7 @@ namespace FritzBot.Core
 {
     public static class PluginManager
     {
-        private const string DefaultReferences = "mscorlib.dll,System.dll,System.Core.dll,System.Configuration.dll,System.IO.Compression.dll,System.Web.dll,System.Xml.dll,System.Xml.Linq.dll,System.Net.FtpClient.dll,CsQuery.dll,EntityFramework.dll,Newtonsoft.Json.dll,Meebey.SmartIrc4net.dll";
+        private const string DefaultReferences = "mscorlib.dll,System.dll,System.Core.dll,System.Configuration.dll,System.IO.Compression.dll,System.Web.dll,System.Xml.dll,System.Xml.Linq.dll,System.Net.FtpClient.dll,CsQuery.dll,EntityFramework.dll,Newtonsoft.Json.dll,Irc4netButSmarter.dll";
 
         private static Dictionary<string, PluginInfo> _lookupDictionary = new Dictionary<string, PluginInfo>(StringComparer.OrdinalIgnoreCase);
         private static List<PluginInfo> _plugins = new List<PluginInfo>();
