@@ -281,7 +281,7 @@ namespace FritzBot.Core
 
             foreach (ServerChannel channel in Settings.Channels)
             {
-                _connection.RfcJoin(channel.Name);
+                _connection.RfcJoin(channel.Name, Priority.Critical);
             }
 
             _listener = Toolbox.SafeThreadStart("ListenThread " + Settings.Address, true, _connection.Listen);
@@ -291,25 +291,22 @@ namespace FritzBot.Core
 
         void _connection_OnConnectionError(object sender, EventArgs e)
         {
-            Log.Error("Verbindung zu Server {ServerAddress} verloren. Versuche Verbindung wiederherzustellen", Settings.Address);
-            DateTime TimeConnectionLost = DateTime.Now;
+            Connected = false;
+            var timeConnectionLost = DateTime.Now;
+
+            Log.Error("Verbindung zu Server {ServerAddress} verloren. Versuche Verbindung in 5 Sekunden wiederherzustellen", Settings.Address);
+            Thread.Sleep(5000);
 
             //Wenn wir bis hierhin gekommen sind, wurde eine bestehende Verbindung aus einem externen Grund terminiert
             //Intern wurde bereits Disconnect aufgerufen, das heißt die Write, Read und Idle Threads wurden beendet.
             //Wir befinden uns in dieser Methode dann im _listener Thread, wenn wir diese Methode verlassen und _connection.IsConnected == true
             //wird die Listen(bool) Methode weiter loopen
-            int ConnectionAttempt = 1;
+            int connectionAttempt = 1;
             do
             {
                 try
                 {
-                    _connection.Connect(Settings.Address, Settings.Port);
-                    _connection.Login(Settings.Nickname, Settings.Nickname, 0, Settings.Nickname);
-
-                    foreach (ServerChannel channel in Settings.Channels)
-                    {
-                        _connection.RfcJoin(channel.Name);
-                    }
+                    Connect();
                 }
                 catch (Exception ex)
                 {
@@ -318,14 +315,14 @@ namespace FritzBot.Core
 
                 if (!_connection.IsConnected)
                 {
-                    ++ConnectionAttempt;
-                    int delay = (ConnectionAttempt - 1) % 3 == 0 ? 30000 : 5000;
-                    Log.Information("Nächster Verbindungsversuch ({ConnectionAttempt}) zu {ServerAddress}:{ServerPort} in {Delay} Sekunden", ConnectionAttempt, Settings.Address, Settings.Port, delay / 1000);
+                    ++connectionAttempt;
+                    int delay = (connectionAttempt - 1) % 3 == 0 ? 30000 : 5000;
+                    Log.Information("Nächster Verbindungsversuch ({ConnectionAttempt}) zu {ServerAddress}:{ServerPort} in {Delay} Sekunden", connectionAttempt, Settings.Address, Settings.Port, delay / 1000);
                     Thread.Sleep(delay);
                 }
             }
             while (!_connection.IsConnected);
-            Log.Information("Verbindung mit {ServerAddress} nach {TimeConnectionLost} Sekunden ohne Verbindung und {ConnectionAttempt} Verbindungsversuchen wiederhergestellt.", Settings.Address, DateTime.Now.Subtract(TimeConnectionLost).TotalSeconds, ConnectionAttempt);
+            Log.Information("Verbindung mit {ServerAddress} nach {TimeConnectionLost} Sekunden ohne Verbindung und {ConnectionAttempt} Verbindungsversuchen wiederhergestellt.", Settings.Address, DateTime.Now.Subtract(timeConnectionLost).TotalSeconds, connectionAttempt);
         }
 
         /// <summary>
@@ -516,12 +513,11 @@ namespace FritzBot.Core
             Connected = false;
             if (_connection != null)
             {
-                _connection.RfcQuit(Settings.QuitMessage);
-
                 if (_connection.IsConnected)
                 {
                     try
                     {
+                        _connection.RfcQuit(Settings.QuitMessage);
                         _connection.Disconnect();
                     }
                     catch (NotConnectedException) { }
