@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
+using System.Runtime.Loader;
 using System.Threading;
 
 namespace FritzBot
@@ -239,6 +240,14 @@ namespace FritzBot
 
         private static void Main()
         {
+            var profiles = new DirectoryInfo("Profiles");
+            if (!profiles.Exists)
+            {
+                profiles.Create();
+            }
+            AssemblyLoadContext.Default.SetProfileOptimizationRoot(profiles.FullName);
+            AssemblyLoadContext.Default.StartProfileOptimization("Default");
+
             Init();
             ShutdownSignal.WaitOne();
             Deinit();
