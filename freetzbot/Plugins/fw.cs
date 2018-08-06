@@ -17,11 +17,11 @@ using System.Threading.Tasks;
 
 namespace FritzBot.Plugins
 {
-    [Name("fw")]
-    [Help("Sucht auf dem AVM FTP nach der Version des angegbenen Modells, z.b. \"!fw 7390\", \"!fw 7270_v1\", \"!fw 7390 source\", \"!fw 7390 recovery\" \"!fw 7390 all\"")]
-    [ParameterRequired]
-    [Subscribeable]
-    class fw : PluginBase, ICommand, IBackgroundTask
+    //[Name("fw")]
+    //[Help("Sucht auf dem AVM FTP nach der Version des angegbenen Modells, z.b. \"!fw 7390\", \"!fw 7270_v1\", \"!fw 7390 source\", \"!fw 7390 recovery\" \"!fw 7390 all\"")]
+    //[ParameterRequired]
+    //[Subscribeable]
+    class fw : PluginBase//, ICommand, IBackgroundTask
     {
         private FtpDirectory LastScan;
         private CancellationTokenSource worker;
@@ -44,6 +44,7 @@ namespace FritzBot.Plugins
 
         public async Task WorkerThread(CancellationToken token)
         {
+            // https://osp.avm.de/fritzbox/
             while (true)
             {
                 if (FWCheckEnabled)
