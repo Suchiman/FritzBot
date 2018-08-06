@@ -32,6 +32,12 @@ namespace FritzBot.Plugins
 
         public void Run(IrcMessage theMessage)
         {
+            if (!theMessage.HasArgs)
+            {
+                theMessage.Answer("http://web.archive.org/web/20170609125914/http://www.wehavemorefun.de/fritzbox/Main_Page");
+                return;
+            }
+
             var data = Cache.GetItem(false);
             if (data == null)
             {
