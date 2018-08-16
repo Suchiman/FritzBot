@@ -1,5 +1,6 @@
 using FritzBot.Core;
 using FritzBot.DataModel;
+using Serilog;
 using System;
 using System.Net;
 using System.Net.Http;
@@ -23,18 +24,25 @@ namespace FritzBot.Plugins
 
         public void Server_OnPostProcessingMessage(object sender, IrcMessage theMessage)
         {
-            if (theMessage.Message.StartsWith("#", StringComparison.Ordinal) && theMessage.Message.Length > 1)
+            try
             {
-                string requestUri = $"{ConfigHelper.GetString("HippieUrl")}?user={WebUtility.UrlEncode(theMessage.Nickname)}&Date={DateTime.Now:s}&query={theMessage.Message.Substring(1)}";
-                using (var response = Client.GetAsync(requestUri).GetAwaiter().GetResult())
+                if (theMessage.Message.StartsWith("#", StringComparison.Ordinal) && theMessage.Message.Length > 1)
                 {
-                    string answer = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-                    if (String.IsNullOrWhiteSpace(answer))
+                    string requestUri = $"{ConfigHelper.GetString("HippieUrl")}?user={WebUtility.UrlEncode(theMessage.Nickname)}&from={(theMessage.IsPrivate ? "pm" : "chan")}&date={WebUtility.UrlEncode(DateTime.Now.ToString("s"))}&query={theMessage.Message.Substring(1)}";
+                    using (var response = Client.GetAsync(requestUri).GetAwaiter().GetResult())
                     {
-                        theMessage.Answer(answer);
-                        theMessage.HandledByEvent = true;
+                        string answer = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                        if (!String.IsNullOrWhiteSpace(answer))
+                        {
+                            theMessage.Answer(answer.TrimEnd());
+                            theMessage.HandledByEvent = true;
+                        }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Fehler beim Ausführen des Hippie Query");
             }
         }
     }
