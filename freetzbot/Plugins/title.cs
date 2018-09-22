@@ -31,13 +31,18 @@ namespace FritzBot.Plugins
 
         private void Server_OnPostProcessingMessage(object sender, IrcMessage theMessage)
         {
+            if (theMessage.IsIgnored)
+            {
+                return;
+            }
+
             try
             {
                 List<string> links = theMessage.CommandArgs.Where(x => x.StartsWith("http://") || x.StartsWith("https://")).Distinct().ToList();
                 foreach (string link in links)
                 {
                     WebClient dl = new WebClient();
-                    dl.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.93 Safari/537.36");
+                    dl.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36");
                     dl.Headers.Add("Accept-Language", "de-de, de, en;q=0.5");
                     dl.DownloadProgressChanged += dl_DownloadProgressChanged;
                     dl.DownloadDataCompleted += dl_DownloadDataCompleted;
