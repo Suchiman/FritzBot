@@ -26,7 +26,7 @@ namespace FritzBot.Plugins
         {
             try
             {
-                if (theMessage.Message.StartsWith("#", StringComparison.Ordinal) && theMessage.Message.Length > 1)
+                if (theMessage.Message.StartsWith("$", StringComparison.Ordinal) && theMessage.Message.Length > 1)
                 {
                     string requestUri = $"{ConfigHelper.GetString("HippieUrl")}?user={WebUtility.UrlEncode(theMessage.Nickname)}&from={(theMessage.IsPrivate ? "pm" : "chan")}&date={WebUtility.UrlEncode(DateTime.Now.ToString("s"))}&query={theMessage.Message.Substring(1)}";
                     using (var response = Client.GetAsync(requestUri).GetAwaiter().GetResult())
