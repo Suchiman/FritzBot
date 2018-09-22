@@ -456,7 +456,7 @@ namespace FritzBot.Core
                 User user = MaintainUser(e.Data.Nick);
                 IrcMessage message = new IrcMessage(e.Data, this);
 
-                if (!message.IsIgnored)
+                if (!user.Ignored && !message.IsIgnored)
                 {
                     OnPreProcessingMessage?.Invoke(this, message);
 
