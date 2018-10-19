@@ -1,6 +1,7 @@
 using FritzBot.Core;
 using FritzBot.DataModel;
 using FritzBot.Functions;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,7 +13,7 @@ namespace FritzBot.Plugins
     [Help("Gibt infos zu aktuellen Firmwares")]
     class Fw2Plugin : PluginBase, ICommand
     {
-        private static readonly DataCache<Dictionary<string, FirmwareEntry>> Cache = new DataCache<Dictionary<string, FirmwareEntry>>(RefreshCache, TimeSpan.FromHours(12));
+        private static readonly DataCache<Dictionary<string, FirmwareEntry>> Cache = new DataCache<Dictionary<string, FirmwareEntry>>(RefreshCache, TimeSpan.FromHours(1));
         private static HttpClient Client = new HttpClient();
 
         private static Dictionary<string, FirmwareEntry> RefreshCache(Dictionary<string, FirmwareEntry> old)
@@ -24,6 +25,12 @@ namespace FritzBot.Plugins
                 while (reader.ReadLine() is string line)
                 {
                     var splits = line.Split('\t');
+                    if (splits.Length != 6)
+                    {
+                        Log.Warning("Zeile {Row} in Datensatz enthält {Length} anstatt 6 Elemente", line, splits.Length);
+                        continue;
+                    }
+
                     var entry = new FirmwareEntry
                     {
                         Nick = splits[0],
