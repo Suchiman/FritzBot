@@ -58,7 +58,8 @@ namespace FritzBot.Plugins
                     continue;
                 }
 
-                List<NewsEntry> newNews = updatedNews.Except(news).ToList();
+                var maxOld = DateTime.Today.AddDays(-1);
+                List<NewsEntry> newNews = updatedNews.Where(x => x.Datum > maxOld).Except(news.Where(x => x.Datum > maxOld)).ToList();
                 if (newNews.Count > 0)
                 {
                     if (newNews.Count == news.Count)
