@@ -1,7 +1,6 @@
 using FritzBot.Core;
 using FritzBot.Database;
 using FritzBot.DataModel;
-using Meebey.SmartIrc4net;
 using System;
 using System.Linq;
 

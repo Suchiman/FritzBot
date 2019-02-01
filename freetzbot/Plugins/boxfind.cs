@@ -2,7 +2,6 @@ using FritzBot.Core;
 using FritzBot.Database;
 using FritzBot.DataModel;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace FritzBot.Plugins
