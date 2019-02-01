@@ -1,7 +1,6 @@
 using AngleSharp;
 using AngleSharp.Dom;
-using AngleSharp.Dom.Html;
-using AngleSharp.Extensions;
+using AngleSharp.Html.Dom;
 using FluentFTP;
 using FritzBot.Core;
 using FritzBot.Database;

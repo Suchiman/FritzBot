@@ -1,7 +1,6 @@
 using AngleSharp;
 using AngleSharp.Dom;
-using AngleSharp.Dom.Html;
-using AngleSharp.Extensions;
+using AngleSharp.Html.Dom;
 using FritzBot.Core;
 using FritzBot.DataModel;
 using Serilog;
