@@ -5,11 +5,13 @@ using FritzBot.DataModel;
 using Serilog;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Net.Security;
+using System.Net.Sockets;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace FritzBot.Plugins
 {
@@ -18,6 +20,16 @@ namespace FritzBot.Plugins
     [ParameterRequired]
     class title : PluginBase, IBackgroundTask
     {
+        private static readonly HttpClient Client = new HttpClient
+        {
+            DefaultRequestHeaders =
+            {
+                { "User-Agent", "Mozilla/5.0 (Windows NT 6.3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.93 Safari/537.36" },
+                { "Accept-Language", "de-de, de, en;q=0.5" }
+            },
+            MaxResponseContentBufferSize = 1 * 1024 * 1024
+        };
+
         public void Start()
         {
             ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(delegate { return true; });
@@ -29,7 +41,7 @@ namespace FritzBot.Plugins
             ServerConnection.OnPostProcessingMessage -= Server_OnPostProcessingMessage;
         }
 
-        private void Server_OnPostProcessingMessage(object sender, IrcMessage theMessage)
+        private async void Server_OnPostProcessingMessage(object sender, IrcMessage theMessage)
         {
             if (theMessage.IsIgnored)
             {
@@ -39,14 +51,68 @@ namespace FritzBot.Plugins
             try
             {
                 List<string> links = theMessage.CommandArgs.Where(x => x.StartsWith("http://") || x.StartsWith("https://")).Distinct().ToList();
+                if (links.Count == 0)
+                {
+                    return;
+                }
+
+                var tasks = new List<Task<HttpResponseMessage>>(links.Count);
                 foreach (string link in links)
                 {
-                    WebClient dl = new WebClient();
-                    dl.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36");
-                    dl.Headers.Add("Accept-Language", "de-de, de, en;q=0.5");
-                    dl.DownloadProgressChanged += dl_DownloadProgressChanged;
-                    dl.DownloadDataCompleted += dl_DownloadDataCompleted;
-                    dl.DownloadDataAsync(new Uri(link), theMessage);
+                    Uri address = new Uri(link);
+                    if (IPAddress.TryParse(address.DnsSafeHost, out var ip) && IsInternal(ip))
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        try
+                        {
+                            var addresses = Dns.GetHostAddresses(address.DnsSafeHost);
+                            if (addresses.Any(IsInternal))
+                            {
+                                continue;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex);
+                        }
+                    }
+
+                    tasks.Add(Client.GetAsync(address, HttpCompletionOption.ResponseContentRead));
+                }
+
+                if (tasks.Count == 0)
+                {
+                    return;
+                }
+
+                try
+                {
+                    await Task.WhenAll(tasks);
+                }
+                catch
+                {
+                }
+
+                foreach (var task in tasks)
+                {
+                    try
+                    {
+                        var response = await task;
+                        var stream = await response.Content.ReadAsStreamAsync();
+                        IDocument doc = await BrowsingContext.New().OpenAsync(x => x.Content(stream, true));
+
+                        string title = Regex.Replace(doc.Title.Replace("\n", "").Replace("\r", "").Replace("â€“", "–"), "[ ]{2,}", " ");
+                        if (!String.IsNullOrWhiteSpace(title))
+                        {
+                            theMessage.Answer("[url] " + title);
+                        }
+                    }
+                    catch
+                    {
+                    }
                 }
             }
             catch (Exception ex)
@@ -55,32 +121,33 @@ namespace FritzBot.Plugins
             }
         }
 
-        void dl_DownloadDataCompleted(object sender, DownloadDataCompletedEventArgs e)
+        private static bool IsInternal(IPAddress address)
         {
-            if (e.Cancelled || e.Error != null || e.Result == null)
+            if (address.AddressFamily == AddressFamily.InterNetworkV6)
             {
-                return;
-            }
-            try
-            {
-                IDocument doc = BrowsingContext.New().OpenAsync(x => x.Content(new MemoryStream(e.Result), true)).Result;
-
-                string title = Regex.Replace(doc.Title.Replace("\n", "").Replace("\r", "").Replace("â€“", "–"), "[ ]{2,}", " ");
-                if (!String.IsNullOrWhiteSpace(title))
+                if (address.IsIPv6SiteLocal || address.IsIPv6Multicast || address.IsIPv6LinkLocal)
                 {
-                    (e.UserState as IrcMessage).Answer("[url] " + title);
+                    return true;
                 }
-            }
-            catch
-            {
-            }
-        }
 
-        private void dl_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
-        {
-            if (Math.Max(e.TotalBytesToReceive, e.BytesReceived) > 1048576)
+                var addressAsString = address.ToString();
+                var firstWord = addressAsString.AsSpan(0, addressAsString.IndexOf(':'));
+
+                return firstWord.Length >= 4 && (firstWord.StartsWith("fc") || firstWord.StartsWith("fd")) || firstWord == "100";
+            }
+
+            byte[] ip = address.GetAddressBytes();
+            switch (ip[0])
             {
-                ((WebClient)sender).CancelAsync();
+                case 10:
+                case 127:
+                    return true;
+                case 172:
+                    return ip[1] >= 16 && ip[1] < 32;
+                case 192:
+                    return ip[1] == 168;
+                default:
+                    return false;
             }
         }
     }
