@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using System;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 
@@ -8,6 +9,7 @@ namespace FritzBot.Functions
     public static class Geolocation
     {
         private const string APIUrl = "http://api.ipinfodb.com/v3/ip-{0}/?format=json&key=a97de1a8f890097cc2e32558555d836957229706b9b3ac264ef3cfe10e54ea69&ip={1}";
+        private const string NokResponse = "{\"statusCode\":\"NOK\"}";
 
         public static string GetCountryCode(string ip)
         {
@@ -21,25 +23,14 @@ namespace FritzBot.Functions
 
         private static string SafeGet(string ip, string preferedMode)
         {
-            if (IPAddress.TryParse(ip, out IPAddress ad))
-            {
-                if (ad.AddressFamily == AddressFamily.InterNetworkV6)
-                {
-                    preferedMode = "country"; //IPv6 Lokalisierung scheint nur im Country Mode zu funktionieren
-                }
-            }
-            else
+            if (!IPAddress.TryParse(ip, out IPAddress ad))
             {
                 try
                 {
                     IPHostEntry entry = Dns.GetHostEntry(ip);
-                    if (entry != null && entry.AddressList.Length > 0)
+                    if (entry.AddressList.Length > 0)
                     {
-                        ad = entry.AddressList[0];
-                        if (ad.AddressFamily == AddressFamily.InterNetworkV6)
-                        {
-                            preferedMode = "country"; //IPv6 Lokalisierung scheint nur im Country Mode zu funktionieren
-                        }
+                        ad = entry.AddressList.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetwork) ?? entry.AddressList[0];
                         ip = ad.ToString();
                     }
                 }
@@ -48,12 +39,22 @@ namespace FritzBot.Functions
                 }
             }
 
+            if (ad == null)
+            {
+                return NokResponse;
+            }
+
+            if (ad.AddressFamily == AddressFamily.InterNetworkV6)
+            {
+                preferedMode = "country"; //IPv6 Lokalisierung scheint nur im Country Mode zu funktionieren
+            }
+
             string url = String.Format(APIUrl, preferedMode, ip);
             string response = Toolbox.GetWeb(url);
 
             if (String.IsNullOrEmpty(response) || response.Contains("ERROR"))
             {
-                response = "{\"statusCode\":\"NOK\"}";
+                response = NokResponse;
             }
 
             return response;
