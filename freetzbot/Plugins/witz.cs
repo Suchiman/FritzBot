@@ -27,7 +27,9 @@ namespace FritzBot.Plugins
                 IQueryable<WitzEntry> ws = context.WitzEntries;
                 if (theMessage.HasArgs)
                 {
-                    ws = ws.Where(x => theMessage.CommandArgs.All(f => x.Witz.ToLower().Contains(f.ToLower())));
+                    var negatedArgs = theMessage.CommandArgs.Where(x => x.StartsWith('!')).Select(x => x.Substring(1).ToLower()).ToList();
+                    var positiveArgs = theMessage.CommandArgs.Where(x => !x.StartsWith('!')).Select(x => x.ToLower()).ToList();
+                    ws = ws.Where(x => !negatedArgs.Any(n => x.Witz.ToLower().Contains(n)) && positiveArgs.All(p => x.Witz.ToLower().Contains(p)));
                 }
                 WitzEntry entry = ws.OrderBy(x => x.Frequency).Skip(rand.Next(0, 10)).FirstOrDefault();
 
