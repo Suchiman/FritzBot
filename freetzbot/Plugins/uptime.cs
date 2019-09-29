@@ -8,7 +8,7 @@ namespace FritzBot.Plugins
     [ParameterRequired(false)]
     class uptime : PluginBase, ICommand
     {
-        private DateTime startzeit;
+        private readonly DateTime startzeit;
 
         public uptime()
         {

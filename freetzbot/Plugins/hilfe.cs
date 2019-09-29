@@ -29,8 +29,8 @@ namespace FritzBot.Plugins
             }
             else
             {
-                PluginInfo info = PluginManager.Get(theMessage.CommandArgs[0]);
-                if (info != null && !String.IsNullOrEmpty(info.HelpText))
+                PluginInfo? info = PluginManager.Get(theMessage.CommandArgs[0]);
+                if (!String.IsNullOrEmpty(info?.HelpText))
                 {
                     theMessage.Answer(info.HelpText);
                 }

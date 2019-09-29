@@ -5,7 +5,6 @@ using Serilog;
 using Serilog.Events;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -17,9 +16,9 @@ namespace FritzBot.Core
     /// </summary>
     public static class ServerManager
     {
-        private static List<ServerConnection> _servers;
+        private static readonly List<ServerConnection> _servers;
 
-        public static IEnumerable<ServerConnection> Servers { get { return _servers; } }
+        public static IEnumerable<ServerConnection> Servers => _servers;
 
         /// <summary>
         /// Erstellt eine neue Instanz des ServerManagers und lädt die ServerConnetions aus der Datenbank
@@ -47,8 +46,6 @@ namespace FritzBot.Core
         /// <param name="Channels">Alle Channels die Betreten werden sollen</param>
         public static ServerConnection NewConnection(string HostName, int Port, string Nickname, string QuitMessage, List<string> Channels)
         {
-            Contract.Ensures(Contract.Result<ServerConnection>() != null);
-
             Server server = new Server
             {
                 Address = HostName,
@@ -75,8 +72,6 @@ namespace FritzBot.Core
         /// <param name="serverConnetion"></param>
         public static void Remove(ServerConnection serverConnetion)
         {
-            Contract.Requires(serverConnetion != null);
-
             serverConnetion.Disconnect();
             _servers.Remove(serverConnetion);
             using (var context = new BotContext())
@@ -142,37 +137,37 @@ namespace FritzBot.Core
         /// <summary>
         /// Wird ausgelöst, wenn ein User einen Channel betritt
         /// </summary>
-        public static event JoinEventHandler OnJoin;
+        public static event JoinEventHandler? OnJoin;
 
         /// <summary>
         /// Wird ausgelöst, wenn ein User einen Channel verlässt
         /// </summary>
-        public static event PartEventHandler OnPart;
+        public static event PartEventHandler? OnPart;
 
         /// <summary>
         /// Wird ausgelöst, wenn ein User den IRC Server verlässt
         /// </summary>
-        public static event QuitEventHandler OnQuit;
+        public static event QuitEventHandler? OnQuit;
 
         /// <summary>
         /// Wird ausgelöst, wenn ein User seinen Nickname ändert
         /// </summary>
-        public static event NickChangeEventHandler OnNickChange;
+        public static event NickChangeEventHandler? OnNickChange;
 
         /// <summary>
         /// Wird ausgelöst, wenn ein User gekickt wird
         /// </summary>
-        public static event KickEventHandler OnKick;
+        public static event KickEventHandler? OnKick;
 
         /// <summary>
         /// Wird ausgelöst, bevor versucht wird, die Nachricht mit einem Command zu behandeln
         /// </summary>
-        public static event IrcMessageEventHandler OnPreProcessingMessage;
+        public static event IrcMessageEventHandler? OnPreProcessingMessage;
 
         /// <summary>
         /// Wird ausgelöst, nachdem die Nachricht die Verarbeitung durchlaufen hat aber noch vor dem Logging
         /// </summary>
-        public static event IrcMessageEventHandler OnPostProcessingMessage;
+        public static event IrcMessageEventHandler? OnPostProcessingMessage;
 
         public delegate void IrcMessageEventHandler(object sender, IrcMessage theMessage);
 
@@ -183,9 +178,9 @@ namespace FritzBot.Core
         /// </summary>
         public bool Connected { get; protected set; }
 
-        private IrcFeatures _connection;
+        private IrcFeatures? _connection;
 
-        private Thread _listener = null;
+        private Thread? _listener;
 
         /// <summary>
         /// Erstellt ein neues ServerConnetion Objekt welches die Verbindung zu einem IRC Server kapselt
@@ -207,7 +202,7 @@ namespace FritzBot.Core
                 return;
             }
 
-            _connection.RfcJoin(channel);
+            IrcClient.RfcJoin(channel);
 
             using (var context = new BotContext())
             {
@@ -229,7 +224,7 @@ namespace FritzBot.Core
                 return;
             }
 
-            _connection.RfcPart(channel);
+            IrcClient.RfcPart(channel);
 
             using (var context = new BotContext())
             {
@@ -289,7 +284,7 @@ namespace FritzBot.Core
             Connected = true;
         }
 
-        void _connection_OnConnectionError(object sender, EventArgs e)
+        void _connection_OnConnectionError(object? sender, EventArgs e)
         {
             Connected = false;
             var timeConnectionLost = DateTime.Now;
@@ -313,7 +308,7 @@ namespace FritzBot.Core
                     Log.Error(ex, "Verbindungsversuch zu {ServerAddress} gescheitert", Settings.Address);
                 }
 
-                if (!_connection.IsConnected)
+                if (!_connection!.IsConnected)
                 {
                     ++connectionAttempt;
                     int delay = (connectionAttempt - 1) % 3 == 0 ? 30000 : 5000;
@@ -401,8 +396,8 @@ namespace FritzBot.Core
             Log.Information("{OldNickname} heißt jetzt {NewNickname}", e.OldNickname, e.NewNickname);
             using (var context = new BotContext())
             {
-                User oldNick = context.GetUser(e.OldNickname);
-                User newNick = context.GetUser(e.NewNickname);
+                User? oldNick = context.TryGetUser(e.OldNickname);
+                User? newNick = context.TryGetUser(e.NewNickname);
                 if (oldNick != null && newNick == null)
                 {
                     oldNick.LastUsedName = new Nickname { Name = e.NewNickname, User = oldNick };
@@ -530,7 +525,7 @@ namespace FritzBot.Core
         /// <summary>
         /// Gibt das der Verbindung zugrunde liegende IRC Objekt zurück
         /// </summary>
-        public IrcFeatures IrcClient => _connection;
+        public IrcFeatures IrcClient => _connection ?? throw new InvalidOperationException("Not connected");
 
         /// <summary>
         /// Gibt eine Nachricht in allen Channels bekannt
@@ -540,7 +535,7 @@ namespace FritzBot.Core
         {
             foreach (ServerChannel channel in Settings.Channels)
             {
-                _connection.SendMessage(SendType.Message, channel.Name, message);
+                IrcClient.SendMessage(SendType.Message, channel.Name, message);
                 Log.Information("An {Receiver:l}: {Message:l}", channel.Name, message);
             }
         }

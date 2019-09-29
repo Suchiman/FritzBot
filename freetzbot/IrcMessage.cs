@@ -4,7 +4,6 @@ using Meebey.SmartIrc4net;
 using Serilog.Events;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Reflection;
 
@@ -22,8 +21,6 @@ namespace FritzBot
         /// <param name="serverConnetion">Die ServerConnetion von dem die Nachricht kommt</param>
         public IrcMessage(IrcMessageData data, ServerConnection serverConnetion)
         {
-            Contract.Requires(data != null && serverConnetion != null);
-
             Data = data;
             ServerConnetion = serverConnetion;
             Nickname = Data.Nick;
@@ -176,9 +173,7 @@ namespace FritzBot
         /// </summary>
         public void AnswerHelp(object plugin)
         {
-            Contract.Requires(plugin != null);
-
-            HelpAttribute help = plugin.GetType().GetCustomAttribute<HelpAttribute>();
+            HelpAttribute? help = plugin.GetType().GetCustomAttribute<HelpAttribute>();
             if (help == null)
             {
                 throw new ArgumentException("Das Plugin verfügt über keine Hilfe");

@@ -45,7 +45,7 @@ namespace FritzBot.Plugins
                 var UserImChannel = theMessage.Data.Irc.GetChannel(channel).Users.Values.Select(x =>
                 {
                     User u = context.GetUser(x.Nick);
-                    SeenEntry entry = context.SeenEntries.FirstOrDefault(s => s.User.Id == u.Id);
+                    SeenEntry entry = context.SeenEntries.FirstOrDefault(s => s.User!.Id == u.Id);
                     return new { Nickname = x.Nick, User = u, SeenEntry = entry };
                 }).ToList();
 

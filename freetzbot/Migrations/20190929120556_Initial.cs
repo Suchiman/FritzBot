@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace FritzBot.Migrations
@@ -14,8 +13,8 @@ namespace FritzBot.Migrations
                 {
                     Id = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    FullName = table.Column<string>(nullable: true),
-                    ShortName = table.Column<string>(nullable: true)
+                    ShortName = table.Column<string>(nullable: false),
+                    FullName = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -28,9 +27,9 @@ namespace FritzBot.Migrations
                 {
                     Id = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
+                    Plugin = table.Column<string>(nullable: false),
                     Created = table.Column<DateTime>(nullable: false),
-                    Notification = table.Column<string>(nullable: true),
-                    Plugin = table.Column<string>(nullable: true)
+                    Notification = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -43,10 +42,11 @@ namespace FritzBot.Migrations
                 {
                     Id = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Address = table.Column<string>(nullable: true),
-                    Nickname = table.Column<string>(nullable: true),
+                    Address = table.Column<string>(nullable: false),
                     Port = table.Column<int>(nullable: false),
-                    QuitMessage = table.Column<string>(nullable: true)
+                    Nickname = table.Column<string>(nullable: false),
+                    QuitMessage = table.Column<string>(nullable: true),
+                    NickServPassword = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -59,8 +59,8 @@ namespace FritzBot.Migrations
                 {
                     Id = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    BoxId = table.Column<long>(nullable: true),
-                    Pattern = table.Column<string>(nullable: true)
+                    Pattern = table.Column<string>(nullable: false),
+                    BoxId = table.Column<long>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -70,7 +70,7 @@ namespace FritzBot.Migrations
                         column: x => x.BoxId,
                         principalTable: "Boxes",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -79,8 +79,8 @@ namespace FritzBot.Migrations
                 {
                     Id = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(nullable: true),
-                    ServerId = table.Column<long>(nullable: true)
+                    Name = table.Column<string>(nullable: false),
+                    ServerId = table.Column<long>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -90,7 +90,7 @@ namespace FritzBot.Migrations
                         column: x => x.ServerId,
                         principalTable: "Servers",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -99,9 +99,9 @@ namespace FritzBot.Migrations
                 {
                     Id = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    BoxId = table.Column<long>(nullable: true),
                     Text = table.Column<string>(nullable: false),
-                    UserId = table.Column<long>(nullable: true)
+                    BoxId = table.Column<long>(nullable: true),
+                    UserId = table.Column<long>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -120,11 +120,11 @@ namespace FritzBot.Migrations
                 {
                     Id = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Admin = table.Column<bool>(nullable: false),
+                    LastUsedNameId = table.Column<long>(nullable: false),
+                    Password = table.Column<string>(nullable: true),
                     Authentication = table.Column<DateTime>(nullable: true),
                     Ignored = table.Column<bool>(nullable: false),
-                    LastUsedNameId = table.Column<long>(nullable: true),
-                    Password = table.Column<string>(nullable: true)
+                    Admin = table.Column<bool>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -137,12 +137,12 @@ namespace FritzBot.Migrations
                 {
                     Id = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Created = table.Column<DateTime>(nullable: true),
-                    CreatorId = table.Column<long>(nullable: true),
                     Key = table.Column<string>(nullable: false),
-                    Text = table.Column<string>(nullable: true),
-                    Updated = table.Column<DateTime>(nullable: true),
-                    UpdaterId = table.Column<long>(nullable: true)
+                    Text = table.Column<string>(nullable: false),
+                    CreatorId = table.Column<long>(nullable: false),
+                    Created = table.Column<DateTime>(nullable: true),
+                    UpdaterId = table.Column<long>(nullable: true),
+                    Updated = table.Column<DateTime>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -152,7 +152,7 @@ namespace FritzBot.Migrations
                         column: x => x.CreatorId,
                         principalTable: "Users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_AliasEntries_Users_UpdaterId",
                         column: x => x.UpdaterId,
@@ -167,7 +167,7 @@ namespace FritzBot.Migrations
                 {
                     Id = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(nullable: true),
+                    Name = table.Column<string>(nullable: false),
                     UserId = table.Column<long>(nullable: false)
                 },
                 constraints: table =>
@@ -187,10 +187,10 @@ namespace FritzBot.Migrations
                 {
                     Id = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
+                    CreatorId = table.Column<long>(nullable: false),
+                    Message = table.Column<string>(nullable: false),
                     Created = table.Column<DateTime>(nullable: false),
-                    CreatorId = table.Column<long>(nullable: true),
-                    Message = table.Column<string>(nullable: true),
-                    UserId = table.Column<long>(nullable: true)
+                    UserId = table.Column<long>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -200,13 +200,13 @@ namespace FritzBot.Migrations
                         column: x => x.CreatorId,
                         principalTable: "Users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_ReminderEntries_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -215,9 +215,9 @@ namespace FritzBot.Migrations
                 {
                     Id = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    LastMessage = table.Column<string>(nullable: true),
-                    LastMessaged = table.Column<DateTime>(nullable: true),
                     LastSeen = table.Column<DateTime>(nullable: true),
+                    LastMessaged = table.Column<DateTime>(nullable: true),
+                    LastMessage = table.Column<string>(nullable: true),
                     UserId = table.Column<long>(nullable: true)
                 },
                 constraints: table =>
@@ -237,9 +237,9 @@ namespace FritzBot.Migrations
                 {
                     Id = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Plugin = table.Column<string>(nullable: true),
-                    Provider = table.Column<string>(nullable: true),
-                    UserId = table.Column<long>(nullable: true)
+                    Provider = table.Column<string>(nullable: false),
+                    Plugin = table.Column<string>(nullable: false),
+                    UserId = table.Column<long>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -249,7 +249,7 @@ namespace FritzBot.Migrations
                         column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -258,9 +258,9 @@ namespace FritzBot.Migrations
                 {
                     Id = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Key = table.Column<string>(nullable: true),
-                    UserId = table.Column<long>(nullable: true),
-                    Value = table.Column<string>(nullable: true)
+                    UserId = table.Column<long>(nullable: false),
+                    Key = table.Column<string>(nullable: false),
+                    Value = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -270,7 +270,7 @@ namespace FritzBot.Migrations
                         column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -279,9 +279,9 @@ namespace FritzBot.Migrations
                 {
                     Id = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    CreatorId = table.Column<long>(nullable: true),
+                    Witz = table.Column<string>(nullable: false),
                     Frequency = table.Column<int>(nullable: false),
-                    Witz = table.Column<string>(nullable: true)
+                    CreatorId = table.Column<long>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -291,7 +291,7 @@ namespace FritzBot.Migrations
                         column: x => x.CreatorId,
                         principalTable: "Users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -300,7 +300,7 @@ namespace FritzBot.Migrations
                 {
                     Id = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Bedingung = table.Column<string>(nullable: true),
+                    Bedingung = table.Column<string>(nullable: false),
                     SubscriptionId = table.Column<long>(nullable: true)
                 },
                 constraints: table =>
@@ -377,24 +377,24 @@ namespace FritzBot.Migrations
                 column: "ServerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Subscriptions_UserId",
-                table: "Subscriptions",
-                column: "UserId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_SubscriptionBedingung_SubscriptionId",
                 table: "SubscriptionBedingung",
                 column: "SubscriptionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Users_LastUsedNameId",
-                table: "Users",
-                column: "LastUsedNameId");
+                name: "IX_Subscriptions_UserId",
+                table: "Subscriptions",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserKeyValueEntries_UserId",
                 table: "UserKeyValueEntries",
                 column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_LastUsedNameId",
+                table: "Users",
+                column: "LastUsedNameId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_WitzEntries_CreatorId",
@@ -407,7 +407,7 @@ namespace FritzBot.Migrations
                 column: "UserId",
                 principalTable: "Users",
                 principalColumn: "Id",
-                onDelete: ReferentialAction.Restrict);
+                onDelete: ReferentialAction.Cascade);
 
             migrationBuilder.AddForeignKey(
                 name: "FK_Users_Nicknames_LastUsedNameId",
@@ -415,7 +415,7 @@ namespace FritzBot.Migrations
                 column: "LastUsedNameId",
                 principalTable: "Nicknames",
                 principalColumn: "Id",
-                onDelete: ReferentialAction.Restrict);
+                onDelete: ReferentialAction.Cascade);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

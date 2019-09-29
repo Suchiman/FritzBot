@@ -14,7 +14,7 @@ namespace FritzBot.Plugins
     class Fw2Plugin : PluginBase, ICommand
     {
         private static readonly DataCache<Dictionary<string, FirmwareEntry>> Cache = new DataCache<Dictionary<string, FirmwareEntry>>(RefreshCache, TimeSpan.FromHours(1));
-        private static HttpClient Client = new HttpClient();
+        private static readonly HttpClient Client = new HttpClient();
 
         private static Dictionary<string, FirmwareEntry> RefreshCache(Dictionary<string, FirmwareEntry> old)
         {
@@ -108,16 +108,16 @@ namespace FritzBot.Plugins
                 return;
             }
 
-            string output = FormatResult(entry, firmware, recovery, downgrades, source);
+            string? output = FormatResult(entry, firmware, recovery, downgrades, source);
             if (!String.IsNullOrEmpty(output))
             {
                 theMessage.Answer(output);
             }
         }
 
-        private static string FormatResult(FirmwareEntry entry, bool firmware, bool recovery, bool downgrades, bool source)
+        private static string? FormatResult(FirmwareEntry entry, bool firmware, bool recovery, bool downgrades, bool source)
         {
-            string output = entry.Model;
+            string? output = entry.Model;
             if (firmware && !String.IsNullOrWhiteSpace(entry.Firmware))
             {
                 output += " - Firmwares: " + entry.Firmware;
@@ -141,11 +141,11 @@ namespace FritzBot.Plugins
 
     class FirmwareEntry
     {
-        public string Nick { get; set; }
-        public string Model { get; set; }
-        public string Firmware { get; set; }
-        public string Recovery { get; set; }
-        public string Downgrade { get; set; }
-        public string Source { get; set; }
+        public string? Nick { get; set; }
+        public string? Model { get; set; }
+        public string? Firmware { get; set; }
+        public string? Recovery { get; set; }
+        public string? Downgrade { get; set; }
+        public string? Source { get; set; }
     }
 }

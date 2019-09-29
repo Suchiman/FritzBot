@@ -21,8 +21,7 @@ namespace FritzBot.Plugins
                 {
                     using (var context = new BotContext())
                     {
-                        User u = context.GetUser(theMessage.CommandArgs[1]);
-                        if (u != null)
+                        if (context.TryGetUser(theMessage.CommandArgs[1]) is { } u)
                         {
                             BoxManager mgr = new BoxManager(u, context);
                             string boxtoadd = theMessage.CommandArgs.Skip(2).Join(" ");
@@ -42,8 +41,7 @@ namespace FritzBot.Plugins
                 {
                     using (var context = new BotContext())
                     {
-                        User u = context.GetUser(theMessage.CommandArgs[1]);
-                        if (u != null)
+                        if (context.TryGetUser(theMessage.CommandArgs[1]) is { } u)
                         {
                             BoxManager mgr = new BoxManager(u, context);
                             if (mgr.RemoveBox(theMessage.CommandArgs.Skip(2).Join(" ")))

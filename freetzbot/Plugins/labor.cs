@@ -9,7 +9,7 @@ using FritzBot.Functions;
 using Serilog;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -26,8 +26,8 @@ namespace FritzBot.Plugins
     class labor : PluginBase, ICommand//, IBackgroundTask
     {
         public const string BaseUrl = "http://avm.de/fritz-labor/";
-        private DataCache<List<Labordaten>> LaborDaten = null;
-        private CancellationTokenSource laborCancellation;
+        private readonly DataCache<List<Labordaten>> LaborDaten;
+        private CancellationTokenSource? laborCancellation;
 
         public labor()
         {
@@ -42,13 +42,13 @@ namespace FritzBot.Plugins
 
         public void Stop()
         {
-            laborCancellation.Cancel();
+            laborCancellation?.Cancel();
             laborCancellation = null;
         }
 
         protected override IQueryable<Subscription> GetSubscribers(BotContext context, string[] criteria)
         {
-            if (criteria != null && criteria.Length > 0)
+            if (criteria.Length > 0)
             {
                 return base.GetSubscribers(context, criteria).Where(x => criteria.Any(c => x.Bedingungen.Any(a => a.Bedingung.Contains(c))));
             }
@@ -66,7 +66,7 @@ namespace FritzBot.Plugins
             }
             if (!LaborDaten.IsUpToDate)
             {
-                theMessage.Answer("Es war mir nicht möglich den Labor Cache zu erneuern. Grund: " + LaborDaten.LastUpdateFail.Message + ". Verwende Cache vom " + LaborDaten.Renewed.ToString());
+                theMessage.Answer("Es war mir nicht möglich den Labor Cache zu erneuern. Grund: " + LaborDaten.LastUpdateFail?.Message + ". Verwende Cache vom " + LaborDaten.Renewed.ToString());
             }
 
             if (String.IsNullOrEmpty(theMessage.CommandLine))
@@ -76,8 +76,7 @@ namespace FritzBot.Plugins
             else
             {
                 string BoxName = BoxDatabase.GetShortName(theMessage.CommandLine);
-                Labordaten first = daten.FirstOrDefault(x => x.Typ == BoxName);
-                if (first != null)
+                if (daten.FirstOrDefault(x => x.Typ == BoxName) is { } first)
                 {
                     theMessage.Answer($"Die neueste {first.Typ} labor Version ist am {first.Datum} erschienen mit der Versionsnummer: {first.Version} - Laborseite: {first.Url}");
                 }
@@ -90,7 +89,7 @@ namespace FritzBot.Plugins
 
         private async Task LaborCheck(CancellationToken token)
         {
-            List<Labordaten> alte = null;
+            List<Labordaten>? alte;
             while (!TryGetNewestLabors(out alte))
             {
                 await Task.Delay(1000, token);
@@ -99,7 +98,7 @@ namespace FritzBot.Plugins
             {
                 if (ConfigHelper.GetBoolean("LaborCheckEnabled", true))
                 {
-                    List<Labordaten> neue = null;
+                    List<Labordaten>? neue;
                     while (!TryGetNewestLabors(out neue))
                     {
                         await Task.Delay(1000, token);
@@ -123,9 +122,9 @@ namespace FritzBot.Plugins
 
         private List<Labordaten> GetFTPBetas()
         {
-            List<Tuple<Labordaten, string>> ftpBetas = new List<Tuple<Labordaten, string>>();
+            var ftpBetas = new List<(Labordaten daten, string target)>();
 
-            var betaCache = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location), "betaCache");
+            var betaCache = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location)!, "betaCache");
             if (!Directory.Exists(betaCache))
                 Directory.CreateDirectory(betaCache);
 
@@ -145,70 +144,70 @@ namespace FritzBot.Plugins
                     string target = Path.Combine(betaCache, file.Name);
                     if (!File.Exists(target))
                     {
-                        using (Stream f = ftp.OpenRead(file.Name))
-                        using (FileStream fi = File.Create(target))
-                            f.CopyTo(fi);
+                        using Stream f = ftp.OpenRead(file.Name);
+                        using FileStream fi = File.Create(target);
+                        f.CopyTo(fi);
                     }
 
-                    ftpBetas.Add(new Tuple<Labordaten, string>(daten, target));
+                    ftpBetas.Add((daten, target));
                 }
             }
 
-            foreach (Tuple<Labordaten, string> fw in ftpBetas)
+            foreach ((Labordaten daten, string target) in ftpBetas)
             {
                 try
                 {
-                    using (Stream file = File.OpenRead(fw.Item2))
+                    using (Stream file = File.OpenRead(target))
                     using (ZipArchive archive = new ZipArchive(file, ZipArchiveMode.Read))
                     {
                         ZipArchiveEntry firmware = archive.Entries.FirstOrDefault(x => x.Name.Contains("_Labor.") || x.Name.Contains(".Labor.") || x.Name.Contains("_LabBETA.") || x.Name.Contains(".LabBETA."));
                         if (firmware == null)
                         {
-                            Log.Error("Firmware {Firmware} hat keine erkannte Labor Firmware", fw.Item2);
+                            Log.Error("Firmware {Firmware} hat keine erkannte Labor Firmware", target);
                             continue;
                         }
 
                         string RawName = firmware.Name;
 
-                        fw.Item1.Version = Regex.Match(RawName, @"((\d{2,3}\.)?\d\d\.\d\d(-\d{1,6})?).image$").Groups[1].Value;
-                        if (!BoxDatabase.TryGetShortName(RawName, out string tmp))
+                        daten.Version = Regex.Match(RawName, @"((\d{2,3}\.)?\d\d\.\d\d(-\d{1,6})?).image$").Groups[1].Value;
+                        if (!BoxDatabase.TryGetShortName(RawName, out string? tmp))
                         {
                             if (RawName.LastIndexOf(' ') != -1)
                             {
-                                fw.Item1.Typ = RawName.AsSpan(RawName.LastIndexOf(' ')).Trim().ToString();
+                                daten.Typ = RawName.AsSpan(RawName.LastIndexOf(' ')).Trim().ToString();
                             }
                             else
                             {
-                                fw.Item1.Typ = RawName.Trim();
+                                daten.Typ = RawName.Trim();
                             }
                         }
                         else
                         {
-                            fw.Item1.Typ = tmp;
+                            daten.Typ = tmp;
                         }
                     }
                 }
                 catch (InvalidDataException ex) //'System.IO.InvalidDataException' in System.IO.Compression.dll("Das Ende des Datensatzes im zentralen Verzeichnis wurde nicht gefunden.")
                 {
-                    var betaCachePath = Path.GetDirectoryName(fw.Item2);
-                    var name = Path.GetFileNameWithoutExtension(fw.Item2);
-                    var extension = Path.GetExtension(fw.Item2);
+                    var betaCachePath = Path.GetDirectoryName(target)!;
+                    var name = Path.GetFileNameWithoutExtension(target);
+                    var extension = Path.GetExtension(target);
                     string corruptedFilePath = Path.Combine(betaCachePath, $"{name}_corrupted_{DateTime.Now:dd_MM_yyyy_hh_mm_ss}{extension}");
-                    File.Move(fw.Item2, corruptedFilePath);
-                    Log.Error(ex, "Korruptes Zip {Filename} gefunden. Zip umbenannt zu {NewFilename}", fw.Item2, corruptedFilePath);
+                    File.Move(target, corruptedFilePath);
+                    Log.Error(ex, "Korruptes Zip {Filename} gefunden. Zip umbenannt zu {NewFilename}", target, corruptedFilePath);
                 }
             }
 
             return ftpBetas.Select(x => x.Item1).ToList();
         }
 
-        private bool TryGetNewestLabors(out List<Labordaten> Daten)
+        private bool TryGetNewestLabors([MaybeNullWhen(false)]out List<Labordaten> daten)
         {
-            Daten = null;
+            daten = null!;
             try
             {
                 LaborDaten.ForceRefresh(false);
-                Daten = LaborDaten.GetItem(false);
+                daten = LaborDaten.GetItem(false);
                 return true;
             }
             catch
@@ -219,9 +218,6 @@ namespace FritzBot.Plugins
 
         private List<Labordaten> GetDifferentLabors(List<Labordaten> alte, List<Labordaten> neue)
         {
-            Contract.Requires(alte != null && neue != null);
-            Contract.Ensures(Contract.Result<List<Labordaten>>() != null);
-
             return neue.Where(neu => !alte.Any(alt => alt == neu)).ToList();
         }
 
@@ -236,7 +232,7 @@ namespace FritzBot.Plugins
             IDocument LaborStartSeite = context.OpenAsync(BaseUrl).Result;
             List<Labordaten> NeueLaborDaten = LaborStartSeite.QuerySelectorAll<IHtmlAnchorElement>("#content-section div.csc-space-after-1 div.csc-default a.button-link").Where(x => x.Href.Contains("/fritz-labor/")).Select(link =>
             {
-                string fallbackDate = null;
+                string? fallbackDate = null;
                 var lastUpdate = link.ParentElement.PreviousElementSibling;
                 if (lastUpdate.TextContent.StartsWith(KeywordLetztesUpdate))
                 {
@@ -246,7 +242,7 @@ namespace FritzBot.Plugins
                 IHtmlParagraphElement downloadInformations = detailPage.QuerySelector<IHtmlParagraphElement>("p:contains('Downloadinformationen:')") ?? detailPage.QuerySelector<IHtmlParagraphElement>("p:contains('Informationen zum Download:')");
 
                 if (downloadInformations == null)
-                    return null;
+                    return null!;
 
                 Labordaten daten = new Labordaten();
                 daten.Typ = detailPage.Title.EndsWith(TitleAVM) ? detailPage.Title.Remove(detailPage.Title.Length - TitleAVM.Length) : detailPage.Title;
@@ -254,7 +250,7 @@ namespace FritzBot.Plugins
                 daten.Datum = downloadInformations.ChildNodes.Where(x => x.TextContent.StartsWith(KeywordDatum)).Select(x => x.TextContent.Substring(KeywordDatum.Length)).FirstOrDefault() ?? fallbackDate;
                 daten.Url = link.Href;
                 return daten;
-            }).ToList();
+            }).Where(x => x != null!).ToList();
 
             try
             {
@@ -282,50 +278,46 @@ namespace FritzBot.Plugins
 
     class Labordaten : IEquatable<Labordaten>
     {
-        public string Typ { get; set; }
-        public string Datum { get; set; }
-        public string Version { get; set; }
-        public string Url { get; set; }
+        public string? Typ { get; set; }
+        public string? Datum { get; set; }
+        public string? Version { get; set; }
+        public string? Url { get; set; }
 
         public override int GetHashCode()
         {
-            return Datum.GetHashCode() ^ Version.GetHashCode();
+            return Datum?.GetHashCode() ?? 0 ^ Version?.GetHashCode() ?? 0;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
-            var labordaten = obj as Labordaten;
-            if (labordaten == null)
-                return false;
-
-            return Equals(labordaten);
+            return Equals(obj as Labordaten);
         }
 
-        public bool Equals(Labordaten other)
+        public bool Equals(Labordaten? other)
         {
-            return (object)other != null && Version == other.Version && Datum == other.Datum && Url == other.Url && Typ == other.Typ;
+            return other is object && Version == other.Version && Datum == other.Datum && Url == other.Url && Typ == other.Typ;
         }
 
-        public static bool operator ==(Labordaten labordaten1, Labordaten labordaten2)
+        public static bool operator ==(Labordaten left, Labordaten right)
         {
-            if ((object)labordaten1 != null)
+            if ((object)left != null)
             {
-                return labordaten1.Equals(labordaten2);
+                return left.Equals(right);
             }
-            if ((object)labordaten2 != null)
+            if ((object)right != null)
             {
                 return false;
             }
             return true;
         }
 
-        public static bool operator !=(Labordaten labordaten1, Labordaten labordaten2)
+        public static bool operator !=(Labordaten left, Labordaten right)
         {
-            if ((object)labordaten1 != null)
+            if ((object)left != null)
             {
-                return !labordaten1.Equals(labordaten2);
+                return !left.Equals(right);
             }
-            if ((object)labordaten2 != null)
+            if ((object)right != null)
             {
                 return true;
             }

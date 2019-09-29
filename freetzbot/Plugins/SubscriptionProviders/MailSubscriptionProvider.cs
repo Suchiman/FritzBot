@@ -13,14 +13,10 @@ namespace FritzBot.Plugins.SubscriptionProviders
     {
         public override void SendNotification(User user, string message)
         {
-            string receiver = null;
+            string? receiver;
             using (var context = new BotContext())
             {
-                UserKeyValueEntry entry = context.GetStorage(user, PluginID);
-                if (entry != null)
-                {
-                    receiver = entry.Value;
-                }
+                receiver = context.GetStorage(user, PluginId)?.Value;
             }
             if (receiver == null)
             {
@@ -43,7 +39,7 @@ namespace FritzBot.Plugins.SubscriptionProviders
             UserKeyValueEntry entry;
             using (var context = new BotContext())
             {
-                entry = context.GetStorage(theMessage.Nickname, PluginID);
+                entry = context.GetStorage(theMessage.Nickname, PluginId);
             }
             if (entry == null || String.IsNullOrWhiteSpace(entry.Value))
             {

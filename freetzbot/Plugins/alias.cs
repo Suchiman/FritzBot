@@ -104,7 +104,7 @@ namespace FritzBot.Plugins
             if (thealias[0] == '!')
             {
                 StackTrace trace = new StackTrace();
-                StackFrame[] frames = trace.GetFrames();
+                StackFrame[] frames = trace.GetFrames()!;
                 int recursion = frames.Count(x => x.GetMethod() == frames[0].GetMethod());
                 if (recursion > 4)
                 {
@@ -129,7 +129,7 @@ namespace FritzBot.Plugins
         {
             using (var context = new BotContext())
             {
-                string key = null;
+                string? key = null;
                 if (theMessage.CommandArgs.Count > 1)
                 {
                     key = theMessage.CommandArgs[1];
@@ -197,7 +197,7 @@ namespace FritzBot.Plugins
                             theMessage.Answer("Unzureichend viele Argumente: info <key>");
                             return;
                         }
-                        AliasEntry info = context.AliasEntries.Include(x => x.Creator.LastUsedName).Include(x => x.Updater.LastUsedName).FirstOrDefault(x => x.Key == key);
+                        AliasEntry info = context.AliasEntries.Include(x => x.Creator.LastUsedName).Include(x => x.Updater!.LastUsedName).FirstOrDefault(x => x.Key == key);
                         if (info != null)
                         {
                             StringBuilder sb = new StringBuilder();
@@ -239,7 +239,7 @@ namespace FritzBot.Plugins
                                 theMessage.Answer("Wonach soll ich denn Suchen wenn du nichts angibst ?: search <key>");
                                 return;
                             }
-                            key = key.ToLower();
+                            key = key!.ToLower();
                             List<AliasEntry> search = context.AliasEntries.Where(x => x.Key.ToLower().Contains(key) || x.Text.ToLower().Contains(key)).ToList();
                             if (search.Count == 0)
                             {

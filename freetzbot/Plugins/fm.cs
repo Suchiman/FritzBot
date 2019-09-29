@@ -6,7 +6,7 @@ using FritzBot.DataModel;
 using FritzBot.Functions;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 
@@ -18,7 +18,7 @@ namespace FritzBot.Plugins
     {
         private const string ModelPage = "http://freetz.org/wiki/models";
 
-        private DataCache<Dictionary<string, TableBox>> PackagesCache = new DataCache<Dictionary<string, TableBox>>(GetPackages, TimeSpan.FromMinutes(30));
+        private readonly DataCache<Dictionary<string, TableBox>> PackagesCache = new DataCache<Dictionary<string, TableBox>>(GetPackages, TimeSpan.FromMinutes(30));
 
         public void Run(IrcMessage theMessage)
         {
@@ -47,13 +47,12 @@ namespace FritzBot.Plugins
             if (input.Contains('#'))
             {
                 string[] split = input.Split(new[] { '#' }, 2);
-                Contract.Assume(split.Length == 2);
                 sharpSplit = "#" + split[1];
                 input = split[0];
             }
             int inputLength = input.Length;
 
-            TableBox Box = null;
+            TableBox? Box = null;
             List<TableBox> Boxen = new List<TableBox>();
 
             Dictionary<string, TableBox> packages = PackagesCache.GetItem(true);
@@ -81,7 +80,7 @@ namespace FritzBot.Plugins
                         }
                     }
                 }
-                if (!Boxen.Contains(Box))
+                if (Box != null && !Boxen.Contains(Box))
                 {
                     Boxen.Add(Box);
                 }
@@ -180,7 +179,7 @@ namespace FritzBot.Plugins
             {
                 IDocument document = BrowsingContext.New(Configuration.Default.WithDefaultLoader()).OpenAsync(ModelPage).Result;
 
-                string PreviousName = null;
+                string? PreviousName = null;
                 return document.QuerySelector<IHtmlTableElement>("table.wiki").Rows.Where(x => x.Cells.Length == 10 && !x.Cells[0].TextContent.Contains("Modell")).Select(row =>
                 {
                     var cells = row.Cells;
@@ -221,7 +220,7 @@ namespace FritzBot.Plugins
             }
         }
 
-        private static bool NotEmpty(string s)
+        private static bool NotEmpty([NotNullWhen(true)]string? s)
         {
             return !String.IsNullOrEmpty(s) && s != "-";
         }
@@ -229,26 +228,26 @@ namespace FritzBot.Plugins
 
     class TableBox
     {
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
-        public string Url { get; set; }
+        public string? Url { get; set; }
 
-        public string FreetzType { get; set; }
+        public string FreetzType { get; set; } = null!;
 
-        public string AngepassteFirmware { get; set; }
+        public string? AngepassteFirmware { get; set; }
 
-        public string FreetzVersion { get; set; }
+        public string? FreetzVersion { get; set; }
 
-        public string Annex { get; set; }
+        public string? Annex { get; set; }
 
-        public string Sprache { get; set; }
+        public string? Sprache { get; set; }
 
-        public string CPU { get; set; }
+        public string? CPU { get; set; }
 
-        public string Flash { get; set; }
+        public string? Flash { get; set; }
 
-        public string RAM { get; set; }
+        public string? RAM { get; set; }
 
-        public string USBHost { get; set; }
+        public string? USBHost { get; set; }
     }
 }

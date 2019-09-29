@@ -16,8 +16,13 @@ namespace FritzBot.Plugins
             Names = names;
         }
 
-        public override bool Match(object obj)
+        public override bool Match(object? obj)
         {
+            if (obj == null)
+            {
+                return false;
+            }
+
             NameAttribute obj1 = (NameAttribute)obj;
             if (obj1.Names.Length != Names.Length)
             {

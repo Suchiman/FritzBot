@@ -1,8 +1,9 @@
 using AngleSharp.Html.Dom;
+using FritzBot.DataModel;
 using Serilog;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -30,8 +31,6 @@ namespace FritzBot.Core
 
         public static IEnumerable<T> ForEach<T>(this IEnumerable<T> list, Action<T> action)
         {
-            Contract.Requires(list != null);
-
             foreach (T item in list)
             {
                 action(item);
@@ -46,8 +45,6 @@ namespace FritzBot.Core
 
         public static IEnumerable<T> Distinct<T>(this IEnumerable<T> source, Func<T, object> selector)
         {
-            Contract.Requires(source != null);
-
             return source.Distinct(new KeyEqualityComparer<T>(selector));
         }
 
@@ -116,7 +113,7 @@ namespace FritzBot.Core
             Func<TA, TK> selectKeyA,
             Func<TB, TK> selectKeyB,
             Func<IEnumerable<TA>, IEnumerable<TB>, TK, TR> projection,
-            IEqualityComparer<TK> cmp = null)
+            IEqualityComparer<TK>? cmp = null)
         {
             cmp = cmp ?? EqualityComparer<TK>.Default;
             ILookup<TK, TA> alookup = a.ToLookup(selectKeyA, cmp);
@@ -139,7 +136,7 @@ namespace FritzBot.Core
             Func<TA, TB, TK, TR> projection,
             TA defaultA = default(TA),
             TB defaultB = default(TB),
-            IEqualityComparer<TK> cmp = null)
+            IEqualityComparer<TK>? cmp = null)
         {
             cmp = cmp ?? EqualityComparer<TK>.Default;
             ILookup<TK, TA> alookup = a.ToLookup(selectKeyA, cmp);
@@ -195,7 +192,6 @@ namespace FritzBot.Core
 
         public static string ToStringWithDeclaration(this XDocument doc)
         {
-            Contract.Requires(doc != null);
             if (doc == null)
             {
                 throw new ArgumentNullException(nameof(doc));
@@ -217,7 +213,7 @@ namespace FritzBot.Core
 
     public static class HtmlExtensions
     {
-        public static string HrefOrNull(this IHtmlAnchorElement a)
+        public static string? HrefOrNull(this IHtmlAnchorElement a)
         {
             return a.HasAttribute("href") ? a.Href : null;
         }
@@ -225,13 +221,10 @@ namespace FritzBot.Core
 
     public static class PluginExtensions
     {
-        public static T As<T>(this PluginInfo info) where T : class
+        [return: MaybeNull, NotNullIfNotNull("info")]
+        public static T As<T>(this PluginInfo? info) where T : PluginBase
         {
-            if (info == null)
-            {
-                return null;
-            }
-            return info.Plugin as T;
+            return (T)info?.Plugin!;
         }
     }
 
@@ -258,13 +251,10 @@ namespace FritzBot.Core
     {
         public static bool In<T>(this T source, params T[] values)
         {
-            Contract.Requires(values != null);
-            Contract.Requires(values.Length > 0);
-
             return values.Contains(source);
         }
 
-        public static string SanitizeString(this string source)
+        public static string? SanitizeString(this string source)
         {
             return String.IsNullOrWhiteSpace(source) ? null : source.Trim();
         }
@@ -272,35 +262,38 @@ namespace FritzBot.Core
 
     public class KeyEqualityComparer<T> : IEqualityComparer<T>
     {
-        private readonly Func<T, T, bool> comparer;
-        private readonly Func<T, object> keyExtractor;
+        private readonly Func<T, T, bool>? comparer;
+        private readonly Func<T, object>? keyExtractor;
 
         // Allows us to simply specify the key to compare with: y => y.CustomerID
         public KeyEqualityComparer(Func<T, object> keyExtractor) : this(keyExtractor, null) { }
         // Allows us to tell if two objects are equal: (x, y) => y.CustomerID == x.CustomerID
         public KeyEqualityComparer(Func<T, T, bool> comparer) : this(null, comparer) { }
 
-        public KeyEqualityComparer(Func<T, object> keyExtractor, Func<T, T, bool> comparer)
+        public KeyEqualityComparer(Func<T, object>? keyExtractor, Func<T, T, bool>? comparer)
         {
             this.keyExtractor = keyExtractor;
             this.comparer = comparer;
         }
 
-        public bool Equals(T x, T y)
+        public bool Equals([AllowNull]T x, [AllowNull]T y)
         {
             if (comparer != null)
                 return comparer(x, y);
-            object valX = keyExtractor(x);
-            if (valX is IEnumerable<object>) // The special case where we pass a list of keys
-                return ((IEnumerable<object>)valX).SequenceEqual((IEnumerable<object>)keyExtractor(y));
 
-            return valX.Equals(keyExtractor(y));
+            object valX = keyExtractor!(x);
+            object valY = keyExtractor!(y);
+            if (valX is IEnumerable<object>) // The special case where we pass a list of keys
+                return ((IEnumerable<object>)valX).SequenceEqual((IEnumerable<object>)valY);
+
+            return valX.Equals(valY);
         }
 
-        public int GetHashCode(T obj)
+        public int GetHashCode([DisallowNull]T obj)
         {
             if (keyExtractor == null)
-                return obj.ToString().ToLower().GetHashCode();
+                return obj!.ToString()!.ToLower().GetHashCode();
+
             object val = keyExtractor(obj);
             if (val is IEnumerable<object>) // The special case where we pass a list of keys
                 return (int)((IEnumerable<object>)val).Aggregate((x, y) => x.GetHashCode() ^ y.GetHashCode());

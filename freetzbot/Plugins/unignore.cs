@@ -15,8 +15,7 @@ namespace FritzBot.Plugins
             using (var context = new BotContext())
             {
                 string nickname = theMessage.CommandArgs.FirstOrDefault();
-                User u = context.GetUser(nickname);
-                if (u != null)
+                if (context.TryGetUser(nickname) is { } u)
                 {
                     u.Ignored = false;
                     context.SaveChanges();

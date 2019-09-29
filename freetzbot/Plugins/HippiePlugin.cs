@@ -10,7 +10,7 @@ namespace FritzBot.Plugins
     [Name("Hippie")]
     class HippiePlugin : PluginBase, IBackgroundTask
     {
-        private static HttpClient Client = new HttpClient();
+        private static readonly HttpClient Client = new HttpClient();
 
         public void Start()
         {

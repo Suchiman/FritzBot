@@ -7,9 +7,9 @@ namespace FritzBot.Database
     public class User
     {
         public virtual Int64 Id { get; set; }
-        public virtual List<Nickname> Names { get; set; }
-        public virtual Nickname LastUsedName { get; set; }
-        public virtual string Password { get; set; }
+        public virtual ICollection<Nickname> Names { get; set; } = null!;
+        public virtual Nickname LastUsedName { get; set; } = null!;
+        public virtual string? Password { get; set; }
         public virtual DateTime? Authentication { get; set; }
         [NotMapped]
         public bool Authenticated
@@ -21,7 +21,7 @@ namespace FritzBot.Database
         }
         public virtual bool Ignored { get; set; }
         public virtual bool Admin { get; set; }
-        public virtual ICollection<UserKeyValueEntry> UserStorage { get; set; }
+        public virtual ICollection<UserKeyValueEntry> UserStorage { get; set; } = null!;
 
         public void SetPassword(string pw)
         {

@@ -66,7 +66,7 @@ namespace FritzBot.Plugins
         private SeenEntry GetSeenEntry(BotContext context, string nick)
         {
             User u = context.GetUser(nick);
-            SeenEntry entry = context.SeenEntries.FirstOrDefault(x => x.User.Id == u.Id);
+            SeenEntry entry = context.SeenEntries.FirstOrDefault(x => x.User!.Id == u.Id);
             if (entry == null)
             {
                 entry = new SeenEntry { User = u };

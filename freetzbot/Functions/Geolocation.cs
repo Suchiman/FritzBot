@@ -11,7 +11,7 @@ namespace FritzBot.Functions
         private const string APIUrl = "http://api.ipinfodb.com/v3/ip-{0}/?format=json&key=a97de1a8f890097cc2e32558555d836957229706b9b3ac264ef3cfe10e54ea69&ip={1}";
         private const string NokResponse = "{\"statusCode\":\"NOK\"}";
 
-        public static string GetCountryCode(string ip)
+        public static string? GetCountryCode(string ip)
         {
             LocationInfo info = GetLocationInfoSimple(ip);
             if (info.Success)
@@ -74,21 +74,21 @@ namespace FritzBot.Functions
     public class LocationInfo
     {
         public bool Success => statusCode == "OK" && !String.IsNullOrEmpty(countryCode) && countryCode != "-";
-        public string statusCode { get; set; }
-        public string statusMessage { get; set; }
-        public string ipAddress { get; set; }
-        public string countryCode { get; set; }
-        public string countryName { get; set; }
+        public string? statusCode { get; set; }
+        public string? statusMessage { get; set; }
+        public string? ipAddress { get; set; }
+        public string? countryCode { get; set; }
+        public string? countryName { get; set; }
     }
 
     public class LocationInfoDetailed : LocationInfo
     {
-        public string regionName { get; set; }
-        public string cityName { get; set; }
-        public string zipCode { get; set; }
-        public string latitude { get; set; }
-        public string longitude { get; set; }
-        public string timeZone { get; set; }
+        public string? regionName { get; set; }
+        public string? cityName { get; set; }
+        public string? zipCode { get; set; }
+        public string? latitude { get; set; }
+        public string? longitude { get; set; }
+        public string? timeZone { get; set; }
         public DateTime LocalTime
         {
             get

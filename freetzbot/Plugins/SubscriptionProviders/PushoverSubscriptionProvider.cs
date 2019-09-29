@@ -12,7 +12,7 @@ namespace FritzBot.Plugins.SubscriptionProviders
     {
         public override void SendNotification(User user, string message)
         {
-            string userToken = null;
+            string? userToken = null;
             using (var context = new BotContext())
             {
                 userToken = context.GetStorage(user, "pushover_token")?.Value;

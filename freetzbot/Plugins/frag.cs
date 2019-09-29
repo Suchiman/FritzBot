@@ -27,7 +27,7 @@ namespace FritzBot.Plugins
         {
             using (var context = new BotContext())
             {
-                User u = context.GetUser(e.Who);
+                User? u = context.TryGetUser(e.Who);
                 if (u == null || u.Ignored) return;
             }
             Boxfrage(e.Data.Irc, e.Who, true);

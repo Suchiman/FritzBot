@@ -11,7 +11,7 @@ namespace FritzBot.Plugins
     [ParameterRequired(false)]
     class passwd : PluginBase, ICommand
     {
-        private string Requested;
+        private string? Requested;
 
         public void Run(IrcMessage theMessage)
         {

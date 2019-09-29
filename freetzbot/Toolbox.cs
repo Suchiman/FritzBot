@@ -3,7 +3,6 @@ using FritzBot.Database;
 using Serilog;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.IO;
 using System.Net;
 using System.Security.Cryptography;
@@ -22,13 +21,8 @@ namespace FritzBot
         /// <returns>Den Hashwert des Strings</returns>
         public static string Crypt(string toCrypt)
         {
-            byte[] hash = null;
-            byte[] tocode = Encoding.UTF8.GetBytes(toCrypt.ToCharArray());
-            using (SHA512 theCrypter = new SHA512Managed())
-            {
-                hash = theCrypter.ComputeHash(tocode);
-                theCrypter.Clear();
-            }
+            using SHA512 theCrypter = new SHA512Managed();
+            byte[] hash = theCrypter.ComputeHash(Encoding.UTF8.GetBytes(toCrypt));
             return BitConverter.ToString(hash).Replace("-", "");
         }
 
@@ -52,7 +46,7 @@ namespace FritzBot
         /// <param name="Url">Die http WebAdresse</param>
         /// <param name="POSTParams">Optionale POST Parameter</param>
         /// <returns>Die Webseite als String</returns>
-        public static string GetWeb(string Url, Dictionary<string, string> POSTParams = null)
+        public static string GetWeb(string Url, Dictionary<string, string>? POSTParams = null)
         {
             string POSTData = "";
             if (POSTParams != null)
@@ -62,8 +56,8 @@ namespace FritzBot
                     POSTData += HttpUtility.UrlEncode(key) + "=" + HttpUtility.UrlEncode(POSTParams[key]) + "&";
                 }
             }
-            HttpWebResponse response = null;
-            HttpWebRequest request = null;
+            HttpWebResponse response;
+            HttpWebRequest request;
             try
             {
                 request = (HttpWebRequest)WebRequest.Create(Url);
@@ -123,15 +117,11 @@ namespace FritzBot
         /// <returns>Einen URL Encodierten String</returns>
         public static string UrlEncode(string url)
         {
-            Contract.Requires(url != null);
-
             return HttpUtility.UrlEncode(url, Encoding.UTF8);
         }
 
         public static bool IsOp(User user)
         {
-            Contract.Requires(user != null);
-
             if (user.Admin && (user.Authenticated || String.IsNullOrEmpty(user.Password)))
             {
                 return true;
@@ -141,9 +131,6 @@ namespace FritzBot
 
         public static Thread SafeThreadStart(string name, bool restartOnException, Action method)
         {
-            Contract.Requires(method != null);
-            Contract.Ensures(Contract.Result<Thread>() != null);
-
             Thread t = new Thread(() =>
             {
                 do

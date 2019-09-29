@@ -23,8 +23,8 @@ namespace FritzBot.Plugins
                         throw new NotImplementedException();
                         //db.Query<BoxEntry>().ForEach(x => { x.ReAssociateBoxes(); db.SaveOrUpdate(x); });
                     }
-                    theMessage.Answer("Done");
-                    return;
+                    //theMessage.Answer("Done");
+                    //return;
                 case "boxdb":
                     BoxDB(theMessage);
                     return;

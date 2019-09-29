@@ -3,29 +3,28 @@ using Microsoft.EntityFrameworkCore;
 using Serilog;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace FritzBot.DataModel
 {
     public static class BoxDatabase
     {
-        private static List<Box> _boxen;
+        private static readonly List<Box> _boxen;
 
-        public static IEnumerable<Box> Boxen { get { return _boxen; } }
+        public static IEnumerable<Box> Boxen => _boxen;
 
         static BoxDatabase()
         {
             try
             {
-                using (var context = new BotContext())
-                {
-                    _boxen = context.Boxes.Include(x => x.RegexPattern).ToList();
-                }
+                using var context = new BotContext();
+                _boxen = context.Boxes.Include(x => x.RegexPattern).ToList();
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "Fehler beim Laden der BoxDatabase");
+                throw;
             }
         }
 
@@ -37,8 +36,6 @@ namespace FritzBot.DataModel
         /// <param name="RegexPattern">Ein oder mehrere Reguläre Ausdrücke um die Box zu erkennen</param>
         public static Box AddBox(string ShortName, string FullName, params string[] RegexPattern)
         {
-            Contract.Ensures(Contract.Result<Box>() != null);
-
             if (GetBoxByShortName(ShortName) != null)
             {
                 throw new Exception("Es gibt bereits eine Box mit gleichem ShortName");
@@ -72,7 +69,7 @@ namespace FritzBot.DataModel
         /// <param name="input">Ein string anhand dessen versucht werden soll die passende Box zu finden</param>
         public static string GetShortName(string input)
         {
-            if (TryFindExactBox(input, out Box ToFind))
+            if (TryFindExactBox(input, out Box? ToFind))
             {
                 return ToFind.ShortName;
             }
@@ -83,7 +80,7 @@ namespace FritzBot.DataModel
         /// Versucht die zum input passende Box zu finden und den ShortName zurückzugeben.
         /// </summary>
         /// <param name="input">Ein string anhand dessen versucht werden soll die passende Box zu finden</param>
-        public static bool TryGetShortName(string input, out string ShortName)
+        public static bool TryGetShortName(string input, [NotNullWhen(true)]out string? ShortName)
         {
             ShortName = null;
             string result = GetShortName(input);
@@ -106,7 +103,7 @@ namespace FritzBot.DataModel
         /// <summary>
         /// Versucht anhand des Inputs mit den gegebenen Daten die einzig passende Box zu ermitteln
         /// </summary>
-        public static bool TryFindExactBox(string input, out Box box)
+        public static bool TryFindExactBox(string input, [NotNullWhen(true)]out Box? box)
         {
             box = null;
             var boxes = FindBoxes(input).Take(2).ToArray();

@@ -7,7 +7,6 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
@@ -20,7 +19,7 @@ namespace FritzBot.Plugins
     [Subscribeable]
     class news : PluginBase, IBackgroundTask
     {
-        private CancellationTokenSource newsthread;
+        private CancellationTokenSource? newsthread;
 
         public void Start()
         {
@@ -30,7 +29,7 @@ namespace FritzBot.Plugins
 
         public void Stop()
         {
-            newsthread.Cancel();
+            newsthread?.Cancel();
             newsthread = null;
         }
 
@@ -78,10 +77,7 @@ namespace FritzBot.Plugins
 
         private static async Task<List<NewsEntry>> GetNews(string Url, CancellationToken token)
         {
-            Contract.Requires(Url != null);
-            Contract.Ensures(Contract.Result<List<NewsEntry>>() != null);
-
-            IDocument document = null;
+            IDocument? document = null;
             for (int i = 1; ; i++)
             {
                 try
@@ -113,7 +109,7 @@ namespace FritzBot.Plugins
                 }
 
                 entry.Version = metaInfos.SkipWhile(m => m.TextContent != "Version:").ElementAtOrDefault(1)?.TextContent.Trim();
-                string rawDateString = metaInfos.SkipWhile(m => m.TextContent != "Datum:").ElementAtOrDefault(1)?.TextContent.Trim();
+                string? rawDateString = metaInfos.SkipWhile(m => m.TextContent != "Datum:").ElementAtOrDefault(1)?.TextContent.Trim();
                 if (!DateTime.TryParseExact(rawDateString, "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsed))
                 {
                     parsed = DateTime.MinValue;
@@ -128,18 +124,18 @@ namespace FritzBot.Plugins
 
     class NewsEntry : IEquatable<NewsEntry>
     {
-        public string Titel { get; set; }
-        public string Version { get; set; }
+        public string? Titel { get; set; }
+        public string? Version { get; set; }
         public DateTime Datum { get; set; }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return Equals(obj as NewsEntry);
         }
 
-        public bool Equals(NewsEntry other)
+        public bool Equals(NewsEntry? other)
         {
-            return other != null && Titel == other.Titel && Datum == other.Datum && Version == other.Version;
+            return other is object && Titel == other.Titel && Datum == other.Datum && Version == other.Version;
         }
 
         public override int GetHashCode()
@@ -147,7 +143,7 @@ namespace FritzBot.Plugins
             return HashCode.Combine(Titel, Version, Datum);
         }
 
-        public override string ToString()
+        public override string? ToString()
         {
             return Titel;
         }

@@ -1,9 +1,5 @@
-﻿using System;
-using System.Diagnostics.Contracts;
-
-namespace FritzBot
+﻿namespace FritzBot
 {
-    [ContractClass(typeof(CommandContract))]
     public interface ICommand
     {
         /// <summary>
@@ -13,7 +9,6 @@ namespace FritzBot
         void Run(IrcMessage theMessage);
     }
 
-    [ContractClass(typeof(BackgroundTaskContract))]
     public interface IBackgroundTask
     {
         /// <summary>
@@ -24,28 +19,5 @@ namespace FritzBot
         /// Wird beim Anhalten oder Beenden aufgerufen. Eventuelle Daten sollten spätestens hier gesichert werden.
         /// </summary>
         void Stop();
-    }
-
-    [ContractClassFor(typeof(ICommand))]
-    public abstract class CommandContract : ICommand
-    {
-        public void Run(IrcMessage theMessage)
-        {
-            Contract.Requires<ArgumentNullException>(theMessage != null, "theMessage darf nicht null sein");
-        }
-    }
-
-    [ContractClassFor(typeof(IBackgroundTask))]
-    public abstract class BackgroundTaskContract : IBackgroundTask
-    {
-        public void Start()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Stop()
-        {
-            throw new NotImplementedException();
-        }
     }
 }

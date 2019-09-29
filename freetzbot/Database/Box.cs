@@ -9,9 +9,9 @@ namespace FritzBot.Database
     public class Box
     {
         public virtual Int64 Id { get; set; }
-        public virtual string ShortName { get; set; }
-        public virtual string FullName { get; set; }
-        public virtual ICollection<BoxRegexPattern> RegexPattern { get; set; }
+        public virtual string ShortName { get; set; } = null!;
+        public virtual string FullName { get; set; } = null!;
+        public virtual ICollection<BoxRegexPattern> RegexPattern { get; set; } = null!;
 
         /// <summary>
         /// Überprüft mit den gegebenen Daten ob der input dieser Box entspricht
@@ -37,7 +37,7 @@ namespace FritzBot.Database
             RegexPattern.RemoveAll(x => x.Pattern == pattern);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return ShortName == (obj as Box)?.ShortName;
         }
@@ -52,30 +52,30 @@ namespace FritzBot.Database
             return ShortName;
         }
 
-        public static bool operator ==(Box daten1, Box daten2)
+        public static bool operator ==(Box? left, Box? right)
         {
-            if (daten1 is null ^ daten2 is null)
+            if (left is null != right is null)
             {
                 return false;
             }
-            if (daten1 is null)
+            if (left is null)
             {
                 return true;
             }
-            return daten1.Equals(daten2);
+            return left.Equals(right);
         }
 
-        public static bool operator !=(Box daten1, Box daten2)
+        public static bool operator !=(Box? left, Box? right)
         {
-            if (daten1 is null ^ daten2 is null)
+            if (left is null != right is null)
             {
                 return true;
             }
-            if (daten1 is null)
+            if (left is null)
             {
                 return false;
             }
-            return daten1.ShortName != daten2.ShortName;
+            return left.ShortName != right!.ShortName;
         }
     }
 }

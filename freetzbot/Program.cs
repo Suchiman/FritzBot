@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Serilog;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Runtime.Loader;
@@ -14,11 +13,11 @@ namespace FritzBot
 {
     public static class Program
     {
-        private static AutoResetEvent ShutdownSignal;
+        private static readonly AutoResetEvent ShutdownSignal = new AutoResetEvent(false);
         private static bool RestartFlag;
 
         private static bool FloodingNotificated;
-        private static List<DateTime> Floodings = new List<DateTime>();
+        private static readonly List<DateTime> Floodings = new List<DateTime>();
 
         /// <summary>
         /// Verarbeitet eine ircMessage mit einem Command und stellt sicher, dass die dem Command zugeordneten Attribute eingehalten werden
@@ -26,7 +25,6 @@ namespace FritzBot
         /// <param name="theMessage">Die zu verarbeitende ircMessage</param>
         public static void HandleCommand(IrcMessage theMessage)
         {
-            Contract.Requires(theMessage != null);
             bool isOp;
             bool isAdmin;
             using (var context = new BotContext())
@@ -59,7 +57,7 @@ namespace FritzBot
 
             try
             {
-                PluginInfo info = PluginManager.Get(theMessage.CommandName);
+                PluginInfo? info = PluginManager.Get(theMessage.CommandName);
 
                 if (info?.IsCommand ?? false)
                 {
@@ -121,17 +119,16 @@ namespace FritzBot
                         }
                         using (var context = new BotContext())
                         {
-                            User nutzer = context.GetUser(consoleSplitted[1]);
-                            if (nutzer != null)
+                            if (context.TryGetUser(consoleSplitted[1]) is { } u)
                             {
-                                if (nutzer.Admin)
+                                if (u.Admin)
                                 {
-                                    Console.WriteLine(nutzer.LastUsedName + " ist bereits OP");
+                                    Console.WriteLine(u.LastUsedName + " ist bereits OP");
                                     break;
                                 }
-                                nutzer.Admin = true;
+                                u.Admin = true;
                                 context.SaveChanges();
-                                Console.WriteLine(nutzer.LastUsedName + " zum OP befördert");
+                                Console.WriteLine(u.LastUsedName + " zum OP befördert");
                             }
                             else
                             {
@@ -182,7 +179,7 @@ namespace FritzBot
                 return Console.ReadLine();
             }
             string Hostname = Question("Hostname: ");
-            int port = 0;
+            int port;
             do
             {
                 Console.Write("Port: ");
@@ -204,9 +201,6 @@ namespace FritzBot
 
         private static void Init()
         {
-            RestartFlag = false;
-            ShutdownSignal = new AutoResetEvent(false);
-
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.Console(outputTemplate: "{Timestamp:dd.MM HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}")
                 .WriteTo.File(path: Path.Combine("Logs", "log.txt"), outputTemplate: "{Timestamp:dd.MM.yyyy HH:mm:ss.fff} [{Level}] {Message}{NewLine}{Exception}", fileSizeLimitBytes: 20 * 1024 * 1024, rollOnFileSizeLimit: true, retainedFileCountLimit: null)
@@ -214,11 +208,11 @@ namespace FritzBot
 
             PluginManager.BeginInit(true);
 
-            if (Environment.OSVersion.Platform == PlatformID.Unix)
-            {
-                SQLitePCL.raw.SetProvider(new SQLitePCL.SQLite3Provider_sqlite3());
-                SQLitePCL.raw.FreezeProvider();
-            }
+            //if (Environment.OSVersion.Platform == PlatformID.Unix)
+            //{
+            //    SQLitePCL.raw.SetProvider(new SQLitePCL.SQLite3Provider_sqlite3());
+            //    SQLitePCL.raw.FreezeProvider();
+            //}
 
             using (var context = new BotContext())
             {

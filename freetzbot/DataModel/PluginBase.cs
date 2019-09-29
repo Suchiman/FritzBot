@@ -9,16 +9,16 @@ namespace FritzBot.DataModel
 {
     public abstract class PluginBase
     {
-        public string PluginID { get; protected set; }
+        public string PluginId { get; }
 
         protected PluginBase()
         {
-            PluginID = GetType().Name;
+            PluginId = GetType().Name;
         }
 
         protected virtual void NotifySubscribers(string message)
         {
-            NotifySubscribers(message, new string[0]);
+            NotifySubscribers(message, Array.Empty<string>());
         }
 
         protected virtual void NotifySubscribers(string message, string[] criteria)
@@ -38,7 +38,7 @@ namespace FritzBot.DataModel
                 {
                     Created = DateTime.Now,
                     Notification = message,
-                    Plugin = PluginID
+                    Plugin = PluginId
                 };
                 context.NotificationHistories.Add(h);
                 context.SaveChanges();
@@ -47,13 +47,13 @@ namespace FritzBot.DataModel
 
         protected virtual void DoNotification(Subscription subscription, string message)
         {
-            SubscriptionProvider provider = PluginManager.Plugins.FirstOrDefault(x => x.ID == subscription.Provider).As<SubscriptionProvider>();
+            SubscriptionProvider provider = PluginManager.Plugins.FirstOrDefault(x => x.Id == subscription.Provider).As<SubscriptionProvider>();
             provider?.SendNotification(subscription.User, message);
         }
 
         protected virtual IQueryable<Subscription> GetSubscribers(BotContext context, string[] criteria)
         {
-            return context.Subscriptions.Include(x => x.User).Where(x => x.Plugin == PluginID);
+            return context.Subscriptions.Include(x => x.User).Where(x => x.Plugin == PluginId);
         }
     }
 }

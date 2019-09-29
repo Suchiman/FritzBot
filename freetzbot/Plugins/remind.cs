@@ -38,7 +38,7 @@ namespace FritzBot.Plugins
         {
             using (var context = new BotContext())
             {
-                foreach (ReminderEntry item in context.ReminderEntries.Include(x => x.Creator.LastUsedName).Where(x => x.User == context.Nicknames.FirstOrDefault(n => n.Name == nickname).User).ToList())
+                foreach (ReminderEntry item in context.ReminderEntries.Include(x => x.Creator.LastUsedName).Where(x => x.User.Names.Any(n => n.Name == nickname)).ToList())
                 {
                     SendAction($"{item.Creator.LastUsedName} hat für dich am {item.Created:dd.MM.yyyy 'um' HH:mm:ss} eine Nachricht hinterlassen: {item.Message}");
                     context.ReminderEntries.Remove(item);
@@ -58,8 +58,7 @@ namespace FritzBot.Plugins
                         theMessage.Answer("Wieso sollte ich mich selbst an etwas erinnern ;) ?");
                         return;
                     }
-                    User u = context.GetUser(theMessage.CommandArgs[0]);
-                    if (u != null)
+                    if (context.TryGetUser(theMessage.CommandArgs[0]) is { } u)
                     {
                         ReminderEntry r = new ReminderEntry();
                         r.Created = DateTime.Now;

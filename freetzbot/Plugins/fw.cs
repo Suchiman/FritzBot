@@ -5,7 +5,6 @@ using FritzBot.DataModel;
 using Serilog;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -23,9 +22,9 @@ namespace FritzBot.Plugins
     //[Subscribeable]
     class fw : PluginBase//, ICommand, IBackgroundTask
     {
-        private FtpDirectory LastScan;
-        private CancellationTokenSource worker;
-        private string host;
+        private FtpDirectory? LastScan;
+        private CancellationTokenSource? worker;
+        private string? host;
 
         protected bool FWCheckEnabled => ConfigHelper.GetBoolean("FWCheckEnabled", true);
         protected int FWCheckIntervall => ConfigHelper.GetInt("FWCheckIntervall", 6000);
@@ -78,7 +77,7 @@ namespace FritzBot.Plugins
                     {
                         if (directory.Original == null) // Neuer Ordner
                         {
-                            neu.Add("[" + directory.Current.FullName + (directory.Current.Files.Any() ? "(" + directory.Current.Files.Select(x => x.Name).Join(", ") + ")]" : "]"));
+                            neu.Add("[" + directory.Current!.FullName + (directory.Current.Files.Any() ? "(" + directory.Current.Files.Select(x => x.Name).Join(", ") + ")]" : "]"));
                         }
                         else if (directory.Current == null) // Ordner gelöscht
                         {
@@ -92,7 +91,7 @@ namespace FritzBot.Plugins
                             {
                                 if (file.Original == null) // Neue Datei
                                 {
-                                    fileChanges.Add(file.Current.Name + "(neu)");
+                                    fileChanges.Add(file.Current!.Name + "(neu)");
                                 }
                                 else if (file.Current == null) // Datei gelöscht
                                 {
@@ -173,11 +172,11 @@ namespace FritzBot.Plugins
 
         protected override IQueryable<Subscription> GetSubscribers(BotContext context, string[] criterias)
         {
-            if (criterias?.Length > 0)
+            if (criterias.Length > 0)
             {
-                Expression filter = null;
-                ParameterExpression[] parameter = null;
-                MemberExpression subscriptionBedingungen = null;
+                Expression? filter = null;
+                ParameterExpression[]? parameter = null;
+                MemberExpression? subscriptionBedingungen = null;
                 foreach (string criteria in criterias)
                 {
                     Expression<Func<Subscription, bool>> condition = subscription => subscription.Bedingungen.Any(a => a.Bedingung.Contains(criteria));
@@ -189,7 +188,7 @@ namespace FritzBot.Plugins
                         continue;
                     }
 
-                    var methodCall = condition.Body as MethodCallExpression;
+                    var methodCall = (MethodCallExpression)condition.Body;
                     methodCall = Expression.Call(methodCall.Method, subscriptionBedingungen, methodCall.Arguments[1]);
 
                     filter = Expression.OrElse(filter, methodCall);
@@ -245,9 +244,9 @@ namespace FritzBot.Plugins
                 rawName = theMessage.CommandLine;
             }
 
-            FtpDirectory Scan = LastScan;
-            FtpDirectory match = null;
-            List<FtpDirectory> matches = null;
+            FtpDirectory? Scan = LastScan;
+            FtpDirectory? match = null;
+            List<FtpDirectory>? matches = null;
             bool shouldRefresh = false;
             if (Scan != null)
             {
@@ -317,17 +316,17 @@ namespace FritzBot.Plugins
         {
             foreach (string name in files)
             {
-                if (BoxDatabase.TryGetShortName(name, out string shortName))
+                if (BoxDatabase.TryGetShortName(name, out string? shortName))
                 {
                     yield return shortName;
                 }
             }
         }
 
-        private static List<FtpDirectory> FindDirectory(List<FtpDirectory> directories, Box box, string name)
+        private static List<FtpDirectory> FindDirectory(List<FtpDirectory> directories, Box? box, string name)
         {
-            FtpDirectory idMatch = null;
-            FtpDirectory directMatch = null;
+            FtpDirectory? idMatch = null;
+            FtpDirectory? directMatch = null;
             List<FtpDirectory> roughMatches = new List<FtpDirectory>();
             foreach (FtpDirectory directory in directories)
             {
@@ -345,7 +344,7 @@ namespace FritzBot.Plugins
                     roughMatches.Add(directory);
                 }
             }
-            return idMatch == null && directMatch == null ? roughMatches : new List<FtpDirectory> { idMatch ?? directMatch };
+            return idMatch == null && directMatch == null ? roughMatches : new List<FtpDirectory> { idMatch ?? directMatch! };
         }
 
         private static string FormatResult(FtpDirectory scan, bool recovery, bool source, bool firmware)
@@ -400,9 +399,6 @@ namespace FritzBot.Plugins
         /// <returns>Die Versionsnummer oder der eingabestring wenn keine Versionsnummer extrahiert wurden konnte</returns>
         public static string TryExtractVersion(string toExtract)
         {
-            Contract.Requires(toExtract != null);
-            Contract.Ensures(Contract.Result<string>() != null);
-
             Match regex = Regex.Match(toExtract, @"((\b\d{2,3}\.)?\d\d\.\d\d-?\d?\d?)\.\D"); //@"\d{2,3}\.\d\d\.\d\d"
             if (!regex.Success)
             {
@@ -414,7 +410,7 @@ namespace FritzBot.Plugins
 
     class FtpFile
     {
-        public string Name { get; set; }
+        public string Name { get; set; } = null!;
         public DateTime Modified { get; set; }
 
         public override string ToString()
@@ -425,10 +421,10 @@ namespace FritzBot.Plugins
 
     class FtpDirectory
     {
-        public string Name { get { return Path.GetFileName(FullName); } }
-        public string FullName { get; set; }
-        public List<FtpFile> Files { get; set; }
-        public List<FtpDirectory> Folders { get; set; }
+        public string Name => Path.GetFileName(FullName);
+        public string FullName { get; set; } = null!;
+        public List<FtpFile> Files { get; set; } = null!;
+        public List<FtpDirectory> Folders { get; set; } = null!;
 
         public override string ToString()
         {

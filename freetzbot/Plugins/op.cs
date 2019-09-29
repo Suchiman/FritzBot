@@ -13,15 +13,14 @@ namespace FritzBot.Plugins
         {
             using (var context = new BotContext())
             {
-                User u = context.GetUser(theMessage.CommandLine);
-                if (u == null)
+                if (context.TryGetUser(theMessage.CommandLine) is { } u)
                 {
-                    theMessage.Answer("Den Benutzer kenne ich nicht");
+                    u.Admin = true;
+                    context.SaveChanges();
+                    theMessage.Answer("Okay");
                     return;
                 }
-                u.Admin = true;
-                context.SaveChanges();
-                theMessage.Answer("Okay");
+                theMessage.Answer("Den Benutzer kenne ich nicht");
             }
         }
     }

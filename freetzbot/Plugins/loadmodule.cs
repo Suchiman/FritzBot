@@ -16,7 +16,7 @@ namespace FritzBot.Plugins
     {
         public void Run(IrcMessage theMessage)
         {
-            string PluginDirectory = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "plugins");
+            string PluginDirectory = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, "plugins");
             string name = theMessage.CommandLine;
             int loaded = 0;
 

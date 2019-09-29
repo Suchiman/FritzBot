@@ -6,7 +6,6 @@ using FritzBot.DataModel;
 using FritzBot.Functions;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
 
 namespace FritzBot.Plugins
@@ -17,7 +16,7 @@ namespace FritzBot.Plugins
     {
         private const string PackagesPage = "http://freetz.org/wiki/packages";
 
-        private DataCache<List<FreetzPackage>> PackagesCache = new DataCache<List<FreetzPackage>>(GetPackages, TimeSpan.FromMinutes(30));
+        private readonly DataCache<List<FreetzPackage>> PackagesCache = new DataCache<List<FreetzPackage>>(GetPackages, TimeSpan.FromMinutes(30));
 
         public void Run(IrcMessage theMessage)
         {
@@ -32,16 +31,14 @@ namespace FritzBot.Plugins
             if (input.Contains('#'))
             {
                 string[] split = input.Split(new[] { '#' }, 2);
-                Contract.Assume(split.Length == 2);
                 anchor = "#" + split[1];
                 input = split[0];
             }
 
             int lowestFuzzyDifference = 0, lowestStartsWithDifference = 0;
-            FreetzPackage exactMatch = null, fuzzyMatch = null, startsWithMatch = null;
+            FreetzPackage? exactMatch = null, fuzzyMatch = null, startsWithMatch = null;
 
-            List<FreetzPackage> packages = PackagesCache.GetItem(true);
-            if (packages != null && (exactMatch = packages.FirstOrDefault(x => x.Name.Equals(input, StringComparison.OrdinalIgnoreCase))) == null)
+            if (PackagesCache.GetItem(true) is { } packages && (exactMatch = packages.FirstOrDefault(x => x.Name.Equals(input, StringComparison.OrdinalIgnoreCase))) == null)
             {
                 FreetzPackage likelyKey = packages.FirstOrDefault(x => x.Name.StartsWith(input, StringComparison.OrdinalIgnoreCase));
                 if (likelyKey != null)
@@ -125,8 +122,8 @@ namespace FritzBot.Plugins
 
         class FreetzPackage
         {
-            public string Name { get; set; }
-            public string Url { get; set; }
+            public string Name { get; set; } = null!;
+            public string? Url { get; set; }
         }
     }
 }

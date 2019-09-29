@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace FritzBot.Functions
 {
@@ -8,18 +9,13 @@ namespace FritzBot.Functions
     /// <typeparam name="T">Der Typ der gekapselt werden soll</typeparam>
     public class DataCache<T>
     {
-        private T Item;
-        private Func<T, T> ValueFactory;
-        private TimeSpan Expires;
+        [AllowNull] private T Item = default;
+        private readonly Func<T, T> ValueFactory;
+        private readonly TimeSpan Expires;
         public DateTime Renewed { get; protected set; }
-        public Exception LastUpdateFail { get; protected set; }
-        public bool IsUpToDate
-        {
-            get
-            {
-                return Expires == TimeSpan.Zero || Renewed + Expires >= DateTime.Now;
-            }
-        }
+        public Exception? LastUpdateFail { get; protected set; }
+        public bool IsUpToDate => Expires == TimeSpan.Zero || Renewed + Expires >= DateTime.Now;
+
         /// <summary>
         /// Initialisiert eine neue Cache Instanz
         /// </summary>
@@ -42,7 +38,7 @@ namespace FritzBot.Functions
             try
             {
                 T tmp = ValueFactory(Item);
-                if (!tmp.Equals(Item))
+                if (tmp != null && !tmp.Equals(Item))
                 {
                     Item = tmp;
                     Renewed = DateTime.Now;

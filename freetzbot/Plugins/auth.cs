@@ -27,8 +27,7 @@ namespace FritzBot.Plugins
         {
             using (var context = new BotContext())
             {
-                User u = context.GetUser(e.Data.Nick);
-                if (u != null)
+                if (context.TryGetUser(e.Data.Nick) is { } u)
                 {
                     u.Authentication = DateTime.MinValue;
                     context.SaveChanges();

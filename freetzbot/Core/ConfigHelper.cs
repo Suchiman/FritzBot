@@ -7,7 +7,7 @@ namespace FritzBot.Core
 {
     public static class ConfigHelper
     {
-        private static JObject conf;
+        private static readonly JObject conf;
 
         static ConfigHelper()
         {
@@ -16,7 +16,7 @@ namespace FritzBot.Core
             {
                 using (var text = File.OpenText(configPath))
                 {
-                    conf = JToken.ReadFrom(new JsonTextReader(text)) as JObject;
+                    conf = (JObject)JToken.ReadFrom(new JsonTextReader(text));
                 }
             }
             else
@@ -27,7 +27,7 @@ namespace FritzBot.Core
 
         private static string GetPath()
         {
-            return Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location), "config.json");
+            return Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location)!, "config.json");
         }
 
         private static void SaveChanges()

@@ -10,7 +10,6 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Threading;
 
 namespace FritzBot.Core
@@ -19,10 +18,10 @@ namespace FritzBot.Core
     {
         private const string DefaultReferences = "mscorlib.dll,System.dll,System.Core.dll,System.Configuration.dll,System.IO.Compression.dll,System.Web.dll,System.Xml.dll,System.Xml.Linq.dll,System.Net.FtpClient.dll,CsQuery.dll,EntityFramework.dll,Newtonsoft.Json.dll,Irc4netButSmarter.dll";
 
-        private static Dictionary<string, PluginInfo> _lookupDictionary = new Dictionary<string, PluginInfo>(StringComparer.OrdinalIgnoreCase);
-        private static List<PluginInfo> _plugins = new List<PluginInfo>();
+        private static readonly Dictionary<string, PluginInfo> _lookupDictionary = new Dictionary<string, PluginInfo>(StringComparer.OrdinalIgnoreCase);
+        private static readonly List<PluginInfo> _plugins = new List<PluginInfo>();
 
-        public static IEnumerable<PluginInfo> Plugins { get { return _plugins; } }
+        public static IEnumerable<PluginInfo> Plugins => _plugins;
 
         /// <summary>
         /// Fährt den PluginManager herunter
@@ -78,9 +77,9 @@ namespace FritzBot.Core
         /// <summary>
         /// Gibt das erste PluginInfo zurück mit dem angegebenen Namen
         /// </summary>
-        public static PluginInfo Get(string name)
+        public static PluginInfo? Get(string name)
         {
-            if (_lookupDictionary.TryGetValue(name, out PluginInfo plugin))
+            if (_lookupDictionary.TryGetValue(name, out PluginInfo? plugin))
             {
                 return plugin;
             }
@@ -108,7 +107,7 @@ namespace FritzBot.Core
         /// </summary>
         public static void Init(bool AutostartTask)
         {
-            string PluginDirectory = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location), "plugins");
+            string PluginDirectory = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location)!, "plugins");
             if (!Directory.Exists(PluginDirectory))
             {
                 Directory.CreateDirectory(PluginDirectory);
@@ -128,13 +127,13 @@ namespace FritzBot.Core
                     Log.Error(ex, "Das Laden der Source Module ist fehlgeschlagen und werden deshalb nicht zur Verfügung stehen!");
                 }
             }
-            allTypes.AddRange(Bot.GetTypes().Where(x => !allTypes.Contains(x, y => y.FullName)));
+            allTypes.AddRange(Bot.GetTypes().Where(x => !allTypes.Contains(x, y => y.FullName!)));
             AddDistinct(AutostartTask, allTypes.ToArray<Type>()); //Die Methode verwirft alle Typen die nicht von PluginBase abgeleitet sind
         }
 
         public static void RecycleScoped(PluginBase plugin)
         {
-            PluginInfo info = _plugins.FirstOrDefault(x => x.ID == plugin.PluginID);
+            PluginInfo info = _plugins.FirstOrDefault(x => x.Id == plugin.PluginId);
             info.Recycle(plugin);
         }
 
@@ -157,13 +156,9 @@ namespace FritzBot.Core
         {
             foreach (Type t in assembly.GetTypes())
             {
-                NameAttribute att = t.GetCustomAttribute<NameAttribute>();
-                if (att?.Names != null)
+                if (t.GetCustomAttribute<NameAttribute>()?.Names?.Any(x => x.Equals(name, StringComparison.OrdinalIgnoreCase)) == true)
                 {
-                    if (att.Names.Any(x => x.Equals(name, StringComparison.OrdinalIgnoreCase)))
-                    {
-                        return AddDistinct(true, t);
-                    }
+                    return AddDistinct(true, t);
                 }
             }
             return 0;
@@ -177,8 +172,8 @@ namespace FritzBot.Core
         public static Assembly LoadSource(params string[] fileName)
         {
             string[] assemblies = ConfigHelper.GetString("ReferencedAssemblies", DefaultReferences).Split(',');
-            string FrameworkAssemblyPath = Path.GetDirectoryName(typeof(object).Assembly.Location);
-            string BotAssemblyPath = Path.GetDirectoryName(typeof(PluginManager).Assembly.Location);
+            string FrameworkAssemblyPath = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
+            string BotAssemblyPath = Path.GetDirectoryName(typeof(PluginManager).Assembly.Location)!;
 
             var references = new List<MetadataReference>();
             references.Add(MetadataReference.CreateFromFile(typeof(PluginManager).Assembly.Location));
@@ -241,33 +236,33 @@ namespace FritzBot.Core
 
     public class PluginInfo : IBackgroundTask, ICommand
     {
-        public Type PluginType { get; protected set; }
-        public PluginBase Plugin { get; protected set; }
+        public Type PluginType { get; }
+        public PluginBase Plugin { get; }
 
-        private Dictionary<string, PluginBase> UserScoped = new Dictionary<string, PluginBase>();
-        private Dictionary<string, PluginBase> ChannelScoped = new Dictionary<string, PluginBase>();
-        private Dictionary<KeyValuePair<string, string>, PluginBase> UserChannelScoped = new Dictionary<KeyValuePair<string, string>, PluginBase>();
+        private readonly Dictionary<string, PluginBase> UserScoped = new Dictionary<string, PluginBase>();
+        private readonly Dictionary<string, PluginBase> ChannelScoped = new Dictionary<string, PluginBase>();
+        private readonly Dictionary<KeyValuePair<string, string>, PluginBase> UserChannelScoped = new Dictionary<KeyValuePair<string, string>, PluginBase>();
 
-        public string ID { get; protected set; }
-        public List<string> Names { get; protected set; }
+        public string Id { get; }
+        public List<string> Names { get; }
 
-        public bool AuthenticationRequired { get; protected set; }
-        public bool ParameterRequired { get; protected set; }
-        public bool ParameterRequiredSpecified { get; protected set; }
+        public bool AuthenticationRequired { get; }
+        public bool ParameterRequired { get; }
+        public bool ParameterRequiredSpecified { get; }
 
-        public bool IsHidden { get; protected set; }
-        public bool IsCommand { get; protected set; }
-        public bool IsSubscribeable { get; protected set; }
-        public bool IsBackgroundTask { get; protected set; }
+        public bool IsHidden { get; }
+        public bool IsCommand { get; }
+        public bool IsSubscribeable { get; }
+        public bool IsBackgroundTask { get; }
 
-        public string HelpText { get; protected set; }
-        public Scope InstanceScope { get; protected set; }
+        public string? HelpText { get; }
+        public Scope InstanceScope { get; }
 
         public PluginInfo(Type plugin)
         {
             PluginType = plugin;
-            Plugin = Activator.CreateInstance(PluginType) as PluginBase;
-            ID = Plugin.PluginID;
+            Plugin = (PluginBase)Activator.CreateInstance(PluginType)!;
+            Id = Plugin.PluginId;
 
             IsCommand = Plugin is ICommand;
             IsBackgroundTask = Plugin is IBackgroundTask;
@@ -279,8 +274,7 @@ namespace FritzBot.Core
             IsHidden = plugin.GetCustomAttribute<HiddenAttribute>() != null;
 
             Names = plugin.GetCustomAttribute<NameAttribute>()?.Names.ToList() ?? new List<string>();
-            ParameterRequiredAttribute paramAtt = plugin.GetCustomAttribute<ParameterRequiredAttribute>();
-            if (paramAtt != null)
+            if (plugin.GetCustomAttribute<ParameterRequiredAttribute>() is { } paramAtt)
             {
                 ParameterRequiredSpecified = true;
                 ParameterRequired = paramAtt.Required;
@@ -309,14 +303,14 @@ namespace FritzBot.Core
                     plugin = Plugin;
                     break;
             }
-            return plugin as T;
+            return (T)(object)plugin;
         }
 
         public PluginBase GetUserScoped(string user)
         {
-            if (!UserScoped.TryGetValue(user, out PluginBase pluginBase))
+            if (!UserScoped.TryGetValue(user, out var pluginBase))
             {
-                pluginBase = Activator.CreateInstance(PluginType) as PluginBase;
+                pluginBase = (PluginBase)Activator.CreateInstance(PluginType)!;
                 UserScoped[user] = pluginBase;
             }
             return pluginBase;
@@ -325,9 +319,9 @@ namespace FritzBot.Core
         public PluginBase GetUserChannelScoped(string user, string channel)
         {
             KeyValuePair<string, string> key = new KeyValuePair<string, string>(user, channel);
-            if (!UserChannelScoped.TryGetValue(key, out PluginBase pluginBase))
+            if (!UserChannelScoped.TryGetValue(key, out var pluginBase))
             {
-                pluginBase = Activator.CreateInstance(PluginType) as PluginBase;
+                pluginBase = (PluginBase)Activator.CreateInstance(PluginType)!;
                 UserChannelScoped[key] = pluginBase;
             }
             return pluginBase;
@@ -335,9 +329,9 @@ namespace FritzBot.Core
 
         public PluginBase GetChannelScoped(string channel)
         {
-            if (!ChannelScoped.TryGetValue(channel, out PluginBase pluginBase))
+            if (!ChannelScoped.TryGetValue(channel, out var pluginBase))
             {
-                pluginBase = Activator.CreateInstance(PluginType) as PluginBase;
+                pluginBase = (PluginBase)Activator.CreateInstance(PluginType)!;
                 ChannelScoped[channel] = pluginBase;
             }
             return pluginBase;
@@ -354,7 +348,7 @@ namespace FritzBot.Core
             {
                 throw new NotSupportedException();
             }
-            (Plugin as IBackgroundTask).Start();
+            ((IBackgroundTask)Plugin).Start();
         }
 
         public void Stop()
@@ -363,7 +357,7 @@ namespace FritzBot.Core
             {
                 throw new NotSupportedException();
             }
-            (Plugin as IBackgroundTask).Stop();
+            ((IBackgroundTask)Plugin).Stop();
         }
 
         public void Run(IrcMessage theMessage)
@@ -372,7 +366,7 @@ namespace FritzBot.Core
             {
                 throw new NotSupportedException();
             }
-            (Plugin as ICommand).Run(theMessage);
+            ((ICommand)Plugin).Run(theMessage);
         }
 
         public void Recycle(PluginBase plugin)

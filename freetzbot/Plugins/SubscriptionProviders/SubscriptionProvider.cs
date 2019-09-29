@@ -4,7 +4,6 @@ using FritzBot.DataModel;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Reflection;
 
@@ -16,18 +15,16 @@ namespace FritzBot.Plugins.SubscriptionProviders
 
         public virtual void AddSubscription(IrcMessage theMessage, PluginBase plugin)
         {
-            Contract.Requires(theMessage != null && plugin != null);
-
             using (var context = new BotContext())
             {
                 User u = context.GetUser(theMessage.Nickname);
-                Subscription SpecificSubscription = context.Subscriptions.Include(x => x.Bedingungen).FirstOrDefault(x => x.User.Id == u.Id && x.Provider == PluginID && x.Plugin == plugin.PluginID);
+                Subscription SpecificSubscription = context.Subscriptions.Include(x => x.Bedingungen).FirstOrDefault(x => x.User.Id == u.Id && x.Provider == PluginId && x.Plugin == plugin.PluginId);
                 if (SpecificSubscription == null)
                 {
                     SpecificSubscription = new Subscription()
                     {
-                        Plugin = plugin.PluginID,
-                        Provider = PluginID,
+                        Plugin = plugin.PluginId,
+                        Provider = PluginId,
                         User = u,
                         Bedingungen = new List<SubscriptionBedingung>()
                     };
@@ -38,7 +35,7 @@ namespace FritzBot.Plugins.SubscriptionProviders
                     }
 
                     context.Subscriptions.Add(SpecificSubscription);
-                    theMessage.Answer($"Du wirst absofort mit {GetType().GetCustomAttribute<NameAttribute>().Names[0]} für {plugin.GetType().GetCustomAttribute<NameAttribute>().Names[0]} benachrichtigt");
+                    theMessage.Answer($"Du wirst absofort mit {GetType().GetCustomAttribute<NameAttribute>()!.Names[0]} für {plugin.GetType().GetCustomAttribute<NameAttribute>()!.Names[0]} benachrichtigt");
                 }
                 else if (theMessage.CommandArgs.Count > 3 && !String.IsNullOrEmpty(theMessage.CommandArgs[3]) && SpecificSubscription.Bedingungen.Count == 0)
                 {
@@ -61,8 +58,6 @@ namespace FritzBot.Plugins.SubscriptionProviders
 
         public virtual void ParseSubscriptionSetup(IrcMessage theMessage)
         {
-            Contract.Requires(theMessage != null);
-
             if (theMessage.CommandArgs.Count < 3)
             {
                 theMessage.Answer("Zu wenig Parameter, probier mal: !subscribe setup <SubscriptionProvider> <Einstellung>");
@@ -70,7 +65,7 @@ namespace FritzBot.Plugins.SubscriptionProviders
             }
             using (var context = new BotContext())
             {
-                UserKeyValueEntry entry = context.GetStorageOrCreate(theMessage.Nickname, PluginID);
+                UserKeyValueEntry entry = context.GetStorageOrCreate(theMessage.Nickname, PluginId);
                 entry.Value = theMessage.CommandArgs[2];
                 context.SaveChanges();
             }

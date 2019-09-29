@@ -24,7 +24,7 @@ namespace FritzBot.Plugins.SubscriptionProviders
                         var userInChannel = channel.Users.Keys.Intersect(names).FirstOrDefault();
                         if (userInChannel != null)
                         {
-                            UserKeyValueEntry entry = context.GetStorage(user, PluginID);
+                            UserKeyValueEntry entry = context.GetStorage(user, PluginId);
 
                             connection.IrcClient.SendMessage((entry?.Value ?? "PRIVMSG") == "PRIVMSG" ? SendType.Message : SendType.Notice, userInChannel, message);
                         }

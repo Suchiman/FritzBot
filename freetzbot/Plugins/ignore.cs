@@ -14,8 +14,7 @@ namespace FritzBot.Plugins
             {
                 if (theMessage.Source == theMessage.CommandLine || Toolbox.IsOp(context.GetUser(theMessage.Nickname)))
                 {
-                    User u = context.GetUser(theMessage.CommandLine);
-                    if (u != null)
+                    if (context.TryGetUser(theMessage.CommandLine) is { } u)
                     {
                         u.Ignored = true;
                         context.SaveChanges();
